@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3197</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 121a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-10-10</P>
+<HR>
+<A NAME="3197"></A><H4>3197.
+  
+Relaxed requirements for integer representations
+</H4>
+<B>Section: </B>C.8.3&#160; [<A href="
+   https://wg21.link/diff.basic">diff.basic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-04<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/914">#914</A>.)</P>
+
+<P>C++ does not have a requirement that an integer value 0 is
+represented as all-zero bits in the value representation; C does.  See
+C23 6.2.6.2 paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+... For any integer type, the object representation where all the bits
+are zero shall be a representation of the value zero in that type.
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Add a section in C.8.3 [<A href="
+   https://wg21.link/diff.basic">diff.basic</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 6.9.3 [<A href="
+   https://wg21.link/basic.fundamental">basic.fundamental</A>]<BR>
+<B>Change:</B> C++ has relaxed rules for the representation of integer types compared to C.<BR>
+[ Example: With the assumption that <TT>int</TT> has no padding bits:
+<PRE>
+  int i = 0;
+  unsigned char a[sizeof(int)] = {};
+  assert(memcmp(&amp;i, a, sizeof(i)) == 0);   //<SPAN CLASS="cmnt"> guaranteed to hold in C; may fail in C++</SPAN>
+</PRE>
+-- end example]<BR>
+<B>Rationale:</B> C++ has a more elaborate value model that de-emphasizes
+access to object representations.<BR>
+<B>Effect on original feature:</B>
+Change of semantics of well-defined feature.<BR>
+<B>Difficulty of converting:</B> Semantic transformation.  Aggregate
+initialization should be used in lieu of <TT>memset</TT>.<BR>
+<B>How widely used:</B> Occasionally.  In particular, <TT>calloc</TT>
+and <TT>memset</TT> are expected to yield scalar subobjects with value
+0.<BR>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-06-26</B></P>
+
+<P>In lieu of the above suggested resolution, CWG opted to eliminate
+this difference vs. C.</P>
+
+<P><B>Proposed resolution (no objections during CWG reflector review starting 2026-08-20):</B></P>
+
+<P>Change in 6.9.3 [<A href="
+   https://wg21.link/basic.fundamental#11">basic.fundamental</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The types char, wchar_t, char8_t, char16_t, and char32_t are
+collectively called character types. The character types, bool, the
+signed and unsigned integer types, and cv-qualified versions
+(6.9.6 [<A href="
+   https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) thereof, are collectively termed integral
+types. A synonym for integral type is integer type.</P>
+<P>[<I>Note 8:</I>
+Enumerations (9.8.1 [<A href="
+   https://wg21.link/dcl.enum">dcl.enum</A>]) are not integral; however,
+unscoped enumerations can be promoted to integral types as specified
+in 7.3.7 [<A href="
+   https://wg21.link/conv.prom">conv.prom</A>]. &#8212;<I>end note</I>]</P>
+<P class="ins">If the bits in the value representation of an object of
+integer type all have value zero, the object contains the
+value <TT>false</TT> if it is of type <TT>bool</TT> and zero
+otherwise.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
