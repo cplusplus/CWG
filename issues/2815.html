@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2815</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 115a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-07-24</P>
+<HR>
+<A NAME="2815"></A><H4>2815.
+  
+Overload resolution for references/pointers to <TT>noexcept</TT> functions
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-05<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)() noexcept) {}
+  void g(void (&amp;)()) {}
+
+  int main() {
+    g(f);     // <SPAN CLASS="cmnt">error: ambiguous</SPAN>
+  }
+</PRE>
+
+<P>In contrast:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)()) {} 
+  void g(void (&amp;)()) {}      // <SPAN CLASS="cmnt">#1</SPAN>
+
+  int main() {
+    g(f);    // <SPAN CLASS="cmnt">OK, calls #1</SPAN>
+  }
+</PRE>
+
+<P>In both cases, binding <TT>void(&amp;)()</TT> to <TT>void()
+noexcept</TT> is considered an identity conversion, without further
+disambiguation by 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>].</P>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>Binding a reference to a function should not be considered an
+identity conversion if it strips a non-throwing exception
+specification.  This amendment removes the ambiguity for the first
+example and makes the second example ambiguous, which is
+desirable.</P>
+
+<BR><BR>
+</BODY>
+</HTML>
