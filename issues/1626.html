@@ -1,0 +1,69 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1626</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="1626"></A><H4>1626.
+  
+<TT>constexpr</TT> member functions in <I>brace-or-equal-initializer</I>s
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-02-19<BR>
+
+
+<P>The Standard should make clear that a <TT>constexpr</TT> member
+function cannot be used in a constant expression until its class is
+complete.  For example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct C {
+    template&lt;typename T2&gt; static constexpr bool _S_chk() {
+      return false;
+    }
+    static const bool __value = _S_chk&lt;int&gt;();
+  };
+
+  C&lt;double&gt; c;
+</PRE>
+
+<P>Current implementations accept this, although they reject the
+corresponding non-template case:</P>
+
+<PRE>
+  struct C {
+    static constexpr bool _S_chk() { return false; }
+    static const bool __value = _S_chk();
+  };
+
+  C c;
+</PRE>
+
+<P>Presumably the template case should be handled consistently with the
+non-template case.</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

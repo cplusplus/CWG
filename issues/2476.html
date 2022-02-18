@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2476</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2476"></A><H4>2476.
+  
+<I>placeholder-type-specifier</I>s and function declarators
+</H4>
+<B>Section: </B>9.2.9.6.1&#160; [<A href="https://wg21.link/dcl.spec.auto.general">dcl.spec.auto.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-01-29<BR>
+
+
+
+
+<P>According to 9.2.9.6.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+The placeholder type can appear with a function declarator
+in the <I>decl-specifier-seq</I>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>,
+or <I>trailing-return-type</I>, in any context where such a
+declarator is valid. If the function declarator includes
+a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies the declared
+return type of the function. Otherwise, the function
+declarator shall declare a function.
+
+</BLOCKQUOTE>
+
+<P>This wording disallows a declaration like</P>
+
+<PRE>
+   int f();
+   auto (*fp)()=f;
+</PRE>
+
+<P>The requirement to declare a function was introduced by
+the resolution of <A HREF="1892.html">issue 1892</A>.</P>
+
+<P><B>Proposed resolution (April, 2021):</B></P>
+
+<P>Change 9.2.9.6.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The placeholder type can appear with a function declarator
+in the <I>decl-specifier-seq</I>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>, or <I>trailing-return-type</I><DEL>,
+in any context where such a declarator is valid</DEL>
+<INS>if the function declarator includes a
+<I>trailing-return-type</I> <TT>T</TT>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) or declares a function</INS>.
+<DEL>If the function declarator includes
+a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies</DEL>
+<INS>In the former case, <TT>T</TT> is</INS> the declared
+return type of the function. <DEL>Otherwise, the function
+declarator shall declare a function.</DEL> If the declared
+return type of <DEL>the</DEL> <INS>a</INS> function contains
+a placeholder type, the return type of the function is
+deduced from non-discarded <TT>return</TT> statements, if
+any, in the body of the function (8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (May, 2021):</B></P>
+
+<P>It was observed  that the proposed resolution above does not
+address the example in the issue, since <TT>fp</TT> neither has
+a <I>trailing-return-type</I> nor declares a function. Presumably
+another case in which a function declarator with a placeholder
+return type should be permitted is in the declaration of a
+variable in which the type is deduced from its initializer.</P>
+
+<P>It was also noted in passing that the deduction in the
+example is only partial: the parameter-type-list is
+specified by the declarator and only the return type is
+deduced from the initializer.  Although this example is
+supported by current implementations, there is
+implementation divergence in the support of another case in
+which only part of the variable's type is deduced:</P>
+
+<PRE>
+    auto (&amp;ar)[2] = L"a";  //<SPAN CLASS="cmnt"> Array bound declared, element type deduced</SPAN>
+</PRE>
+
+<P>This issue is related to <A HREF="1892.html">issue 1892</A>,
+which prohibited cases like</P>
+
+<PRE>
+    std::vector&lt;auto(*)()&gt; v;
+</PRE>
+
+<P>The ultimate outcome of the two issues should be:</P>
+
+<PRE>
+    int f();
+    auto (*fp1)() = f;       //<SPAN CLASS="cmnt"> OK</SPAN>
+    auto (*fp2)()-&gt;int = f;  //<SPAN CLASS="cmnt"> OK</SPAN>
+    auto (*fp3)()-&gt;auto = f; //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;typename T&gt; struct C { };
+    C&lt;auto(*)()&gt; c1;         //<SPAN CLASS="cmnt"> Not OK</SPAN>
+    C&lt;auto(*)()-&gt;int&gt; c2;    //<SPAN CLASS="cmnt"> OK</SPAN>
+    C&lt;auto(*)()-&gt;auto&gt; c3;   //<SPAN CLASS="cmnt"> Not OK</SPAN>
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

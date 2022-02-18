@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2463</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2463"></A><H4>2463.
+  
+Trivial copyability and unions with non-trivial members
+</H4>
+<B>Section: </B>11.2&#160; [<A href="https://wg21.link/class.prop">class.prop</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-11-30<BR>
+
+
+<P>According to 11.2 [<A href="https://wg21.link/class.prop#1">class.prop</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>trivially copyable class</I> is a class:</P>
+
+<UL>
+<LI><P>that has at least one eligible copy constructor, move
+constructor, copy assignment operator, or move assignment
+operator (11.4.4 [<A href="https://wg21.link/special">special</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]),</P></LI>
+
+<LI><P>where each eligible copy constructor, move
+constructor, copy assignment operator, and move assignment
+operator is trivial, and</P></LI>
+
+<LI><P>that has a trivial, non-deleted destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This definition has surprising effects in a union whose
+members are not trivial. For example:</P>
+
+<PRE>
+  struct S {
+    S&amp; operator=(const S&amp;);
+  };
+  union U {
+    S s;
+  };
+</PRE>
+
+<P>In this case, <TT>S</TT> is not trivially copyable because
+its assignment operator is non-trivial, although its copy
+constructor is trivial. <TT>U</TT>, however, is trivially
+copyable because its assignment operator is not eligible
+(11.4.4 [<A href="https://wg21.link/special#6">special</A>] paragraph 6) because it is
+deleted, but its copy constructor is trivial, thus satisfying
+the second bullet.</P>
+
+<P>It is unclear why, for example, a complete object of type
+<TT>S</TT> cannot be <TT>memcpy</TT>ed but such an object
+can be <TT>memcpy</TT>ed when embedded in a union.</P>
+
+<P>There is implementation divergence in the handling of
+this example.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

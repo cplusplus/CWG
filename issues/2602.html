@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2602</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2602"></A><H4>2602.
+  
+consteval defaulted functions
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aaron Ballman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-16<BR>
+
+
+
+
+<P>It is not clear whether a defaulted consteval function is still an
+immediate function even if it is not a valid constexpr function. For
+example:</P>
+
+<PRE>
+  template &lt;typename Ty&gt;
+  struct A {
+    Ty n;
+    consteval A() {}
+  };
+
+  template &lt;typename Ty&gt;
+  struct B {
+    Ty n;
+    consteval B() = default;
+  };
+
+  A&lt;int&gt; a;
+  B&lt;int&gt; b;
+</PRE>
+
+<P>The declarations of <TT>a</TT> and <TT>b</TT> should both fail due
+to an uninitialized member <TT>n</TT> in each of <TT>A</TT>
+and <TT>B</TT>. The <TT>= default</TT>; should not make a
+difference. However, there is implementation divergence. We should be
+able to lean on 7.7 [<A href="https://wg21.link/expr.const#5.5">expr.const</A>] bullet 5.5 to handle this
+when the immediate invocation is required.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.2.6 [<A href="https://wg21.link/dcl.constexpr#7">dcl.constexpr</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a
+constexpr <INS>templated</INS> function <DEL>template or member
+function of a class template</DEL> would fail to satisfy the
+requirements for a constexpr function, that specialization is still a
+constexpr function, even though a call to such a function cannot
+appear in a constant expression.
+<INS>Similarly, if the instantiated template specialization of a
+consteval <INS>templated</INS> function would fail to satisfy the
+requirements for a consteval function, that specialization is still an
+immediate function, even though an immediate invocation would be
+ill-formed.</INS> If no specialization of the template would satisfy
+the requirements for a constexpr <INS>or consteval</INS> function when
+considered as a non-template function, the template is ill-formed, no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

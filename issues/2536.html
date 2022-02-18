@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2536</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2536"></A><H4>2536.
+  
+Partially initialized variables during constant initialization
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-21<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A { int x = 1; int y; };
+  constinit A a;                   // <SPAN CLASS="cmnt">static storage duration; #1</SPAN>
+</PRE>
+
+<P>The treatment of this example changed with
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1331r2.pdf">P1331R2</A>
+(Permitting trivial default initialization in constexpr contexts),
+adopted 2019-07. Prior to this paper, the default constructor
+of <TT>A</TT> was not <TT>constexpr</TT> because it left a data member
+uninitialized.  With paper P1331, the restriction was shifted to
+reading uninitialized objects during constant evaluation, and the
+variable <TT>a</TT> now satisfies the requirements for
+"constant-initialized" in 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+A variable or temporary object o is <I>constant-initialized</I> if
+<UL>
+<LI>either it has an initializer or its default-initialization results
+in some initialization being performed, and</LI>
+
+<LI>the full-expression of its initialization is a constant expression
+when interpreted as a constant-expression, except that if o is an
+object, that full-expression may also invoke constexpr constructors
+for o and its subobjects even if those objects are of non-literal
+class types.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Zero-initialization is not performed prior to
+constant-initialization per 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<I>Constant initialization</I> is performed if a variable or temporary
+object with static or thread storage duration is constant-initialized
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). If constant initialization is not
+performed, a variable with static storage duration
+(6.7.5.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread storage duration
+(6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is zero-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). Together, zero-initialization and constant
+initialization are called <I>static initialization</I>; all other
+initialization is <I>dynamic initialization</I>.
+
+</BLOCKQUOTE>
+
+<P>Thus, #1 is valid and <TT>a</TT> is statically initialized,
+but <TT>a.y</TT> would remain uninitialized, which is surprising for
+an object with static storage duration.</P>
+
+<P>Current implementations diagnose an error at #1, because the
+variable <TT>a</TT> is actually not considered to be
+constant-initialized.</P>
+
+<P>This issue is closely related to <A HREF="2558.html">issue 2558</A>.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+Change in 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2:
+
+<BLOCKQUOTE>
+
+A variable or temporary object o is <I>constant-initialized</I> if
+<UL>
+<LI>either it has an initializer or its default-initialization results
+in some initialization being performed, and</LI>
+
+<LI><INS>every non-variant non-static data member and base class subobject
+is initialized (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), and</INS></LI>
+
+<LI>the full-expression of its initialization is a constant expression
+when interpreted as a constant-expression, except that if o is an
+object, that full-expression may also invoke constexpr constructors
+for o and its subobjects even if those objects are of non-literal
+class types.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+
+
+<P><U>Alternative suggested resolution (March, 2022):</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#11">expr.const</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constant expression is either a glvalue core constant expression
+that refers to an entity that is a permitted result of a constant
+expression (as defined below), or a prvalue core constant expression
+whose value satisfies the following constraints:
+
+<UL>
+<LI>if the value is an object of class type, each non-static data
+member of reference type refers to an entity that is a permitted
+result of a constant expression,
+</LI>
+
+<LI>if the value is of pointer type, it contains the address of an
+object with static storage duration, the address past the end of such
+an object (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]), the address of a non-immediate
+function, or a null pointer value,
+</LI>
+
+<LI>if the value is of pointer-to-member-function type, it does not
+designate an immediate function, and
+</LI>
+
+<LI>if the value is an object of class or array type, each subobject
+<INS>is initialized (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) and</INS> satisfies
+these constraints for the value.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

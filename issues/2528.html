@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2528</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2528"></A><H4>2528.
+  
+Three-way comparison and the usual arithmetic conversions
+</H4>
+<B>Section: </B>7.4&#160; [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Cameron DaCamara
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-01-26<BR>
+
+
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+  void f(unsigned char i, unsigned ui) {
+    i &lt;=&gt; ui;
+  }
+</PRE>
+
+<P>According to 7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>] paragraph
+4, the usual arithmetic conversions are applied to the
+operands. According to 7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>] bullet
+1.5, the integral promotions are performed on both
+operands, resulting in <TT>i</TT> being converted from
+<TT>unsigned char</TT> to <TT>int</TT>. The operands
+are then of types <TT>int</TT> and <TT>unsigned int</TT>,
+so bullet 1.5.5 applies, further converting <TT>i</TT>
+to type <TT>unsigned int</TT>.</P>
+
+<P>Unfortunately, that latter conversion, from <TT>int</TT>
+to <TT>unsigned int</TT>, is a narrowing conversion, which
+runs afoul of 7.6.8 [<A href="https://wg21.link/expr.spaceship#4.1">expr.spaceship</A>] bullet 4.1, which
+prohibits narrowing conversions other than integral to
+floating in three-way comparisons.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 7.4 [<A href="https://wg21.link/expr.arith.conv#1.5">expr.arith.conv</A>] bullet 1.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, <DEL>the integral promotions
+(7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]) shall be performed on both
+operands</DEL> <INS>each operand shall be converted to a
+common type <I>C</I>. The integral promotion rules
+(7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>] shall be used to determine a
+type <I>T1</I> and type <I>T2</I> for each
+operand</INS>.<SUP>50</SUP> Then the following rules shall
+be applied to <DEL>the promoted operands</DEL>
+<INS>determine <I>C</I></INS>:</P>
+
+<UL>
+<LI><P>If <DEL>both operands have</DEL> <INS><I>T1</I>
+and <I>T2</I> are</INS> the same type, <DEL>no further
+conversion is needed</DEL> <INS><I>C</I> shall
+be that type</INS>.</P></LI>
+
+<LI><P>Otherwise, if <DEL>both operands have</DEL>
+<INS><I>T1</I> and <I>T2</I> are both</INS> signed integer
+types or both <DEL>have</DEL> <INS>are</INS> unsigned
+integer types, <DEL>the operand with the type of lesser
+integer conversion rank shall be converted to the type of
+the operand</DEL> <INS><I>C</I> shall be the type</INS> with
+greater rank.</P></LI>
+
+<LI><P>Otherwise, if the <DEL>operand that has</DEL>
+<INS>the type <I>U</I> that is an</INS> unsigned integer
+type has rank greater than or equal to the rank of
+the <INS>other</INS> type<DEL> of the other operand, the
+operand with signed integer type shall be converted to the
+type of the operand with unsigned integer
+type</DEL><INS>, <I>C</I> shall be <I>U</I></INS>.</P></LI>
+
+<LI><P>Otherwise, if the type <DEL>of the operand with</DEL>
+<INS><I>S</I> that is a</INS> signed integer type can
+represent all of the values of the <INS>other</INS>
+type<DEL> of the operand with unsigned integer type, the
+operand with unsigned integer type shall be converted to the
+type of the operand with signed integer
+type</DEL><INS>, <I>C</I> shall be <I>S</I></INS>.</P></LI>
+
+<LI><P>Otherwise, <DEL>both operands shall be converted to</DEL>
+<INS><I>C</I> shall be</INS> the unsigned integer type
+corresponding to the <DEL>type of the operand with</DEL>
+signed integer type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

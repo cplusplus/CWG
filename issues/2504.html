@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2504</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 108i.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2022-07-16</P>
+<HR>
+<A NAME="2504"></A><H4>2504.
+  
+Inheriting constructors from virtual base classes
+</H4>
+<B>Section: </B>11.9.4&#160; [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-11-03<BR>
+
+
+
+
+<P>According to 11.9.4 [<A href="https://wg21.link/class.inhctor.init#1">class.inhctor.init</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+When a constructor for type <TT>B</TT> is invoked to
+initialize an object of a different type <TT>D</TT> (that
+is, when the constructor was inherited
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])), initialization proceeds as if a
+defaulted default constructor were used to initialize
+the <TT>D</TT> object and each base class subobject from
+which the constructor was inherited, except that
+the <TT>B</TT> subobject is initialized by the invocation of
+the inherited constructor. The complete initialization is
+considered to be a single function call; in particular, the
+initialization of the inherited constructor's parameters is
+sequenced before the initialization of any part of the <TT>D</TT>object.
+
+</BLOCKQUOTE>
+
+<P>First, this assumes that the base class constructor will
+be invoked from the derived class constructor, which will not
+be true if the base is virtual and initialized by a
+more-derived constructor.</P>
+
+<P>If the call to the virtual base constructor is omitted,
+the last sentence is unclear whether the initialization of
+the base class constructor's parameters by the inheriting
+constructor occurs or not.  There is implementation
+divergence in the initialization of <TT>V</TT>'s parameter
+in the following example:</P>
+
+<PRE>
+  struct NonTriv {
+    NonTriv(int);
+    ~NonTriv();
+  };
+  struct V { V() = default; V(NonTriv); };
+  struct Q { Q(); };
+  struct A : virtual V, Q {
+    using V::V;
+    A() : A(42) { }
+  };
+  struct B : A { };
+  void foo() { B b; }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>
