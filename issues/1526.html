@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1526</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1526"></A><H4>1526.
+  
+Dependent-class lookup in the current instantiation
+</H4>
+<B>Section: </B>13.8.3&#160; [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-07-22<BR>
+
+
+
+
+<P>According to 13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+In the definition of a class or class template, if a base class
+depends on a <I>template-parameter</I>, the base class scope is not
+examined during unqualified name lookup either at the point of
+definition of the class template or member or during an instantiation
+of the class template or member.
+
+</BLOCKQUOTE>
+
+<P>Note that this is phrased not as &#8220;if a base class is a
+dependent type&#8221; but as &#8220;if a base class depends on a
+<I>template-parameter</I>;&#8221; the current instantiation depends on
+a <I>template-parameter</I> but is not a dependent type.  The
+difference can be seen in this example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    typedef int type;
+    struct C;
+  };
+
+  template&lt;typename T&gt; struct A&lt;T&gt;::C {
+    void type();
+    struct B;
+  };
+
+  template&lt;typename T&gt; struct A&lt;T&gt;::C::B : A&lt;T&gt; {
+    type x;
+  };
+
+  A&lt;int&gt;::C::B b;   //<SPAN CLASS="cmnt"> #1</SPAN>
+</PRE>
+
+<P>If the excluded bases were dependent types, the reference to
+<TT>type</TT> at #1 would resolve to <TT>A::type</TT>; with the
+current wording, the reference resolves to <TT>C::type</TT>.</P>
+
+<P>(See also <A HREF="1524.html">issue 1524</A> for another case
+in which this distinction makes a difference.)</P>
+
+<P><B>Rationale (September, 2012):</B></P>
+
+<P>This issue is a duplicate of <A HREF="591.html">issue 591</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2434</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2434"></A><H4>2434.
+  
+Mandatory copy elision vs non-class objects
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-09-30<BR>
+
+
+<P>In the following example,</P>
+
+<PRE>
+  int f() {
+    X x;
+    return 4;
+  }
+  int a = f();
+</PRE>
+
+<P>
+<TT>a</TT> must be directly initialized in the return statement
+of <TT>f()</TT> because the exception permitting temporaries for
+function arguments and return types in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3
+applies only to certain class types:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type <TT>X</TT> is passed to or
+returned from a function, if <TT>X</TT> has at least one
+eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is
+trivial, and the destructor of <TT>X</TT> is either trivial
+or deleted, implementations are permitted to create a
+temporary object to hold the function parameter or result
+object. The temporary object is constructed from the
+function argument or return value, respectively, and the
+function's parameter or return object is initialized as if
+by using the eligible trivial constructor to copy the
+temporary (even if that constructor is inaccessible or would
+not be selected by overload resolution to perform a copy or
+move of the object). [<I>Note:</I> This latitude is granted
+to allow objects of class type to be passed to or returned
+from functions in registers. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>This requirement is observable, since the destructor of
+<TT>X</TT> in the example could inspect the value
+of <TT>a</TT>.</P>
+
+<P>The permissions in this paragraph should also apply to all
+non-class types.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type X is passed to or returned from a
+function, if X has at least one eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is trivial, and
+the destructor of X is either trivial or deleted, implementations are
+permitted to create a temporary object to hold the function parameter
+or result object. The temporary object is constructed from the
+function argument or return value, respectively, and the function's
+parameter or return object is initialized as if by using the eligible
+trivial constructor to copy the temporary (even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object). <INS>Similarly, implementations
+are permitted to create a temporary object of scalar type to hold a
+function parameter or result object.</INS> [<I>Note 4:</I> This
+latitude is granted to allow objects of <INS>scalar or</INS> class
+type to be passed to or returned from functions in registers.
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

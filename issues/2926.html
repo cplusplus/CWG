@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2926</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2926"></A><H4>2926.
+  
+Lookup context for dependent qualified names
+</H4>
+<B>Section: </B>6.5.5.1&#160; [<A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-16<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/599">#599</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename U&gt;
+  constexpr bool foo = U::b;
+
+  template &lt;class T&gt;
+  struct A {
+    A() requires(foo&lt;A&gt;) {}
+    static constexpr bool b = true;
+  };
+  A&lt;int&gt; a;
+</PRE>
+	       
+<P>All implementation accept, but there is no normative wording
+prescribing the lookup context for <TT>U::b</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-13):</B></P>
+
+<P>Change in 6.5.5.1 [<A href="https://wg21.link/basic.lookup.qual.general#3">basic.lookup.qual.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Qualified name lookup</I> in a class, namespace, or enumeration
+performs a search of the scope associated with it
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) except as specified below. Unless
+otherwise specified, a qualified name undergoes qualified name lookup
+in its lookup context from the point where it appears unless the
+lookup context <DEL>either</DEL>
+<UL>
+<LI>is dependent and is not the current instantiation
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])<INS>, in which case the lookup is done from the point of instantiation (13.8.4.1 [<A href="https://wg21.link/temp.point">temp.point</A>]),</INS> or</LI>
+<LI>is <DEL>not a class or class template</DEL> <INS>a type that is
+not a class, in which case unqualified lookup
+is performed from the point where it appears</INS>. <INS>[ Note: Such a
+qualified name can be used to name a destructor
+(7.5.5.5 [<A href="https://wg21.link/expr.prim.id.dtor">expr.prim.id.dtor</A>]). -- end note ]</INS>
+</LI>
+</UL>
+If nothing is found by qualified lookup for a
+member-qualified name that is the terminal name
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]) of a <I>nested-name-specifier</I> and
+is not dependent, it undergoes unqualified lookup.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (September, 2024)</B></P>
+
+<P>The proposed wording appears to make the following example
+unintentionally well-formed:</P>
+
+<PRE>
+  int n;
+  using T = int;
+  int m = T::n;
+</PRE>
+
+<P><B>CWG 2024-11-08</B></P>
+
+<P>The example above is already ill-formed per
+6.5.5.1 [<A href="https://wg21.link/basic.lookup.qual.general#1">basic.lookup.qual.general</A>] paragraph 1.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,193 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 115</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="115"></A><H4>115.
+  
+Address of template-id
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 May 1999<BR>
+
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+
+
+<PRE>
+    template &lt;class T&gt; void f(T);
+    template &lt;class T&gt; void g(T);
+    template &lt;class T&gt; void g(T,T);
+
+    int main()
+    {
+        (&amp;f&lt;int&gt;);
+        (&amp;g&lt;int&gt;);
+    }
+</PRE>
+
+The question is whether <TT>&amp;f&lt;int&gt;</TT> identifies a unique function.
+<TT>&amp;g&lt;int&gt;</TT> is clearly ambiguous.
+
+<P>12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1
+
+says that a function template name is considered to name a
+set of overloaded functions.  I believe it should be expanded to say that
+a function template name with an explicit template argument list is also
+considered to name a set of overloaded functions.</P>
+
+<P>In the general case, you need to have a destination type in order
+to identify a unique function.  While it is possible to permit this, I
+don't think it is a good idea because such code depends on there only
+being one template of that name that is visible.</P>
+
+<P>The EDG front end issues an error on this use of "<TT>f</TT>".
+egcs 1.1.1 allows
+it, but the most current snapshot of egcs that I have also issues an error
+on it.</P>
+
+<P>It has been pointed out that when dealing with nontemplates, the rules
+for taking the address of a single function differ from the rules
+for an overload set, but this asymmetry is needed for C compatibility.
+This need does not exist for the template case.</P>
+
+<P>My feeling is that a general rule is better than a general rule plus
+an exception.  The general rule is that you need a destination type
+to be sure that the operation will succeed.  The exception is when
+there is only one template in the set and only then when you provide
+values for all of the template arguments.</P>
+
+<P>It is true that in some cases you can provide a shorthand, but only if
+you encourage a fragile coding style (that will cause programs to break
+when additional templates are added).</P>
+
+<P>I think the standard needs to specify one way or the other how this
+case should be handled.  My recommendation would be that it is
+ill-formed.</P>
+
+<P>
+<U>Nico Josuttis</U>: Consider the following example:</P>
+
+<PRE>
+    template &lt;int VAL&gt;
+    int add (int elem)
+    {
+	return elem + VAL;
+    }
+
+    std::transform(coll.begin(), coll.end(),
+		   coll.begin(),
+		   add&lt;10&gt;);
+</PRE>
+
+<P>If John's recommendation is adopted, this code will become
+ill-formed.  I bet there will be a lot of explanation for users
+necessary why this fails and that they have to change
+<TT>add&lt;10&gt;</TT> to something like
+<TT>(int (*)(int))add&lt;10&gt;</TT>.</P>
+
+<P>This example code is probably common practice because this
+use of the STL is typical and is accepted in many current
+implementations.  I strongly urge that this issue be resolved
+in favor of keeping this code valid.</P>
+
+<P>
+<U>Bill Gibbons</U>:  I find this rather surprising.  Shouldn't
+a <I>template-id</I> which specifies all of the template arguments
+be treated like a declaration-only explicit instantiation,
+producing a set of ordinary function declarations?  And when that
+set happens to contain only one function, shouldn't the example
+code work?</P>
+
+<P>(See also <A HREF="250.html">issue 250</A>.)</P>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>The consensus of the group was that the <TT>add</TT> example
+should not be an error.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>In 13.4 add to the end of paragraph 2:</P>
+<BLOCKQUOTE>
+[<I>Note:</I> As described in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>],
+if deduction fails and the
+function template name is followed by an explicit template
+argument list, the <I>template-id</I> is then examined to
+see whether it identifies a single function template
+specialization.  If it does, the <I>template-id</I> is
+considered to be an lvalue for that function template
+specialization.  The target type is not used in that
+determination.]
+</BLOCKQUOTE>
+
+<P>
+In 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#2">temp.arg.explicit</A>] paragraph 2 insert before
+the first example:</P>
+<BLOCKQUOTE>
+In contexts where deduction is done and fails,
+or in contexts where deduction is not done,
+if a template argument list is specified and it, along with any
+default template arguments, identifies a single function template
+specialization, then the <I>template-id</I> is an lvalue
+for the function template specialization.
+</BLOCKQUOTE>
+
+<P>
+Change the first example of 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#2">temp.arg.explicit</A>] paragraph 2:</P>
+<PRE>
+  template&lt;class X, class Y&gt; X f(Y);
+  void g()
+  {
+    int i = f&lt;int&gt;(5.6);    // Y <I>is deduced to be</I> double
+    int j = f(5.6);         // <I>ill-formed:</I> X <I>cannot be deduced</I>
+  }
+</PRE>
+to read:
+<PRE>
+  template&lt;class X, class Y&gt; X f(Y);
+  void g()
+  {
+    int i = f&lt;int&gt;(5.6);    // Y <I>is deduced to be</I> double
+    int j = f(5.6);         // <I>ill-formed:</I> X <I>cannot be deduced</I>
+    f&lt;void&gt;(f&lt;int, bool&gt;);  // Y <I>for outer</I> f <I>deduced to be</I>
+                            //   int (*)(bool)
+    f&lt;void&gt;(f&lt;int&gt;);        // <I>ill-formed:</I> f&lt;int&gt; <I>does not denote a</I>
+                            //   <I>single template function specialization</I>
+  }
+</PRE>
+
+<P>
+<B>Note:</B> This interacts with the resolution of
+<A HREF="226.html">issue 226</A> (default
+template arguments for function templates).
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

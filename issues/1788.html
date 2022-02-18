@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1788</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1788"></A><H4>1788.
+  
+Sized deallocation of array of non-class type
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-29<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>The changes from N3778 require use of a sized deallocator for a case
+like</P>
+
+<PRE>
+  char *p = new char[32];
+  void f() { delete [] p; }
+</PRE>
+
+<P>That is unimplementable under current ABIs, which do not store the
+array size for such allocations.  It should instead be unspecified or
+implementation-defined whether the sized form of <TT>operator[]</TT> is
+used for a pointer to a type other than a class with a non-trivial
+destructor or array thereof.</P>
+
+<P><B>Proposed resolution (February, 2014) [SUPERSEDED]:</B></P>
+
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#10">expr.delete</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If <DEL>the type is complete and if</DEL> deallocation function lookup
+finds both a usual deallocation function with only a pointer parameter and
+a usual deallocation function with both a pointer parameter and a size
+parameter, then</P>
+
+<UL>
+<LI>
+<INS>for the first alternative (delete object), if the type of the
+object to be deleted is complete, and for the second alternative (delete
+array), if the type of the object to be deleted is a complete class type
+with a non-trivial destructor, then</INS> the selected deallocation
+function shall be the one with two parameters;</LI>
+
+<LI><P><INS>otherwise, it is implementation-defined which deallocation
+function is selected.</INS></P></LI>
+
+<P>Otherwise, the selected deallocation function shall be the function
+with one parameter.</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note, February, 2014:</B></P>
+
+<P>It is not clear that this resolution accurately reflects the intent of
+the issue.  In particular, it changes deletion of a pointer to incomplete
+type from requiring use of the single-parameter version to being
+implementation-defined.  Also, the &#8220;type of the object to be
+deleted&#8221; in the array case is always an array type and thus cannot be
+&#8220;a complete class type with a non-trivial destructor.&#8221; The
+issue has consequently been returned to "review" status.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#10">expr.delete</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+If <DEL>the type is complete and if</DEL> deallocation function lookup finds
+both a usual deallocation function with only a pointer parameter
+and a usual deallocation function with both a pointer parameter
+and a size parameter, <DEL>then the selected deallocation function
+shall be the one with two parameters. Otherwise, the selected
+deallocation function shall be the function with one parameter.</DEL>
+<INS>the function to be called is selected as follows:</INS>
+
+<UL>
+<LI><P><INS>If the type is complete and if, for the second
+alternative (delete array) only, the operand is a pointer to a
+class type with a non-trivial destructor or a (possibly
+multi-dimensional) array thereof, the function with two parameters
+is selected.</INS></P></LI>
+
+<LI><P><INS>Otherwise, it is unspecified which of the two
+deallocation functions is selected.</INS></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1001</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1001"></A><H4>1001.
+  
+Parameter type adjustment in dependent parameter types
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2009-11-08<BR>
+
+
+
+
+<P>According to 9.3.4.6 [<A href="https://wg21.link/dcl.fct#5">dcl.fct</A>] paragraph 5,
+top-level cv-qualifiers on parameter types are deleted when
+determining the function type.  It is not clear how or whether
+this adjustment should be applied to parameters of function
+templates when the parameter has a dependent type, however.  For
+example:</P>
+
+<PRE>
+    template&lt;class T&gt; struct A {
+       typedef T arr[3];
+    };
+
+    template&lt;class T&gt; void f(const typename A&lt;T&gt;::arr) { } // #1
+
+    template void f&lt;int&gt;(const A&lt;int&gt;::arr);
+
+    template &lt;class T&gt; struct B {
+       void g(T);
+    };
+
+    template &lt;class T&gt; void B&lt;T&gt;::g(const T) { } // #2
+</PRE>
+
+<P>If the <TT>const</TT> in #1 is dropped, <TT>f&lt;int&gt;</TT> has
+a parameter type of <TT>A*</TT> rather than the <TT>const A*</TT>
+specified in the explicit instantiation.  If the <TT>const</TT> in
+#2 is <I>not</I> dropped, we fail to match the definition of
+<TT>B::g</TT> to its declaration.
+</P>
+
+<P><B>Rationale (November, 2010):</B></P>
+
+<P>The CWG agreed that this behavior is intrinsic to the different
+ways cv-qualification applies to array types and non-array types.
+</P>
+
+<P><B>Notes, January, 2012:</B></P>
+
+<P>Additional discussion of this issue arose regarding the following
+example:</P>
+
+<PRE>
+    template&lt;class T&gt; struct A {
+      typedef double Point[2];
+      virtual double calculate(const Point point) const = 0;
+    };
+
+    template&lt;class T&gt; struct B : public A&lt;T&gt; {
+      virtual double calculate(const typename A&lt;T&gt;::Point point) const {
+        return point[0];
+      }
+    };
+
+    int main() {
+      B&lt;int&gt; b;
+      return 0;
+    }
+</PRE>
+
+<P>The question is whether the member function in
+<TT>B&lt;int&gt;</TT> has the same type as that in
+<TT>A&lt;int&gt;</TT>: is the parameter-type-list instantiated
+directly (i.e., using the adjusted types) or regenerated from the
+individual parameter types? </P>
+
+<P>(See also <A HREF="1322.html">issue 1322</A>.)</P>
+
+<P><B>Additional notes (February, 2024)</B></P>
+
+<P>There is implementation divergence for the following example (clang
+and EDG accept, gcc and MSVC reject):</P>
+
+<PRE>
+  template&lt;typename U&gt;
+  int f(const U t);
+
+  int v;
+  auto test = f(v);
+
+  template&lt;typename U&gt;
+  int f(U t) {
+   static_assert(std::is_const&lt;decltype(t)&gt;::value, "t should be non-const");
+   return 0;
+  }
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+The type of a function is determined using the following rules. The
+type of each parameter (including function parameter packs) is
+determined from its own <I>parameter-declaration</I>
+(9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]). After determining the type of each
+parameter, any parameter of type &#8220;array of T&#8221; or of
+function type T is adjusted to be &#8220;pointer to T&#8221;. After
+producing the list of parameter types, any top-level
+<I>cv-qualifier</I>s modifying a <INS>non-dependent</INS> parameter
+type are deleted when forming the function type. The resulting list of
+transformed parameter types and the presence or absence of the
+ellipsis or a function parameter pack is the
+function's <I>parameter-type-list</I>.
+...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

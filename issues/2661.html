@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2661</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2661"></A><H4>2661.
+  
+Missing disambiguation rule for <I>pure-specifier</I> vs. <I>brace-or-equal-initializer</I>
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-10-07<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Subclause 11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>] has this grammar:</P>
+
+<PRE>
+    <I>member-declarator:
+        declarator virt-specifier-seq[opt] pure-specifier[opt]
+        declarator brace-or-equal-initializer[opt]
+
+    pure-specifier:</I>
+        = 0
+</PRE>
+
+<P>The primary issue is that <TT>foo = 0</TT> matches
+both <I>member-declarator</I> productions. Secondarily,
+a <I>declarator</I> by itself is also ambiguous.</P>
+
+<P>Code such as <TT>virtual FunctionType f = 0;</TT> can be valid, so
+disambiguation on the syntactic form of the <I>declarator</I> is not
+possible.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change and add before 11.4.1 [<A href="https://wg21.link/class.mem.general#1">class.mem.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+    <I>member-declarator:
+        declarator virt-specifier-seq<SUB>opt</SUB> pure-specifier<SUB>opt</SUB>
+        declarator brace-or-equal-initializer<DEL><SUB>opt</SUB></DEL></I>
+</PRE>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+In the absence of a <I>virt-specifier-seq</I>, the token sequence <TT>= 0</TT> is treated as a <I>pure-specifier</I> if the type of
+the <I>declarator-id</I> (9.3.4.1 [<A href="https://wg21.link/dcl.meaning.general">dcl.meaning.general</A>]) is a function type, and is
+otherwise treated as a <I>brace-or-equal-initializer</I>. [ <I>Note:</I> If the
+member declaration acquires a function type through template
+instantiation, the program is ill-formed; see 13.9.1 [<A href="https://wg21.link/temp.spec.general">temp.spec.general</A>]. <I>--end note</I> ]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,190 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1466</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1466"></A><H4>1466.
+  
+Visible sequences of side effects are redundant
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Batty
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-21<BR>
+
+
+<P>[Moved to DR at the February, 2014 meeting as part of document N3914.]</P>
+
+<P><I>[The following is reproduced verbatim from WG14 DR406 as a C-liaison
+issue.]</I></P>
+
+<P>It has been mathematically proved that a simplification can be made
+to the memory model as it is specified in the final draft of the C++11
+standard. Essentially, the restriction defining <I>visible sequence of
+side effects</I> (vsse) is redundant and can be removed with no ill
+effects. The main motivation for doing this is that the current
+restriction is misleading. 5.1.2.4p22 defines vsse's: </P>
+
+<BLOCKQUOTE>
+
+The visible sequence of side effects on an atomic object M, with
+respect to a value computation B of M, is a maximal contiguous
+sub-sequence of side effects in the modification order of M, where the
+first side effect is visible with respect to B, and for every
+subsequent side effect, it is not the case that B happens before
+it. The value of an atomic object M, as determined by evaluation B,
+shall be the value stored by some operation in the visible sequence of
+M with respect to B.
+
+</BLOCKQUOTE>
+
+<P>The wording of this paragraph makes it seem as if the vsse
+identifies the writes that an atomic read is allowed to read from, but
+this is not the case. There can be writes in the vsse that cannot be
+read due to the coherence requirements (to be included in C, 1.10p15
+through 1.10p18 in C++ N3291). Consequently this is even more
+confusing than it at first appears. </P>
+
+<P>Also propose changing 5.1.2.4p22 to the following:</P>
+
+<BLOCKQUOTE>
+
+The value of an atomic object M, as determined by evaluation B, shall
+be the value stored by some side effect A that modifies M, where B
+does not happen before A.
+
+</BLOCKQUOTE>
+
+<P>With a note to remind the reader of the coherence requirements: </P>
+
+<BLOCKQUOTE>
+
+NOTE: The set of side effects that a given evaluation might take its
+value from is also restricted by the rest of the rules described here,
+and in particular, by the coherence requirements below
+
+</BLOCKQUOTE>
+
+<P>If the committee is concerned about allowing a differing text from C++11, then a note could be added to assure the reader: </P>
+
+<BLOCKQUOTE>
+
+NOTE: Although the rules for multi-threaded executions differ here
+from those of C++11, the executions they allow are precisely the
+same. Visible sequences of side effects are a redundant restriction.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (January, 2014) [SSUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 6.9.2 [<A href="https://wg21.link/intro.multithread#14">intro.multithread</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The <I>visible sequence of side effects</I> on an atomic
+object <I>M</I>, with respect to a value computation <I>B</I> of <I>M</I>,
+is a maximal contiguous sub-sequence of side effects in the modification
+order of M, where the first side effect is visible with respect
+to <I>B</I>, and for every side effect, it is not the case that <I>B</I>
+happens before it.</DEL> The value of an atomic object <I>M</I>, as
+determined by evaluation <I>B</I>, shall be the value stored by
+some <DEL>operation in the visible sequence of <I>M</I> with respect
+to <I>B</I></DEL> <INS>side effect <I>A</I> that modifies <I>M</I>,
+where <I>B</I> does not happen before <I>A</I></INS>. [<I>Note:</I> <DEL>It
+can be shown that the visible sequence of side effects of a value
+computation is unique given</DEL> <INS>The set of side effects that a given
+evaluation might take its value from is also restricted by the rest of the
+rules described here, and in particular, by</INS> the coherence
+requirements below. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.9.2 [<A href="https://wg21.link/intro.multithread#20">intro.multithread</A>] paragraph 20 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> The <DEL>visible sequence of side effects</DEL> <INS>value
+observed by a load of an atomic</INS> depends on the &#8220;happens
+before&#8221; relation, which depends on the values observed by loads of
+atomics<DEL>, which we are restricting here</DEL>. The intended reading is
+that there must exist an association of atomic loads with modifications
+they observe that, together with suitably chosen modification orders and
+the &#8220;happens before&#8221; relation derived as described above,
+satisfy the resulting constraints as imposed here. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.9.2 [<A href="https://wg21.link/intro.multithread#22">intro.multithread</A>] paragraph 22 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Compiler transformations that introduce assignments to a
+potentially shared memory location that would not be modified by the
+abstract machine are generally precluded by this standard, since such an
+assignment might overwrite another assignment by a different thread in
+cases in which an abstract machine execution would not have encountered a
+data race. This includes implementations of data member assignment that
+overwrite adjacent members in separate memory locations. Reordering of
+atomic loads in cases in which the atomics in question may alias is also
+generally precluded, since this may violate the <DEL>&#8220;visible
+sequence&#8221;</DEL> <INS>coherence</INS> rules. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 32.5.4 [<A href="https://wg21.link/atomics.order#3">atomics.order</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>There shall be a single total order <I>S</I> on all
+<TT>memory_order_seq_cst</TT> operations, consistent with the
+&#8220;happens before&#8221; order and modification orders for all affected
+locations, such that each <TT>memory_order_seq_cst</TT>
+operation <I>B</I> that loads a value from an atomic object <I>M</I>
+observes one of the following values:</P>
+
+<UL>
+<LI><P>the result of the last modification <I>A</I> of <I>M</I> that
+precedes <I>B</I> in <I>S</I>, if it exists, or</P></LI>
+
+<LI><P>if <I>A</I> exists, the result of some modification
+of <I>M</I> <DEL>in the visible sequence of side effects with respect
+to <I>B</I></DEL> that is not <TT>memory_order_seq_cst</TT> and that does not
+happen before <I>A</I>, or</P></LI>
+
+<LI><P>if <I>A</I> does not exist, the result of some modification
+of <I>M</I> <DEL>in the visible sequence of side effects with respect
+to <I>B</I></DEL> that is not <TT>memory_order_seq_cst</TT>.</P></LI>
+
+</UL>
+
+<P>[<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,237 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2847</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2847"></A><H4>2847.
+  
+Constrained explicit specializations of function templates at class scope
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/482">#482</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &gt; sizeof(char);
+  template&lt;typename T&gt;
+  concept D = sizeof(T) &gt; sizeof(int) ;
+
+  template&lt;typename T&gt;
+  struct A 
+  {
+    template&lt;typename U&gt;
+    constexpr int f(U) requires C&lt;U&gt; { return 0; }
+
+    template&lt;&gt;
+    constexpr int f(int) requires D&lt;T&gt; { return 1; }
+  };
+
+  static_assert(A&lt;int&gt;().f(0) == 0);   // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>There is substantial implementation variance: GCC does not allow
+explicit specializations of function templates at class scope
+(contrary to the rule change introduced by <A HREF="727.html">issue 727</A>), clang rejects them if a <I>trailing-requires-clause</I>
+is present, and EDG accepts, but ignores the constraint, causing #1 to
+fail.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-03-01) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An explicit specialization of a function shall not have a
+trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]).  [
+Example:</P>
+
+<PRE class="ins">
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &lt;= sizeof(int);
+
+  template&lt;typename T&gt;
+  struct A {
+    template&lt;typename U&gt;
+    void f(U) requires C&lt;U&gt;;
+
+    template&lt;&gt;
+    void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;&gt;
+    void f(short) requires (sizeof(T) &gt;= 1); //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
+  };
+
+  template&lt;&gt;
+  template&lt;typename U&gt;
+  void A&lt;int&gt;::f(U) requires C&lt;U&gt; {} //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
+</PRE>
+
+<P class="ins">-- end example ]
+</P>
+
+<P>The placement of explicit specialization declarations for function
+templates ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add another example at the end of 13.9.4 [<A href="https://wg21.link/temp.expl.spec#15">temp.expl.spec</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>[ Example:</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct D {
+     template&lt;typename U&gt;
+     static constexpr int f(U);          //<SPAN CLASS="cmnt"> #1</SPAN>
+
+     template&lt;typename U&gt;
+     static constexpr int f(U) requires (sizeof(T) == 1);    //<SPAN CLASS="cmnt"> #2</SPAN>
+
+     template&lt;&gt;
+     constexpr int f(int)                //<SPAN CLASS="cmnt"> #3</SPAN>
+     { return 1; }
+   };
+
+   template&lt;&gt; template&lt;typename U&gt;
+   constexpr int D&lt;signed char&gt;::f(U) requires (sizeof(signed char) == 1)  //<SPAN CLASS="cmnt"> #4</SPAN> 
+   { return 0; }
+
+   static_assert(D&lt;char&gt;::f(0) == 1);          // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
+   static_assert(D&lt;char[2]&gt;::f(0) == 1);       // <SPAN CLASS="cmnt">overload resolution selects #1; #3 is a specialization for #1</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0) == 1);   // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0.0) == 0); // <SPAN CLASS="cmnt">overload resolution selects #2; #4 is a specialization for #2</SPAN>
+</PRE>
+<P>-- end example ]</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (April, 2024)</B></P>
+
+<P>The phrasing "an explicit specialization of a function" does not make sense.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An explicit specialization that declares a function shall not have a
+trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]).  [
+Example:</P>
+
+<PRE class="ins">
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &lt;= sizeof(int);
+
+  template&lt;typename T&gt;
+  struct A {
+    template&lt;typename U&gt;
+    void f(U) requires C&lt;U&gt;;
+
+    template&lt;&gt;
+    void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;&gt;
+    void f(short) requires (sizeof(T) &gt;= 1); //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
+  };
+
+  template&lt;&gt;
+  template&lt;typename U&gt;
+  void A&lt;int&gt;::f(U) requires C&lt;U&gt; {} //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
+
+  template&lt;&gt;
+  template&lt;&gt;
+  void A&lt;short&gt;::f(int) requires C&lt;int&gt; {} //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> for a declaration of a non-templated function</SPAN>
+</PRE>
+
+<P class="ins">-- end example ]
+</P>
+
+<P>The placement of explicit specialization declarations for function
+templates ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add another example at the end of 13.9.4 [<A href="https://wg21.link/temp.expl.spec#15">temp.expl.spec</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>[ Example:</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct D {
+     template&lt;typename U&gt;
+     static constexpr int f(U);          //<SPAN CLASS="cmnt"> #1</SPAN>
+
+     template&lt;typename U&gt;
+     static constexpr int f(U) requires (sizeof(T) == 1);    //<SPAN CLASS="cmnt"> #2</SPAN>
+
+     template&lt;&gt;
+     constexpr int f(int)                //<SPAN CLASS="cmnt"> #3</SPAN>
+     { return 1; }
+   };
+
+   template&lt;&gt; template&lt;typename U&gt;
+   constexpr int D&lt;signed char&gt;::f(U) requires (sizeof(signed char) == 1)  //<SPAN CLASS="cmnt"> #4</SPAN> 
+   { return 0; }
+
+   static_assert(D&lt;char&gt;::f(0) == 1);          // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
+   static_assert(D&lt;char[2]&gt;::f(0) == 1);       // <SPAN CLASS="cmnt">overload resolution selects #1; #3 is a specialization for #1</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0) == 1);   // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0.0) == 0); // <SPAN CLASS="cmnt">overload resolution selects #2; #4 is a specialization for #2</SPAN>
+</PRE>
+<P>-- end example ]</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

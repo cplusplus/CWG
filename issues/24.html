@@ -1,0 +1,267 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 24</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="24"></A><H4>24.
+  
+Errors in examples in 14.7.3
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>unknown
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<P>
+<B>Problem Description:</B>
+At least four of the examples in 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ have errors. </P>
+
+<P><B>Proposed Resolution (10/99):</B></P>
+
+<P>1. Change the example in paragraph 8 from: </P>
+<BLOCKQUOTE>
+[<I>Example:</I>
+<PRE>
+    // <I>file #1 </I>
+    #include &lt;vector&gt;
+    // <I>Primary class template</I> vector
+    export template&lt;class T&gt; void f(t) {
+        vector&lt;T&gt; vec;         // <I>should match the specialization</I>
+        /* ... */
+    }
+
+    // <I>file #2 </I>
+    #include &lt;vector&gt;
+    class B { };
+    // <I>Explicit specialization of </I>vector<I> for </I>vector&lt;B&gt;
+    template&lt;class T&gt; class vector&lt;B&gt; { /* ... */ }
+    template&lt;class T&gt; void f(T);
+    void g(B b) {
+        f(b);                   // <I>ill formed: </I>
+                                // f&lt;B&gt; <I>should refer to </I>vector&lt;B&gt;<I>, but the </I>
+                                // <I>specialization was not declared with the </I>
+                                // <I>definition of </I>f<I> in file #1 </I>
+    }
+</PRE>
+<I>&#8212;end example</I>]
+</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    // <I>file #1 </I>
+    #include &lt;vector&gt;
+    // <I>Primary class template</I> vector
+    export template&lt;class T&gt; void f(T) {
+        std::vector&lt;T&gt; vec;     // <I>should match the specialization </I>
+        /* ... */
+    };
+
+    // <I>file #2 </I>
+    #include &lt;vector&gt;
+    class B { };
+    // <I>Explicit specialization of </I>vector<I> for </I>vector&lt;B&gt;
+    namespace std {
+        template&lt;&gt; class vector&lt;B&gt; { /* ... */ };
+    }
+    template&lt;class T&gt; void f(T);
+    void g(B b) {
+        f(b);                   // <I>ill formed: </I>
+                                // f&lt;B&gt; <I>should refer to </I>vector&lt;B&gt;<I>, but the </I>
+                                // <I>specialization was not declared with the </I>
+                                // <I>definition of </I>f<I> in file #1 </I>
+    }
+</PRE>
+    <I>&#8212;end example</I>]
+</BLOCKQUOTE>
+
+<P>2. The example in paragraph 16 as it appears in the IS: </P>
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T&gt; struct A {
+        void f(T);
+        template&lt;class X&gt; void g(T, X);
+        void h(T) { }
+    };
+
+    // <I>specialization </I>
+    template&lt;&gt; void A&lt;int&gt;::f(int);
+
+    // <I>out of class member template definition </I>
+    template&lt;class T&gt; template&lt;class X&gt; void A&lt;T&gt;::g(T,X) { }
+
+    // <I>member template partial specialization </I>
+    template&lt;&gt; template&lt;class X&gt; void A&lt;int&gt;::g(int, X);
+
+    // <I>member template specialization </I>
+    template&lt;&gt; template&lt;&gt;
+        void A&lt;int&gt;::g(int, char);        // X <I>deduced as</I> char
+    template&lt;&gt; template&lt;&gt;
+        void A&lt;int&gt;::g&lt;char&gt;(int, char);  // X <I>specified as</I> char
+
+    // <I>member specialization even if defined in class definition </I>
+    template&lt;&gt; void A&lt;int&gt;::h(int) { }
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+The word 'partial' in the third comment in the example
+should be removed because this example does not illustrate partial
+specialization.  Also, the two specializations of <TT>template&lt;&gt;
+template&lt;&gt; void A&lt;int&gt;::g(int, char);</TT> violate
+13.9 [<A href="https://wg21.link/temp.spec">temp.spec</A>]
+, paragraph 5, which reads:
+
+<BLOCKQUOTE>
+No program shall explicitly instantiate any template more than once,
+both explicitly instantiate and explicitly specialize a template, or
+specialize a template more than once for a given set of
+<I>template-argument</I>s.  An implementation is not required
+to diagnose a violation of this rule.
+</BLOCKQUOTE>
+
+<B>Proposed resolution (10/99): </B>
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T&gt; struct A {
+        void f(T);
+        template&lt;class X1&gt; void g1(T, X1);
+        template&lt;class X2&gt; void g2(T, X2);
+        void h(T) { }
+    };
+
+    // <I>specialization </I>
+    template&lt;&gt; void A&lt;int&gt;::f(int);
+
+    // <I>out of class member template definition </I>
+    template&lt;class T&gt; template&lt;class X1&gt; void A&lt;T&gt;::g1(T,X1) { }
+
+    // <I>member template specialization </I>
+    template&lt;&gt; template&lt;class X1&gt; void A&lt;int&gt;::g1(int, X1);
+
+    // <I>member template specialization </I>
+    template&lt;&gt; template&lt;&gt;
+        void A&lt;int&gt;::g1(int, char);        // X1 <I>deduced as</I> char
+    template&lt;&gt; template&lt;&gt;
+        void A&lt;int&gt;::g2&lt;char&gt;(int, char);  // X2 <I>specified as</I> char
+
+    // <I>member specialization even if defined in class definition </I>
+    template&lt;&gt; void A&lt;int&gt;::h(int) { }
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<P>3. Remove the spurious semicolon (or the curly brackets) from the
+end of the last line in the example in paragraph 17.  This is the
+example as it appears in the IS:</P>
+
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T1&gt; class A {
+        template&lt;class T2&gt; class B {
+            void mf();
+        };
+    };
+    template&lt;&gt; template&lt;&gt; A&lt;int&gt;::B&lt;double&gt; { };
+    template&lt;&gt; template&lt;&gt; void A&lt;char&gt;::B&lt;char&gt;::mf() {};
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<B>Proposed resolution (10/99):</B>
+
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T1&gt; class A {
+        template&lt;class T2&gt; class B {
+            void mf();
+        };
+    };
+    template&lt;&gt; template&lt;&gt; A&lt;int&gt;::B&lt;double&gt;;
+    template&lt;&gt; template&lt;&gt; void A&lt;char&gt;::B&lt;char&gt;::mf();
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+<P><I>Note (Steve Adamczyk, March 2002): that's still incorrect.  The missing
+"<TT>class</TT>" was added editorially when TC1 was prepared.</I></P>
+
+<P>4. Remove spurious semicolons (or curly brackets) from the
+specializations of <TT>mf1</TT> and <TT>mf2</TT> in the example in
+paragraph 18.  This is the text of the example as it appears in the
+IS:</P>
+
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T1&gt; class A {
+        template&lt;class T2&gt; class B {
+            template&lt;class T3&gt; void mf1(T3);
+            void mf2();
+        };
+    };
+    template&lt;&gt; template&lt;class X&gt;
+        class A&lt;int&gt;::B { };
+    template&lt;&gt; template&lt;&gt; template&lt;class T&gt;
+        void A&lt;int&gt;::B&lt;double&gt;::mf1(T t) { };
+    template&lt;class Y&gt; template&lt;&gt;
+        void A&lt;Y&gt;::B&lt;double&gt;::mf2() { }; // <I>ill-formed; </I>B&lt;double&gt;<I> is specialized but </I>
+                                         // <I>its enclosing class template </I>A<I> is not </I>
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<B>Proposed resolution (10/99):</B>
+<BLOCKQUOTE>
+[<I>Example: </I>
+<PRE>
+    template&lt;class T1&gt; class A {
+        template&lt;class T2&gt; class B {
+            template&lt;class T3&gt; void mf1(T3);
+            void mf2();
+        };
+    };
+    template&lt;&gt; template&lt;class X&gt;
+        class A&lt;int&gt;::B { };
+    template&lt;&gt; template&lt;&gt; template&lt;class T&gt;
+        void A&lt;int&gt;::B&lt;double&gt;::mf1(T t) { }
+    template&lt;class Y&gt; template&lt;&gt;
+        void A&lt;Y&gt;::B&lt;double&gt;::mf2() { } // <I>ill-formed; </I>B&lt;double&gt;<I> is specialized but </I>
+                                         // <I>its enclosing class template </I>A<I> is not </I>
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+<P><I>Note (Steve Adamczyk, March 2002): that's still incorrect.
+See <A HREF="336.html">issue 336</A>.</I></P>
+<BR><BR>
+</BODY>
+</HTML>

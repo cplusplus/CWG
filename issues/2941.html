@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2941</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2941"></A><H4>2941.
+  
+Lifetime extension for function-style cast to reference type
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-18<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/625">#625</A>.)
+</P>
+
+<P>
+<A HREF="2894.html">Issue 2894</A> will clarify that a
+function-style cast to reference type produces a glvalue, not a
+prvalue.  However, 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>] does not specify
+lifetime-extension for this case, even though implementations
+uniformly do extend the lifetime.</P>
+
+<P>For example:</P>
+
+<PRE>
+  int glob;
+  struct A {
+   constexpr ~A() { p = &amp;glob; }
+   int *p;
+  };
+  constexpr int f() {
+   typedef const A &amp;AR;
+   const A &amp;ref = AR{0};
+   delete ref.p;
+   return 0;
+  }
+  extern constexpr int x = f(); //<SPAN CLASS="cmnt"> okay</SPAN>
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<UL>
+<LI>a
+<UL>
+<LI>const_cast (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]),</LI>
+<LI>...</LI>
+</UL>
+</LI>
+
+<LI class="ins">an explicit type conversion (functional notation)
+(7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]) to a reference type whose initializer
+is a <I>braced-init-list</I> where the reference is
+<UL>
+<LI>bound directly to the glvalue result of one of these expressions
+that is the sole element of the <I>braced-init-list</I> or</LI>
+<LI>bound to the result of a temporary materialization conversion,</LI>
+</UL>
+</LI>
+
+<LI>a conditional expression (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]) that is a
+glvalue where the second or third operand is one of these expressions,
+or</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

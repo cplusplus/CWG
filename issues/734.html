@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 734</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="734"></A><H4>734.
+  
+Are unique addresses required for namespace-scope variables?
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 October, 2008<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>Consider the following example:</P>
+
+<PRE>
+    static const char test1 = 'x';
+    static const char test2 = 'x';
+    bool f() {
+        return &amp;test1 != &amp;test2;
+    }
+</PRE>
+
+<P>Is <TT>f()</TT> allowed to return <TT>false</TT>?  Can a smart
+optimizer alias these two variables, taking advantage of the fact that
+they are <TT>const</TT>, initialized to the same value, and thus can
+never be different in a well-defined program?</P>
+
+<P>The C++ Standard doesn't explicitly specify address allocation of
+objects except as members of arrays and classes, so the answer would
+appear to be that such an implementation would be conforming.</P>
+
+<P>This situation appears to have been the inadvertent result of
+the resolution of <A HREF="73.html">issue 73</A>. Prior to that
+change, 7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>] said,</P>
+
+<BLOCKQUOTE>
+
+Two pointers of the same type compare equal if and only if they...
+both point to the same object...
+
+</BLOCKQUOTE>
+
+<P>That resolution introduced the current wording,</P>
+
+<BLOCKQUOTE>
+
+Two pointers of the same type compare equal if and only if... both
+represent the same address.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the March, 2009 meeting:</B></P>
+
+<P>The CWG agreed that this aliasing should not be permitted in
+a conforming implementation.</P>
+
+<P><B>Proposed resolution (November, 2009):</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph after 6.7.2 [<A href="https://wg21.link/intro.object#5">intro.object</A>] paragraph 5:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>Unless an object is a bit-field or a base class subobject
+of zero size, the address of that object is the address of the
+first byte it occupies. Two distinct objects that are neither
+bit-fields nor base class subobjects of zero size shall have
+distinct addresses [<I>Footnote:</I> Under the &#8220;as-if&#8221;
+rule an implementation is allowed to store two objects at the
+same machine address or not store an object at all if the program
+cannot observe the difference (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]). &#8212;<I>end footnote</I>].
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  static const char test1 = 'x';
+  static const char test2 = 'x';
+  const bool b = &amp;test1 != &amp;test2;   //<SPAN CLASS="cmnt"> always true</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The result of the unary <TT>&amp;</TT> operator is a pointer to
+its operand. The operand shall be an lvalue or a
+<I>qualified-id</I>. <DEL>In the first case, if the type of the
+expression is &#8220;<TT>T</TT>,&#8221; the type of the result is
+&#8220;pointer to <TT>T</TT>.&#8221; In particular, the address
+of an object of type &#8220;<I>cv</I> <TT>T</TT>&#8221; is
+&#8220;pointer to <I>cv</I> <TT>T</TT>,&#8221; with the same
+cv-qualifiers. For a <I>qualified-id</I>, if the member is a
+static member of type &#8220;<TT>T</TT>&#8221;, the type of the
+result is plain &#8220;pointer to <TT>T</TT>.&#8221; If the
+member is a non-static member of class <TT>C</TT> of type
+<TT>T</TT>, the type of the result is &#8220;pointer to member of
+class <TT>C</TT> of type <TT>T</TT>.&#8221;</DEL> <INS>If the
+operand is a <I>qualified-id</I> naming a non-static member
+<TT>m</TT> of some class <TT>C</TT> with type <TT>T</TT>, the
+result has type &#8220;pointer to member of class <TT>C</TT> of
+type <TT>T</TT>&#8221; and is an rvalue designating
+<TT>C::m</TT>.  Otherwise, if the type of the expression is
+<TT>T</TT>, the result has type &#8220;pointer to
+<TT>T</TT>&#8221; and is an rvalue that is the address of the
+designated object (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) or a pointer to the
+designated function. [<I>Note:</I> In particular, the address of
+an object of type &#8220;<I>cv</I> <TT>T</TT>&#8221; is
+&#8220;pointer to <I>cv</I> <TT>T</TT>,&#8221; with the same
+cv-qualification. &#8212;<I>end note</I>]</INS> [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

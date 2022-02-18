@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 152</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="152"></A><H4>152.
+  
+<TT>explicit</TT> copy constructors
+</H4>
+<B>Section: </B>11.4.8.2&#160; [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 August 1999<BR>
+
+
+
+
+
+<P>Can a copy-constructor declared as <TT>explicit</TT> be used to
+copy class values implicitly?  For example,</P>
+
+<PRE>
+   struct X {
+      X();
+      explicit X(const X&amp;);
+   };
+   void f(X);
+   int main() { X x; f(x); }
+</PRE>
+
+According to 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]
+
+paragraphs 2-3,
+
+<BLOCKQUOTE>
+An explicit constructor constructs objects just like non-explicit
+constructors, but does so only where the direct-initialization syntax
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+) or where casts
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+,
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]
+) are explicitly used...
+A copy-constructor (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+) is a
+converting constructor.  An implicitly-declared copy constructor is
+not an explicit constructor; it may be called for implicit type
+conversions.
+</BLOCKQUOTE>
+
+This passage would appear to indicate that the call in the example is
+ill-formed, since it uses neither the direct-initialization syntax nor
+an explicit cast.  The last sentences are especially interesting in
+this regard, indicating that <TT>explicit</TT> and
+non-<TT>explicit</TT> copy constructors are handled differently.
+
+<P>On the other hand,
+9.4 [<A href="https://wg21.link/dcl.init#14">dcl.init</A>] paragraph 14,
+ bullet 4,
+sub-bullet 2 says,</P>
+
+<BLOCKQUOTE>
+If the initialization is direct-initialization, or if it is
+copy-initialization where the cv-unqualified version of the source
+type is the same class as, or a derived class of, the class of the
+destination... [the] applicable constructors are enumerated
+(12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]
+)...
+</BLOCKQUOTE>
+
+The cited passage says that
+
+<BLOCKQUOTE>
+The candidate functions are all the constructors of the class of the
+object being initialized.
+</BLOCKQUOTE>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>After the issue was accepted as a DR with the proposed
+resolution to change 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1
+as described below, it was noticed that 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#3">class.conv.ctor</A>] paragraph 3
+states that:</P>
+
+<BLOCKQUOTE>
+
+A copy-constructor (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) is a converting
+constructor.
+
+</BLOCKQUOTE>
+
+<P>In addition to making the proposed resolution for this issue
+ineffectual, the wording of paragraph 3 also contradicts that of
+paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+A constructor declared without the <I>function-specifier</I>
+<TT>explicit</TT> that can be called with a single parameter specifies
+a conversion from the type of its first parameter to the type of its
+class. Such a constructor is called a converting constructor.
+
+</BLOCKQUOTE>
+
+<P>These considerations led to the addition of the second point
+of the proposed resolution.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+<OL>
+<LI>
+<P>Change the first two sentences of
+12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1
+to</P>
+<BLOCKQUOTE>
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or copy-initialized
+from an expression of the same or a derived class type
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload
+resolution selects the constructor.  For direct-initialization, the
+candidate functions are all the constructors of the class of the object
+being initialized.  For copy-initialization, the candidate functions are
+all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]
+) of that class.
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change the first sentence of 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#3">class.conv.ctor</A>] paragraph 3
+to read:</P>
+
+<BLOCKQUOTE>
+
+A non-explicit copy constructor (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) is a
+converting constructor.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

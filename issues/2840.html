@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2840</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2840"></A><H4>2840.
+  
+Missing requirements for fundamental alignments
+</H4>
+<B>Section: </B>6.7.3&#160; [<A href="https://wg21.link/basic.align">basic.align</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/412">#412</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+struct S {
+  long double d;
+};
+</PRE>
+
+<P>There appears to be no rule that prevents <TT>S</TT> from having an
+extended alignment.
+(See also WG14
+<A HREF="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2396.htm#dr_445">DR445</A>.)
+</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.3 [<A href="https://wg21.link/basic.align#2">basic.align</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A fundamental alignment is represented by an alignment less than or
+equal to <DEL>the greatest alignment supported by the implementation
+in all contexts, which is equal to</DEL>
+<TT>alignof(std::max_align_t)</TT>
+(17.2 [<A href="https://wg21.link/support.types">support.types</A>]).  <INS>Fundamental alignments shall be
+supported by the implementation for objects of all storage durations
+(6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]).</INS> The alignment required for a type
+may be different when it is used as the type of a complete object and
+when it is used as the type of a subobject. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.3 [<A href="https://wg21.link/basic.align#3">basic.align</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An extended alignment is represented by an alignment greater than
+alignof(std::max_align_t). It is implementation-defined whether any
+extended alignments are supported and the <DEL>contexts
+in</DEL> <INS>storage durations for</INS> which they are supported
+(9.12.2 [<A href="https://wg21.link/dcl.align">dcl.align</A>]). A type having an extended alignment
+requirement is an <I>over-aligned type</I>.
+
+[<I>Note 1:</I> Every over-aligned type is or contains a class type to
+which extended alignment applies (possibly through a non-static data
+member). &#8212;<I>end note</I>]
+
+<INS>[<I>Note 2:</I> The strictest supported alignment can be
+different for objects with different storage durations. &#8212;<I>end
+note</I>]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert a new paragraph before 6.7.3 [<A href="https://wg21.link/basic.align#4">basic.align</A>] paragraph 4
+and change as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+Each of the following types has a fundamental alignment requirement:
+<UL class="ins">
+<LI>a scalar type (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]),</LI>
+<LI>an array type (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]) whose element type
+has a fundamental alignment requirement, and</LI>
+<LI>a class type (Clause 11 [<A href="https://wg21.link/class">class</A>]) where all base classes and
+non-static data members have a type with a fundamental alignment
+requirement and no non-static data member is declared with
+an <I>alignment-specifier</I> (9.12.2 [<A href="https://wg21.link/dcl.align">dcl.align</A>]) specifying
+an extended alignment.</LI>
+</UL>
+</P>
+
+<P>Alignments are represented as values of the type
+<TT>std::size_t</TT>.  Valid alignments include only <DEL>those values
+returned by an alignof expression for the</DEL>
+fundamental <DEL>types</DEL> <INS>alignments</INS> plus an additional
+implementation-defined set of values, which may be empty. Every
+alignment value shall be a non-negative integral power of two.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.2 [<A href="https://wg21.link/dcl.align#2">dcl.align</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+When the alignment-specifier is of the form
+alignas( <I>constant-expression</I> ):
+<UL>
+<LI>the <I>constant-expression</I> shall be an integral constant
+expression <INS>and</INS>
+</LI>
+<LI>if the constant expression does not evaluate to an alignment value
+(6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]), or evaluates to an extended alignment
+and the implementation does not support that alignment <DEL>in the
+context of the declaration</DEL> <INS>for the storage duration (if
+any) of the entity being declared</INS>, the program is
+ill-formed.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

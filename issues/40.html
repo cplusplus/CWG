@@ -1,0 +1,166 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 40</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="40"></A><H4>40.
+  
+Syntax of <I>declarator-id</I>
+</H4>
+<B>Section: </B>9.3.4&#160; [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>01 Sep 1998<BR>
+
+
+
+<P>(From J16/99-0005 = WG21 N1182, "Proposed Resolutions for Core
+Language Issues 6, 14, 20, 40, and 89")</P>
+
+<P>There are two sub-issues. The first concerns the statement in
+9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]
+
+
+paragraph 1,</P>
+<BLOCKQUOTE>The <I>id-expression</I> of a <I>declarator-id</I> shall be
+a simple identifier except for the declaration of some special functions
+(11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]
+,
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+,
+12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]
+) and for the declaration
+of template specializations or partial specializations
+(13.9 [<A href="https://wg21.link/temp.spec">temp.spec</A>]
+).</BLOCKQUOTE>
+The second sub-issue is regarding another statement in the same paragraph:
+<BLOCKQUOTE>A <I>declarator-id</I> shall not be qualified except for the
+definition of a member function (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]
+)
+or static data member (11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]
+)
+or nested class (11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>]
+) outside
+of its class, the definition or explicit instantiation of a function, variable
+or class member of a namespace outside of its namespace, or...</BLOCKQUOTE>
+<U>Analysis</U>
+
+<P>The problem in the first sub-issue is that the wrong syntactic non-terminal
+is mentioned. The relevant portions of the grammar are:</P>
+<UL>
+<I>declarator-id </I>:
+<UL>
+<I>id-expression</I>
+<BR><TT>::</TT><SUB>opt</SUB>&#160; <I>nested-name-specifier</I><SUB>opt</SUB>
+<I>type-name</I>
+</UL>
+<I>id-expression </I>:
+<UL>
+<I>unqualified-id</I>
+<BR><I>qualified-id</I>
+</UL>
+<I>unqualified-id </I>:
+<UL>
+<I>identifier</I>
+<BR><I>operator-function-id</I>
+<BR><I>conversion-function-id</I>
+<BR>~ <I>class-name</I>
+<BR><I>template-id</I>
+</UL>
+</UL>
+The exceptions in the citation from
+9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]
+
+
+paragraph 1 are all the non-identifier cases of <I>unqualified-id</I>:
+11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]
+
+
+is for <I>conversion-function-id</I>s,
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+
+
+is for destructors,
+12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]
+
+ is
+for overloaded operators, and
+13.9 [<A href="https://wg21.link/temp.spec">temp.spec</A>]
+
+
+is for <I>template-id</I>s. If taken literally, this sentence would exclude
+all <I>qualified-id</I>s, which it obviously is not intended to do. Instead,
+the apparent intent is something along the lines of
+<BLOCKQUOTE>If an <I>unqualified-id</I> is used as the <I>id-expression</I>
+of a <I>declarator-id</I>, it shall be a simple identifier except...</BLOCKQUOTE>
+However, it does not appear that this restriction has any meaning; all
+of the possible cases of <I>unqualified-id</I>s are represented in the
+list of exceptions! Rather than recasting the sentence into a correct but
+useless form, it would be better to remove it altogether.
+
+<P>The second sub-issue deals with the conditions under which a <I>qualified-id</I>
+can be used in a declarator, including "the definition of a...nested class"
+and "the definition or explicit instantiation of a...class member of a
+namespace." However, the name in a class definition is not part of a declarator;
+these constructs do not belong in a list of declarator contexts.</P>
+
+<P><B>Proposed Resolution for sub-issue 1 (04/99):</B></P>
+<P>The suggested resolution for the first sub-issue overlooked the
+fact that the existing wording has the additional effect of prohibiting
+the use of the non-identifier syntax for declaring other than the
+listed entities.  Thus the proposed wording
+for the first sub-issue is:</P>
+<P>Change 9.3.4 [<A href="https://wg21.link/dcl.meaning#1">dcl.meaning</A>] paragraph 1
+from:</P>
+<BLOCKQUOTE>The <I>id-expression</I> of a <I>declarator-id</I> shall be a simple <I>identifier</I> except...</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>An <I>unqualified-id</I> occurring in a <I>declarator-id</I> shall be a simple <I>identifier</I> except...</BLOCKQUOTE>
+
+<P><B>Proposed Resolution for sub-issue 2 (10/99):</B></P>
+
+<P>Change 9.3.4 [<A href="https://wg21.link/dcl.meaning#1">dcl.meaning</A>] paragraph 1
+from:</P>
+<BLOCKQUOTE>A <I>declarator-id</I> shall not be qualified except for the
+definition of a member function (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]
+)
+or static data member (11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]
+)
+or nested class (11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>]
+) outside
+of its class, the definition or explicit instantiation of a function, variable
+or class member of a namespace outside of its namespace, or...</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>A <I>declarator-id</I> shall not be qualified except for the
+definition of a member function (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]
+)
+or static data member (11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]
+)
+outside
+of its class, the definition or explicit instantiation of a function or
+variable member of a namespace outside of its namespace, or...</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

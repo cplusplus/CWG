@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2757</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2757"></A><H4>2757.
+  
+Deleting or deallocating storage of an object during its construction
+</H4>
+<B>Section: </B>11.9.5&#160; [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-14<BR>
+
+
+<P>Subclause 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+... For an object under construction or destruction, see
+11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. Otherwise, ...
+
+</BLOCKQUOTE>
+
+<P>However, the referenced subclause does not discuss deleting the
+object or deallocating its storage.</P>
+
+<P>See also <A HREF="2258.html">issue 2258</A>.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2023-10-20):</B></P>
+
+<OL>
+<LI>
+<P>Insert before 11.9.5 [<A href="https://wg21.link/class.cdtor#2">class.cdtor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+During the initialization or destruction of an object, invoking the
+destructor for the object or releasing or reusing
+(6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]) the storage which the object occupies
+results in undefined behavior. [ Note: Creating an object nested
+within some object <I>o</I> does not reuse the storage
+for <I>o</I>. -- end note ] [ Example:</P>
+
+<PRE class="ins">
+  struct A() {
+    A() {
+      ::operator delete(this);
+    }
+  };
+
+  A *p1 = new A;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+
+  struct B() {
+    B() {
+      delete this;
+    }
+  };
+
+  B *p2 = new B;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+
+  struct S {
+    constexpr S() { this-&gt;~S(); }
+    constexpr S(int) {}
+  };
+
+  constexpr int f() {
+    S s(0);
+    s.~S();
+    std::construct_at(&amp;s);  // <SPAN CLASS="cmnt">#1</SPAN>
+    return 0;
+  }
+
+  constexpr int x = f();  // <SPAN CLASS="cmnt">error: undefined behavior at #1</SPAN>
+</PRE>
+<P class="ins">-- end example ]</P>
+
+<P>During the construction of an object, if the value of the object ...</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.9.5 [<A href="https://wg21.link/class.cdtor#4">class.cdtor</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Member functions<DEL>, including virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]),</DEL> <INS>other than the
+destructor</INS> can be called during construction or destruction
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).  When a virtual
+function <INS>(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>])</INS> is called directly or
+indirectly from a constructor or from a destructor, including during
+the construction or destruction of the class's non-static data
+members, and ...
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

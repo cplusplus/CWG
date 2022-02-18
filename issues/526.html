@@ -1,0 +1,180 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 526</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="526"></A><H4>526.
+  
+Confusing aspects in the specification of non-deduced contexts
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>25 July 2005<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5">temp.deduct.type</A>] paragraph 5 reads:</P>
+
+<BLOCKQUOTE>
+
+<P>The non-deduced contexts are:</P>
+
+<UL>
+
+<LI><P>The <I>nested-name-specifier</I> of a type that was specified
+using a <I>qualified-id</I>.</P></LI>
+
+<LI><P>A non-type template argument or an array bound that is an
+expression that references a template parameter.</P></LI>
+
+<LI><P>A template parameter used in the parameter type of a function
+parameter that has a default argument that is being used in the call
+for which argument deduction is being done.</P></LI>
+
+<LI><P>A function parameter for which argument deduction cannot be
+done because the associated function argument is a function, or a set
+of overloaded functions (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or more
+of the following apply:</P></LI>
+
+<UL>
+
+<LI><P>more than one function matches the function parameter type
+(resulting in an ambiguous deduction), or</P></LI>
+
+<LI><P>no function matches the function parameter type, or</P></LI>
+
+<LI><P>the set of functions supplied as an argument contains one or
+more function templates.</P></LI>
+
+</UL>
+
+<LI><P>An array bound that is an expression that references
+a <I>template-parameter</I>.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>There are two problems with this list:</P>
+
+<OL>
+
+<LI><P>The last bullet is redundant with the second bullet.  This
+appears to have been the result of applying the resolutions of issues
+<A HREF="70.html">70</A> and <A HREF="352.html">352</A>
+independently instead of in coordination.</P></LI>
+
+<LI>
+<P>The second bullet
+appears to be contradicted by the statement in paragraph 8 saying that
+an argument can be deduced if <TT>P</TT> and <TT>A</TT> have the
+forms <I>type</I><TT>[i]</TT> and
+<I>template-name</I><TT>&lt;i&gt;</TT>.</P>
+
+<P>The intent of the wording in bullet 2 appears to have been that
+deduction cannot be done if the template parameter is a sub-expression
+of the template argument or array bound expression and that it can be
+done if it is the complete expression, but the current wording does
+not say that very clearly.  (Similar wording also appears in
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#3">temp.dep.type</A>] paragraph 3 and 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#14">temp.deduct.type</A>] paragraph 14.)</P>
+</LI>
+
+</OL>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5">temp.deduct.type</A>] paragraph 5 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The non-deduced contexts are:</P>
+
+<UL>
+<LI><P>The <I>nested-name-specifier</I> of a type that was specified
+using a <I>qualified-id</I>.</P></LI>
+
+<LI><P>A non-type template argument or an array bound <DEL>that is an
+expression that</DEL> <INS>in either of which a subexpression</INS>
+references a template parameter.</P></LI>
+
+<LI><P>A template parameter used in the parameter type of a function
+parameter that has a default argument that is being used in the call
+for which argument deduction is being done.</P></LI>
+
+<LI><P>A function parameter for which argument deduction cannot be done
+because the associated function argument is a function, or a set of
+overloaded functions (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or more of
+the following apply:</P></LI>
+
+<UL>
+<LI><P>more than one function matches the function parameter type
+(resulting in an ambiguous deduction), or</P></LI>
+
+<LI><P>no function matches the function parameter type, or</P></LI>
+
+<LI><P>the set of functions supplied as an argument contains one or more function templates.</P></LI>
+</UL>
+
+<DEL><LI><P>An array bound that is an expression that references a
+<I>template-parameter</I>.</P></LI></DEL>
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#14">temp.deduct.type</A>] paragraph 14 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+If, in the declaration of a function template with a non-type template
+parameter, the non-type template parameter is used in <DEL>an
+expression</DEL> <INS>a subexpression</INS> in the function parameter list,
+the expression is a non-deduced context <INS>as specified above</INS>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#3">temp.dep.type</A>] paragraph 3 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+A template argument that is equivalent to a template parameter (i.e.,
+has the same constant value or the same type as the template
+parameter) can be used in place of that template parameter in a
+reference to the current instantiation. In the case of a non-type
+template argument, the argument must have been given the value of the
+template parameter and not an expression <DEL>involving</DEL> <INS>that
+contains</INS> the template parameter <INS>as a subexpression</INS>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 616</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="616"></A><H4>616.
+  
+Definition of &#8220;indeterminate value&#8221;
+</H4>
+<B>Section: </B>Clause 3&#160; [<A href="https://wg21.link/intro.defs">intro.defs</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bjarne Stroustrup
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 February 2007<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>The C++ Standard uses the phrase &#8220;indeterminate value&#8221;
+without defining it.  C99 defines it as &#8220;either an unspecified
+value or a trap representation.&#8221;  Should C++ follow suit?</P>
+
+<P>In addition, 7.3.2 [<A href="https://wg21.link/conv.lval#1">conv.lval</A>] paragraph 1 says that
+applying the lvalue-to-rvalue conversion to an &#8220;object
+[that] is uninitialized&#8221; results in undefined behavior;
+this should be rephrased in terms of an object with an
+indeterminate value.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<OL>
+<LI><P>Change 7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>] paragraphs 1 and 2 as
+follows (including changing the running text of paragraph 2 into
+bullets):</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A glvalue (7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) of a non-function, non-array
+type <TT>T</TT> can be converted to a prvalue.<SUP>53</SUP> If
+<TT>T</TT> is an incomplete type, a program that necessitates this
+conversion is ill-formed. <DEL>If the object to which the glvalue
+refers is not an object of type <TT>T</TT> and is not an object of a
+type derived from <TT>T</TT>, or if the object is uninitialized, a
+program that necessitates this conversion has undefined
+behavior.</DEL> If <TT>T</TT> is a non-class type, the type of the
+prvalue is the cv-unqualified version of <TT>T</TT>. Otherwise, the
+type of the prvalue is <TT>T</TT>.<SUP>54</SUP>
+</P>
+
+<P>When an lvalue-to-rvalue conversion occurs in an unevaluated
+operand or a subexpression thereof (Clause 7 [<A href="https://wg21.link/expr">expr</A>]) the
+value contained in the referenced object is not accessed. <INS>In all
+other cases, the result of the conversion is determined according
+to the following rules:</INS>
+</P>
+
+<UL>
+<LI><P><INS>If <TT>T</TT> is (possibly cv-qualified)
+<TT>std::nullptr_t</TT>, the result is a null pointer constant
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]).</INS></P></LI>
+
+<LI><P>Otherwise, if <DEL>the glvalue</DEL> <INS><TT>T</TT></INS> has
+a class type, the conversion copy-initializes a temporary of type
+<TT>T</TT> from the glvalue and the result of the conversion is a
+prvalue for the temporary.</P></LI>
+
+<LI><P><INS>Otherwise, if the object to which the glvalue refers contains
+an invalid pointer value (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>],
+_N4885_6.7.5.5.4 [<A href="https://wg21.link/basic.stc.dynamic.safety">basic.stc.dynamic.safety</A>]), the behavior is
+implementation-defined.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if <TT>T</TT> is a (possibly cv-qualified)
+unsigned character type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]), and the object
+to which the glvalue refers contains an indeterminate value
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), and that object does not have automatic storage
+duration or the glvalue was the operand of a unary <TT>&amp;</TT>
+operator or it was bound to a reference, the result is an unspecified
+value.  [<I>Footnote:</I> The value may be different each time the
+lvalue-to-rvalue conversion is applied to the object.  An <TT>unsigned
+char</TT> object with indeterminate value allocated to a register
+might trap. &#8212;<I>end footnote</I>]</INS></P></LI>
+
+<LI><P><INS>Otherwise, if the object to which the glvalue refers contains
+an indeterminate value, the behavior is undefined.</INS></P></LI>
+
+<LI><P>
+<DEL>Otherwise, if the glvalue
+has (possibly cv-qualified) type <TT>std::nullptr_t</TT>, the prvalue
+result is a null pointer constant (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]).</DEL>
+Otherwise, the value contained in the object indicated by the glvalue
+is the prvalue result.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4 second bullet as
+follows:</P></LI>
+
+<UL>
+<LI><P>If <TT>E2</TT> is a static data member...</P></LI>
+
+<LI><P>...If <TT>E1</TT> is an lvalue, then <TT>E1.E2</TT> is an
+lvalue; <DEL>if <TT>E1</TT> is an xvalue, then</DEL>
+<INS>otherwise</INS> <TT>E1.E2</TT> is an xvalue<DEL>; otherwise, it is a
+prvalue</DEL>.  Let the notation...</P></LI>
+
+<LI><P>If <TT>E2</TT> is a (possibly overloaded) member
+function...</P></LI>
+
+</UL>
+
+<LI><P>Change 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#6">expr.mptr.oper</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The result of a <TT>.*</TT> expression whose second operand is a
+pointer to a data member is <DEL>of the same value category
+(7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) as its first operand</DEL> <INS>an lvalue
+if the first operand is an lvalue and an xvalue otherwise</INS>.  The
+result of a <TT>.*</TT> expression whose second operand is a pointer
+to a member function...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="129.html">129</A>,
+<A HREF="240.html">240</A>, <A HREF="312.html">312</A>,
+<A HREF="623.html">623</A>, and <A HREF="1013.html">1013</A>.</P>
+
+<P>(See also <A HREF="1213.html">issue 1213</A>.)</P>
+
+<P><B>Additional note (August, 2012):</B></P>
+
+<P>It was observed  that the phrase in the
+fourth bullet of the change to 7.3.2 [<A href="https://wg21.link/conv.lval#2">conv.lval</A>] paragraph 2
+that reads &#8220;is not a local variable&#8221; should probably
+be changed to &#8220;does not have automatic storage
+duration,&#8221; because objects with static storage duration are
+zero-initialized and thus cannot have an indeterminate value. The
+issue was returned to "review" status for discussion of this point.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

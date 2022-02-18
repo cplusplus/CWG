@@ -1,0 +1,280 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1642</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1642"></A><H4>1642.
+  
+Missing requirements for prvalue operands
+</H4>
+<B>Section: </B>7.6&#160; [<A href="https://wg21.link/expr.compound">expr.compound</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joseph Mansfield
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-03-15<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>Although the note in 7.2.1 [<A href="https://wg21.link/basic.lval#1">basic.lval</A>] paragraph 1
+states that</P>
+
+<BLOCKQUOTE>
+
+The discussion of each built-in operator in
+Clause 7 [<A href="https://wg21.link/expr">expr</A>] indicates the category of the value
+it yields and the value categories of the operands it
+expects
+
+</BLOCKQUOTE>
+
+<P>in fact, many of the operators that take prvalue operands
+do not make that requirement explicit.  Possible approaches
+to address this failure could be a blanket statement that an
+operand whose value category is not stated is assumed to be
+a prvalue; adding prvalue requirements to each operand
+description for which it is missing; or changing the
+description of the usual arithmetic conversions to state
+that they imply the lvalue-to-rvalue conversion, which would
+cover the majority of the omissions.</P>
+
+<P>(See also <A HREF="1685.html">issue 1685</A>, which deals with
+an inaccurately-specified value category.)</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-04-28):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.2.1 [<A href="https://wg21.link/basic.lval#6">basic.lval</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Whenever a glvalue appears as an operand of an operator
+that <DEL>expects</DEL> <INS>requires</INS> a prvalue for that
+operand, the lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), or function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are applied to
+convert the expression to a prvalue. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.1 [<A href="https://wg21.link/conv.general#1">conv.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... A standard conversion sequence will be applied to an expression if
+necessary to convert it to <INS>an expression having</INS> a required
+destination type <INS>and value category</INS>. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add to the bulleted list in 7.4 [<A href="https://wg21.link/expr.arith.conv#1">expr.arith.conv</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... This pattern is called the usual arithmetic conversions, which are
+defined as follows:
+<UL>
+<LI class="ins">
+The lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is
+applied to each operand and the resulting prvalues are used in place
+of the original operands for the remainder of this section.</LI>
+<LI>If either operand is of scoped enumeration
+type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), no conversions are performed; if
+the other operand does not have the same type, the expression is
+ill-formed.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#1">expr.call</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... For a call to a non-member function or to a static member
+function, the postfix expression shall <INS>be</INS>
+either <DEL>be</DEL> an lvalue that refers to a function (in which
+case the function-to-pointer standard conversion
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) is suppressed on the postfix expression),
+or <DEL>have</DEL> <INS>a prvalue of</INS> function pointer type.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#7">expr.unary.op</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand of the unary + operator shall <DEL>have</DEL> <INS>be a
+prvalue of</INS> arithmetic, unscoped enumeration, or pointer type and
+the result is the value of the argument. Integral promotion is
+performed on integral or enumeration operands. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#8">expr.unary.op</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand of the unary - operator shall <DEL>have</DEL> <INS>be a
+prvalue of</INS> arithmetic or unscoped enumeration type and the
+result is the negative of its operand. Integral promotion is performed
+on integral or enumeration operands. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#10">expr.unary.op</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand of the ~ operator shall <DEL>have</DEL> <INS>be a prvalue
+of</INS> integral or unscoped enumeration type. Integral promotions
+are performed. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... <DEL>The operand shall be of pointer to object type or of class
+type.</DEL> If <INS>the operand is</INS> of class type, <DEL>the
+operand</DEL> <INS>it</INS> is contextually implicitly converted
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) to a pointer to object type. [ Footnote:
+... ] <INS>Otherwise, it shall be a prvalue of pointer to object
+type.</INS> The <I>delete-expression</I> has type void.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#2">expr.mptr.oper</A>] paragraph 2 and 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The binary operator .* binds its second operand, which shall
+be <INS>a prvalue</INS> of type &#8220;pointer to member of T&#8221;
+to its first operand, which shall be ...</P>
+
+<P>The binary operator -&gt;* binds its second operand, which shall be
+<INS>a prvalue</INS> of type &#8220;pointer to member of T&#8221; to
+its first operand, which shall be ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#1">expr.add</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The additive operators + and - group left-to-right.
+<DEL>The</DEL> <INS>Each operand shall be a prvalue. If both operands
+have arithmetic or unscoped enumeration type, the</INS> usual
+arithmetic conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed
+<DEL>for operands of arithmetic or enumeration type</DEL>.
+<INS>Otherwise, if one operand has arithmetic or unscoped enumeration
+type, integral promotion is applied (7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]) to
+that operand.  A converted or promoted operand is used in place of the
+corresponding original operand for the remainder of this
+section.</INS> ...
+For addition, either both operands shall
+have arithmetic <DEL>or unscoped enumeration</DEL> type, or one operand shall be
+a pointer to a completely-defined object type and the other shall have
+integral <DEL>or unscoped enumeration</DEL> type.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#2">expr.add</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For subtraction, one of the following shall hold:
+<UL>
+<LI>both operands have arithmetic <DEL>or unscoped enumeration</DEL>
+type; or</LI>
+<LI>both operands are pointers to cv-qualified or cv-unqualified
+versions of the same completely-defined object type; or</LI>
+<LI>the left operand is a pointer to a completely-defined object type
+and the right operand has integral <DEL>or unscoped enumeration</DEL>
+type.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.7 [<A href="https://wg21.link/expr.shift#1">expr.shift</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The operands shall be <INS>prvalues</INS> of integral or unscoped
+enumeration type and integral promotions are performed. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.9">dcl.init.general</A>] bullet 16.9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+Otherwise, the initial value of the object being initialized is the
+(possibly converted) value of the initializer expression. A standard
+conversion sequence (7.3 [<A href="https://wg21.link/conv">conv</A>]) <DEL>will
+be</DEL> <INS>is</INS> used<DEL>, if necessary,</DEL> to convert the
+initializer expression to <INS>a prvalue of</INS> the cv-unqualified
+version of the destination type; no user-defined conversions are
+considered. ...</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

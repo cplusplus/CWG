@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2126</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2126"></A><H4>2126.
+  
+Lifetime-extended temporaries in constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-05-20<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+
+
+<P>Consider an example like the following:</P>
+
+<PRE>
+  typedef const int CI[3];
+  constexpr CI &amp;ci = CI{11, 22, 33};
+  static_assert(ci[1] == 22, "");
+</PRE>
+
+<P>This is ill-formed because the lifetime of the array temporary
+did not start within the current evaluation.  Perhaps we should
+treat all lifetime-extended temporaries of const-qualified literal
+type that are initialized by constant expressions as if they are
+<TT>constexpr</TT> objects?</P>
+
+<P><B>Proposed resolution (October, 2019):</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#3">expr.const</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A variable is <I>usable in constant expressions</I> after
+its initializing declaration is encountered if it is a
+constexpr variable, or it is a constant-initialized variable
+of reference type or of const-qualified integral or
+enumeration type. An object or reference is <I>usable in
+constant expressions</I> if it is</P>
+
+<UL>
+<LI><P>a variable that is usable in constant
+expressions, or</P></LI>
+
+<LI><P>a template parameter object
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), or</P></LI>
+
+<LI><P>a string literal object
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]), or</P></LI>
+
+<LI><P><INS>a temporary object of non-volatile const-qualified
+literal type whose lifetime is extended
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) to that of a variable that is usable
+in constant expressions, or</INS></P></LI>
+
+<LI><P>a non-mutable subobject or reference member of any of the
+above<DEL>, or</DEL><INS>.</INS>
+</P></LI>
+
+<LI><P><DEL>a complete temporary object of non-volatile const-qualified
+integral or enumeration type that is initialized with a
+constant expression.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="2439.html">issue 2439</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

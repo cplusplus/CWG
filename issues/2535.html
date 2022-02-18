@@ -1,0 +1,144 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2535</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2535"></A><H4>2535.
+  
+Type punning in class member access
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-17<BR>
+
+
+<P>[Accepted at the July, 2022 meeting.]</P>
+
+
+
+<P>The initialization of <TT>j</TT> ought to have undefined behavior,
+but the standard does not explicitly say so:</P>
+
+<PRE>
+  struct C { int m; };
+
+  int i = 0;
+  int j = reinterpret_cast&lt;C&amp;&gt;(i).m; //<SPAN CLASS="cmnt"> the same as </SPAN>int j = i<SPAN CLASS="cmnt"> ?</SPAN>
+</PRE>
+
+<P>A related case for pointer-to-member expressions is covered by
+7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+If the dynamic type of <TT>E1</TT> does not contain the member to
+which <TT>E2</TT> refers, the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>The invocation of non-static member functions is covered by
+11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+If a non-static member function of a class <TT>X</TT> is called for an
+object that is not of type <TT>X</TT>, or of a type derived
+from <TT>X</TT>, the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-06-17):</B></P>
+
+<P>(updated according to 2022-05-20 and 2022-06-03 CWG guidance)</P>
+
+<OL>
+<LI>
+<P>Add a new paragraph after 7.6.1.5 [<A href="https://wg21.link/expr.ref#7">expr.ref</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+<P>If <TT>E2</TT> is a non-static <DEL>data member or a non-static</DEL>
+member <DEL>function</DEL>, the program is ill-formed if the class of
+which <TT>E2</TT> is directly a member is an ambiguous base
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) of the naming class
+(11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]) of <TT>E2</TT>.  [Note: The program is also
+ill-formed if the naming class is an ambiguous base of the class type
+of the object expression; see
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]. &#8212;<I>end note</I> -- end note]</P>
+
+<P>
+<INS>If <TT>E2</TT> is a non-static member and the result
+of <TT>E1</TT> is an object whose type is not similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to the type of <TT>E1</TT>, the behavior
+is undefined. [ Example:</INS>
+<PRE>
+<INS>  struct A { int i; };
+  struct B { int j; };
+  struct D : A, B {};
+  void f() {
+    D d;
+    static_cast&lt;B&amp;&gt;(d).j;       //<SPAN CLASS="cmnt"> OK, object expression designates the </SPAN>B<SPAN CLASS="cmnt"> subobject of</SPAN> d
+    reinterpret_cast&lt;B&amp;&gt;(d).j;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+  }</INS>
+</PRE>
+<INS>-- end example ]</INS>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<DEL>If the dynamic type of <TT>E1</TT></DEL>
+
+<INS>If the result of E1 is an object whose type is not similar to the
+type of E1, or whose most derived object</INS>
+
+does not contain the member to which E2 refers, the behavior is
+undefined. <DEL>Otherwise, t</DEL> <INS>T</INS>he expression E1 is
+sequenced before the expression E2.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<DEL>If a non-static member function of a class <TT>X</TT> is called for an
+object that is not of type <TT>X</TT>, or of a type derived
+from <TT>X</TT>, the behavior is undefined.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1573</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1573"></A><H4>1573.
+  
+Inherited constructor characteristics
+</H4>
+<B>Section: </B>_N4527_.12.9&#160; [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-15<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>
+<A HREF="1350.html">Issue 1350</A> clarified that the
+<I>exception-specification</I> for an inheriting constructor is
+determined like defaulted functions, but we should also say something
+similar for <TT>deleted</TT>, and perhaps <TT>constexpr</TT>.</P>
+
+<P>Also, the description of the semantics of inheriting constructors
+don't seem to allow for C-style variadic functions, so the text should
+be clearer that such constructors are only inherited without their
+ellipsis.</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<OL>
+<LI><P>Change _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#1">class.inhctor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) that names a
+constructor implicitly declares a set of <I>inheriting constructors</I>. The
+<I>candidate set of inherited constructors</I> from the class <TT>X</TT>
+named in the <I>using-declaration</I> consists of actual constructors and
+notional constructors that result from the transformation of defaulted
+parameters <INS>and ellipsis parameter specifications</INS> as follows:</P>
+
+<UL>
+<LI><P>
+<DEL>all non-template constructors </DEL> <INS>for each
+non-template constructor</INS> of <TT>X</TT>, <INS>the constructor that
+results from omitting any ellipsis parameter specification,</INS>
+and</P></LI>
+
+<LI><P>for each non-template constructor of <TT>X</TT> that has at least
+one parameter with a default argument, the set of constructors that results
+from omitting any ellipsis parameter specification and successively
+omitting parameters with a default argument from the end of the
+parameter-type-list, and</P></LI>
+
+<LI><P>
+<DEL>all constructor templates</DEL> <INS>for each constructor
+template</INS> of <TT>X</TT>, <INS>the constructor template that results
+from omitting any ellipsis parameter specification,</INS> and</P></LI>
+
+<LI><P>for each constructor template of <TT>X</TT> that has at least one
+parameter with a default argument, the set of constructor templates that
+results from omitting any ellipsis parameter specification and successively
+omitting parameters with a default argument from the end of the
+parameter-type-list.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#2">class.inhctor</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <I>constructor characteristics</I> of a constructor or constructor
+template are</P>
+
+<UL>
+<LI><P>the template parameter list (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), if
+any,</P></LI>
+
+<LI><P>the <DEL><I>parameter-type-list</I></DEL> <INS>parameter-type-list</INS>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), <INS>and</INS>
+</P></LI>
+
+<LI><P>absence or presence of <TT>explicit</TT>
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>])<DEL>, and</DEL><INS>.</INS>
+</P></LI>
+
+<LI><P><DEL>absence or presence of <TT>constexpr</TT>
+(9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]).</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#4">class.inhctor</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A constructor so declared has the same access as the corresponding
+constructor in <TT>X</TT>. <INS>It is <TT>constexpr</TT> if the
+user-written constructor (see below) would satisfy the requirements of
+a <TT>constexpr</TT> constructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]).</INS> It is
+deleted if the corresponding constructor in <TT>X</TT> is deleted
+(<DEL>9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]</DEL> <INS>9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]</INS>)
+<INS>or if a defaulted default constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>])
+would be deleted, except that the construction of the direct base class
+<TT>X</TT> is not considered in the determination</INS>. An inheriting
+constructor shall not be explicitly instantiated
+(13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicitly specialized
+(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]).
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

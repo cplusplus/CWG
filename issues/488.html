@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 488</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="488"></A><H4>488.
+  
+Local types, overload resolution, and template argument deduction
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Nov 2004<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting as paper N2657.]</P>
+
+<P>It is not clear how to handle the following example:</P>
+
+<PRE>
+    struct S {
+        template &lt;typename T&gt; S(const T&amp;);
+    };
+    void f(const S&amp;);
+    void f(int);
+    void g() {
+        enum E { e };
+        f(e);    //<SPAN CLASS="cmnt"> ill-formed?</SPAN>
+    }
+</PRE>
+
+<P>Three possibilities suggest themselves:</P>
+
+<OL>
+
+<LI><P>
+<B>Fail during overload resolution.</B> In order to
+perform overload resolution for the call to <TT>f</TT>, the
+declaration of the required specialization of the <TT>S</TT>
+constructor must be instantiated.  This instantiation uses a
+local type and is thus ill-formed (13.4.2 [<A href="https://wg21.link/temp.arg.type#2">temp.arg.type</A>] paragraph 2)
+, rendering the example as a whole ill-formed, as
+well.</P></LI>
+
+<LI><P>
+<B>Treat this as a type-deduction failure.</B> Although it
+is not listed currently among the causes of type-deduction
+failure in 13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2, it could
+plausibly be argued that instantiating a function declaration
+with a local type as a template type-parameter falls under the
+rubric of &#8220;If a substitution in a template parameter or in
+the function type of the function template results in an invalid
+type&#8221; and thus should be a type-deduction failure.  The
+result would be that the example is well-formed because
+<TT>f(const S&amp;)</TT> would be removed from the list of viable
+functions.</P></LI>
+
+<LI><P>
+<B>Fail only if the function selected by overload
+resolution requires instantiation with a local type.</B> This
+approach would require that the diagnostic resulting from the
+instantiation of the function type during overload resolution be
+suppressed and either regenerated or regurgitated once overload
+resolution is complete.  (The example would be well-formed under
+this approach because <TT>f(int)</TT> would be selected as the
+best match.)</P></LI>
+
+</OL>
+
+<P>(See also <A HREF="489.html">issue 489</A>.)</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The question in the original example was whether there should be
+an error, even though the uninstantiable template was not needed for
+calling the best-matching function.  The broader issue is whether a
+user would prefer to get an error or to call a &#8220;worse&#8221;
+non-template function in such cases.  For example:</P>
+
+<PRE>
+    template&lt;typename T&gt; void f(T);
+    void f(int);
+    void g() {
+        enum E { e };
+        f(e);    //<SPAN CLASS="cmnt"> call </SPAN>f(int)<SPAN CLASS="cmnt"> or get an error?</SPAN>
+    }
+</PRE>
+
+<P>It was observed that the type deduction rules are intended to model,
+albeit selectively, the other rules of the language.  This would argue
+in favor of the second approach, a type-deduction failure, and the
+consensus of the group was that the incremental benefit of other
+approaches was not enough to outweigh the additional complexity of
+specification and implementation.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<P>Add a new sub-bullet following bullet 3, sub-bullet 7 ("Attempting
+to give an invalid type to a non-type template parameter") of
+13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2:</P>
+
+<UL><LI><P>Attempting to use a local or unnamed type as the value of
+a template type parameter.</P></LI></UL>
+
+<P><B>Additional note (December, 2005):</B></P>
+
+<P>The Evolution Working Group is currently considering an extension
+that would effectively give linkage to some (but perhaps not all)
+types that currently have no linkage.  If the proposed resolution above
+is adopted and then later a change along the lines that the EWG is
+considering were also adopted, the result would be a silent change
+in the result of overload resolution, because the newly-acceptable
+specializations would become part of the overload set.  It is not
+clear whether that possibility is sufficient reason to delay adoption
+of this resolution or not.  </P>
+
+<P><B>Notes from the April, 2007 meeting:</B></P>
+
+<P>The Evolution Working Group is now actively pursuing an
+extension that would allow local and/or nameless types to be
+used as template arguments, so this resolution will be held in
+abeyance until the outcome of that proposal is known.</P>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>Paper N2657, adopted at the Sophia Antipolis (June, 2008) meeting,
+removed the restriction against local and unnamed types as template
+parameters.  The example is now well-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

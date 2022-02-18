@@ -1,0 +1,254 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2813</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2813"></A><H4>2813.
+  
+Class member access with prvalues
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-28<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Subclause 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot) the first expression shall be a glvalue. ...
+
+</BLOCKQUOTE>
+
+<P>This provision forces a temporary materialization conversion
+(i.e. a copy) per 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+Whenever a prvalue appears as an operand of an operator that expects a
+glvalue for that operand, the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied to convert the expression to
+an xvalue.
+
+</BLOCKQUOTE>
+
+<P>However, this is limiting in the case that an explicit object
+member function with a by-value object parameter is invoked for a
+non-copyable class object, for example:</P>
+
+<PRE>
+  struct X {
+    X() = default;
+
+    X(const X&amp;) = delete;
+    X&amp; operator=(const X&amp;) = delete;
+
+    void f(this X self) { }
+  };
+
+  void f() {
+    X{}.f();   // OK?
+  }
+</PRE>
+
+<P>The example ought to be well-formed.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-02-16) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> Temporary objects are materialized:
+<UL>
+<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
+<LI>when performing <INS>certain</INS>
+member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
+<LI class="ins">when invoking an implicit object member function on a
+class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>...</LI>
+</UL>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>]
+<INS>If the function is a static member function invoked using class
+member access syntax, the object expression is a discarded-value
+expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
+implicit object member function, <INS>the object expression of the
+class member access shall be a glvalue</INS> and the <TT>this</TT>
+parameter of the function (7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
+with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
+5:</I> There is no access or ambiguity checking on this conversion;
+the access checking and disambiguation are done as part of the
+(possibly implicit) class member access operator. See
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot)<INS>, if the <I>id-expression</I> is a data
+member,</INS> the first expression shall be a glvalue. For the second
+option (arrow)<INS>,</INS> the first expression shall be a prvalue
+having pointer type. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-02-16</B></P>
+
+<P>When a class member access refers to a static data member or a
+member enumerator, the object expression should also be treated as a
+discarded-value expression.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> Temporary objects are materialized:
+<UL>
+<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
+<LI>when performing <INS>certain</INS>
+member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
+<LI class="ins">when invoking an implicit object member function on a
+class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>...</LI>
+</UL>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>] If the function is an implicit object
+member function, <INS>the object expression of the class member access
+shall be a glvalue</INS> and the <TT>this</TT> parameter of the
+function (7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized with a pointer to
+the object of the call, converted as if by an explicit type conversion
+(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note 5:</I> There is no access or
+ambiguity checking on this conversion; the access checking and
+disambiguation are done as part of the (possibly implicit) class
+member access operator. See 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>],
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot)<INS>, if the <I>id-expression</I> names a
+static member or an enumerator, the first expression is a
+discarded-value expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]); if
+the <I>id-expression</I> names a non-static data member,</INS> the first
+expression shall be a glvalue. For the second option
+(arrow)<INS>,</INS> the first expression shall be a prvalue having
+pointer type. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

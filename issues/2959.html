@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2959</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2959"></A><H4>2959.
+  
+Naming enumerators in class member access expressions
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>keinflue
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-04<BR>
+
+
+
+
+<P>While lookup for a member enumerator is supported using class
+member access syntax (7.6.1.5 [<A href="https://wg21.link/expr.ref#7.5">expr.ref</A>] bullet 7.5, the
+following example from 9.7.2 [<A href="https://wg21.link/enum.udecl#2">enum.udecl</A>] paragraph 2 is
+ill-formed:</P>
+
+<PRE>
+  enum class fruit { orange, apple };
+  struct S {
+   using enum fruit;       //<SPAN CLASS="cmnt"> OK, introduces </SPAN>orange<SPAN CLASS="cmnt"> and </SPAN>apple<SPAN CLASS="cmnt"> into </SPAN>S
+  };
+  void f() {
+   S s;
+   <U>s.orange;           //<SPAN CLASS="cmnt"> OK, names </SPAN>fruit::orange</U>
+   S::orange;          //<SPAN CLASS="cmnt"> OK, names </SPAN>fruit::orange
+  }
+</PRE>
+
+<P>Additional examples to consider:</P>
+
+<PRE>
+  enum class fruit { orange };
+  struct S { using fruit::orange; } s;
+  auto a = s.S::orange; //<SPAN CLASS="cmnt"> OK?</SPAN>
+  auto b = s.fruit::orange; //<SPAN CLASS="cmnt"> OK?</SPAN>
+  struct T { using fruit::orange; } t;
+  auto c = s.T::orange; //<SPAN CLASS="cmnt"> OK?</SPAN>
+</PRE>
+
+<P>"Using enum" was introduced by paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1099r5.html">P1099R5</A>.</P>
+
+<P>
+<A HREF="2557.html">Issue 2557</A> makes the original example
+well-formed, but none of the qualified additional examples.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

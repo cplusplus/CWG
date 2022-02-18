@@ -1,0 +1,220 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2419</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2419"></A><H4>2419.
+  
+Loss of generality treating pointers to objects as one-element arrays
+</H4>
+<B>Section: </B>7.6.6&#160; [<A href="https://wg21.link/expr.add">expr.add</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-07-15<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+CCCC,<P>Before the resolution of <A HREF="1596.html">issue 1596</A>,
+7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] specified that:</P>
+
+<BLOCKQUOTE>
+
+For the purposes of these operators, a pointer to a nonarray object
+behaves the same as a pointer to the first element of an array of length
+one with the type of the object as its element type.
+
+</BLOCKQUOTE>
+
+<P>where &#8220;these operators&#8221; refers to the additive operators.
+This provision thus applied to any pointer, regardless of its
+provenance. In its place, the normative provision for this treatment
+was restricted to the <TT>&amp;</TT> operator only, in
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+For purposes of pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and
+comparison (7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>],
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]), an object that is not an array
+element whose address is taken in this way is considered to
+belong to an array with one element of type <TT>T</TT>.
+
+</BLOCKQUOTE>
+
+<P>Thus, for example:</P>
+
+<PRE>
+  int *p1 = new int;
+  int *p2 = &amp;*p1;
+  bool b1 = p1 &lt; p1+1;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+  bool b2 = p2 &lt; p2+1;  //<SPAN CLASS="cmnt"> well-defined</SPAN>
+</PRE>
+
+<P>This restriction does not seem desirable.</P>
+
+<P><B>Proposed resolution (October, 2019):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3.2">expr.unary.op</A>] bullet 3.2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The result of the unary <TT>&amp;</TT> operator is a pointer
+to its operand.</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>Otherwise, if the operand is an lvalue of type <TT>T</TT>, the
+resulting expression is a prvalue of type &#8220;pointer to
+<TT>T</TT>&#8221; whose result is a pointer to the designated object
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) or function. [<I>Note:</I> In
+particular, taking the address of a variable of type
+&#8220;<I>cv</I>
+<TT>T</TT>&#8221; yields a pointer of type &#8220;pointer
+to <I>cv</I>
+<TT>T</TT>&#8221;. &#8212;<I>end note</I>] <DEL>For purposes
+of pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and
+comparison (7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>],
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]), an object that is not an array
+element whose address is taken in this way is considered to
+belong to an array with one element of
+type <TT>T</TT>.</DEL>
+</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A value of a pointer type that is a pointer to or past
+the end of an object <I>represents the address</I> of the
+first byte in memory (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) occupied
+by the object<SUP>43</SUP> or the first byte in memory after
+the end of the storage occupied by the object,
+respectively. [<I>Note:</I> A pointer past the end of an
+object (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) is not considered to
+point to an unrelated object of the object's type that might
+be located at that address. A pointer value becomes invalid
+when the storage it denotes reaches the end of its storage
+duration; see 6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]. &#8212;<I>end
+note</I>] For purposes of pointer arithmetic
+(7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and comparison
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>], 7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]), a
+pointer past the end of the last element of an
+array <TT>x</TT> of <I>n</I> elements is considered to be
+equivalent to a pointer to a hypothetical
+element <TT>x[</TT><I>n</I><TT>]</TT> <INS>and an object
+of type <TT>T</TT> that is not an array element is considered
+to belong to an array with one element of
+type <TT>T</TT></INS>. The value representation of pointer
+types...
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 7.6.6 [<A href="https://wg21.link/expr.add#4.2">expr.add</A>] bullet 4.2
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>When an expression <TT>J</TT> that has integral type is
+added to or subtracted from an expression <TT>P</TT> of
+pointer type, the result has the type of <TT>P</TT>.</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>Otherwise, if <TT>P</TT> points to an array
+element <I>i</I> of an array object <TT>x</TT> with <I>n</I>
+elements (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]), [<I>Footnote:</I>
+<DEL>An</DEL> <INS>As specified in
+6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>].  an</INS> object that is not an
+array element is considered to belong to a single-element
+array for this purpose<DEL>; see
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]. A</DEL>
+<INS>and a</INS> pointer past the last element of an
+array <TT>x</TT> of <I>n</I> elements is considered to be
+equivalent to a pointer to a hypothetical array
+element <I>n</I> for this purpose<DEL>; see
+6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]</DEL>.  &#8212;<I>end
+footnote</I>] the expressions...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>] paragraph
+4 aa follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The result of comparing unequal pointers to objects
+[<I>Footnote:</I> <DEL>An</DEL>
+<INS>As specified in 6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>], an</INS>
+object that is not an array element is
+considered to belong to a single-element array for this
+purpose<DEL>; see 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]. A</DEL>
+<INS>and a</INS> pointer past the last element of an
+array <TT>x</TT> of <I>n</I> elements is considered to be
+equivalent to a pointer to a hypothetical <INS>array</INS>
+element <DEL><TT>x [</TT> <I>n</I> <TT>]</TT></DEL>
+<INS><I>n</I></INS> for this purpose<DEL>; see
+6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]</DEL>.  &#8212;<I>end footnote</I>] is
+defined in terms of a partial order consistent with the
+following rules:
+
+</BLOCKQUOTE>
+
+<LI><P>Change 26.10.16 [<A href="https://wg21.link/numeric.ops.midpoint#5">numeric.ops.midpoint</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<I>Expects:</I> <TT>a</TT> and <TT>b</TT> point to,
+respectively, elements <TT>x[</TT><I>i</I><TT>]</TT>
+and <TT>x[</TT><I>j</I><TT>]</TT> of the same array object
+<TT>x</TT>. [<I>Note:</I> <DEL>An</DEL>
+<INS>As specified in 6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>], an</INS>
+object that is not an array element is considered to belong
+to a single-element array for this purpose<DEL>; see
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]. A</DEL>
+<INS>and a</INS> pointer past the last element of an
+array <TT>x</TT> of <I>n</I> elements is considered to be
+equivalent to a pointer to a hypothetical <INS>array</INS>
+element <DEL><TT>x[</TT><I>n</I><TT>]</TT></DEL>
+<INS><I>n</I></INS> for this purpose<DEL>; see
+6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]</DEL>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

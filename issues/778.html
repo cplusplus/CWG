@@ -1,0 +1,234 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 778</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="778"></A><H4>778.
+  
+Template parameter packs in non-type template parameters
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 February, 2009<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3270.]</P>
+
+<P>Consider an example like:</P>
+
+<PRE>
+    template &lt;typename T, T Value&gt; struct bar { };
+    template &lt;typename... T, T ...Value&gt; void foo(bar&lt;T, Value&gt;);
+</PRE>
+
+<P>The current wording in 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>] is unclear as to
+whether this is permitted or not. For comparison,
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#13">dcl.fct</A>] paragraph 13 says,</P>
+
+<BLOCKQUOTE>
+
+A <I>declarator-id</I> or <I>abstract-declarator</I> containing an
+ellipsis shall only be used in a <I>parameter-declaration</I>.  Such a
+<I>parameter-declaration</I> is a parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]). When it is part of a
+<I>parameter-declaration-clause</I>, the parameter pack is a function
+parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).  [<I>Note:</I>
+Otherwise, the <I>parameter-declaration</I> is part of a
+<I>template-parameter-list</I> and the parameter pack is a template
+parameter pack; see 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]. &#8212;<I>end note</I>]
+A function parameter pack, if present, shall occur at the end of the
+<I>parameter-declaration-list</I>.  The type <TT>T</TT> of the
+<I>declarator-id</I> of the function parameter pack shall contain a
+template parameter pack; each template parameter pack in <TT>T</TT> is
+expanded by the function parameter pack.
+
+</BLOCKQUOTE>
+
+<P>The requirement here that the type of a function parameter pack
+must contain a template parameter pack is not repeated for template
+non-type parameters in 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>], nor is the statement
+that it expands the template parameter pack.</P>
+
+<P>A related issue is that neither function nor template parameter
+packs are listed in 13.7.4 [<A href="https://wg21.link/temp.variadic#4">temp.variadic</A>] paragraph 4 among
+the contexts in which a pack expansion can appear.</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.5 [<A href="https://wg21.link/expr.sizeof#5">expr.sizeof</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The identifier in a <TT>sizeof...</TT> expression shall name a
+parameter pack. The <TT>sizeof...</TT> operator yields the number of
+arguments provided for the parameter pack <I>identifier</I>. <DEL>The
+parameter pack is expanded (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) by the
+<TT>sizeof...</TT> operator</DEL> <INS>A <TT>sizeof...</TT> expression
+is a pack expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>])</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.3.4.6 [<A href="https://wg21.link/dcl.fct#13">dcl.fct</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>declarator-id</I> or <I>abstract-declarator</I> containing an
+ellipsis shall only be used in a <I>parameter-declaration</I>.  Such a
+<I>parameter-declaration</I> is a parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]). When it is part of a
+<I>parameter-declaration-clause</I>, the parameter pack is a function
+parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).  [<I>Note:</I>
+Otherwise, the <I>parameter-declaration</I> is part of a
+<I>template-parameter-list</I> and the parameter pack is a template
+parameter pack; see 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>].  &#8212;<I>end
+note</I>] <DEL>The type <TT>T</TT> of the <I>declarator-id</I> of the
+function parameter pack shall contain a template parameter pack; each
+template parameter pack in <TT>T</TT> is expanded by the function
+parameter pack</DEL> <INS>A function parameter pack is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>])</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.2 [<A href="https://wg21.link/temp.param#15">temp.param</A>] paragraph 15 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a <I>template-parameter</I> is a <I>type-parameter</I> with an
+ellipsis prior to its optional <I>identifier</I> or is a
+<I>parameter-declaration</I> that declares a parameter pack
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), then the <I>template-parameter</I> is a
+template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]). <INS>A template
+parameter pack that is a <I>parameter-declaration</I> whose type
+contains one or more unexpanded parameter packs is a pack
+expansion. Similarly, a template parameter pack that is a
+<I>type-parameter</I> with a <I>template-parameter-list</I> containing
+one or more unexpanded parameter packs is a pack expansion.</INS>
+[<I>Example:</I>
+</P>
+
+<PRE>
+  template &lt;class... Types&gt; class Tuple; // Types<SPAN CLASS="cmnt"> is a template type parameter pack <INS>and a pack expansion</INS></SPAN>
+  template &lt;class T, int... Dims&gt; struct multi_array; // Dims<SPAN CLASS="cmnt"> is a non-type template parameter pack <INS>but not a pack expansion</INS></SPAN>
+<INS>  template &lt;class T, T... Values&gt; struct static_array; // Values<SPAN CLASS="cmnt"> is a non-type template parameter pack and a pack expansion</SPAN></INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>] paragraphs 4-6 and add a new
+paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>pack expansion</I> <DEL>is a sequence of tokens that names one
+or more parameter packs, followed by an ellipsis.  The sequence of
+tokens is called the <I>pattern of the expansion</I>; its syntax</DEL>
+<INS>consists of a <I>pattern</I> and an ellipsis, the instantiation
+of which produces zero or more instantiations of the pattern in a list
+(described below).  The form of the pattern</INS> depends on the
+context in which the expansion occurs. Pack expansions can occur in
+the following contexts:</P>
+
+<UL>
+<LI><P><INS>In a function parameter pack (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]);
+the pattern is the <I>parameter-declaration</I> without the
+ellipsis.</INS></P></LI>
+
+<LI>
+<P><INS>In a template parameter pack that is a pack expansion
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]):</INS></P>
+
+<UL>
+<LI><P><INS>if the template parameter pack is a
+<I>parameter-declaration</I>; the pattern is the
+<I>parameter-declaration</I> without the ellipsis,</INS></P></LI>
+
+<LI><P><INS>if the template parameter pack is a <I>type-parameter</I>
+with a <I>template-parameter-list</I>; the pattern is the corresponding
+<I>type-parameter</I> without the ellipsis.</INS></P></LI>
+
+</UL>
+
+</LI>
+
+<LI><P>...</P></LI>
+
+<LI><P><INS>In a <TT>sizeof...</TT> expression (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]),
+the pattern is an <I>identifier</I>.</INS></P></LI>
+
+</UL>
+
+<P>[<I>Example:...</I>
+</P>
+
+<P>A parameter pack whose name appears within the pattern of a pack
+expansion is expanded by that pack expansion.  An appearance of the
+name of a parameter pack is only expanded by the innermost enclosing
+pack expansion.  The pattern of a pack expansion shall name one or
+more parameter packs that are not expanded by a nested pack
+expansion<INS>; such parameter packs are called
+<I>unexpanded</I> parameter packs in the pattern</INS>. All of the
+parameter packs expanded...</P>
+
+<PRE>
+  ...
+  void g(Args ... args) {  <INS>//<SPAN CLASS="cmnt"> OK: &#8220;</SPAN>Args<SPAN CLASS="cmnt">&#8221; is expanded by the function parameter pack &#8220;</SPAN>args<SPAN CLASS="cmnt">&#8221;</SPAN></INS>
+  ...
+</PRE>
+
+<P>The instantiation of <DEL>an</DEL> <INS>a pack</INS> expansion
+<INS>that is not a <TT>sizeof...</TT> expression</INS> produces a
+list...</P>
+
+<P><INS>The instantiation of a <TT>sizeof...</TT> expression
+(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]) produces an integral constant containing
+the number of elements in the parameter pack it expands.</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1182.html">1182</A>
+and <A HREF="1183.html">1183</A>.</P>
+
+<P><B>Additional note (February, 2011):</B></P>
+
+<P>A problematic case is a function like</P>
+
+<PRE>
+  template&lt;typename... T, T... t&gt; void f(T...) { }
+</PRE>
+
+<P>where each element of the nontype pack actually has a different
+type.  This causes problems for template argument deduction, since
+<TT>T</TT> and <TT>t</TT> are supposed to be deduced independently,
+but they're linked through their sizes.  There doesn't appear to be
+any use case for this kind of example, so it should be ill-formed.</P>
+
+<P>The rule should probably be to consider a non-type template
+parameter pack that expands any template parameter packs from the same
+<I>template-parameter-list</I> as ill-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

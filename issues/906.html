@@ -1,0 +1,171 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 906</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="906"></A><H4>906.
+  
+Which special member functions can be defaulted?
+</H4>
+<B>Section: </B>9.5&#160; [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 May, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>The only restriction placed on the use of &#8220;<TT>=default</TT>&#8221;
+in 9.5 [<A href="https://wg21.link/dcl.fct.def#9">dcl.fct.def</A>] paragraph 9 is that a defaulted function must
+be a special member function.  However, there are many variations of
+declarations of special member functions, and it's not clear which of
+those should be able to be defaulted.  Among the possibilities:</P>
+
+<UL>
+<LI><P>default arguments</P></LI>
+
+<LI><P>by-value parameter for a copy assignment operator</P></LI>
+
+<LI><P>exception specifications</P></LI>
+
+<LI><P>arbitrary return values for copy assignment operators</P></LI>
+
+<LI><P>a <TT>const</TT> reference parameter when the implicit
+function would have a non-const</P></LI>
+
+</UL>
+
+<P>Presumably, you should only be able to default a function if it
+is declared compatibly with the implicit declaration that would have
+been generated.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<OL>
+<LI><P>Change 9.5 [<A href="https://wg21.link/dcl.fct.def#9">dcl.fct.def</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A function definition of the form:</P>
+
+<UL>
+<I>decl-specifier-seq<SUB>opt</SUB> attribute-specifier<SUB>opt</SUB> declarator</I> <TT>= default ;</TT>
+</UL>
+
+<P>is called an <I>explicitly-defaulted</I> definition. <DEL>Only special
+member functions may be explicitly defaulted, and the implementation
+shall define them as if they had implicit definitions (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>], 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]).</DEL>
+<INS>A function that is explicitly defaulted shall</INS>
+</P>
+
+<UL>
+<LI><P><INS>be a special member function,</INS></P></LI>
+
+<LI><P><INS>have the same declared function type (except for possibly-differing
+<I>ref-qualifier</I>s and except that in the case of a copy constructor
+or copy assignment operator, the parameter type may be
+&#8220;reference to non-const <TT>T</TT>,&#8221; where <TT>T</TT> is
+the name of the member function's class) as if it had been implicitly
+declared,</INS></P></LI>
+
+<LI><P><INS>not have default arguments, and</INS></P></LI>
+
+<LI><P><INS>not have an <I>exception-specification</I>.</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> This implies that parameter types, return type,
+and cv-qualifiers must match the hypothetical implicit declaration.
+&#8212;<I>end note</I>] An explicitly-defaulted function may be declared
+constexpr only if it would have been implicitly declared as constexpr.
+If it is explicitly defaulted on its first declaration,</INS></P>
+
+<UL>
+<LI><P><INS>it shall be public,</INS></P></LI>
+
+<LI><P><INS>it shall not be explicit,</INS></P></LI>
+
+<LI><P><INS>it shall not be virtual,</INS></P></LI>
+
+<LI><P><INS>it is implicitly considered to have the same
+<I>exception-specification</I> as if it had been implicitly
+declared (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), and</INS></P></LI>
+
+<LI><P><INS>in the case of a copy constructor or copy assignment
+operator, it shall have the same parameter type as if it had been
+implicitly declared.</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> Such a special member function may be trivial,
+and thus its accessibility and explicitness should match the
+hypothetical implicit definition; see below. &#8212;<I>end note</I>]
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct S {
+    S(int a = 0) = default;              //<SPAN CLASS="cmnt"> ill-formed: default argument</SPAN>
+    void operator=(const S&amp;) = default;  //<SPAN CLASS="cmnt"> ill-formed: non-matching return type</SPAN>
+    ~S() throw() = default;              //<SPAN CLASS="cmnt"> ill-formed: exception-specification</SPAN>
+  private:
+    S(S&amp;);                               //<SPAN CLASS="cmnt"> OK: private copy constructor</SPAN>
+  };
+  S::S(S&amp;) = default;                    //<SPAN CLASS="cmnt"> OK: defines copy constructor</SPAN></INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>] Explicitly-defaulted functions and
+implicitly-declared functions are collectively called <I>defaulted</I>
+functions, and the implementation shall provide implicit definitions
+for them (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>], 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]), which might mean defining them as
+deleted.</INS>A special member function that would be implicitly
+defined as deleted may be explicitly defaulted only on its first
+declaration, in which case it is defined as deleted.  A special member
+function is <I>user-provided</I> if it is user-declared and not
+explicitly defaulted on its first declaration. A user-provided
+explicitly-defaulted function is defined at the point where it is
+explicitly defaulted. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<P><I>[Editorial note: this change incorporates the overlapping portion
+of the resolution of <A HREF="667.html">issue 667</A>.]</I></P>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#6">class.ctor</A>] paragraph 6 as follows:</P></LI>
+
+...[<I>Note:</I> ...An explicitly-defaulted definition <DEL>has
+no</DEL> <INS>might have an</INS> implicit
+<I>exception-specification</I><INS>, see 9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]</INS>. &#8212;<I>end note</I>]
+
+</OL>
+
+<P>This resolution also resolves <A HREF="905.html">issue 905</A>.
+See also <A HREF="667.html">issue 667</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

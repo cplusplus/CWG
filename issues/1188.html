@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1188</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1188"></A><H4>1188.
+  
+Type punning in constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-31<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+
+
+<P>The status of the following example is not clear:</P>
+
+<PRE>
+    union U { float f; unsigned long u; };
+
+    constexpr U u1 = { 1.0 };
+    constexpr unsigned long u2 = u1.u;
+</PRE>
+
+<P>This might be ill-formed because the aliasing causes undefined
+behavior, which should make the expression not a constant expression.
+However, a similar example using a permitted aliasing would
+presumably be acceptable:</P>
+
+<PRE>
+    union U {
+        unsigned char c[sizeof(double)];
+        double d;
+    };
+    constexpr U c1u = { 0x12, 0x34 /* etc. */ };
+    constexpr double c1 = c1u.d;
+</PRE>
+
+<P>One suggestion was that unions should not be considered literal
+types, but some in the ensuing discussion deemed that excessive.  That
+also would not address similar examples using
+<TT>reinterpret_cast</TT>, which is currently also permitted in
+constant expressions.</P>
+
+<P><B>Proposed resolution (November, 2010) [SUPERSEDED]:</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2 as follows:</P>
+
+<UL>
+<LI><P>an lvalue-to-rvalue conversion...</P></LI>
+
+<LI><P><INS>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>])
+that is applied to a glvalue that refers to a non-active member of a
+union or a subobject thereof;</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+<LI><P>
+<DEL>a type conversion from a pointer or pointer-to-member type to a
+literal type [<I>Note:</I> a user-defined conversion invokes a function
+&#8212;<I>end note</I>]</DEL> <INS>a <TT>reinterpret_cast</TT>
+(7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>])</INS>;</P></LI>
+
+</UL>
+
+<P><I>[Note: the proposed resolution of <A HREF="1098.html">issue 1098</A>
+edits this bullet in an incompatible fashion.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

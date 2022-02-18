@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 624</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="624"></A><H4>624.
+  
+Overflow in calculating size of allocation
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 March 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting (resolution
+in paper N2757).]</P>
+
+
+
+<P>
+<A HREF="256.html">Issue 256</A> was closed without action,
+principally on the the grounds that an implementation could provide a
+means (command-line option, <TT>#pragma</TT>, etc.) for requesting
+that the allocation size be checked for validity, but that &#8220;it
+would not be appropriate to require this overhead for every array
+allocation in every program.&#8221;</P>
+
+<P>This rationale may be giving too much weight to the overhead such a
+check would add, especially when compared to the likely cost of
+actually doing the storage allocation.  In particular, the test
+essentially amounts to something like</P>
+
+<PRE>
+    if (max_allocation_size / sizeof(T) &lt; num_elements)
+        throw std::bad_alloc();
+</PRE>
+
+<P>(noting that <TT>max_allocation_size/sizeof(T)</TT> is a
+compile-time constant).  It might make more sense to turn the
+rationale around and require the check, assuming that implementations
+could provide a mechanism for suppressing it if needed.</P>
+
+<P>
+<U>Suggested resolution</U>:</P>
+
+<P>In 7.6.2.8 [<A href="https://wg21.link/expr.new#7">expr.new</A>] paragraph 7, add the following
+words before the example:</P>
+
+<BLOCKQUOTE>
+
+If the value of the expression is such that the size of the allocated
+object would exceed the implementation-defined limit, an exception of
+type <TT>std::bad_alloc</TT> is thrown and no storage is obtained.
+
+</BLOCKQUOTE>
+
+<P><B>Note (March, 2008):</B></P>
+
+<P>The Evolution Working Group has accepted the intent of
+<A HREF="256.html">issue 256</A> and referred it to CWG for
+action for C++0x (see paper J16/07-0033 = WG21 N2173).</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>As suggested.</P>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>The CWG felt that this situation should not be treated like an
+out-of-memory situation and thus an exception of type
+<TT>std::bad_alloc</TT> (or, alternatively, returning a null pointer
+for a <TT>throw()</TT> allocator) would not be appropriate.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#8">expr.new</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>If the value of the <I>expression</I> in a
+<I>direct-new-declarator</I> is such that the size of the
+allocated object would exceed the implementation-defined limit, no
+storage is obtained and the <I>new-expression</I> terminates by
+throwing an exception of a type that would match a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type <TT>std::length_error</TT>
+(19.2.6 [<A href="https://wg21.link/length.error">length.error</A>]).  Otherwise, if</INS>
+<DEL>When</DEL> the value of <DEL>the</DEL> <INS>that</INS> <I>expression</I> <DEL>in a
+<I>direct-new-declarator</I></DEL> is zero, the allocation function is
+called to allocate an array with no elements.
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: <TT>std::length_error</TT> is thrown by
+<TT>std::string</TT> and <TT>std::vector</TT> and thus appears to
+be the right choice for the exception to be thrown here.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

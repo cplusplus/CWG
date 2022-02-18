@@ -1,0 +1,184 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 240</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="240"></A><H4>240.
+  
+Uninitialized values and undefined behavior
+</H4>
+<B>Section: </B>7.3.2&#160; [<A href="https://wg21.link/conv.lval">conv.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Aug 2000<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>7.3.2 [<A href="https://wg21.link/conv.lval#1">conv.lval</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+If the object to which the lvalue refers is not an object of type
+<TT>T</TT> and is not an object of a type derived from <TT>T</TT>, or
+if the object is uninitialized, a program that necessitates this
+conversion has undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>I think there are at least three related issues around this
+specification:</P>
+
+<OL>
+
+<LI><P>Presumably assigning a valid value to an uninitialized
+object allows it to participate in the lvalue-to-rvalue
+conversion without undefined behavior (otherwise the number of
+programs with defined behavior would be vanishingly small :-).
+However, the wording here just says "uninitialized" and doesn't
+mention assignment.</P></LI>
+
+<LI><P>There's no exception made for <TT>unsigned char</TT> types.
+The wording in 6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>] was carefully crafted to
+allow use of <TT>unsigned char</TT> to access uninitialized data so
+that <TT>memcpy</TT> and such could be written in C++ without
+undefined behavior, but this statement undermines that
+intent.</P></LI>
+
+<LI>
+<P>It's possible to get an uninitialized rvalue without invoking
+the lvalue-to-rvalue conversion.  For instance:</P>
+
+<PRE>
+        struct A {
+            int i;
+            A() { } // no init of A::i
+        };
+        int j = A().i;  // uninitialized rvalue
+</PRE>
+
+<P>There doesn't appear to be anything in the current IS wording
+that says that this is undefined behavior.  My guess is that we
+thought that in placing the restriction on use of uninitialized
+objects in the lvalue-to-rvalue conversion we were catching all
+possible cases, but we missed this one.</P>
+</LI>
+
+</OL>
+
+<P>In light of the above, I think the discussion of uninitialized
+objects ought to be removed from 7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>] paragraph
+1.  Instead, something like the following ought to be added to
+6.8 [<A href="https://wg21.link/basic.types#4">basic.types</A>] paragraph 4 (which is where the concept of
+"value" is introduced):</P>
+
+<BLOCKQUOTE>
+Any use of an indeterminate value (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>],
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) of any type
+other than <TT>char</TT> or <TT>unsigned char</TT> results in
+undefined behavior.
+</BLOCKQUOTE>
+
+<P>
+<U>John Max Skaller</U>:</P>
+
+<P>
+<TT>A().i</TT> had better be an lvalue; the rules are wrong.
+Accessing a member of a structure requires it be converted to
+an lvalue, the above calculation is 'as if':</P>
+
+<PRE>
+    struct A {
+        int i;
+        A *get() { return this; }
+    };
+    int j = (*A().get()).i;
+</PRE>
+
+<P>and you can see the bracketed expression is an lvalue. </P>
+
+<P>A consequence is:</P>
+
+<PRE>
+    int &amp;j= A().i; // OK, even if the temporary evaporates
+</PRE>
+
+<P>
+<TT>j</TT> now refers to a 'destroyed' value. Any use of <TT>j</TT>
+is an error.  But the binding at the time is valid.</P>
+
+<P><B>Proposed Resolution (November, 2006):</B></P>
+
+<OL>
+<LI>
+<P>Add the indicated words to 6.8 [<A href="https://wg21.link/basic.types#4">basic.types</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+... For trivial types, the value representation is a set of bits in the
+object representation that determines a value, which is one discrete
+element of an implementation-defined set of values. <INS>Any use of an
+indeterminate value (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) of a type other than <TT>unsigned char</TT>
+results in undefined behavior.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.3.2 [<A href="https://wg21.link/conv.lval#1">conv.lval</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the object to which the lvalue refers is not an object of
+type <TT>T</TT> and is not an object of a type derived
+from <TT>T</TT>, <DEL>or if the object is uninitialized,</DEL> a program
+that necessitates this conversion has undefined behavior.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><B>Additional note (May, 2008):</B></P>
+
+<P>The C committee is dealing with a similar issue in their <A HREF="http://www.open-std.org/jtc1/sc22/wg14/www/docs/dr_338.htm">DR338</A>.
+According to <A HREF="http://wiki.dinkumware.com/twiki/pub/WG14/DefectReports/dr338_response.txt">
+this analysis</A>, they plan to take almost the opposite approach
+to the one described above by augmenting the description of their
+version of the lvalue-to-rvalue conversion.  The CWG did not
+consider that access to an unsigned char might still trap if it
+is allocated in a register and needs to reevaluate the proposed
+resolution in that light.  See also <A HREF="129.html">issue 129</A>.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="616.html">issue 616</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

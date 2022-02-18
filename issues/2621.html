@@ -1,0 +1,151 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2621</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2621"></A><H4>2621.
+  
+Kind of lookup for <TT>using enum</TT> declarations
+</H4>
+<B>Section: </B>9.7.2&#160; [<A href="https://wg21.link/enum.udecl">enum.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Sean Baxter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-17<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2720r0.pdf#CA054">P2720R0 comment
+  CA&#160;054<BR></A>
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+enum class E {
+  a, b, c
+};
+
+using MyE = E;
+
+int main() {
+  using enum MyE;   //<SPAN CLASS="cmnt"> #1</SPAN>
+}
+</PRE>
+
+<P>Does the lookup for the <I>elaborated-enum-specifier</I> at #1 use
+type-only lookup per 6.5.6 [<A href="https://wg21.link/basic.lookup.elab">basic.lookup.elab</A>]?  There is
+implementation divergence; EDG, gcc, and MSVC accept, clang rejects.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>Lookup for the <I>elaborated-enum-specifier</I> is as specified
+in 6.5.6 [<A href="https://wg21.link/basic.lookup.elab">basic.lookup.elab</A>].</INS>
+The <I>elaborated-enum-specifier</I> shall not name a dependent type
+and the type shall have a reachable <I>enum-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P><B>CWG telecon 2022-09-09:</B></P>
+
+<P>The example at #1 is intended to be valid; even though the grammar
+suggests that an <I>elaborated-type-specifier</I> is used here, an
+ordinary (not a type-only) lookup is performed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-09-23) [SUPERSEDED]:</B></P>
+
+<P>Change in 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>The terminal name of the <I>elaborated-enum-specifier</I>
+undergoes ordinary lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>],
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]).</INS>
+The <I>elaborated-enum-specifier</I> shall not name a dependent type
+and the type shall have a reachable <I>enum-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2022-11-07:</B></P>
+
+<P>Use the wording approach presented in CA-054, with necessary
+adjunct fixes.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-10):</B></P>
+
+<P>Change the grammar before 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#1">dcl.type.elab</A>] paragraph 1 as
+follows, merging the grammar productions:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+<I>elaborated-type-specifier :
+    class-key attribute-specifier-seq<SUB>opt</SUB> nested-name-specifier<SUB>opt</SUB> identifier
+    class-key simple-template-id
+    class-key nested-name-specifier template<SUB>opt</SUB> simple-template-id</I>
+    <DEL><I>elaborated-enum-specifier
+    
+elaborated-enum-specifier :</I></DEL>
+    enum <I>nested-name-specifier<SUB>opt</SUB> identifier</I>
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>Change the grammar before 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+<I>using-enum-declaration:</I>
+    using <DEL><I>elaborated-enum-specifier</I></DEL> <INS>enum <I>using-enum-declarator</I></INS> ;
+
+<INS><I>using-enum-declarator:
+    nested-name-specifier<SUB>opt</SUB> identifier
+    nested-name-specifier<SUB>opt</SUB> simple-template-id</I></INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>Change in 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A <I>using-enum-declarator</I> names the set of declarations
+found by lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>],
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]) for
+the <I>using-enum-declarator</I>.</INS>
+The <DEL><I>elaborated-enum-specifier</I></DEL>
+<INS><I>using-enum-declarator</I></INS> shall
+<DEL>not name a dependent</DEL> <INS>designate a non-dependent</INS>
+type <DEL>and the type shall have</DEL> <INS>with</INS> a
+reachable <I>enum-specifier</I>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

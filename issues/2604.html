@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2604</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2604"></A><H4>2604.
+  
+Attributes for an explicit specialization
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aaron Ballman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-23<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+
+
+<P>It is unclear whether an explicit template specialization
+"inherits" the attributes written on the primary template, or whether
+the specialization has to repeat the attributes. For example:</P>
+
+<PRE>
+  template &lt;typename Ty&gt;
+  [[noreturn]] void func(Ty);
+
+  template &lt;&gt;
+  void func&lt;int&gt;(int) {
+    //<SPAN CLASS="cmnt"> Warning about returning from a noreturn function or not?</SPAN>
+  }
+</PRE>
+
+<P>A similar question arises for attributes written on the parameters
+of the primary function template. For example:</P>
+
+<PRE>
+  template &lt;typename Ty&gt;
+  void func([[maybe_unused]] int i);
+
+  template &lt;&gt;
+  void func&lt;int&gt;(int i) {
+   //<SPAN CLASS="cmnt"> i is not used, should it be warned on or not?</SPAN>
+  }
+</PRE>
+
+<P>There is implementation divergence for the example.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#13">temp.expl.spec</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>Any attributes applying to any part of the declaration of an explicit specialization of a function or variable template, as well as </INS>
+<DEL>Whether</DEL> <INS>whether such</INS> an explicit
+specialization <DEL>of a function or variable template</DEL> is
+inline, constexpr, or an immediate function<INS>,</INS> is determined
+by the explicit specialization and is independent of those properties
+of the template.
+<INS>[ Note: Attributes that would affect the association of the
+declaration of an explicit specialization with the declaration of the
+primary template need to match. -- end note ]</INS>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-09):</B></P>
+
+<P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+Whether an explicit specialization of a function or variable
+template is inline, constexpr, or an immediate function is
+determined by the explicit specialization and is independent
+of those properties of the template. <INS>Similarly, attributes
+appearing in the declaration of a template have no effect on an
+explicit specialization of that template.</INS> [<I>Example 7:</I>
+
+<PRE>
+  template&lt;class T&gt; void f(T) { /* ... */ }
+  template&lt;class T&gt; inline T g(T) { /* ... */ }
+
+  template&lt;&gt; inline void f&lt;&gt;(int) { /* ... */ } //<SPAN CLASS="cmnt"> OK, inline</SPAN>
+  template&lt;&gt; int g&lt;&gt;(int) { /* ... */ }         //<SPAN CLASS="cmnt"> OK, not inline</SPAN>
+
+<INS>  template&lt;typename&gt; [[noreturn]] void h([[maybe_unused]] int i);
+  template&lt;&gt; void h&lt;int&gt;(int i) {
+    //<SPAN CLASS="cmnt"> Implementations are expected not to warn that the function returns but can</SPAN>
+    //<SPAN CLASS="cmnt"> warn about the unused parameter.</SPAN>
+  }</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

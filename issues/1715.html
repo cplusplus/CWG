@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1715</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1715"></A><H4>1715.
+  
+Access and inherited constructor templates
+</H4>
+<B>Section: </B>_N4527_.12.9&#160; [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-16<BR>
+
+
+<P>[Adopted at the October, 2015 meeting as P0136R1.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  template&lt;class T&gt; struct S {
+  private:
+    typedef int X;
+    friend struct B;
+  };
+
+  struct B {
+    template&lt;class T&gt; B(T, typename T::X);
+  };
+
+  struct D: B {
+    using B::B;
+  };
+
+  S&lt;int&gt; s;
+  B b(s, 2); //<SPAN CLASS="cmnt"> Okay, thanks to friendship.</SPAN>
+  D d(s, 2); //<SPAN CLASS="cmnt"> Error: friendship is not inherited.</SPAN>
+</PRE>
+
+<P>My understanding is that the construction of <TT>d</TT> fails
+because <TT>typename T::X</TT> expands to <TT>S&lt;int&gt;::X</TT> in this
+case, and that is not accessible from <TT>D</TT>.</P>
+
+<P>However, I'm not sure that makes sense from a usability perspective.
+The user of <TT>D</TT> just wanted to be able to wrap class <TT>B</TT>, and
+the fact that friendship was granted to <TT>B</TT> to enable its
+constructor parameter seems like just an implementation detail
+that <TT>D</TT> shouldn't have to cope with.</P>
+
+<P>Would it perhaps be better to suspend access checking during the
+instantiation of inheriting member function template declarations (not
+definitions), since real access problems (e.g., the selection of a private
+constructor) would presumably be revealed when doing the full
+instantiation?</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#4">class.inhctor</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A constructor so declared has the same access as the corresponding
+constructor in <TT>X</TT>. It is deleted if the corresponding constructor
+in <TT>X</TT> is deleted (<DEL>9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]</DEL>
+<INS>9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]</INS>). <INS>While performing template
+argument substitution (13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) for constructor
+templates so declared, name lookup, overload resolution, and access
+checking are performed in the context of the corresponding constructor
+template of <TT>X</TT>. [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>   struct B {
+     template&lt;class T&gt; B(T, typename T::Q);
+   };
+
+   class S {
+     using Q = int;
+     template&lt;class T&gt;
+     friend B::B(T, typename T::Q);
+   };
+
+   struct D : B {
+     using B::B;
+   };
+
+   B b(S(), 1); //<SPAN CLASS="cmnt"> OK: </SPAN>B::B<SPAN CLASS="cmnt"> is a friend of </SPAN>S
+   D d(S(), 2); //<SPAN CLASS="cmnt"> OK: access control is in the context of </SPAN>B::B</INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS> An inheriting constructor shall not
+be explicitly instantiated (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicitly
+specialized (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]).</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (June, 2014):</B></P>
+
+<P>This issue is being returned to "review" status in light of a
+suggestion for an alternative approach to the problem; see
+<A HREF="1941.html">issue 1941</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

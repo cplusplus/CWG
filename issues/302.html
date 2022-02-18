@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 302</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="302"></A><H4>302.
+  
+Value-initialization and generation of default constructor
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Jul 2001<BR>
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+
+
+<P>We've been looking at implementing value-initialization.  At one point,
+some years back, I remember Bjarne saying that something like X() in
+an expression should produce an X object with the same value one would
+get if one created a static X object, i.e., the uninitialized members
+would be zero-initialized because the whole object is initialized
+at program startup, before the constructor is called.</P>
+
+<P>The formulation for default-initialization that made it into TC1 (in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])
+is written a little differently (see <A HREF="178.html">issue 178</A>),
+but I had always
+assumed that it would still be a valid implementation to zero the whole
+object and then call the default constructor for the troublesome
+"non-POD but no user-written constructor" cases.</P>
+
+<P>That almost works correctly, but I found a problem case:</P>
+<PRE>
+    struct A {
+      A();
+      ~A();
+    };
+    struct B {
+      // B is a non-POD with no user-written constructor.
+      // It has a nontrivial generated constructor.
+      const int i;
+      A a;
+    };
+    int main () {
+      // Value-initializing a "B" doesn't call the default constructor for
+      // "B"; it value-initializes the members of B.  Therefore it shouldn't
+      // cause an error on generation of the default constructor for the
+      // following:
+      new B();
+    }
+</PRE>
+
+<P>If the definition of the <TT>B::B()</TT> constructor is generated, an error
+is issued because the const member "<TT>i</TT>" is not initialized.  But the
+definition of value-initialization doesn't require calling the
+constructor, and therefore it doesn't require generating it, and
+therefore the error shouldn't be detected.</P>
+
+<P>So this is a case where zero-initializing and then calling the constructor
+is not equivalent to value-initializing, because one case generates
+an error and the other doesn't.</P>
+
+<P>This is sort of unfortunate, because one doesn't want to generate all
+the required initializations at the point where the "<TT>()</TT>"
+initialization
+occurs.  One would like those initializations to be packaged in a
+function, and the default constructor is pretty much the function
+one wants.</P>
+
+<P>I see several implementation choices:</P>
+<OL>
+<LI>
+Zero the object, then call the default generated constructor.  This
+is not valid unless the standard is changed to say that the default
+constructor might be generated for value-initialization cases like the
+above (that is, it's implementation-dependent whether the constructor
+definition is generated).  The zeroing operation can of course be
+optimized, if necessary, to hit only the pieces of the object that
+would otherwise be left uninitialized.  An alternative would be
+to <I>require</I> generation of the constructor for value-initialization
+cases, even if the implementation technique doesn't call the
+constructor at that point.  It's pretty likely that the constructor
+is going to have to be generated at some point in the program anyway.
+</LI>
+<LI>
+Make a new value-initialization "constructor," whose body looks a
+lot like the usual generated constructor, but which also zeroes other members.
+No errors would be generated while generating this modified constructor,
+because it generates code that does full initialization.  (Actually,
+it wouldn't guarantee initialization of reference members, and that
+might be an argument for generating the constructor, in order to get that
+error.)  This is standard-conforming, but it destroys object-code
+compatibility.
+</LI>
+<LI>
+Variation on (1):  Zero first, and generate the object code for the
+default constructor when it's needed for value-initialization cases, but
+don't issue any errors at that time.  Issue the errors only if it turns
+out the constructor is "really" referenced.  Aside from the essential
+shadiness of this approach, I fear that something in the generation
+of the constructor will cause a template instantiation which will be
+an abservable side effect.
+</LI>
+</OL>
+
+<P>Personally, I find option 1 the least objectionable.</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P>Add the indicated wording to the third-to-last sentence of
+6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] pararaph 2:</P>
+<BLOCKQUOTE>
+A default constructor for a class is used by default initialization
+<INS>or value initialization</INS> as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>].
+</BLOCKQUOTE>
+<P>Add a footnote to the indicated bullet in 9.4 [<A href="https://wg21.link/dcl.init#5">dcl.init</A>] paragraph 5:
+</P>
+<UL>
+<LI>
+if <TT>T</TT> is a non-union class type without a user-declared constructor,
+then every non-static data member and base-class component of <TT>T</TT> is
+value-initialized.
+<INS>[Footnote: Value-initialization for such a class object may be
+implemented by zero-initializing the object and then calling the default
+constructor.]</INS>
+</LI>
+</UL>
+<P>Add the indicated wording to the first sentence of
+11.4.5 [<A href="https://wg21.link/class.ctor#7">class.ctor</A>] paragraph 7:</P>
+<BLOCKQUOTE>
+An implicitly-declared default constructor for a class is <I>implicitly
+defined</I> when it is used <INS>(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])</INS> to
+create an object of its class type
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

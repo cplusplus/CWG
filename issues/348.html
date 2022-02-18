@@ -1,0 +1,258 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 348</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="348"></A><H4>348.
+  
+<TT>delete</TT> and user-written deallocation functions
+</H4>
+<B>Section: </B>6.7.6.5.3&#160; [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ruslan Abdikeev
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 April 2002<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>Standard is clear on behaviour of default allocation/deallocation
+functions.
+However, it is surpisingly vague on requirements to the behaviour
+of user-defined deallocation function and an interaction between
+delete-expression and deallocation function.
+This caused a heated argument on fido7.su.c-cpp newsgroup.</P>
+
+<P>Resume:</P>
+
+<P>It is not clear if user-supplied deallocation function is called from
+delete-expr when the operand of delete-expr is the null
+pointer (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]).
+If it is, standard does not specify what user-supplied
+deallocation function shall do with
+the null pointer operand (17.6.3 [<A href="https://wg21.link/new.delete">new.delete</A>]).
+Instead, Standard uses the term "has no effect", which meaning
+is too vague in context given (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]).</P>
+
+<P>Description:</P>
+
+<P>Consider statements
+<PRE>
+   char* p= 0; //result of failed non-throwing ::new char[]
+   ::delete[] p;
+</PRE>
+Argument passed to delete-expression is valid - it is the result
+of a call to the non-throwing version of ::new, which has been failed.
+7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1 explicitly prohibit us to pass 0
+without having the ::new failure.</P>
+
+<P>Standard does NOT specify whether user-defined deallocation function
+should be called in this case, or not.</P>
+
+<P>Specifically, standard says in 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2:
+<BLOCKQUOTE>
+   ...if the value of the operand of delete is the null pointer the operation
+   has no effect.
+</BLOCKQUOTE>
+Standard doesn't specify term "has no effect".
+It is not clear from this context, whether the called deallocation function
+is required to have no effect, or delete-expression shall not call
+the deallocation function.</P>
+<P>Furthermore, in para 4 standard says on default deallocation function:
+<BLOCKQUOTE>
+   If the delete-expression calls the implementation deallocation
+   function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]),
+   if the operand of the delete expression is not
+   the null pointer constant, ...
+</BLOCKQUOTE>
+Why it is so specific on interaction of default deallocation function
+and delete-expr?</P>
+
+<P>If "has no effect" is a requirement to the deallocation function,
+then it should be stated in 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>],
+or in 17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] and
+17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>],
+and it should be stated explicitly.</P>
+
+<P>Furthermore, standard does NOT specify what actions shall
+be performed by user-supplied deallocation function if NULL
+is given (17.6.3.2 [<A href="https://wg21.link/new.delete.single#12">new.delete.single</A>] paragraph 12):</P>
+<BLOCKQUOTE>
+   Required behaviour: accept a value of ptr that is null or that was
+   returned by an earlier call to the default
+<TT>operator new(std::size_t)</TT>
+   or <TT>operator new(std::size_t, const std::nothrow_t&amp;)</TT>.
+</BLOCKQUOTE>
+
+<P>The same corresponds to ::delete[] case.</P>
+
+<P>Expected solution:</P>
+
+<OL>
+<LI>
+Make it clear that delete-expr will not call deallocation function
+if null pointer is given (in 7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]).
+</LI>
+<LI>
+Specify what user deallocation function shall do when null is given
+(either in 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>], or
+in 17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>], and
+17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>]).
+</LI>
+</OL>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>We believe that study of 17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] paragraphs
+12 and 13, 17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>] paragraphs 11 and 12, and
+6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#3">basic.stc.dynamic.deallocation</A>] paragraph 3 shows that the
+system-provided operator delete functions must accept a null pointer and
+ignore it.  Those sections also show that a user-written replacement
+for the system-provided operator delete functions must accept a
+null pointer.  There is no requirement that such functions ignore
+a null pointer, which is okay -- perhaps the reason for replacing the
+system-provided functions is to do something special
+with null pointer values (e.g., log such calls and return).</P>
+
+<P>We believe that the standard should not require an implementation
+to call a delete function with a null pointer, but it must allow
+that.  For the system-provided delete functions or replacements
+thereof, the standard already makes it clear that the delete
+function must accept a null pointer.  For class-specific delete
+functions, we believe the standard should require that such
+functions accept a null pointer, though it should not mandate
+what they do with null pointers.</P>
+
+<P>7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>] needs to be updated to say that
+it is unspecified whether or not the operator delete function is
+called with a null pointer, and 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]
+needs to be updated to say that any deallocation function must
+accept a null pointer.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2 as
+indicated:</P>
+
+<BLOCKQUOTE>
+
+If the operand has a class type, the operand is converted to a
+pointer type by calling the above-mentioned conversion function,
+and the converted operand is used in place of the original
+operand for the remainder of this section. In either alternative,
+<DEL>if</DEL> the value of the operand of <TT>delete</TT> <DEL>is the
+null pointer the operation has no effect</DEL> <INS>may be a null
+pointer value. If it is not a null pointer value, in</INS>
+<DEL>In</DEL> the first alternative (<I>delete object</I>), the value
+of the operand of <TT>delete</TT> shall be a pointer to a
+non-array object or a pointer to a sub-object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) representing a base class of such an object
+(11.7 [<A href="https://wg21.link/class.derived">class.derived</A>])...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 as
+follows (note that the old wording reflects the changes proposed
+by <A HREF="442.html">issue 442</A>:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>cast-expression</I> in a <I>delete-expression</I> shall
+be evaluated exactly once. <DEL>If the delete-expression calls the
+implementation deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]), and if the value of the operand of the
+delete expression is not a null pointer, the deallocation
+function will deallocate the storage referenced by the pointer
+thus rendering the pointer invalid. [<I>Note:</I> the value of a
+pointer that refers to deallocated storage is
+indeterminate. &#8212;<I>end note</I>]</DEL>
+</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>] paragraphs 6-7 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The</DEL> <INS>If the value of the operand of the
+<I>delete-expression</I> is not a null pointer value, the</INS>
+<I>delete-expression</I> will invoke the destructor (if any) for
+the object or the elements of the array being deleted. In the
+case of an array, the elements will be destroyed in order of
+decreasing address (that is, in reverse order of the completion
+of their constructor; see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</P>
+
+<P>
+<DEL>The</DEL> <INS>If the value of the operand of the <I>delete-expression</I> is not a
+null pointer value, the</INS> <I>delete-expression</I> will call a
+deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]). <INS>Otherwise, it is unspecified
+whether the deallocation function will be called.</INS> [<I>Note:</I> The
+deallocation function is called regardless of whether the
+destructor for the object or some element of the array throws an
+exception. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#3">basic.stc.dynamic.deallocation</A>] paragraph 3 as
+indicated:</P>
+
+<BLOCKQUOTE>
+
+The value of the first argument supplied to <DEL>one of the</DEL> <INS>a</INS>
+deallocation function<DEL>s provided in the standard library</DEL> may be a
+null pointer value; if so, <INS>and if the deallocation function is
+one supplied in the standard library,</INS> the call <DEL>to the
+deallocation function</DEL> has no effect. Otherwise, the value
+supplied to <TT>operator delete(void*)</TT> in the standard library shall
+be one of the values returned by a previous invocation of either
+<TT>operator new(std::size_t)</TT> or <TT>operator new(std::size_t, const
+std::nothrow_t&amp;)</TT> in the standard library, and the value supplied
+to <TT>operator delete[](void*)</TT> in the standard library shall be one
+of the values returned by a previous invocation of either
+<TT>operator new[](std::size_t)</TT> or <TT>operator new[](std::size_t, const
+std::nothrow_t&amp;)</TT> in the standard library.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><I>[Note: this resolution also resolves
+<A HREF="442.html">issue 442</A>.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

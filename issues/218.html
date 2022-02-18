@@ -1,0 +1,376 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 218</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="218"></A><H4>218.
+  
+Specification of Koenig lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hyman Rosen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Mar 2000<BR>
+
+
+<P>[Voted into WP at April, 2007 meeting.]</P>
+
+
+
+<P>The original intent of the Committee when Koenig lookup was added
+to the language was apparently something like the following:</P>
+
+<OL>
+<LI>The name in the function call expression is looked up like any
+other unqualified name.</LI>
+
+<LI>If the ordinary unqualified lookup finds nothing or finds the
+declaration of a (non-member) function, function template, or overload
+set, argument-dependent lookup is done and any functions found in
+associated namespaces are added to the result of the ordinary
+lookup.</LI>
+</OL>
+
+<P>This approach is not reflected in the current wording of the
+Standard.  Instead, the following appears to be the status quo:</P>
+
+<OL>
+
+<LI>Lookup of an unqualified name used as the
+<I>postfix-expression</I> in the function call syntax always performs
+Koenig lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#3">basic.lookup.unqual</A>] paragraph 3).</LI>
+
+<LI>Unless ordinary lookup finds a class member function, the result
+of Koenig lookup always includes the declarations found in associated
+namespaces (6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2), regardless of
+whether ordinary lookup finds a declaration and, if so, what kind of
+entity is found.</LI>
+
+<LI>The declarations from associated namespaces are not limited to
+functions and template functions by anything in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].  However, if Koenig lookup results in more than one
+declaration and at least one of the declarations is a non-function,
+the program is ill-formed (9.8.4 [<A href="https://wg21.link/namespace.udir">namespace.udir</A>], paragraph 4;
+although this restriction is in the description of the
+<I>using-directive</I>, the wording applies to any lookup that spans
+namespaces).</LI>
+
+</OL>
+
+<P>
+<U>John Spicer</U>: Argument-dependent lookup was created to solve
+the problem of looking up function names within templates where you
+don't know which namespace to use because it may depend on the
+template argument types (and was then expanded to permit use in
+nontemplates).  The original intent only concerned functions.  The
+safest and simplest change is to simply clarify the existing wording
+to that effect.</P>
+
+<P>
+<U>Bill Gibbons</U>: I see no reason why non-function declarations
+should not be found.  It would take a special rule to exclude
+"function objects", as well as pointers to functions, from
+consideration.  There is no such rule in the standard and I see no
+need for one.</P>
+
+<P>There is also a problem with the wording in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+If the ordinary unqualified lookup of the name finds the declaration
+of a class member function, the associated namespaces and classes are
+not considered.
+</BLOCKQUOTE>
+
+<P>This implies that if the ordinary lookup of the name finds the
+declaration of a data member which is a pointer to function or
+function object, argument-dependent lookup is still done.</P>
+
+<P>My guess is that this is a mistake based on the incorrect
+assumption that finding any member other than a member function would
+be an error.  I would just change "class member function" to "class
+member" in the quoted sentence.</P>
+
+<P>
+<U>Mike Miller</U>: In light of the issue of "short-circuiting"
+Koenig lookup when normal lookup finds a non-function, perhaps it
+should be written as "...finds the declaration of a class member, an
+object, or a reference, the associated namespaces..."?</P>
+
+<P>
+<U>Andy Koenig</U>: I think I have to weigh in on the side of
+extending argument-dependent lookup to include function objects and
+pointers to functions.  I am particularly concerned about [function
+objects], because I think that programmers should be able to replace
+functions by function objects without changing the behavior of their
+programs in fundamental ways.</P>
+
+<P>
+<U>Bjarne Stroustrup</U>: I don't think we could seriously argue
+from first principles that [argument-dependent lookup should find only
+function declarations].  In general, C++ name lookup is designed to be
+independent of type: First we find the name(s), then, we consider
+its(their) meaning.  6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>] states "The name
+lookup rules apply uniformly to all names ..." That is an important
+principle.</P>
+
+<P>Thus, I consider text that speaks of "function call" instead of
+plain "call" or "application of ()" in the context of koenig lookup an
+accident of history. I find it hard to understand how 7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>] doesn't either disallow all occurrences of
+<TT>x(y)</TT> where <TT>x</TT> is a class object (that's clearly not
+intended) or requires koenig lookup for <TT>x</TT> independently of
+its type (by reference from 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]).  I suspect
+that a clarification of 7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>] to mention
+function objects is in order. If the left-hand operand of () is a
+name, it should be looked up using koenig lookup.</P>
+
+<P>
+<U>John Spicer</U>: This approach causes otherwise well-formed
+programs to be ill-formed, and it does so by making names visible that
+might be completely unknown to the author of the program.
+Using-directives already do this, but argument-dependent lookup is
+different.  You only get names from using-directives if you actually
+<I>use</I> using-directives.  You get names from argument-dependent
+lookup whether you want them or not.</P>
+
+<P>This basically breaks an important reason for having namespaces.
+You are not supposed to need any knowledge of the names used by a
+namespace.</P>
+
+<P>But this example breaks if argument-dependent lookup finds
+non-functions and if the translation unit includes the &lt;list&gt;
+header somewhere.</P>
+
+<PRE>
+    namespace my_ns {
+        struct A {};
+        void list(std::ostream&amp;, A&amp;);
+
+        void f() {
+            my_ns::A a;
+            list(cout, a);
+        }
+    }
+</PRE>
+
+<P>This really makes namespaces of questionable value if you still
+need to avoid using the same name as an entity in another namespace to
+avoid problems like this.</P>
+
+<P>
+<U>Erwin Unruh</U>: Before we really decide on this topic, we should
+have more analysis on the impact on programs. I would also like to see
+a paper on the possibility to overload functions with function
+surrogates (no, I won't write one).  Since such an extension is bound
+to wait until the next official update, we should not preclude any
+outcome of the discussion.</P>
+
+<P>I would like to have a change right now, which leaves open several
+outcomes later. I would like to say that:</P>
+
+<BLOCKQUOTE>
+Koenig lookup will find non-functions as well. If it finds a variable, the
+program is ill-formed.
+If the primary lookup finds a variable, Koenig lookup is done. If the result
+contains both functions and variables, the program is ill-formed.
+[<I>Note:</I> A future standard will assign semantics to such a program.]
+</BLOCKQUOTE>
+
+<P>I myself are not comfortable with this as a long-time result, but it
+prepares the ground for any of the following long term solutions:</P>
+
+<UL>
+<LI>Do overloading on mixed function/variable sets.</LI>
+<LI>Ignore variables on Koenig lookup.</LI>
+<LI>Don't do Koenig lookup if the primary lookup finds a variable.</LI>
+<LI>Find variables on Koenig lookup and give an error if there is a
+variable/function mix.</LI>
+</UL>
+
+<P>The note is there to prevent compiler vendors to put their own
+extensions in here.</P>
+
+<P>(See also issues <A HREF="113.html">113</A> and
+<A HREF="143.html">143</A>.)</P>
+
+<P><B>Notes from 04/00 meeting:</B></P>
+
+<P>Although many agreed that there were valid concerns motivating a
+desire for Koenig lookup to find non-function declarations, there was
+also concern that supporting this capability would be more dangerous
+than helpful in the absence of overload resolution for mixed function
+and non-function declarations.</P>
+
+<P>A straw poll of the group revealed 8 in favor of Koenig lookup
+finding functions and function templates only, while 3 supported the
+broader result.   </P>
+
+<P><B>Notes from the 10/01 meeting:</B></P>
+
+<P>There was unanimous agreement on one less controversial point:
+if the normal lookup of the identifier finds a non-function, argument-dependent
+lookup should not be done.</P>
+
+<P>On the larger issue, the primary point of consensus is that making
+this change is
+an extension, and therefore it should wait until the point at
+which we are considering extensions (which could be very soon).
+There was also consensus on the fact that the standard as it
+stands is not clear: some introductory text suggests that
+argument-dependent lookup finds only functions, but the more
+detailed text that describes the lookup does not have any
+such restriction.</P>
+
+<P>It was also noted that some existing implementations (e.g., g++) do
+find some non-functions in some cases.</P>
+
+<P>The issue at this point is whether we should (1) make a small change
+to make the standard clear (presumably in the direction of not
+finding the non-functions in the lookup), and revisit the issue
+later as an extension, or (2) leave the standard alone for now and
+make any changes only as part of considering the extension.
+A straw vote favored option (1) by a strong majority.</P>
+
+
+
+<P><B>Additional Notes (September, 2006):</B></P>
+
+<P>Recent discussion of this issue
+
+has emphasized the following points:</P>
+
+<OL>
+<LI><P>The concept of finding function pointers and function objects
+as part of argument-dependent lookup is not currently under active
+discussion in the Evolution Working Group.
+</P></LI>
+
+<LI><P>The major area of concern with argument-dependent lookup is
+finding functions in unintended namespaces.  There are current
+proposals to deal with this concern either by changing the
+definition of &#8220;associated namespace&#8221; so that fewer
+namespaces are considered or to provide a mechanism for enabling
+or disabling ADL altogether.  Although this concern is conceptually
+distinct from the question of whether ADL finds function pointers
+and function objects, it is related in the sense that the current
+rules are perceived as finding too many functions (because of
+searching too many namespaces), and allowing function pointers
+and function objects would also increase the number of entities
+found by ADL.
+</P></LI>
+
+<LI><P>Any expansion of ADL to include function pointers and
+function objects must necessarily update the overloading rules
+to specify how they interact with functions and function
+templates in the overload set.  Current implementation experience
+(g++) is not helpful in making this decision because, although
+it performs a uniform lookup and finds non-function entities, it
+diagnoses an error in overload resolution if non-function entities
+are in the overload set.
+</P></LI>
+
+<LI><P>There is a possible problem if types are found by ADL: it
+is not clear that overloading between callable entities
+(functions, function templates, function pointers, and function
+objects) and types (where the postfix syntax means a cast or
+construction of a temporary) is reasonable or useful.
+</P></LI>
+
+</OL>
+
+<P>
+<U>James Widman</U>:</P>
+
+<P>There is a larger debate here about whether ADL should find object
+names; the proposed wording below is only intended to answer the
+request for wording to clarify the status quo (option 1 above) and
+not to suggest the outcome of the larger debate.</P>
+
+<P><B>Proposed Resolution (October, 2006):</B></P>
+
+<OL>
+
+<LI>
+<P>Replace the normative text in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3">basic.lookup.argdep</A>] paragraph 3
+with the following (leaving the text
+of the note and example unchanged):</P>
+
+<BLOCKQUOTE>
+
+<P>Let X be the lookup set produced by unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) and let Y be the lookup set
+produced by argument dependent lookup (defined as follows).  If X
+contains</P>
+
+<P><UL>
+
+<LI>a declaration of a class member, or</LI>
+
+<LI>a block-scope function declaration that is not
+a <I>using-declaration</I>, or</LI>
+
+<LI>a declaration that is neither a function nor a function template</LI>
+
+</UL></P>
+
+<P>then Y is empty.  Otherwise Y is the set of declarations
+found in the namespaces associated with the argument types as
+described below.  The set of declarations found by the lookup of
+the name is the union of X and Y.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#4">basic.lookup.unqual</A>] paragraph 4 as
+indicated:</P>
+
+<BLOCKQUOTE>
+
+<P>When considering an associated namespace, the lookup is the same
+as the lookup performed when the associated namespace is used as
+a qualifier (6.5.5.3 [<A href="https://wg21.link/namespace.qual">namespace.qual</A>]) except that:</P>
+
+<P><UL>
+
+<LI>Any <I>using-directive</I>s in the associated namespace are
+ignored.</LI>
+
+<LI>Any namespace-scope friend functions <INS>or friend function
+templates</INS> declared in associated classes are visible within their
+respective namespaces even if they are not visible during an
+ordinary lookup (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]).</LI>
+
+<INS><LI>All names except those of (possibly overloaded) functions
+and function templates are ignored.</LI></INS>
+
+</UL></P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

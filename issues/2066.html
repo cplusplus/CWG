@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2066</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2066"></A><H4>2066.
+  
+Does type-dependent imply value-dependent?
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-01-09<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  template&lt;int&gt; struct X { typedef int type; };
+  template&lt;typename T&gt; struct Y {
+    void f() { X&lt;false ? this - this : 0&gt;::type x; } //<SPAN CLASS="cmnt"> missing </SPAN>typename<SPAN CLASS="cmnt">?</SPAN>
+  };
+  void g() { Y&lt;void&gt;().f(); }
+</PRE>
+
+<P>This appears to be valid because the template argument expression is
+not value-dependent.</P>
+
+
+<P>Until I discovered this, I had been assuming that any
+type-dependent expression is also value-dependent. The only
+exception to that appears to be the expression <TT>this</TT>, which
+may be type-dependent but is never value-dependent.</P>
+
+
+
+<P>Now, <TT>this</TT> need not ever be value-dependent, because
+evaluation of it will never succeed when it appears as a
+subexpression of an expression that we're checking for
+constant-expression-ness. But if that's really what we want
+here, then the same applies to function parameters with
+dependent types, and probably a few other cases.</P>
+
+<P><B>Proposed resolution (September, 2015) [SUPERSEDED]:</B></P>
+
+<P>Change 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#4">temp.dep.constexpr</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Expressions of the following form are value-dependent:</P>
+
+<UL>
+<TT>sizeof ... (</TT> <I>identifuer</I> <TT>)</TT><BR>
+<TT><INS>this</INS></TT><BR>
+<I>fold-expression</I>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (March, 2016):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="2109.html">issue 2109</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

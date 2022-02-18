@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 484</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="484"></A><H4>484.
+  
+Can a <I>base-specifier</I> name a cv-qualified class type?
+</H4>
+<B>Section: </B>11.7&#160; [<A href="https://wg21.link/class.derived">class.derived</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Corden
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Oct 2004<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>
+<A HREF="298.html">Issue 298</A>, recently approved,
+affirms that cv-qualified class types can be used as
+<I>nested-name-specifier</I>s.  Should the same be true for
+<I>base-specifier</I>s?</P>
+
+<P><B>Rationale (April, 2005):</B></P>
+
+<P>The resolution of <A HREF="298.html">issue 298</A> added
+new text to 11.3 [<A href="https://wg21.link/class.name#5">class.name</A>] paragraph 5 making it
+clear that a typedef that names a cv-qualified class type is a
+<I>class-name</I>.  Because the definition of <I>base-specifier</I>
+simply refers to <I>class-name</I>, it is already the case that
+cv-qualified class types are permitted as <I>base-specifier</I>s.</P>
+
+<P><B>Additional notes (June, 2005):</B></P>
+
+<P>It's not completely clear what it means to have a cv-qualified
+type as a <I>base-specifier</I>.  The original proposed resolution
+for <A HREF="298.html">issue 298</A> said that &#8220;the
+cv-qualifiers are ignored,&#8221; but that wording is not in the
+resolution that was ultimately approved.</P>
+
+<P>If the cv-qualifiers are <I>not</I> ignored, does that mean that
+the base-class subobject should be treated as always similarly
+cv-qualified, regardless of the cv-qualification of the derived-class
+lvalue used to access the base-class subobject?  For instance:</P>
+
+<PRE>
+    typedef struct B {
+        void f();
+        void f() const;
+        int i;
+    } const CB;
+
+    struct D: CB { };
+
+    void g(D* dp) {
+        dp-&gt;f();    // which B::f?
+        dp-&gt;i = 3;  // permitted?
+    }
+</PRE>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+<LI><P>Change 11.3 [<A href="https://wg21.link/class.name#5">class.name</A>] paragraph 5 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>typedef-name</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]) that names a
+class type, or a cv-qualified version thereof, is also
+a <DEL><I>class-name</I>, but</DEL> <INS><I>class-name</I>. If
+a <I>typedef-name</I> that names a cv-qualified class type is used
+where a <I>class-name</I> is required, the cv-qualifiers are ignored.
+A <I>typedef-name</I></INS> shall not be used as the <I>identifier</I>
+in a
+<I>class-head</I>.
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 9.2.4 [<A href="https://wg21.link/dcl.typedef#8">dcl.typedef</A>] paragraph 8:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>[<I>Note:</I> if the <I>typedef-name</I> is used where
+a <I>class-name</I> (or <I>enum-name</I>) is required, the program is
+ill-formed. For example,</P>
+
+<PRE>
+    typedef struct {
+        S();     //<SPAN CLASS="cmnt"> error: requires a return type because </SPAN>S<SPAN CLASS="cmnt"> is</SPAN>
+                  //<SPAN CLASS="cmnt"> an ordinary member function, not a constructor</SPAN>
+    } S;
+</PRE>
+
+<P>&#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

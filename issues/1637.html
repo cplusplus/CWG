@@ -1,0 +1,66 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1637</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1637"></A><H4>1637.
+  
+Recursion in <TT>constexpr</TT> template default constructor
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-03-11<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct A {
+    template &lt;class T&gt; constexpr void* f(T) { return nullptr; }
+    A* ap = (A*)f(A());
+    template &lt;class ...T&gt; constexpr A() {}
+  };
+</PRE>
+
+<P>A default constructor template instance would recurse infinitely
+via the member initializer for <TT>A::ap</TT>.  However, since it's a
+template, by 9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6, that would just
+mean that the instance shouldn't be treated as <TT>constexpr</TT>.</P>
+
+<P>Is an implementation really expected to handle that? In effect, we have
+to try to evaluate the expression and if that fails, nullify the
+<TT>constexpr</TT>-ness of the <TT>A::A&lt;&gt;()</TT> instance, and
+re-examine the initializer with the new understanding of that
+instance?</P>
+
+<P><B>Rationale (April, 2013):</B></P>
+
+<P>In the cited example, the constructor is <TT>constexpr</TT>; it
+simply cannot be used in a constant expression.  The error would be
+detected at the time of such a use.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

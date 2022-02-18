@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2525</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2525"></A><H4>2525.
+  
+Incorrect definition of implicit conversion sequence
+</H4>
+<B>Section: </B>12.2.4.2.1&#160; [<A href="https://wg21.link/over.best.ics.general">over.best.ics.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-09-25<BR>
+
+
+<P>According to 12.2.4.2.1 [<A href="https://wg21.link/over.best.ics.general">over.best.ics.general</A>]
+paragraphs 1 and 9,</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>implicit conversion sequence</I> is a sequence of
+conversions used to convert an argument in a function call
+to the type of the corresponding parameter of the function
+being called. The sequence of conversions is an implicit
+conversion as defined in 7.3 [<A href="https://wg21.link/conv">conv</A>], which
+means it is governed by the rules for initialization of an
+object or reference by a single expression
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]).</P>
+
+<P>If no sequence of conversions can be found to convert an
+argument to a parameter type, an implicit conversion
+sequence cannot be formed.</P>
+
+</BLOCKQUOTE>
+
+<P>However, 7.3.1 [<A href="https://wg21.link/conv.general#3">conv.general</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+An expression <I>E</I> can be <I>implicitly converted</I> to
+a type <TT>T</TT> if and only if the declaration <TT>T
+t=E;</TT> is well-formed, for some invented temporary
+variable <TT>t</TT> (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+
+</BLOCKQUOTE>
+
+<P>This definition is too restrictive in the context of
+overload resolution's implicit conversion sequences.
+The intent, as stated in 12.2.1 [<A href="https://wg21.link/over.match.general">over.match.general</A>]
+note 1, is that overload resolution ignores some
+factors that would make such an initialization
+ill-formed, and these are applied only after the best
+match is determined:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 1:</I> The function selected by overload resolution
+is not guaranteed to be appropriate for the context. Other
+restrictions, such as the accessibility of the function, can
+make its use in the calling context
+ill-formed. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>For example,</P>
+
+<PRE>
+  struct A{
+    A(int) = delete;
+  };
+  struct B{
+     B(int) {}
+  };
+  void fun(A); //<SPAN CLASS="cmnt"> #1</SPAN>
+  void fun(B); //<SPAN CLASS="cmnt"> #2</SPAN>
+  int main() {
+    fun(0);    //<SPAN CLASS="cmnt"> #3</SPAN>
+  }
+</PRE>
+
+<P>The intent is that overload #1 be viable with a valid
+implicit conversion sequence, making the call at #3
+ambiguous, even though the hypothetical declaration</P>
+
+<PRE>
+  A t = 1;
+</PRE>
+
+<P>would be ill-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-12-02):</B></P>
+
+<P>Change 12.2.4.2.1 [<A href="https://wg21.link/over.best.ics.general#1">over.best.ics.general</A>] paragraph 1, merging it with
+paragraph 2,as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>implicit conversion sequence</I> is a sequence of conversions
+used to convert an argument in a function call to the type of the
+corresponding parameter of the function being called. The sequence of
+conversions is an implicit conversion as defined in
+7.3 [<A href="https://wg21.link/conv">conv</A>]<DEL>, which means</DEL><INS>;</INS> it
+is <DEL>governed by</DEL> <INS>thus based on</INS> the rules for
+initialization of an object or reference by a single expression
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>])<DEL>.
+Implicit</DEL><INS>, except that implicit</INS> conversion sequences
+are concerned only with the type, cv-qualification, and value category
+of the argument and how these are converted to match the corresponding
+properties of the parameter.  [Note: ... ]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-02-06</B></P>
+
+<P>Additional drafting is needed to cover e.g. conversions from
+literal 0 to null pointer constants.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

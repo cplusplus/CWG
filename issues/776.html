@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 776</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="776"></A><H4>776.
+  
+Delegating constructors, destructors, and <TT>std::exit</TT>
+</H4>
+<B>Section: </B>6.9.3.3&#160; [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 February, 2009<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+<P>According to 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#1">basic.start.dynamic</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+Destructors (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) for initialized objects with
+static storage duration are called as a result of returning from
+<TT>main</TT> and as a result of calling <TT>std::exit</TT>
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]).
+
+</BLOCKQUOTE>
+
+<P>It is unclear, in the presence of delegating constructors, exactly
+what an &#8220;initialized object&#8221; is. 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1
+says that the lifetime of an object does not begin until
+it is completely initialized, i.e., when its principal constructor
+finishes execution. 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 says that an
+exception during the construction of class object only invokes
+destructors for fully-constructed base and member sub-objects (those
+for which the principal constructor has completed). On the other hand,
+the destructor for a complete class object is called if its
+non-delegating constructor has completed, even if the principal
+constructor has not yet finished. Which of these models is appropriate
+for the behavior of <TT>std::exit</TT>?</P>
+
+<P><B>Notes from the March, 2009 meeting:</B></P>
+
+<P>The CWG agreed that the destructor for a complete object should
+be called by <TT>std::exit</TT> if its non-delegating constructor
+has finished, just as for an exception.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>The CWG decided that the direction adopted at the March, 2009
+meeting was incorrect. Instead, the model should be the way
+completely-constructed base and member subobjects are handled:
+their destructors are called when an exception is thrown but not
+when <TT>std::exit</TT> is called.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<P>Change 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#1">basic.start.dynamic</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Destructors (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) for initialized objects
+<INS>(that is, objects whose lifetime (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]) has
+begun)</INS> with static storage duration are called as a result of
+returning from main and as a result of calling <TT>std::exit</TT>
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]).  Destructors for initialized objects with
+thread storage duration...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

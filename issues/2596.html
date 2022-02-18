@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2596</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2596"></A><H4>2596.
+  
+Instantiation of constrained non-template friends
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Friberg
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-03<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Base {};
+
+  template&lt;int N&gt;
+  struct S : public Base {
+    friend int foo(Base&amp;) requires (N == 1) { return 1; }
+    friend int foo(Base&amp;) requires (N == 2) { return 3; }
+  };
+
+  int main() {
+    S&lt;1&gt; s1{};
+    S&lt;2&gt; s2{};  // #1
+  }
+</PRE>
+
+<P>The current wording does not seem to cover what happens for this
+case.  In particular, 13.9.2 [<A href="https://wg21.link/temp.inst#17">temp.inst</A>] paragraph 17 does not
+cover constrained non-template friends.</P>
+
+<P>See also the Itanium ABI
+<A HREF="https://github.com/itanium-cxx-abi/cxx-abi/issues/24#issuecomment-934713719">issue 24</A>.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 13.7.5 [<A href="https://wg21.link/temp.friend#9">temp.friend</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-template friend declaration with a <I>requires-clause</I> shall
+be a definition. A friend function template with a constraint that
+depends on a template parameter from an enclosing template shall be a
+definition.  Such a constrained friend function or function template
+declaration does not declare the same function or function template as
+a declaration <DEL>in</DEL> <INS>inhabiting</INS> any other scope.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#17">temp.inst</A>] paragraph 17 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>type-constraint</I>s and <I>requires-clause</I> of a template
+specialization or <DEL>member</DEL> <INS>templated</INS> function are
+not instantiated along with the specialization or function itself,
+even for a member function of a local class; substitution into the
+atomic constraints formed from them is instead performed as specified
+in 13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>] and 13.5.2.3 [<A href="https://wg21.link/temp.constr.atomic">temp.constr.atomic</A>] when
+determining whether the constraints are satisfied or as specified in
+13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>] when comparing declarations.
+
+<P>[ Note 7: ... ]</P>
+
+<P>[ Example 10: ... ]</P>
+
+<P><INS>[ Example:</INS></P>
+
+<PRE>
+<INS>  struct Base {};
+
+  template&lt;int N&gt;
+  struct S : Base {
+    friend int foo(Base&amp;) requires (N == 1) { return 1; }  // <SPAN CLASS="cmnt">#1</SPAN>
+    friend int foo(Base&amp;) requires (N == 2) { return 3; }  // <SPAN CLASS="cmnt">#2</SPAN>
+  };
+  S&lt;1&gt; s1;
+  S&lt;2&gt; s2;          // <SPAN CLASS="cmnt">OK, no conflict between #1 and #2</SPAN>
+  int x = foo(s1);  // <SPAN CLASS="cmnt">OK, selects #1</SPAN>
+  int y = foo(s2);  // <SPAN CLASS="cmnt">OK, selects #2</SPAN></INS>
+</PRE>
+
+<P><INS>-- end example ]</INS></P>
+
+<P>[ Example 11: ... ]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><B>CWG 2022-11-10</B></P>
+
+<P>The friend definitions should conflict with friend definitions from
+other instantiations of the same class template, consistent with how
+non-constrained friends would work. Note that the enclosing dependent
+class type does not appear in the friend function's signature, which
+is unusual.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

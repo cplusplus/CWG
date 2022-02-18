@@ -1,0 +1,171 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2541</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2541"></A><H4>2541.
+  
+Linkage specifications, module purview, and module attachment
+</H4>
+<B>Section: </B>10.1&#160; [<A href="https://wg21.link/module.unit">module.unit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-28<BR>
+
+
+
+
+<P>The interaction between linkage specifications
+(9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) and named or global module purview and
+attachment (10.1 [<A href="https://wg21.link/module.unit">module.unit</A>]) is confusing. The addition of
+linkage declarations attaching their contents to the global module is
+not fully integrated into the wording and examples would also
+help.</P>
+
+<UL>
+<LI>Module purview and attachment are not necessarily the same. This
+is never explicitly mentioned.
+</LI>
+
+<LI>10.1 [<A href="https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 explicitly calls out
+replaceable allocation and deallocation functions as being
+(implicitly) attached to the global module. This is unnecessary.
+</LI>
+
+<LI>6.9.3.1 [<A href="https://wg21.link/basic.start.main#1">basic.start.main</A>] paragraph 1 specifies that there shall
+be a main function in the global namespace, but only in paragraph 3 do
+we specify that not attaching it to the global module is ill-formed.
+</LI>
+
+</UL>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change 6.9.3.1 [<A href="https://wg21.link/basic.start.main#1">basic.start.main</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A program shall contain exactly one function called <TT>main</TT> that
+belongs to the global scope <INS>and is attached to the global
+module</INS>. Executing a program starts a main thread of execution
+(6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>], 32.4 [<A href="https://wg21.link/thread.threads">thread.threads</A>]) in which
+the <TT>main</TT> function is invoked. It is implementation-defined
+whether a program in a freestanding environment is required to define
+a <TT>main</TT> function.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 10.1 [<A href="https://wg21.link/module.unit#7.2">module.unit</A>] bullet 7.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>...</LI>
+
+<LI>
+Otherwise, if the declaration
+<UL>
+<LI>
+<DEL>is a replaceable global allocation or deallocation function
+(17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>], 17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>]), or</DEL>
+</LI>
+
+<LI>is a <I>namespace-definition</I> with external linkage<DEL>,</DEL> or
+</LI>
+
+<LI>appears within a <I>linkage-specification</I>,
+</LI>
+</UL>
+it is attached to the
+global module.
+</LI>
+
+<LI>Otherwise, ...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+Add an example at the end of 10.1 [<A href="https://wg21.link/module.unit#7">module.unit</A>] paragraph 7:
+
+<BLOCKQUOTE>
+
+<P class="ins">[ <I>Example</I>:</P>
+
+<PRE class="ins">
+  //<SPAN CLASS="cmnt"> Translation unit #1</SPAN>
+  export module Foo;
+  void f();              //<SPAN CLASS="cmnt"> module linkage, attached to named module</SPAN> Foo
+  extern "C++" {
+    export void g();     //<SPAN CLASS="cmnt"> nameable by importers</SPAN>
+    void h();            //<SPAN CLASS="cmnt"> nameable in </SPAN>Foo<SPAN CLASS="cmnt">'s purview</SPAN>
+  }
+</PRE>
+
+<P class="ins">Both <TT>g</TT> and <TT>h</TT> have external linkage, are attached
+to the global module, and can thus also be redeclared in other
+translation units:</P>
+
+<PRE class="ins">
+  //<SPAN CLASS="cmnt"> Legacy header "foo.h"</SPAN>
+  extern "C++" void g();
+
+  //<SPAN CLASS="cmnt"> Legacy header "foo-internal.h"</SPAN>
+  extern "C++" void h();
+</PRE>
+<P class="ins">-- <I>end example</I> ]</P>
+
+<P>A <I>module-declaration</I> that contains neither...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+Change in 10.2 [<A href="https://wg21.link/module.interface#6">module.interface</A>] paragraph 6 as follows:
+
+<BLOCKQUOTE>
+
+A redeclaration of an entity <I>X</I> is implicitly exported
+if <I>X</I> was introduced by an exported declaration; otherwise it
+shall not be exported <INS>unless it has external linkage</INS>..
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

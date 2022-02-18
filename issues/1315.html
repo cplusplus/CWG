@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1315</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1315"></A><H4>1315.
+  
+Restrictions on non-type template arguments in partial specializations
+</H4>
+<B>Section: </B>13.7.6.1&#160; [<A href="https://wg21.link/temp.spec.partial.general">temp.spec.partial.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-05-12<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>The rationale for the restriction in 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#9.1">temp.spec.partial.general</A>] bullet 9.1 is not clear:</P>
+
+<UL>
+<LI><P>A partially specialized non-type argument expression shall
+not involve a template parameter of the partial specialization except
+when the argument expression is a simple
+<I>identifier</I>. [<I>Example:</I>
+</P></LI>
+
+<PRE>
+  template &lt;int I, int J&gt; struct A {};
+  template &lt;int I&gt; struct A&lt;I+5, I*2&gt; {}; //<SPAN CLASS="cmnt"> error</SPAN>
+  template &lt;int I, int J&gt; struct B {};
+  template &lt;int I&gt; struct B&lt;I, I&gt; {};     //<SPAN CLASS="cmnt"> OK</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+<P>In the example, it's clear that <TT>I</TT> is non-deducible, but
+this rule prevents plausible uses like:</P>
+
+<PRE>
+  template &lt;int I, int J&gt; struct A {};
+  template &lt;int I&gt; struct A&lt;I, I*2&gt; {};
+</PRE>
+
+<P>(See also issues <A HREF="1647.html">1647</A>,
+<A HREF="2033.html">2033</A>, and
+<A HREF="2127.html">2127</A>.)</P>
+
+
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<P>Change 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#9.1">temp.spec.partial.general</A>] bullet 9.1 as follows:</P>
+
+<UL>
+<LI><P>
+<DEL>A partially specialized non-type argument expression shall
+not involve a template parameter of the partial specialization except when
+the argument expression is a
+simple <I>identifier</I>.</DEL> <INS>Each <I>template-parameter</I> shall
+appear at least once in the <I>template-id</I> outside a non-deduced
+context.</INS> [<I>Example:</I>
+</P></LI>
+
+<PRE>
+  template &lt;int I, int J&gt; struct A {};
+  template &lt;int I&gt; struct A&lt;I+5, I*2&gt; {};   //<SPAN CLASS="cmnt"> error</SPAN>
+<DEL>
+  template &lt;int I, int J&gt; struct B {};</DEL>
+  template &lt;int I&gt; struct <DEL>B</DEL> <INS>A</INS>&lt;I, I&gt; {};     //<SPAN CLASS="cmnt"> OK</SPAN>
+<INS>
+  template &lt;int I, int J, int K&gt; struct B {};
+  template &lt;int I&gt; struct B&lt;I, I*2, 2&gt; {};  //<SPAN CLASS="cmnt"> OK</SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

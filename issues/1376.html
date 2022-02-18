@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1376</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1376"></A><H4>1376.
+  
+<TT>static_cast</TT> of temporary to rvalue reference
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-17<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA1">N3690 comment
+  CA&#160;1<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+<P>In a declaration like</P>
+
+<PRE>
+    T&amp;&amp; r = static_cast&lt;T&amp;&amp;&gt;(T());
+</PRE>
+
+<P>it is not clear what the lifetime of the <TT>T</TT> temporary
+should be.  According to 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#4">expr.static.cast</A>] paragraph 4,
+the <TT>static_cast</TT> is equivalent to a declaration of an invented
+temporary variable <TT>t</TT>.  The lifetime of the temporary is
+extended to that of <TT>t</TT>, but it is not clear what that lifetime
+should be, nor if the subsequent binding of <TT>t</TT> to <TT>r</TT>
+would affect the lifetime of the original temporary.  (See also
+<A HREF="1568.html">issue 1568</A>.)</P>
+
+<P><B>Notes from the February, 2012 meeting:</B></P>
+
+<P>The reference is bound to the xvalue result of the <TT>static_cast</TT>,
+so the lifetime of the temporary is not extended and this example results
+in a dangling reference.</P>
+
+<P><B>Proposed resolution (February, 2012) [SUPERSEDED]:</B></P>
+
+<P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#4">expr.static.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, an expression <TT>e</TT> can be explicitly converted to a
+type <TT>T</TT> using a <TT>static_cast</TT> of the form
+<TT>static_cast&lt;T&gt;(e)</TT> if the declaration
+<TT>T&#160;t(e);</TT> is well-formed, for some invented
+<DEL>temporary</DEL> variable <TT>t</TT> (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+The effect...
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#3">expr.static.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A glvalue<INS>, class prvalue, or array prvalue</INS> of type
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; can be cast to type &#8220;rvalue
+reference to <I>cv2</I> <TT>T2</TT>&#8221; if
+&#8220;<I>cv2</I> <TT>T2</TT>&#8221; is reference-compatible with
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]). If the
+<DEL>glvalue</DEL> <INS>value</INS> is not a bit-field, the result refers
+to the object or the specified base class subobject thereof; otherwise, the
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is applied to the
+bit-field and the resulting prvalue is used as the <I>expression</I> of
+the <TT>static_cast</TT> for the remainder of this section. If <TT>T2</TT>
+is an inaccessible (11.8 [<A href="https://wg21.link/class.access">class.access</A>]) or ambiguous
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) base class of <TT>T1</TT>, a program that
+necessitates such a cast is ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

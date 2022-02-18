@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1570</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1570"></A><H4>1570.
+  
+Address of subobject as non-type template argument
+</H4>
+<B>Section: </B>13.4.3&#160; [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-06<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>According to 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1, the argument
+for a non-type template parameter of pointer or reference type must be</P>
+
+<BLOCKQUOTE>
+
+a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that designates the
+address of an object with static storage duration and external or
+internal linkage or a function with external or internal linkage,
+including function templates and function <I>template-id</I>s but
+excluding non-static class members, expressed (ignoring parentheses)
+as <TT>&amp;</TT>&#160;<I>id-expression</I>, except that the
+<TT>&amp;</TT> may be omitted if the name refers to a function or
+array and shall be omitted if the corresponding
+<I>template-parameter</I> is a reference
+
+</BLOCKQUOTE>
+
+<P>In C++03, the requirement for an <I>id-expression</I> eliminated
+the use of &#8220;addresses of array elements and names or addresses
+of non-static class members,&#8221; as noted in paragraph 3 of that
+section.  With the advent of generalized constant expressions, however,
+it is possible to satisfy the requirements and still address these
+subobjects.  For example:</P>
+
+<PRE>
+  extern constexpr int x[] = { 0, 1 };
+  constexpr const int *p1 = x + 1;
+  const int &amp;r = *p1;
+
+  template &lt;const int *&gt; struct A;
+  template &lt;&gt; struct A&lt;&amp;r&gt; { };
+</PRE>
+
+<P>If this is intentional, the note in 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#3">temp.arg.nontype</A>] paragraph 3
+should be revised or removed; if not, the normative
+wording of paragraph 1 must be revised.</P>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>CWG did not favor extending the range of non-type template arguments
+to include subobjects, feeling that they should continue to be restricted
+to the address of a complete object.</P>
+
+<P><B>Proposed resolution (June, 2013):</B></P>
+
+<P>Change 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>template-argument</I> for a non-type,
+non-template <I>template-parameter</I> shall be one of:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that designates
+the address of <DEL>an</DEL> <INS>a complete</INS> object with static
+storage duration and external or internal linkage or a function with
+external or internal linkage, including function templates and
+function <I>template-id</I>s but excluding non-static class members,
+expressed (ignoring parentheses) as <TT>&amp;</TT> <I>id-expression</I>,
+<INS>where the <I>id-expression</I> is the name of an object or
+function,</INS> except that the <TT>&amp;</TT> may be omitted if the name
+refers to a function or array and shall be omitted if the
+corresponding <I>template-parameter</I> is a reference; or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

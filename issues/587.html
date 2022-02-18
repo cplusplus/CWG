@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 587</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="587"></A><H4>587.
+  
+Lvalue operands of a conditional expression differing only in cv-qualification
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Howard Hinnant
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 June 2006<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    template &lt;typename T&gt;
+    const T* f(bool b) {
+        static T t1 = T();
+        static const T t2 = T();
+        return &amp;(b ? t1 : t2);  // error?
+    }
+</PRE>
+
+<P>According to 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>], this function is
+well-formed if <TT>T</TT> is a class type and ill-formed
+otherwise.  If the second and third operands of a conditional
+expression are lvalues of the same class type except for
+cv-qualification, the result of the conditional expression is
+an lvalue; if they are lvalues of the same non-class type
+except for cv-qualification, the result is an rvalue.</P>
+
+<P>This difference seems gratuitous and should be removed.</P>
+
+<P><B>Proposed resolution (June, 2009):</B></P>
+
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, if the second and third operand have different types,
+and either has (possibly cv-qualified) class type, <INS>or if both are
+lvalues of the same type except for cv-qualification,</INS> an attempt
+is made to convert each of those operands to the type of the other.
+The process for determining whether an operand expression <TT>E1</TT>
+of type <TT>T1</TT> can be converted to match an operand expression
+<TT>E2</TT> of type <TT>T2</TT> is defined as follows:</P>
+
+<UL>
+<LI><P>If <TT>E2</TT> is an lvalue: <TT>E1</TT> can be converted
+to match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) to the type &#8220;lvalue reference to
+<TT>T2</TT>&#8221;, subject to the constraint that in the conversion
+the reference must bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to
+<TT>E1</TT>.</P></LI>
+
+<LI><P>If <TT>E2</TT> is an rvalue, or if the conversion above cannot
+be done <INS>and at least one of the operands has (possibly
+cv-qualified) class type</INS>:</P></LI>
+
+<UL><LI><P>...</P></LI></UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 109</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="109"></A><H4>109.
+  
+Allowing <TT>::template</TT> in <I>using-declaration</I>s
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 Apr 1999<BR>
+
+
+
+<P>
+<I>Daveed Vandevoorde
+
+:</I>
+While reading <A HREF="11.html">Core issue 11</A>
+I thought it implied the following
+possibility:</P>
+<PRE>
+    template&lt;typename T&gt;
+    struct B {
+       template&lt;int&gt; void f(int);
+    };
+
+    template&lt;typename T&gt;
+    struct D: B&lt;T&gt; {
+       using B&lt;T&gt;::template f;
+       void g() { this-&gt;f&lt;1&gt;(0); } // OK, f is a template
+    };
+</PRE>
+<P>However, the grammar for a <I>using-declaration</I> reads:</P>
+<UL>
+<TT>using typename<SUB>opt</SUB>&#160;::<SUB>opt</SUB>&#160;<I>nested-name-specifier&#160;unqualified-id</I> ;</TT>
+</UL>
+<P>and <I>nested-name-specifier</I> never ends in "<TT>template</TT>".</P>
+<P>Is that intentional?</P>
+
+<P><I>Bill Gibbons
+
+:</I></P>
+<P>It certainly appears to be, since we have:</P>
+<UL>
+<I>qualified-id</I>:
+<UL><TT>::<SUB>opt</SUB> <I>nested-name-specifier</I> template<SUB>opt</SUB> <I>unqualified-id</I></TT></UL>
+</UL>
+so it would be easier to specify <I>using-declaration</I> as:
+<UL>
+<TT>using typename<SUB>opt</SUB> <I>qualified-id</I> ;</TT>
+</UL>
+if the "<TT>template</TT>" keyword were allowed.
+
+There was a discussion about whether a dependent name specified in a
+<I>using-declaration</I> could be given an "is a type" attribute through the
+<TT>typename</TT> keyword; the decision was to allow this.  But I don't recall
+if the "is a template" attribute was discussed.
+
+<P>
+<B>Rationale (04/99):</B> Any semantics associated with the
+<TT>template</TT> keyword in <I>using-declaration</I>s should be considered an
+extension.</P>
+
+<P><B>Notes from the April 2003 meeting:</B></P>
+
+<P>See also issues <A HREF="96.html">96</A> and
+<A HREF="11.html">11</A>.</P>
+
+<P>We decided to make no change and to close this issue as not-a-defect.
+This is not needed functionality; the example above, for example, can
+be written with <TT>-&gt;template</TT>.  This issue has been on the
+issues list for years as an extension, and there has been no clamor
+for it.</P>
+
+<P>It was also noted that knowing that something is a template is
+not enough; there's still the issue of knowing whether it is a
+class or function template.</P>
+
+<P><B>Additional note (February, 2011):</B></P>
+
+<P>This issue is being reopened for further consideration after
+additional discussion<committee-only>; see messages
+<A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=18492">18492</A> through <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=18499">18499</A></committee-only>.  It
+was noted that, in addition to the workaround described above for
+the member function template case, the new alias template facility
+provides a workaround for the member class template case: instead
+of</P>
+
+<PRE>
+    using T::template X;  //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+</PRE>
+
+<P>for a class template member <TT>X</TT> of base class <TT>T</TT>,
+one could write</P>
+
+<PRE>
+    template&lt;U&gt; using X = typename T::template X&lt;U&gt;;
+</PRE>
+
+<P>Rationale (March, 2011):</P>
+
+<P>There was insufficient motivation for a change at this point.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

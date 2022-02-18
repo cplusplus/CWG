@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2539</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2539"></A><H4>2539.
+  
+Three-way comparison requiring strong ordering for floating-point types
+</H4>
+<B>Section: </B>11.10.3&#160; [<A href="https://wg21.link/class.spaceship">class.spaceship</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-24<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct MyType {
+    int i;
+    double d;
+    std::strong_ordering operator&lt;=&gt; (const MyType&amp; c) const = default;
+  };
+</PRE>
+
+<P>The defaulted three-way comparison operator is defined only if it is used, per 11.10.1 [<A href="https://wg21.link/class.compare.default#1">class.compare.default</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+A comparison operator function for class C that is defaulted on its
+first declaration and is not defined as deleted is implicitly defined
+when it is odr-used or needed for constant evaluation.
+
+</BLOCKQUOTE>
+
+<P>The current rules make an odr-use of the three-way comparison
+operator ill-formed, but it would be preferable if it were deleted
+instead.  In particular, 11.10.3 [<A href="https://wg21.link/class.spaceship#2.2">class.spaceship</A>] bullet 2.2 specifies</P>
+
+<BLOCKQUOTE>
+
+If the synthesized three-way comparison of type R between any objects
+x<sub>i</sub> and x<sub>i</sub> is not defined, the operator function
+is defined as deleted.
+
+</BLOCKQUOTE>
+
+<P>This refers to bullets 1.2 and 1.3 of
+11.10.3 [<A href="https://wg21.link/class.spaceship#1">class.spaceship</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+The <I>synthesized three-way comparison</I> of type R
+(17.11.2 [<A href="https://wg21.link/cmp.categories">cmp.categories</A>]) of glvalues a and b of the same type is
+defined as follows:
+<UL>
+<LI>
+If <TT>a &lt;=&gt; b</TT> is usable (11.10.1 [<A href="https://wg21.link/class.compare.default">class.compare.default</A>]),
+<TT>static_cast&lt;R&gt;(a &lt;=&gt; b)</TT>.</LI>
+<LI>Otherwise, if overload
+resolution for a &lt;=&gt; b is performed and finds at least one
+viable candidate, the synthesized three-way comparison is not defined.</LI>
+<LI>
+Otherwise, if R is not a comparison category type, or either
+the expression a == b or the expression a &lt; b is not usable, the
+synthesized three-way comparison is not defined.</LI>
+
+<LI>Otherwise, ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, <TT>a &lt;=&gt; b</TT> is actually usable, because
+11.10.1 [<A href="https://wg21.link/class.compare.default#3">class.compare.default</A>] paragraph 3 defines:</P>
+
+<BLOCKQUOTE>
+
+A binary operator expression <TT>a @ b</TT> is <I>usable</I> if either
+<UL>
+<LI> a or b
+is of class or enumeration type and overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]) as applied to <TT>a @ b</TT> results in a usable
+candidate, or</LI>
+
+<LI>neither a nor b is of class or enumeration type
+and <TT>a @ b</TT> is a valid expression.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<TT>MyType().d &lt;=&gt; MyType().d</TT> is a valid expression.
+
+<P><B>Proposed resolution (approved by CWG 2022-11-11) [SUPERSEDED]:</B></P>
+
+<BLOCKQUOTE>
+
+The <I>synthesized three-way comparison</I> of type R
+(17.11.2 [<A href="https://wg21.link/cmp.categories">cmp.categories</A>]) of glvalues a and b of the same type is
+defined as follows:
+<UL>
+<LI>
+If <TT>a &lt;=&gt; b</TT> is usable (11.10.1 [<A href="https://wg21.link/class.compare.default">class.compare.default</A>])
+<INS>and</INS>
+
+<UL>
+<LI>
+<INS>if overload resolution for a direct-initialization of an object
+or reference of type R from <TT>a &lt;=&gt; b</TT> results in a usable
+candidate</INS>,
+<TT>static_cast&lt;R&gt;(a &lt;=&gt; b)</TT><INS>,</INS>
+</LI>
+
+<LI>
+<INS>otherwise,
+the synthesized three-way comparison is not defined</INS>.</LI>
+</UL>
+</LI>
+
+<LI>Otherwise, if overload
+resolution for a &lt;=&gt; b is performed and finds at least one
+viable candidate, the synthesized three-way comparison is not defined.</LI>
+
+<LI>
+Otherwise, if R is not a comparison category type, or either
+the expression a == b or the expression a &lt; b is not usable, the
+synthesized three-way comparison is not defined.</LI>
+
+<LI>Otherwise, ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-02-06</B></P>
+
+<P>A simplification of the wording is sought.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-07):</B></P>
+
+<BLOCKQUOTE>
+
+The <I>synthesized three-way comparison</I> of type R
+(17.11.2 [<A href="https://wg21.link/cmp.categories">cmp.categories</A>]) of glvalues a and b of the same type is
+defined as follows:
+<UL>
+<LI>
+If <TT>a &lt;=&gt; b</TT> is usable (11.10.1 [<A href="https://wg21.link/class.compare.default">class.compare.default</A>])
+<INS>and can be explicitly converted to <TT>R</TT> using <TT>static_cast</TT>,</INS>
+<TT>static_cast&lt;R&gt;(a &lt;=&gt; b)</TT>.
+</LI>
+
+<LI>Otherwise, if overload
+resolution for a &lt;=&gt; b is performed and finds at least one
+viable candidate, the synthesized three-way comparison is not defined.</LI>
+
+<LI>
+Otherwise, if R is not a comparison category type, or either
+the expression a == b or the expression a &lt; b is not usable, the
+synthesized three-way comparison is not defined.</LI>
+
+<LI>Otherwise, ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

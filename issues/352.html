@@ -1,0 +1,318 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 352</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="352"></A><H4>352.
+  
+Nondeduced contexts
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 April 2002<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+<P>The current definition of the C++ language speaks about nondeduced
+contexts only in terms of deducing template arguments from a type
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4. Those cases, however, don't
+seem to be the only ones when template argument deduction is not
+possible. The example below illustrates that:</P>
+<PRE>
+namespace  A  {
+   enum  ae  {   };
+   template&lt;class R, class A&gt;
+   int  foo(ae, R(*)(A))
+   {   return  1;   }
+}
+
+template&lt;typename T&gt;
+void  tfoo(T)
+{   }
+
+template&lt;typename T&gt;
+int  tfoo(T)
+{   return  1;   }
+
+/*int  tfoo(int)
+{   return  1;   }*/
+
+
+int  main()
+{
+   A::ae   a;
+   foo(a, &amp;tfoo);
+}
+</PRE>
+<P>Here argument-dependent name lookup finds the function template
+'A::foo' as a candidate function. None of the function template's
+function parameter types constitutes a nondeduced context as per
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4. And yet, quite clearly,
+argument deduction is not possible in this context. Furthermore it is
+not clear what a conforming implementation shall do when the
+definition of the non-template function '::tfoo' is uncommented.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>Add the following as a new paragraph immediately before paragraph 3 of
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]:</P>
+<BLOCKQUOTE>
+<P>After the above transformations, in the event of P being a function
+type, a pointer to function type, or a pointer to member function type
+and the corresponding A designating a set of overloaded (member)
+functions with at least one of the (member) functions introduced by
+the use of a (member) function template name (12.3 [<A href="https://wg21.link/over.over">over.over</A>])
+or by the use of a
+conversion function template (13.10.3.4 [<A href="https://wg21.link/temp.deduct.conv">temp.deduct.conv</A>]),
+the whole function call
+expression is considered to be a nondeduced context. [Example:</P>
+<PRE>
+namespace  A  {
+   enum  ae  {   };
+   template&lt;class R, class A&gt;
+   int  foo(ae, R(*)(A))
+   {   return  1;   }
+}
+
+template&lt;typename T&gt;
+void  tfoo(T)
+{   }
+
+template&lt;typename T&gt;
+int  tfoo(T)
+{   return  1;   }
+
+int  tfoo(int)
+{   return  1;   }
+
+int  main()
+{
+   A::ae   a;
+   foo(a, &amp;tfoo);   //  ill-formed, the call is a nondeduced context
+   using  A::foo;
+   foo&lt;void,int&gt;(a, &amp;tfoo);  // well-formed, the address of the spe-
+                             // cialization 'void tfoo&lt;int&gt;(int)' is
+                             // the second argument of the call
+}
+</PRE>
+</BLOCKQUOTE>
+
+
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>There was agreement that deduction should fail but it's still possible
+to get a result -- it's just not a "nondeduced context" in the
+sense of the standard.</P>
+
+<P>The presence of a template in the overload set should not automatically
+disqualify the overload set.</P>
+
+<P><B>Proposed Resolution (April 2003, revised October 2003):</B></P>
+
+<P>
+In 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4 replace:
+<BLOCKQUOTE>
+The nondeduced contexts are:
+<UL>
+<LI>
+The <I>nested-name-specifier</I> of a type that was specified using a
+<I>qualified-id</I>.
+</LI>
+<LI>
+A type that is a <I>template-id</I> in which one or more of the
+<I>template-argument</I>s is an expression that references a
+<I>template-parameter</I>.
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+with:
+
+<BLOCKQUOTE>
+The nondeduced contexts are:
+<UL>
+<LI>
+The <I>nested-name-specifier</I> of a type that was specified using a
+<I>qualified-id</I>.
+</LI>
+<LI>
+A non-type template argument or an array bound that is an expression
+that references a template-parameter.
+</LI>
+<LI>
+A template parameter used in the parameter type of a function parameter
+that has a default argument that is being used in the call
+for which argument deduction is being done.
+</LI>
+<LI>
+A function parameter for which argument deduction cannot be done
+because the associated function argument is a function, or a set of
+overloaded functions (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or
+more of the following apply:
+<UL>
+<LI>
+more than one function matches the function parameter type
+(resulting in an ambiguous deduction), or
+</LI>
+<LI>
+no function matches the function parameter type, or
+</LI>
+<LI>
+the set of functions supplied as an argument contains one or more
+function templates.
+</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+</P>
+
+<P>
+In 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>], add after paragraph 3:</P>
+
+<BLOCKQUOTE>
+<P>When P is a function type, pointer to function type, or pointer to
+member function type:</P>
+
+<UL>
+<LI>
+If the argument is an overload set containing one or more function templates,
+the parameter is treated as a nondeduced context.
+</LI>
+<LI>
+If the argument is an overload set (not containing function templates),
+trial argument deduction is attempted using each of the members of the set.
+If deduction succeeds for only one of the overload set members, that member
+is used as the argument value for deduction.  If deduction succeeds for more
+than one member of the overload set the parameter is treated as a nondeduced
+context.
+</LI>
+</UL>
+
+<P>
+[Example:
+<PRE>
+// Only one function of an overload set matches the call so the function
+// parameter is a deduced context.
+template &lt;class T&gt; int f(T (*p)(T));
+int g(int);
+int g(char);
+int i = f(g);  // calls f(int (*)(int))
+</PRE>
+--end example]</P>
+
+<P>
+[Example:
+<PRE>
+// Ambiguous deduction causes the second function parameter to be a
+// nondeduced context.
+template &lt;class T&gt; int f(T, T (*p)(T));
+int g(int);
+char g(char);
+int i = f(1, g);  // calls f(int, int (*)(int))
+</PRE>
+--end example]</P>
+
+<P>
+[Example:
+<PRE>
+// The overload set contains a template, causing the second function
+// parameter to be a nondeduced context.
+template &lt;class T&gt; int f(T, T (*p)(T));
+char g(char);
+template &lt;class T&gt; T g(T);
+int i = f(1, g);  // calls f(int, int (*)(int))
+</PRE>
+--end example]</P>
+
+
+</BLOCKQUOTE>
+
+<P>
+In 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#14">temp.deduct.type</A>] paragraph 14, replace:
+
+<BLOCKQUOTE>
+If, in the declaration of a function template with a non-type
+<I>template-parameter</I>, the non-type <I>template-parameter</I> is
+used in an expression in the function parameter-list, the
+corresponding <I>template-argument</I> must always be explicitly
+specified or deduced elsewhere because type deduction would otherwise
+always fail for such a <I>template-argument</I>.
+</BLOCKQUOTE>
+
+With:
+
+<BLOCKQUOTE>
+If, in the declaration of a function template with a non-type
+template parameter, the non-type template parameter is
+used in an expression in the function parameter list, the
+expression is a nondeduced context.
+</BLOCKQUOTE>
+</P>
+
+<P>
+Replace the example with:</P>
+
+<BLOCKQUOTE>
+[Example:
+<PRE>
+template&lt;int i&gt; class A { /* ... */ };
+template&lt;int i&gt; void g(A&lt;i+1&gt;);
+template&lt;int i&gt; void f(A&lt;i&gt;, A&lt;i+1&gt;);
+void k() {
+  A&lt;1&gt; a1;
+  A&lt;2&gt; a2;
+  g(a1);  //error: deduction fails for expression i+1
+  g&lt;0&gt;(a1); //OK
+  f(a1, a2);  // OK
+}
+</PRE>
+--end example]
+</BLOCKQUOTE>
+
+
+<P>
+In 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#16">temp.deduct.type</A>] paragraph 16, replace:</P>
+
+<BLOCKQUOTE>
+A <I>template-argument</I> can be deduced from a pointer to function
+or pointer to member function argument if the set of overloaded
+functions does not contain function templates and at most
+one of a set of overloaded functions provides a unique match.
+</BLOCKQUOTE>
+
+<P>
+With:</P>
+
+<BLOCKQUOTE>
+A <I>template-argument</I> can be deduced from a function,
+pointer to function, or pointer to member function type.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

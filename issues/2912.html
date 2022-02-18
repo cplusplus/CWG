@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2912</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2912"></A><H4>2912.
+  
+Too-large value for size in array new
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mital Ashok
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/560">#560</A>.)</P>
+
+<P>Consider an implementation with a <TT>size_t</TT> smaller
+than <TT>long long</TT>.  An implementation should flag too-large
+values for the size in an array "new", in the same manner it flags
+negative values. For example:</P>
+<PRE>
+  int *p = new int[ULLONG_MAX];
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#8">expr.new</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the expression in a <I>noptr-new-declarator</I> is present, it is
+implicitly converted to std::size_t. The value of the expression is
+invalid if:
+<UL>
+<LI>the expression is of non-class type and its value before
+converting to std::size_t is less than zero <INS>or greater than the
+maximum value representable as a <TT>std::size_t</TT></INS>;
+</LI>
+<LI>the expression is of class type and its value before application
+of the second standard conversion (12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]) [
+Footnote: ... ] is less than zero <INS>or greater than the maximum
+value representable as a <TT>std::size_t</TT></INS>;</LI>
+<LI>its value is such that the size of the allocated object would
+exceed the implementation-defined limit (Annex B); or
+</LI>
+<LI>the <I>new-initializer</I> is a <I>braced-init-list</I> and the
+number of array elements for which initializers are provided
+(including the terminating '\0' in a <I>string-literal</I>
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>])) exceeds the number of elements to
+initialize.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

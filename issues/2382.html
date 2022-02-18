@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2382</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2382"></A><H4>2382.
+  
+Array allocation overhead for non-allocating placement <TT>new</TT>
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Paul Sanders
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-07-16<BR>
+
+
+<P>[Accepted as a DR at the November, 2019 meeting.]</P>
+
+<P>According to 7.6.2.8 [<A href="https://wg21.link/expr.new#12">expr.new</A>] paragraph 12,</P>
+
+<BLOCKQUOTE>
+
+When a <I>new-expression</I> calls an allocation function and that
+allocation has not been extended, the <I>new-expression</I> passes the
+amount of space requested to the allocation function as the first argument
+of type std::size_t . That argument shall be no less than the size of the
+object being created; it may be greater than the size of the object being
+created only if the object is an array. For arrays
+of <TT>char</TT>, <TT>unsigned char</TT>, and <TT>std::byte</TT>, the
+difference between the result of the <I>new-expression</I> and the address
+returned by the allocation function shall be an integral multiple of the
+strictest fundamental alignment requirement (6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]) of
+any object type whose size is no greater than the size of the array being
+created.
+
+</BLOCKQUOTE>
+
+<P>There is no exemption for the non-allocating <TT>(void*,size_t)</TT>
+placement-new allocation function, so programs must allow for the
+possibility that the provided buffer may need to be larger (by an
+indeterminate amount) than the size of an array placed into existing
+storage.</P>
+
+<P>Should the non-allocating placement-new allocation function be
+exempt from the array allocation overhead? (This question was explicitly
+referred to CWG by the EWG chair.)</P>
+
+<P><B>Proposed resolution (February, 2019):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#12">expr.new</A>] paragraph 12
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When a <I>new-expression</I> calls an allocation function
+and that allocation has not been extended,
+the <I>new-expression</I> passes the amount of space
+requested to the allocation function as the first argument
+of type std::size_t . That argument shall be no less than
+the size of the object being created; it may be greater than
+the size of the object being created only if the object is
+an array <INS>and the allocation function is not a
+non-allocating form
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>])</INS>. For arrays of...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#16">expr.new</A>] paragraph 16 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Here, each instance of <TT>x</TT> is a non-negative
+unspecified value representing array allocation overhead;
+the result of the <I>new-expression</I> will be offset by
+this amount from the value returned by <TT>operator
+new[]</TT>.  This overhead may be applied in all
+array <I>new-expression</I>s, including those referencing
+<INS>a placement allocation function, but not when
+referencing</INS> the library function <TT>operator
+new[](std::size_t, void*)</TT><DEL> and other placement
+allocation functions</DEL>. The amount of overhead may vary
+from one invocation of <TT>new</TT> to
+another. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(This resolution effectively resolves <A HREF="476.html">issue 476</A>, which was closed for EWG input.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

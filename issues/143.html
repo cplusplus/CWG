@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 143</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="143"></A><H4>143.
+  
+Friends and Koenig lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Jul 1999<BR>
+
+
+
+<P>[Moved to DR at 4/02 meeting.]</P>
+
+
+
+<P>Paragraphs 1 and 2 of
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ say, in part,</P>
+
+<BLOCKQUOTE>
+When an unqualified name is used as the <I>postfix-expression</I>
+in a function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]
+)... namespace-scope
+friend function declarations
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]
+) not otherwise
+visible may be found... the set of declarations found
+by the lookup of the function name [includes] the set
+of declarations found in the... classes associated with
+the argument types.
+</BLOCKQUOTE>
+
+The most straightforward reading of this wording is that if a function of
+namespace scope (as opposed to a class member function) is
+declared as a friend in a class, and that class is an
+associated class in a function call, the friend function will
+be part of the overload set, even if it is not visible to
+normal lookup.
+
+<P>Consider the following example:</P>
+
+<PRE>
+    namespace A {
+	class S;
+    };
+    namespace B {
+	void f(A::S);
+    };
+    namespace A {
+	class S {
+	    int i;
+	    friend void B::f(S);
+	};
+    }
+    void g() {
+	A::S s;
+	f(s); // should find B::f(A::S)
+    }
+</PRE>
+
+This example would seem to satisfy the criteria from
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+:
+<TT>A::S</TT> is an associated class of the argument, and
+<TT>A::S</TT> has a
+friend declaration of the namespace-scope function
+<TT>B::f(A::S)</TT>,
+so Koenig lookup should include <TT>B::f(A::S)</TT> as part of the
+overload set in the call.
+
+<P>Another interpretation is that, instead of finding the friend
+declarations in associated classes, one only looks for namespace-scope
+functions, visible or invisible, in the namespaces of which the the
+associated classes are members; the only use of the friend
+declarations in the associated classes is to validate whether an
+invisible function declaration came from an associated class or not
+and thus whether it should be included in the overload set or not.
+By this interpretation, the call <TT>f(s)</TT> in the example will
+fail, because <TT>B::f(A::S)</TT> is not a member of namespace
+<TT>A</TT> and thus is not found by the lookup.</P>
+
+<P>
+<B> Notes from 10/99 meeting:</B> The second interpretation
+is correct.  The wording should be revised to make clear that Koenig
+lookup works by finding "invisible" declarations in namespace scope
+and not by finding <TT>friend</TT> declarations in associated
+classes.</P>
+
+<P>
+<B>Proposed resolution (04/01):</B> The "associated classes"
+are handled adequately under this interpretation by
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3">basic.lookup.argdep</A>] paragraph 3, which describes the
+lookup in the associated namespaces as including the friend
+declarations from the associated classes.  Other mentions of the
+associated classes should be removed or qualified to avoid the
+impression that there is a lookup in those classes:</P>
+
+<OL>
+
+<LI>
+<P>In 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>], change</P>
+
+<BLOCKQUOTE>
+
+When an unqualified name is used as the <I>postfix-expression</I>
+in a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), other
+namespaces not considered during the usual unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) may be searched, and
+namespace-scope friend function declarations
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) not otherwise visible may be found.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+When an unqualified name is used as the <I>postfix-expression</I>
+in a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), other
+namespaces not considered during the usual unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) may be searched, and
+<INS>in those namespaces,</INS>
+namespace-scope friend function declarations
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) not otherwise visible may be found.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2, delete
+the words <B>and classes</B> in the following two sentences:</P>
+
+<BLOCKQUOTE>
+
+If the ordinary unqualified lookup of the name finds the
+declaration of a class member function, the associated namespaces
+<B><DEL>and classes</DEL></B> are not considered.  Otherwise the
+set of declarations found by the lookup of the function name is
+the union of the set of declarations found using ordinary
+unqualified lookup and the set of declarations found in the
+namespaces <B><DEL>and classes</DEL></B> associated with the
+argument types.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P>(See also issues
+<A HREF="95.html">95</A>,
+<A HREF="136.html">136</A>,
+<A HREF="138.html">138</A>,
+<A HREF="139.html">139</A>,
+<A HREF="165.html">165</A>,
+<A HREF="166.html">166</A>, and
+<A HREF="218.html">218</A>.)</P>
+<BR><BR>
+</BODY>
+</HTML>

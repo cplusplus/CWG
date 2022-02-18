@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2273</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2273"></A><H4>2273.
+  
+Inheriting constructors vs implicit default constructor
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-17<BR>
+
+
+<P>[Voted into the WP at the July, 2017 meeting.]</P>
+
+
+
+<P>In an example like</P>
+
+<PRE>
+   struct A { A(int = 0); };
+   struct B : A { using A::A; };
+   B b0(0); //<SPAN CLASS="cmnt"> #1 </SPAN>
+   B b;     //<SPAN CLASS="cmnt"> #2 </SPAN>
+</PRE>
+
+<P>Is #2 valid (presumably calling the constructor inherited from
+<TT>A</TT>, or ill-formed due to ambiguity with <TT></TT>'s implicit
+default constructor?</P>
+
+<P><B>Proposed resolution (May, 2017):</B></P>
+
+<OL>
+<LI><P>Change 9.9 [<A href="https://wg21.link/namespace.udecl#16">namespace.udecl</A>] paragraph 16 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For the purpose of <INS>forming a set of candidates during</INS>
+overload resolution, the functions that are introduced by
+a <I>using-declaration</I> into a derived class are treated as
+though they were members of the derived class. In particular, the
+implicit <TT>this</TT> parameter shall be treated as if it were a
+pointer to the derived class rather than to the base class. This
+has no effect on the type of the function, and in all other
+respects the function remains a member of the base
+class. Likewise, constructors that are introduced by
+a <I>using-declaration</I> are treated as though they were
+constructors of the derived class when looking up the
+constructors of the derived class (6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>])
+or forming a set of overload candidates
+(12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]). If such a constructor is selected
+to perform the initialization of an object of class type, all
+subobjects other than the base class from which the constructor
+originated are implicitly initialized
+(11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>]). <INS>[<I>Note:</I> A member of a
+derived class is sometimes preferred to a member of a base class
+if they would otherwise be ambiguous
+(12.2.4 [<A href="https://wg21.link/over.match.best">over.match.best</A>]).  &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new bullet following
+12.2.4 [<A href="https://wg21.link/over.match.best#1.7">over.match.best</A>] bullet 1.7:</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<TT>F1</TT> and <TT>F2</TT> are function template
+specializations, and the function template for <TT>F1</TT> is
+more specialized than the template for <TT>F2</TT> according to
+the partial ordering rules described in
+13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>], or, if not that,</P></LI>
+
+<LI>
+<P><INS><TT>F1</TT> is a constructor for a class <TT>D</TT>,
+<TT>F2</TT> is a constructor for a base class <TT>B</TT> of
+<TT>D</TT>, and for all arguments the corresponding parameters of
+<TT>F1</TT> and <TT>F2</TT> have the same
+type. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct A {
+    A(int = 0);
+  };
+
+  struct B: A {
+    using A::A;
+    B();
+  };
+
+  int main() {
+    B b;  //<SPAN CLASS="cmnt"> OK, </SPAN>B::B()
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>], or, if not that,</INS></P>
+
+</LI>
+
+<LI><P>
+<TT>F1</TT> is generated from a <I>deduction-guide</I>
+(12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>])...</P></LI>
+
+</UL>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="2277.html">issue 2277</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

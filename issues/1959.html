@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1959</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1959"></A><H4>1959.
+  
+Inadvertently inherited copy constructor
+</H4>
+<B>Section: </B>_N4527_.12.9&#160; [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Krauss
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-06-30<BR>
+
+
+<P>[Adopted at the October, 2015 meeting as P0136R1.]</P>
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct a {
+    a() = default;
+    a( a const &amp; ) { std::cout &lt;&lt; "copy\n"; }
+    template&lt; typename t &gt;
+    a( t ) { std::cout &lt;&lt; "convert\n"; }
+  };
+
+  struct b : a {
+    using a::a;
+  };
+
+  a x;
+  b y = x;
+</PRE>
+
+<P>The copy constructor is invoked by the inherited constructor
+template, making it effectively inherited, contrary to the intent of
+_N4527_.12.9 [<A href="https://wg21.link/class.inhctor#3">class.inhctor</A>] paragraph 3.  <TT>std::function</TT> is
+affected by this issue.</P>
+
+<P>A kernel of a resolution might be to inherit the copy and
+move constructors as deleted. Then they will be more
+specialized than any template, and the user won't get
+conversion-from-base behavior unless they explicitly declare
+it. However, reference binding in overload resolution is a
+potential gap. Something like <TT>b::b( a &amp; ) = delete</TT> with
+a non-const parameter would not add safety if it's not
+chosen.</P>
+
+<P>See also <A HREF="1941.html">issue 1941</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

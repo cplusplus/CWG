@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2680</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2680"></A><H4>2680.
+  
+Class template argument deduction for aggregates with designated initializers
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-09<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct X
+   {
+    int i{};
+    T t;
+   };
+
+   X x{ .t = X&lt;int&gt;{ 1, 2 } }; //<SPAN CLASS="cmnt"> should deduce X&lt;X&lt;int&gt;&gt; (not X&lt;int&gt;)</SPAN>
+</PRE>
+
+<P>and</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct Y
+   {
+    int i;
+    T t;
+    int j;
+   };
+
+   template&lt;typename T&gt;
+   Y(int, T) -&gt; Y&lt;T&gt;;
+
+   Y y{ .t = 'c', .j = 2 }; //<SPAN CLASS="cmnt"> should be ill-formed</SPAN>
+</PRE>
+
+<P>Class template argument deduction does not limit deduction to the
+aggregate deduction candidate when a designated initializer list is
+used.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1">over.match.class.deduct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... <INS>If the initializer has a <I>designated-initializer-list</I>, any
+guide that is not an aggregate deduction candidate is not viable; for
+an aggregate deduction candidate,
+the <I>designated-initializer-list</I> is replaced by an
+initializer-list with the same elements.</INS> In addition, if C
+is defined and inherits constructors (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) from a
+direct base class ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#3.5">over.match.class.deduct</A>] bullet 3.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>...</LI>
+
+<LI>If f was generated from a <I>deduction-guide</I>
+(13.7.2.3 [<A href="https://wg21.link/temp.deduct.guide">temp.deduct.guide</A>]), then f' is considered to be so as
+well.</LI>
+
+<LI><INS>If f was generated from an aggregate deduction guide, then f' is
+considered to be so as well.</INS></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

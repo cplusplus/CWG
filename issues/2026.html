@@ -1,0 +1,370 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2026</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2026"></A><H4>2026.
+  
+Zero-initialization and <TT>constexpr</TT>
+</H4>
+<B>Section: </B>6.9.3&#160; [<A href="https://wg21.link/basic.start">basic.start</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-10-20<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>According to 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Variables with static storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or
+thread storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) shall be
+zero-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) before any other initialization
+takes place.
+
+</BLOCKQUOTE>
+
+<P>Does this apply to constant initialization as well?  For example,
+should the following be well-formed, relying on the presumed
+zero-initialization preceding the constant initialization?</P>
+
+<PRE>
+  constexpr int i = i;
+  struct s {
+    constexpr s() : v(v) { }
+    int v;
+  };
+  constexpr s s1;
+</PRE>
+
+<P><B>Notes from the November, 2014 meeting:</B></P>
+
+<P>CWG agreed that constant initialization should be considered as
+happening instead of zero initialization in these cases, making the
+declarations ill-formed.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<OL>
+<LI><P>Rename 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] and make the indicated
+changes, moving parts of its content to a new section immediately
+following, as indicated below:</P></LI>
+
+<BLOCKQUOTE>
+
+<TABLE>
+<TR>
+<TD><B>3.6.2 <DEL>I</DEL><INS>Static
+i</INS>nitialization <DEL>of non-local
+variables</DEL></B></TD>
+
+<TD ALIGN="RIGHT" VALIGN="TOP"><B>[basic.start<DEL>.init</DEL><INS>.static</INS>]</B></TD>
+
+</TR>
+
+</TABLE>
+
+<P>
+<DEL>There are two broad classes of named non-local variables:
+those with static storage duration
+(6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) and those with thread storage
+duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]). Non-local variables</DEL>
+<INS>Variables</INS> with static storage duration are
+initialized as a consequence of program
+initiation. <DEL>Non-local
+variables</DEL> <INS>Variables</INS> with thread storage
+duration are initialized as a consequence of thread
+execution. Within each of these phases of initiation,
+initialization occurs as follows.</P>
+
+<P>
+<DEL>Variables with static storage duration
+(6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread storage duration
+(6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) shall be zero-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) before any other initialization
+takes place.</DEL> A <I>constant initializer</I> for an
+object <TT>o</TT> is an expression that is a
+constant expression, except that it may also invoke
+<TT>constexpr</TT> constructors for o and its subobjects even if
+those objects are of non-literal class types [<I>Note:</I>
+such a class may have a non-trivial destructor &#8212;<I>end
+note</I>]. <I>Constant initialization</I> is performed:</P>
+
+<UL>
+<LI><P>if each full-expression (including implicit conversions) that
+appears in the initializer of a reference with static or
+thread storage duration is a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and the reference is bound to a
+glvalue designating an object with static storage duration,
+to a temporary object (see 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) or
+subobject thereof, or to a function;</P></LI>
+
+<LI><P>if an object with static or thread storage duration is
+initialized by a constructor call, and if the initialization
+full-expression is a constant initializer for the object;</P></LI>
+
+<LI><P>if an object with static or thread storage duration is not
+initialized by a constructor call and if either the object
+is value-initialized or every full-expression that appears
+in its initializer is a constant expression.</P></LI>
+
+</UL>
+
+<P>
+<INS>If constant initialization is not performed, a variable
+with static storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or
+thread storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is
+zero-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</INS>
+Together, zero-initialization and constant initialization
+are called <I>static initialization</I>; all other initialization
+is <I>dynamic initialization</I>. Static initialization shall be
+performed before any dynamic initialization takes place.
+<DEL>Dynamic initialization of a non-local variable with static
+storage duration is <I>unordered</I> if the variable is an
+implicitly or explicitly instantiated specialization, and
+otherwise is <I>ordered</I> [<I>Note:</I> an explicitly specialized
+static data member or variable template specialization has
+ordered initialization. &#8212;<I>end note</I>]. Variables
+with ordered initialization defined within a single
+translation unit shall be initialized in the order of their
+definitions in the translation unit. If a program starts a
+thread (32.4 [<A href="https://wg21.link/thread.threads">thread.threads</A>]), the subsequent
+initialization of a variable is unsequenced with respect to
+the initialization of a variable defined in a different
+translation unit.  Otherwise, the initialization of a
+variable is indeterminately sequenced with respect to the
+initialization of a variable defined in a different
+translation unit. If a program starts a thread, the
+subsequent unordered initialization of a variable is
+unsequenced with respect to every other dynamic
+initialization. Otherwise, the unordered initialization of a
+variable is indeterminately sequenced with respect to every
+other dynamic initialization. [<I>Note:</I> This definition
+permits initialization of a sequence of ordered variables
+concurrently with another sequence. &#8212;<I>end note</I>]</DEL>
+[<I>Note:</I> The <INS>dynamic</INS> initialization of
+<INS>non-local variables is described in 3.6.3
+[basic.start.dynamic]; that of</INS> local static variables
+is described in 8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>].  &#8212;<I>end
+note</I>]</P>
+
+<P>An implementation is permitted to perform the
+initialization of a <DEL>non-local</DEL> variable with
+static <INS>or thread</INS> storage duration as a static
+initialization even if such initialization is not required
+to be done statically, provided that</P>
+
+<UL>
+<LI><P>the dynamic version of the initialization does not change
+the value of any other object of <DEL>namespace scope</DEL>
+<INS>static or thread storage duration</INS> prior to
+its initialization, and</P></LI>
+
+<LI><P>the static version of the initialization produces the same
+value in the initialized variable as would be produced by
+the dynamic initialization if all variables not required to
+be initialized statically were initialized dynamically.</P></LI>
+
+</UL>
+
+<P>[<I>Note:</I> As a consequence, if the initialization of an
+object <TT>obj1</TT> refers to an object <TT>obj2</TT> of namespace scope
+potentially requiring dynamic initialization and defined
+later in the same translation unit, it is unspecified
+whether the value of <TT>obj2</TT> used will be the value of the
+fully initialized <TT>obj2</TT> (because <TT>obj2</TT> was statically
+initialized) or will be the value of <TT>obj2</TT> merely
+zero-initialized. For example,</P>
+
+<PRE>
+  inline double fd() { return 1.0; }
+  extern double d1;
+  double d2 = d1;   //<SPAN CLASS="cmnt"> unspecified:</SPAN>
+                    //<SPAN CLASS="cmnt"> may be statically initialized to </SPAN>0.0<SPAN CLASS="cmnt"> or</SPAN>
+                    //<SPAN CLASS="cmnt"> dynamically initialized to </SPAN>0.0<SPAN CLASS="cmnt"> if </SPAN>d1<SPAN CLASS="cmnt"> is</SPAN>
+                    //<SPAN CLASS="cmnt"> dynamically initialized, or </SPAN>1.0<SPAN CLASS="cmnt"> otherwise</SPAN>
+  double d1 = fd(); //<SPAN CLASS="cmnt"> may be initialized statically or dynamically to </SPAN>1.0
+</PRE>
+
+<P>&#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert a new section after 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<TABLE>
+<TR>
+<TD><INS>3.6.3 Dynamic initialization of non-local variables</INS></TD>
+
+<TD ALIGN="RIGHT" VALIGN="TOP"><INS>[basic.start.dynamic]</INS></TD>
+
+</TR>
+
+</TABLE>
+
+</BLOCKQUOTE>
+
+<LI><P>Move part of 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2 as
+paragraph 1 of the new section:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>Dynamic initialization of a non-local variable with static
+storage duration is unordered if the variable is an
+implicitly or explicitly instantiated specialization, and
+otherwise is ordered [<I>Note:</I> an explicitly specialized
+static data member or variable template specialization has
+ordered initialization. &#8212;<I>end note</I>]. Variables
+with ordered initialization defined within a single
+translation unit shall be initialized in the order of their
+definitions in the translation unit. If a program starts a
+thread (32.4 [<A href="https://wg21.link/thread.threads">thread.threads</A>]), the subsequent
+initialization of a variable is unsequenced with respect to
+the initialization of a variable defined in a different
+translation unit.  Otherwise, the initialization of a
+variable is indeterminately sequenced with respect to the
+initialization of a variable defined in a different
+translation unit. If a program starts a thread, the
+subsequent unordered initialization of a variable is
+unsequenced with respect to every other dynamic
+initialization. Otherwise, the unordered initialization of a
+variable is indeterminately sequenced with respect to every
+other dynamic initialization. [<I>Note:</I> This definition
+permits initialization of a sequence of ordered variables
+concurrently with another sequence. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Move paragraphs 4-6 of 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+as paragraphs 2-4 of the new section:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>It is implementation-defined whether the dynamic
+initialization of a non-local variable with static storage
+duration is done before the first statement of <TT>main</TT>. If the
+initialization is deferred to some point in time after the
+first statement of <TT>main</TT>, it shall occur before the first
+odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of any function or
+variable defined in the same translation unit as the
+variable to be initialized. [<I>Footnote:</I>
+A non-local variable with static storage duration having
+initialization with side-effects must be initialized even if
+it is not odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>],
+6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]). &#8212;<I>end footnote</I>]
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  //<SPAN CLASS="cmnt"> - File 1 -</SPAN>
+  #include "a.h"
+  #include "b.h"
+  B b;
+  A::A(){
+    b.Use();
+  }
+
+  //<SPAN CLASS="cmnt"> - File 2 -</SPAN>
+  #include "a.h"
+  A a;
+
+  //<SPAN CLASS="cmnt"> - File 3 -</SPAN>
+  #include "a.h"
+  #include "b.h"
+  extern A a;
+  extern B b;
+  int main() {
+    a.Use();
+    b.Use();
+}</INS>
+</PRE>
+
+<P><INS>It is implementation-defined whether either <TT>a</TT>
+or <TT>b</TT> is initialized before <TT>main</TT> is entered
+or whether the initializations are delayed until <TT>a</TT>
+is first odr-used in
+<TT>main</TT>. In particular, if <TT>a</TT> is initialized
+before <TT>main</TT> is entered, it is not guaranteed
+that <TT>b</TT> will be initialized before it is odr-used by
+the initialization of <TT>a</TT>, that is,
+before <TT>A::A</TT> is called. If, however, <TT>a</TT> is
+initialized at some point after the first statement
+of <TT>main</TT>, <TT>b</TT> will be initialized prior to
+its use in <TT>A::A</TT>. &#8212;<I>end example</I>]</INS></P>
+
+<P><INS>It is implementation-defined whether the dynamic
+initialization of a non-local variable with static or thread
+storage duration is done before the first statement of the
+initial function of the thread. If the initialization is
+deferred to some point in time after the first statement of
+the initial function of the thread, it shall occur before
+the first odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of any variable
+with thread storage duration defined in the same translation
+unit as the variable to be initialized.</INS></P>
+
+<P><INS>If the initialization of a non-local variable with static or
+thread storage duration exits via an exception,
+<TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).</INS></P>
+
+</BLOCKQUOTE>
+
+<LI>Change 8.8 [<A href="https://wg21.link/stmt.dcl#4">stmt.dcl</A>] paragraph 4 as follows:</LI>
+
+<BLOCKQUOTE>
+
+<DEL>The zero-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of all
+block-scope variables with static storage duration
+(6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread storage duration
+(6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is performed before any other
+initialization takes place. Constant initialization
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]) of a block-scope entity with
+static storage duration, if applicable, is performed before
+its block is first entered.  An implementation is permitted
+to perform early initialization of other block-scope
+variables with static or thread storage duration under the
+same conditions that an implementation is permitted to
+statically initialize a variable with static or thread
+storage duration in namespace scope
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]). Otherwise such a variable is
+initialized</DEL> <INS>Dynamic initialization of a block-scope
+variable with static storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>])
+or thread storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is
+performed</INS> the first time control passes...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>Editing note: all existing cross-references to
+6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] must be examined to determine
+which of the two current sections should be targeted.</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

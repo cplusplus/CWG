@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 367</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="367"></A><H4>367.
+  
+<TT>throw</TT> operator allowed in constant expression?
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin v. Loewis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 July 2002<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>The following translation unit appears to be well-formed.</P>
+<PRE>
+int x[true?throw 4:5];
+</PRE>
+<P>According to 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>], this appears to be an
+integral constant expression:
+it is a conditional expression, involves only literals, and no
+assignment, increment, decrement, function-call, or comma operators.
+However, if this is well-formed, the standard gives no meaning to
+this declaration, since the array bound (9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1)
+ cannot be computed.</P>
+
+<P>I believe the defect is that throw expressions should also be banned
+from constant expressions.</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>We should also check on <TT>new</TT> and <TT>delete</TT>.</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>Although it could be argued that all three of these operators
+potentially involve function calls &#8212; <TT>throw</TT>
+to <TT>std::terminate</TT>, <TT>new</TT> and <TT>delete</TT> to the
+corresponding allocation and deallocation functions &#8212; and thus
+would already be excluded from constant expressions, this reasoning
+was considered to be too subtle to allow closing the issue with no
+change.  A modification that explicitly clarifies the status of these
+operators will be drafted.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<P>Change the last sentence of 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] as indicated:</P>
+
+<BLOCKQUOTE>
+
+In particular, except in <TT>sizeof</TT> expressions, functions, class
+objects, pointers, or references shall not be used, and assignment,
+increment, decrement, <DEL>function-call</DEL> <INS>function call (including
+<I>new-expression</I>s and <I>delete-expression</I>s)</INS>, <DEL>or</DEL> comma
+operators<INS>, or <I>throw-expression</I>s</INS> shall not be used.
+
+</BLOCKQUOTE>
+
+<P><I>Note: this sentence is also changed by the resolution of
+<A HREF="530.html">issue 530</A>.</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

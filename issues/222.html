@@ -1,0 +1,384 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 222</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="222"></A><H4>222.
+  
+Sequence points and lvalue-returning operators
+</H4>
+<B>Section: </B>Clause 7&#160; [<A href="https://wg21.link/expr">expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrew Koenig
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Dec 1999<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>I believe that the committee has neglected to take into
+account one of the differences between C and C++ when defining
+sequence points.  As an example, consider</P>
+
+<PRE>
+    (a += b) += c;
+</PRE>
+
+<P>where <TT>a</TT>, <TT>b</TT>, and <TT>c</TT> all have type
+<TT>int</TT>.  I believe that this expression has undefined behavior,
+even though it is well-formed.  It is not well-formed in C, because +=
+returns an rvalue there.  The reason for the undefined behavior is
+that it modifies the value of `<TT>a</TT>' twice between sequence
+points.</P>
+
+<P>Expressions such as this one are sometimes genuinely useful.
+Of course, we could write this particular example as</P>
+
+<PRE>
+    a += b; a += c;
+</PRE>
+
+<P>but what about</P>
+
+<PRE>
+    void scale(double* p, int n, double x, double y) {
+        for (int i = 0; i &lt; n; ++i) {
+            (p[i] *= x) += y;
+        }
+    }
+</PRE>
+
+<P>All of the potential rewrites involve multiply-evaluating
+<TT>p[i]</TT> or unobvious circumlocations like creating references
+to the array element.</P>
+
+<P>One way to deal with this issue would be to include built-in operators
+in the rule that puts a sequence point between evaluating a function's
+arguments and evaluating the function itself.  However, that might
+be overkill:  I see no reason to require that in</P>
+
+<PRE>
+    x[i++] = y;
+</PRE>
+
+<P>the contents of `<TT>i</TT>' must be incremented before the
+assignment.</P>
+
+<P>A less stringent alternative might be to say that when a built-in
+operator yields an lvalue, the implementation shall not subsequently
+change the value of that object as a consequence of that operator.</P>
+
+<P>I find it hard to imagine an implementation that does not do this
+already.  Am I wrong?  Is there any implementation out there that
+does not `do the right thing' already for <TT>(a += b) += c</TT>?</P>
+
+<P>7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+The result of the assignment operation is the value stored in the left
+operand after the assignment has taken place; the result is an lvalue.
+
+</BLOCKQUOTE>
+
+<P>What is the normative effect of the words "after the assignment has
+taken place"?  I think that phrase ought to mean that in addition to
+whatever constraints the rules about sequence points might impose on
+the implementation, assignment operators on built-in types have the
+additional constraint that they must store the left-hand side's new
+value before returning a reference to that object as their result.</P>
+
+<P>One could argue that as the C++ standard currently stands, the
+effect of <TT>x = y = 0;</TT> is undefined.  The reason is that it
+both fetches and stores the value of <TT>y</TT>, and does not fetch
+the value of <TT>y</TT> in order to compute its new value.</P>
+
+<P>I'm suggesting that the phrase "after the assignment has taken
+place" should be read as constraining the implementation to set
+<TT>y</TT> to 0 before yielding the value of <TT>y</TT> as the result
+of the subexpression <TT>y = 0</TT>.</P>
+
+<T>Note that this suggestion is different from asking that there be a
+sequence point after evaluation of an assignment.  In particular, I am
+not suggesting that an order constraint be imposed on any side effects
+other than the assignment itself.</T>
+
+<P>
+<U>Francis Glassborow</U>:</P>
+
+<P>My understanding is
+that for a single variable:</P>
+
+<OL>
+<LI>Multiple read accesses without a write are OK</LI>
+
+<LI>A single read access followed by a single write (of a value
+dependant on the read, so that the read MUST happen first) is OK</LI>
+
+<LI>A write followed by an actual read is undefined behaviour</LI>
+
+<LI>Multiple writes have undefined behaviour</LI>
+</OL>
+
+<P>It is the 3) that is often ignored because in practice the compiler
+hardly ever codes for the read because it already has that value but
+in complicated evaluations with a shortage of registers, that is not
+always the case. Without getting too close to the hardware, I think we
+both know that a read too close to a write can be problematical on
+some hardware.</P>
+
+<P>So, in <TT>x = y = 0;</TT>, the implementation must NOT fetch a
+value from <TT>y</TT>, instead it has to "know" what that value will
+be (easy because it has just computed that in order to know what it
+must, at some time, store in <TT>y</TT>).  From this I deduce that
+computing the lvalue (to know where to store) and the rvalue to know
+what is stored are two entirely independent actions that can occur in
+any order commensurate with the overall requirements that both
+operands for an operator be evaluated before the operator is.</P>
+
+<P>
+<U>Erwin Unruh</U>:</P>
+
+<P>C
+distinguishes between the resulting value of an assignment and putting the
+value in store. So in C a compiler might implement the statement
+<TT>x=y=0;</TT>
+either as <TT>x=0;y=0;</TT> or as <TT>y=0;x=0;</TT>
+In C the statement <TT>(x += 5) += 7;</TT> is not allowed because the first <TT>+=</TT> yields
+an rvalue which is not allowed as left operand to <TT>+=</TT>.
+So in C an assignment is not a sequence of write/read because the result is
+not really "read".</P>
+
+<P>In C++ we decided to make the result of assignment an lvalue. In
+this case we do not have the option to specify the "value" of the
+result. That is just the variable itself (or its address in a
+different view). So in C++, strictly speaking, the statement
+<TT>x=y=0;</TT> must be implemented as <TT>y=0;x=y;</TT> which makes a
+big difference if <TT>y</TT> is declared <TT>volatile</TT>.</P>
+
+<P>Furthermore, I think undefined behaviour should not be the result of a
+single mentioning of a variable within an expression. So the statement
+<TT>(x +=5) += 7;</TT> should NOT have undefined behaviour.</P>
+
+<P>In my view the semantics could be:</P>
+
+<OL>
+
+<LI>if the result of an assignment is used as an rvalue, its value is that of
+the variable after assignment. The actual store takes place before the next
+sequence point, but may be before the value is used. This is consistent with
+C usage.</LI>
+
+<LI>if the result of an assignment is used as an lvalue to store another
+value, then the new value will be stored in the variable before the next
+sequence point. It is unspecified whether the first assigned value is stored
+intermediately.</LI>
+
+<LI>if the result of an assignment is used as an lvalue to take an address,
+that address is given (it doesn't change). The actual store of the new value
+takes place before the next sequence point.</LI>
+
+</OL>
+
+<P>
+<U>Jerry Schwarz</U>:</P>
+
+<P>My recollection is different from Erwin's. I am confident that the
+intention when we decided to make assignments lvalues was not to
+change the semantics of evaluation of assignments. The semantics was
+supposed to remain the same as C's.</P>
+
+<P>Ervin seems to assume that because assignments are lvalues, an
+assignment's value must be determined by a read of the location. But
+that was definitely not our intention. As he notes this has a
+significant impact on the semantics of assignment to a volatile
+variable.  If Erwin's interpretation were correct we would have no way
+to write a volatile variable without also reading it. </P>
+
+<P>
+<U>Lawrence Crowl</U>:</P>
+
+<P>For <TT>x=y=0</TT>, lvalue semantics implies an lvalue to rvalue
+conversion on the result of <TT>y=0</TT>, which in turn implies a
+read.  If <TT>y</TT> is <TT>volatile</TT>, lvalue semantics implies
+both a read and a write on <TT>y</TT>.</P>
+
+<P>The standard apparently doesn't state whether there is a value
+dependence of the lvalue result on the completion of the assignment.
+Such a statement in the standard would solve the non-volatile C
+compatibility issue, and would be consistent with a user-implemented
+<TT>operator=</TT>.</P>
+
+<P>Another possible approach is to state that primitive assignment
+operators have two results, an lvalue and a corresponding
+"after-store" rvalue.  The rvalue result would be used when an rvalue
+is required, while the lvalue result would be used when an lvalue is
+required.  However, this semantics is unsupportable for user-defined
+assignment operators, or at least inconsistent with all
+implementations that I know of.  I would not enjoy trying to write
+such two-faced semantics.</P>
+
+<P>
+<U>Erwin Unruh</U>:</P>
+
+<P>The intent was for assignments to behave the
+same as in C. Unfortunately the change of the result to lvalue did not keep
+that. An "lvalue of type int" has no "int" value! So there is a difference
+between intent and the standard's wording.</P>
+
+<P>So we have one of several choices:</P>
+
+<UL>
+<LI>live with the incompatibility (and the problems it has for volatile
+variables)</LI>
+
+<LI>make the result of assignment an rvalue (only builtin-assignment, maybe
+only for builtin types), which makes some presently valid programs
+invalid</LI>
+
+<LI>introduce "two-face semantics" for builtin assignments, and clarify the
+sequence problematics</LI>
+
+<LI>make a special rule for assignment to a volatile lvalue of builtin
+type</LI>
+
+</UL>
+
+<P>I think the last one has the least impact on existing programs, but it is an
+ugly solution.</P>
+
+<P>
+<U>Andrew Koenig</U>:</P>
+<P>Whatever we may have intended, I do not think that there is any clean
+way of making
+<PRE>
+    volatile int v;
+    int i;
+
+    i = v = 42;
+</PRE>
+have the same semantics in C++ as it does in C.  Like it or not, the
+subexpression <TT>v = 42</TT> has the type ``reference to volatile int,''
+so if this statement has any meaning at all, the meaning must be to store 42
+in <TT>v</TT> and then fetch the value of <TT>v</TT> to assign it to i.</P>
+
+<P>Indeed, if <TT>v</TT> is volatile, I cannot imagine a
+conscientious programmer
+writing a statement such as this one.  Instead, I would expect to see
+<PRE>
+    v = 42;
+    i = v;
+</PRE>
+if the intent is to store 42 in <TT>v</TT> and then fetch the (possibly
+changed) value of <TT>v</TT>, or
+<PRE>
+    v = 42;
+    i = 42;
+</PRE>
+if the intent is to store 42 in both <TT>v</TT> and <TT>i</TT>.</P>
+
+<P>What I do want is to ensure that expressions such as ``<TT>i = v = 42</TT>''
+have well-defined semantics, as well as expressions such as
+<TT>(i = v) = 42</TT> or, more realistically, <TT>(i += v) += 42</TT> .</P>
+
+<P>I wonder if the following resolution is sufficient:</P>
+
+<P>Append to 7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1:</P>
+<BLOCKQUOTE>
+There is a sequence point between assigning the new value to
+the left operand and yielding the result of the assignment
+expression.
+</BLOCKQUOTE>
+
+<P>I believe that this proposal achieves my desired effect of not
+constraining when <TT>j</TT> is incremented in <TT>x[j++] = y</TT>,
+because I don't
+think there is a constraint on the relative order of incrementing <TT>j</TT>
+and executing the assignment.  However, I do think it allows expressions
+such as <TT>(i += v) += 42</TT>, although with different semantics from C if
+<TT>v</TT> is volatile.</P>
+
+<P><B>Notes on 10/01 meeting:</B></P>
+
+<P>There was agreement that adding a sequence point is probably the
+right solution.</P>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>The working group reaffirmed the sequence-point solution, but
+we will look for any counter-examples where efficiency would be harmed.</P>
+
+<P>For drafting, we note that <TT>++x</TT> is defined in 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>] as equivalent to <TT>x+=1</TT> and is therefore
+affected by this change.  <TT>x++</TT> is not affected. Also, we
+should update any list of all sequence points.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>Discussion centered around whether a sequence point &#8220;between
+assigning the new value to the left operand and yielding the result of
+the expression&#8221; would require completion of all side effects of
+the operand expressions before the value of the assignment expression
+was used in another expression.  The consensus opinion was that it
+would, that this is the definition of a sequence point.  Jason Merrill
+pointed out that adding a sequence point after the assignment is
+essentially the same as rewriting</P>
+
+<PRE>
+    b += a
+</PRE>
+
+<P>as</P>
+
+<PRE>
+    b += a, b
+</PRE>
+
+<P>Clark Nelson expressed a desire for something like a
+&#8220;weak&#8221; sequence point that would force the assignment to
+occur but that would leave the side effects of the operands
+unconstrained.  In support of this position, he cited the following
+expression:</P>
+
+<PRE>
+    j = (i = j++)
+</PRE>
+
+<P>With the proposed addition of a full sequence point after the
+assignment to <TT>i</TT>, the net effect is no change to <TT>j</TT>.
+However, both g++ and MSVC++ behave differently: if the previous value
+of <TT>j</TT> is 5, the value of the expression is 5 but <TT>j</TT>
+gets the value 6.</P>
+
+<P>Clark Nelson will investigate alternative approaches and report
+back to the working group.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>This issue is resolved by the adoption of the sequencing rules
+and the resolution of <A HREF="637.html">issue 637</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

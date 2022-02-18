@@ -1,0 +1,887 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1351</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1351"></A><H4>1351.
+  
+Problems with implicitly-declared <I>exception-specification</I>s
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-16<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>The determination of the <I>exception-specification</I> for an
+implicitly-declared special member function, as described in
+14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14, does not take into account the
+fact that nonstatic data member initializers and default arguments in
+default constructors can contain <I>throw-expression</I>s, which are
+not part of the <I>exception-specification</I> of any function that is
+&#8220;directly invoked&#8221; by the implicit definition.  Also, the
+reference to &#8220;directly invoked&#8221; functions is not
+restricted to potentially-evaluated expressions, thus possibly
+including irrelevant <I>exception-specification</I>s.</P>
+
+<P><B>Additional note (August, 2012):</B></P>
+
+<P>The direction established by CWG for resolving this issue was to
+consider functions called from default arguments and non-static data
+member initializers in determining the <I>exception-specification</I>.
+This leads to a problem with ordering: because non-static data member
+initializers can refer to members declared later, their effect cannot
+be known until the end of the class.  However, a non-static data
+member initializer could possibly refer to an implicitly-declared
+constructor, either its own or that of an enclosing class.
+</P>
+
+<P><B>Proposed resolution (October, 2012) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Add the following two new paragraphs and make the indicated
+changes to 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>A <I>set of potential exceptions</I> may contain types and the
+special value &#8220;any.&#8221; The <I>set of potential exceptions of
+an expression</I> is the union of all sets of potential exceptions of
+each potentially-evaluated subexpression <TT>e</TT>:</INS></P>
+
+<UL>
+<LI><P><INS>If <TT>e</TT> is a call to a function, member function,
+function pointer, or member function pointer (including implicit
+calls, such as a call to the allocation function in a
+<I>new-expression</I>):</INS></P></LI>
+
+<UL>
+<LI><P><INS>if it has a non-throwing
+<I>exception-specification</I> or the call is a core constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), the set is
+empty;</INS></P></LI>
+
+<LI><P><INS>otherwise, if it has a
+<I>dynamic-exception-specification</I>, the set consists of every type in
+that <I>dynamic-exception-specification</I>;</INS></P></LI>
+
+<LI><P><INS>otherwise, the set consists of &#8220;any.&#8221;</INS></P></LI>
+
+</UL>
+
+<LI><P><INS>If <TT>e</TT> is a <I>throw-expression</I> (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the set consists of the type of the exception object
+that would be initialized by the operand if present, or
+&#8220;any&#8221; otherwise.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <TT>dynamic_cast</TT> expression that
+casts to a reference type and requires a run-time check (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), the set consists of the type
+<TT>std::bad_cast</TT>.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <TT>typeid</TT> expression applied to a
+glvalue expression whose type is a polymorphic class type
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), the set consists of the type
+<TT>std::bad_typeid</TT>.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <I>new-expression</I> with a
+non-constant <I>expression</I> in the <I>noptr-new-declarator</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), the set also includes the type
+<TT>std::bad_array_new_length</TT>.</INS></P></LI>
+
+<LI><P><INS>Otherwise, the set is the empty set.</INS></P></LI>
+
+</UL>
+
+<P><INS>The <I>set of potential exceptions of a function</I>
+<TT>f</TT> of some class <TT>X</TT>, where <TT>f</TT> is an inheriting
+constructor or an implicitly-declared special member function, is
+defined as follows: </INS></P>
+
+<UL>
+<LI><P><INS>If <TT>f</TT> is a constructor, the set is the union of the
+sets of potential exceptions of the constructor invocations for
+<TT>X</TT>'s non-variant non-static data members, for <TT>X</TT>'s
+direct base classes, and, if <TT>X</TT> is non-abstract (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), for <TT>X</TT>'s virtual base classes, as selected by
+overload resolution for the implicit definition of <TT>f</TT>
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), including default argument expressions
+used in such invocations. [<I>Note:</I> Even though destructors for fully
+constructed subobjects are invoked when an exception is thrown during
+the execution of a constructor (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]), their
+<I>exception-specification</I>s do not contribute to the
+<I>exception-specification</I> of the constructor, because an
+exception thrown from such a destructor could never escape the
+constructor (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>], 14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). &#8212;<I>end note</I>]</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is a default constructor or inheriting
+constructor, the set also contains all members of the sets of
+potential exceptions of the initialization of non-static data members
+from <I>brace-or-equal-initializer</I>s.</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is an assignment operator, the set is the
+union of the sets of potential exceptions of the assignment operator
+invocations for <TT>X</TT>'s non-variant non-static data members and
+for <TT>X</TT>'s virtual and direct base classes, as selected by
+overload resolution for the implicit definition of <TT>f</TT>
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]), including default argument expressions
+used in such invocations.</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is a destructor, the set is the union of the
+sets of potential exceptions of the destructor invocations for
+<TT>X</TT>'s non-variant non-static data members and for <TT>X</TT>'s
+virtual and direct base classes.</INS></P></LI>
+
+</UL>
+
+<P>An inheriting constructor (_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]) and an
+<DEL>implicitly declared</DEL> <INS>implicitly-declared</INS> special
+member function (11.4.4 [<A href="https://wg21.link/special">special</A>]) <DEL>have an</DEL>
+<INS>are considered to have an implicit</INS>
+<I>exception-specification</I>.  <DEL>If <TT>f</TT> is an inheriting
+constructor or an implicitly declared default constructor, copy
+constructor, move constructor, destructor, copy assignment operator,
+or move assignment operator, its implicit
+<I>exception-specification</I> specifies the <I>type-id</I> <TT>T</TT>
+if and only if <TT>T</TT> is allowed by the
+<I>exception-specification</I> of a function directly invoked by
+<TT>f</TT>'s implicit definition; <TT>f</TT> allows all exceptions if
+any function it directly invokes allows all exceptions, and <TT>f</TT>
+has the <I>exception-specification</I> <TT>noexcept(true)</TT> if
+every function it directly invokes allows no exceptions.</DEL>
+<INS>The implicit <I>exception-specification</I> is
+<TT>noexcept(false)</TT> if the set of potential exceptions of the
+function contains &#8220;any;&#8221; otherwise, if that set
+contains at least one type, the implicit exception-specification
+specifies each type T contained in the set; otherwise, the implicit
+<I>exception-specification</I> is <TT>noexcept(true)</TT>.</INS>
+[<I>Note:</I> An instantiation of an inheriting constructor template
+has an implied <I>exception-specification</I> as if it were a
+non-template inheriting constructor. &#8212;<I>end note</I>]
+[<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    A();
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) throw();
+    B(B&amp;&amp;<INS>, int = (throw Y(), 0)</INS>) throw(Y)<DEL></DEL> <INS>noexcept</INS>;
+    ~B() throw(Y);
+  };
+  struct D : public A, public B {
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D();</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D(const D&amp;) noexcept(true);</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D(D&amp;&amp;) throw(Y);</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::~D() throw(X, Y);</SPAN>
+  };
+</PRE>
+
+<P>Furthermore, if...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept#3">expr.unary.noexcept</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The result of the noexcept operator is <TT>false</TT> if <DEL>in a
+potentially-evaluated context</DEL> the <INS>set of potential
+exceptions of the</INS> expression <INS>(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>])</INS> <DEL>would contain</DEL> <INS>contains
+&#8220;any&#8221; or at least one type and <TT>true</TT>
+otherwise.</INS>
+</P>
+
+<UL>
+<LI><P><DEL>a potentially evaluated call<SUP>80</SUP> to a
+function, member function, function pointer, or member function
+pointer that does not have a non-throwing
+<I>exception-specification</I> (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), unless the
+call is a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</DEL></P></LI>
+
+<LI><P><DEL>a potentially evaluated <I>throw-expression</I> (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]),</DEL></P></LI>
+
+<LI><P><DEL>a potentially evaluated <TT>dynamic_cast</TT> expression
+<TT>dynamic_cast&lt;T&gt;(v)</TT>, where <TT>T</TT> is a reference
+type, that requires a run-time check (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]),
+or</DEL></P></LI>
+
+<LI><P><DEL>a potentially evaluated <TT>typeid</TT> expression (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) applied to a glvalue expression whose type is a
+polymorphic class type (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]).</DEL></P></LI>
+
+</UL>
+
+<P><DEL>Otherwise, the result is <TT>true</TT>.</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(This resolution also resolves issues
+<A HREF="1356.html">1356</A> and <A HREF="1465.html">1465</A>.)</P>
+
+<P><B>Additional note (October, 2012):</B></P>
+
+<P>The preceding wording has been modified from the version that
+was reviewed following the October, 2012 meeting and thus has been
+returned to "review" status.</P>
+
+<P><B>Additional note (March, 2013):</B></P>
+
+<P>It has been suggested that it might be more consistent with
+other parts of the language, and particularly in view of the
+deprecation of <I>dynamic-exception-specification</I>s, if a
+potentially-throwing non-static data member initializer simply made
+an implicit constructor <TT>noexcept(false)</TT> instead of
+giving it a set of potential exception types.</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>One problem with the approach suggested in the preceding note
+would be something like the following example:</P>
+
+<PRE>
+  struct S {
+    virtual ~S() throw(int);
+  };
+  struct D: S { };
+</PRE>
+
+<P>This approach would make the example ill-formed, because
+the derived class destructor would be declared to throw
+types not permitted by the base class
+destructor's <I>exception-specification</I>.  A further
+elaboration on the suggestion above that would not have this
+objection would be to define all
+<I>dynamic-exception-specification</I>s as simply equivalent to
+<TT>noexcept(false)</TT>.</P>
+
+<P>(See also <A HREF="1639.html">issue 1639</A>.)</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>The version of this resolution approved in Bristol
+assumed the underlying text of the C++11 IS; however, the
+wording of 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 has been
+changed by previous resolutions, so this and the related
+issues are being returned to "review" status.</P>
+
+<P><B>Proposed resolution, February, 2014 [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 14.5 [<A href="https://wg21.link/except.spec#5">except.spec</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a virtual function has an <I>exception-specification</I>,
+all declarations, including the definition, of any function
+that overrides that virtual function in any derived class
+shall only allow exceptions that are allowed by
+the <I>exception-specification</I> of the base class virtual
+function<INS>, unless the overriding function is defined as
+deleted</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following two new paragraphs and change
+14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>A <I>set of potential exceptions</I> may contain
+types and the special value &#8220;any&#8221;. The <I>set of
+potential exceptions of an expression</I> is the union of
+all sets of potential exceptions of each
+potentially-evaluated subexpression <TT>e</TT>:</INS></P>
+
+<UL>
+<LI><P><INS>If <TT>e</TT> is a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), the set is
+empty.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if <TT>e</TT> is a function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) whose <I>postfix-expression</I>
+is not a (possibly parenthesized) <I>id-expression</I>
+(_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]) or class member access
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), the set consists of
+&#8220;any&#8221;.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if <TT>e</TT> invokes a function,
+member function, or function pointer (including implicit
+calls, such as to an overloaded operator or to an allocation
+function in a <I>new-expression</I>):</INS></P></LI>
+
+<UL>
+<LI><P><INS>if its declaration has a
+non-throwing <I>exception-specification</I>, the set is
+empty;</INS></P></LI>
+
+<LI><P><INS>otherwise, if its declaration has
+a <I>dynamic-exception-specification</I>, the set consists
+of every type in
+that <I>dynamic-exception-specification</I>;</INS></P></LI>
+
+<LI><P><INS>otherwise, the set consists of
+&#8220;any&#8221;.</INS></P></LI>
+
+</UL>
+
+<LI><P><INS>If <TT>e</TT> is a <I>throw-expression</I>
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the set consists of the type of
+the exception object that would be initialized by the
+operand if present, or &#8220;any&#8221; otherwise.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <TT>dynamic_cast</TT> expression
+that casts to a reference type and requires a run-time check
+(7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), the set consists of the
+type <TT>std::bad_cast</TT>.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <TT>typeid</TT> expression applied
+to a glvalue expression whose type is a polymorphic class
+type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), the set consists of the
+type <TT>std::bad_typeid</TT>.</INS></P></LI>
+
+<LI><P><INS>If <TT>e</TT> is a <I>new-expression</I> with a
+non-constant expression in the <I>noptr-new-declarator</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), the set also includes the
+type <TT>std::bad_array_new_length</TT>.</INS></P></LI>
+
+<LI><P><INS>If none of the previous items applies, the set is the
+empty set.</INS></P></LI>
+
+</UL>
+
+<P><INS>The <I>set of potential exceptions of an
+implicitly-declared special member function</I> <TT>f</TT>
+of some class <TT>X</TT> is defined as follows:</INS></P>
+
+<UL>
+<LI><P><INS>If <TT>f</TT> is a constructor, the set is the
+union of the sets of potential exceptions of the constructor
+invocations for <TT>X</TT>'s non-variant non-static data
+members, for <TT>X</TT>'s direct base classes, and,
+if <TT>X</TT> is non-abstract (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]),
+for <TT>X</TT>'s virtual base classes, as selected by
+overload resolution for the implicit definition
+of <TT>f</TT> (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), including default
+argument expressions used in such invocations. [<I>Note:</I>
+Even though destructors for fully constructed subobjects are
+invoked when an exception is thrown during the execution of
+a constructor (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]),
+their <I>exception-specification</I>s do not contribute to
+the <I>exception-specification</I> of the constructor,
+because an exception thrown from such a destructor could
+never escape the constructor (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>],
+14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). &#8212;<I>end
+note</I>]</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is a default constructor, the set also
+contains all members of the sets of potential exceptions of
+the initialization of non-static data members
+from <I>brace-or-equal-initializer</I>s.</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is an assignment operator, the set is
+the union of the sets of potential exceptions of the
+assignment operator invocations for <TT>X</TT>'s non-variant
+non-static data members and for <TT>X</TT>'s virtual and
+direct base classes, as selected by overload resolution for
+the implicit definition of <TT>f</TT>
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]), including default argument
+expressions used in such invocations.</INS></P></LI>
+
+<LI><P><INS>If <TT>f</TT> is a destructor, the set is the union
+of the sets of potential exceptions of the destructor
+invocations for <TT>X</TT>'s non-variant non-static data
+members and for <TT>X</TT>'s virtual and direct base
+classes.</INS></P></LI>
+
+</UL>
+
+<P>An inheriting constructor (_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]) and
+an implicitly<INS>-</INS>declared special member function
+(11.4.4 [<A href="https://wg21.link/special">special</A>]) <DEL>have</DEL> <INS>are
+considered to have</INS>
+an <INS>implicit</INS> <I>exception-specification</I>. <DEL>If <TT>f</TT>
+is an inheriting constructor or an implicitly declared
+default constructor, copy constructor, move constructor,
+destructor, copy assignment operator, or move assignment
+operator, its implicit <I>exception-specification</I>
+specifies the <I>type-id</I> <TT>T</TT> if and only
+if <TT>T</TT> is allowed by
+the <I>exception-specification</I> of a function directly
+invoked by <TT>f</TT>'s implicit definition; <TT>f</TT>
+allows all exceptions if any function it directly invokes
+allows all exceptions, and <TT>f</TT> has
+the <I>exception-specification</I>
+<TT>noexcept(true)</TT> if every function it directly
+invokes allows no exceptions. [<I>Note:</I> It follows
+that <TT>f</TT> has the <I>exception-specification</I>
+<TT>noexcept(true)</TT> if it invokes no other
+functions. &#8212;<I>end note</I>]</DEL> [<I>Note:</I> An
+instantiation of an inheriting constructor template has an
+implied <I>exception-specification</I> as if it were a
+non-template inheriting constructor. &#8212;<I>end note</I>]
+<INS>The implicit <I>exception-specification</I> is
+<TT>noexcept(false)</TT> if the set of potential exceptions of the
+special member function contains &#8220;any&#8221;; otherwise, if that
+set contains at least one type, the
+implicit <I>exception-specification</I> specifies each type
+<TT>T</TT> contained in the set; otherwise, the
+implicit <I>exception-specification</I>
+is <TT>noexcept(true)</TT>.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    A();
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) <DEL>= default; //<SPAN CLASS="cmnt"> Declaration of </SPAN>B::B(const B&amp;) noexcept(true)</DEL> <INS>throw();</INS>
+    B(B&amp;&amp;<INS>, int = (throw Y(), 0)</INS>) <DEL>throw(Y)</DEL> <INS>noexcept</INS>;
+    ~B() throw(Y);
+  };
+  struct D : public A, public B {
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D();</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D(const D&amp;) noexcept(true);</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::D(D&amp;&amp;) throw(Y);</SPAN>
+      //<SPAN CLASS="cmnt"> Implicit declaration of D::~D() throw(X, Y);</SPAN>
+  };
+</PRE>
+
+<P>Furthermore...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>]paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The result of the <TT>noexcept</TT> operator
+is <DEL><TT>false</TT></DEL> <INS><TT>true</TT></INS>
+if <DEL>in a potentially-evaluated context</DEL>
+the <INS>set of potential exceptions of
+the</INS> <I>expression</I> <INS>(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>])</INS> <DEL>would
+contain</DEL> <INS>is empty, and <TT>false</TT>
+otherwise.</INS>
+</P>
+
+<UL>
+<LI>
+
+<P><DEL>a potentially-evaluated call [<I>[Footnote:</I> This
+includes implicit calls such as the call to an allocation
+function in a <I>new-expression</I>.  &#8212;<I>end
+footnote</I>] to a function, member function, function
+pointer, or member function pointer that does not have a
+non-throwing <I>exception-specification</I>
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), unless the call is a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</DEL></P>
+</LI>
+
+<LI><P><DEL>a potentially-evaluated <I>throw-expression</I>
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]),</DEL></P></LI>
+
+<LI>
+
+<P><DEL>a potentially-evaluated <TT>dynamic_cast</TT> expression
+<TT>dynamic_cast&lt;T&gt;(v)</TT>, where <TT>T</TT> is a
+reference type, that requires a run-time check
+(7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), or</DEL></P>
+</LI>
+
+<LI>
+
+<P><DEL>a potentially-evaluated <TT>typeid</TT> expression
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) applied to a glvalue expression
+whose type is a polymorphic class type
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]).</DEL></P>
+</LI>
+
+</UL>
+
+<P><DEL>Otherwise, the result is <TT>true</TT>.</DEL></P>
+
+</BLOCKQUOTE>
+
+<P>(This resolution also resolves issues <A HREF="1356.html">1356</A>,
+<A HREF="1465.html">1465</A>, and <A HREF="1639.html">1639</A>.)</P>
+
+</OL>
+
+<P><B>Additional note, May, 2014:</B></P>
+
+<P>The current version of the proposed resolution only defines the set of
+potential exceptions for special member functions; since an inheriting
+constructor is not a special member function, the
+<I>exception-specification</I> for an inheriting constructor is
+no longer specified.</P>
+
+<P>In addition, the structure of the specification of the set of
+potential exceptions of an expression is unclear.  If the bulleted
+list is intended to be the definition of general statement (&#8220;union
+of all sets of potential exceptions...&#8221;), it's incomplete because
+it doesn't consider exceptions thrown by the evaluation of function
+arguments in a call, just the exceptions thrown by the function itself;
+if it's intended to be a list of exceptions to the general rule, the
+rule about core constant expressions doesn't exclude unselected
+subexpressions that might throw, so those exceptions are incorrect
+included in the union.</P>
+
+<P>The issue has been returned to "review"
+status to allow discussion of these points.</P>
+
+
+
+<P>See also the discussion in messages <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=25290">25290</A> through
+<A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=25293">25293</A>.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI>Change 14.5 [<A href="https://wg21.link/except.spec#5">except.spec</A>] paragraph 5 as follows:</LI>
+
+<BLOCKQUOTE>
+
+If a virtual function has an <I>exception-specification</I>, all
+declarations, including the definition, of any function that
+overrides that virtual function in any derived class shall only
+allow exceptions that are allowed by
+the <I>exception-specification</I> of the base class virtual
+function<INS>, unless the overriding function is defined as
+deleted</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following new paragraphs following 14.5 [<A href="https://wg21.link/except.spec#13">except.spec</A>] paragraph 13:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>exception-specification</I> is not considered part of a
+function's type.</P>
+
+<P><INS>A <I>potential exception</I> of a given context is either
+a type that might be thrown as an exception or a pseudo-type,
+denoted by &#8220;any&#8221;, that represents the situation where
+an exception of an arbitrary type might be thrown.  A subexpression
+<TT>e1</TT> of an expression <TT>e</TT> is an <I>immediate
+subexpression</I> if there is no subexpression <TT>e2</TT> of <TT>e</TT>
+such that <TT>e1</TT> is a subexpression of <TT>e2</TT>.</INS></P>
+
+<P><INS>The <I>set of potential exceptions of a function, function
+pointer, or member function pointer</I> <TT>f</TT> is defined as
+follows:</INS></P>
+
+<UL>
+<LI><P><INS>If the declaration of <TT>f</TT> has a non-throwing
+<I>exception-specification</I>, the set is empty.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if the declaration of <TT>f</TT> has a
+<I>dynamic-exception-specification</I>, the set consists of every
+type in that <I>dynamic-exception-specification</I>.</INS></P></LI>
+
+<LI><P><INS>Otherwise, the set consists of the pseudo-type
+&#8220;any&#8221;.</INS></P></LI>
+
+</UL>
+
+<P><INS>The <I>set of potential exceptions of an expression</I> <TT>e</TT>
+is empty if <TT>e</TT> is a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).  Otherwise, it is the union of the sets
+of potential exceptions of the immediate subexpressions of <TT>e</TT>,
+including default argument expressions used in a function call,
+combined with a set <I>S</I> defined by the form of <TT>e</TT>, as
+follows:</INS></P>
+
+<UL>
+<LI><P><INS>If <TT>e</TT> is a function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]):</INS></P></LI>
+
+<UL>
+<LI><P><INS>If its <I>postfix-expression</I> is a (possibly
+parenthesized) <I>id-expression</I> (_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]),
+class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), or
+pointer-to-member operation (7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]) whose
+<I>cast-expression</I> is an <I>id-expression</I>, <I>S</I> is the
+set of potential exceptions of the entity selected by the
+contained <I>id-expression</I> (after overload resolution, if
+applicable).</INS></P></LI>
+
+<LI><P><INS>Otherwise, <I>S</I> contains the pseudo-type
+&#8220;any&#8221;.</INS></P></LI>
+
+</UL>
+
+<LI><P><INS>If <TT>e</TT> implicitly invokes a function (such as
+an overloaded operator, an allocation function in a
+<I>new-expression</I>, or a destructor if <TT>e</TT> is a
+full-expression), <I>S</I> is the set of potential exceptions of
+the function.</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a <I>throw-expression</I>
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), <I>S</I> consists of the type of
+the exception object that would be initialized by the operand,
+if present, or the pseudo-type &#8220;any&#8221;
+otherwise.</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a <TT>dynamic_cast</TT> expression
+that casts to a reference type and requires a run-time check
+(7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), <I>S</I> consists of the type
+<TT>std::bad_cast</TT>.</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a <TT>typeid</TT> expression applied
+to a glvalue expression whose type is a polymorphic class type
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), <I>S</I> consists of the type
+<TT>std::bad_typeid</TT>.</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a <I>new-expression</I> with a
+non-constant <I>expression</I> in the <I>noptr-new-declarator</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), <I>S</I> consists of the type
+<TT>std::bad_array_new_length</TT>.</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Example:</I> Given the following declarations</INS></P>
+
+<PRE>
+<INS>  void f() throw(int);
+  void g();
+  struct A { A(); };
+  struct B { B() noexcept; };
+  struct D() { D() throw (double); };</INS>
+</PRE>
+
+<P><INS>the set of potential exceptions for some sample expressions
+is:</INS></P>
+
+<UL>
+<LI><P><INS>for <TT>f()</TT>, the set consists of <TT>int</TT>;
+</INS></P></LI>
+
+<LI><P><INS>for <TT>g()</TT>, the set consists of
+&#8220;any&#8221;;</INS></P></LI>
+
+<LI><P><INS>for <TT>new A</TT>, the set consists of
+&#8220;any&#8221;;</INS></P></LI>
+
+<LI><P><INS>for <TT>B()</TT>, the set is empty;</INS></P></LI>
+
+<LI><P><INS>for <TT>new D</TT>, the set consists of
+&#8220;any&#8221; and <TT>double</TT>.</INS></P></LI>
+
+</UL>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<P><INS>Given a member function <TT>f</TT> of some class <TT>X</TT>,
+where <TT>f</TT> is an inheriting constructor
+(_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]) or an implicitly-declared special member
+function, the <I>set of potential exceptions of the implicitly-declared
+member function</I> <TT>f</TT> consists of all the members from the
+following sets:</INS></P>
+
+<UL>
+<LI><P><INS>if <TT>f</TT> is a constructor,</INS></P></LI>
+
+<UL>
+<LI><P><INS>the sets of potential exceptions of the constructor
+invocations</INS></P></LI>
+
+<UL>
+<LI><P><INS>for <TT>X</TT>'s non-variant non-static data
+members,</INS></P></LI>
+
+<LI><P><INS>for <TT>X</TT>'s direct base classes, and</INS></P></LI>
+
+<LI><P><INS>if <TT>X</TT> is non-abstract (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]),
+for <TT>X</TT>'s virtual base classes,</INS></P></LI>
+
+</UL>
+
+<P><INS>(including default argument expressions used in such
+invocations) as selected by overload resolution for the implicit
+definition of <TT>f</TT> (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]).
+[<I>Note:</I> Even though destructors for fully-constructed
+subobjects are invoked when an exception is thrown during the
+execution of a constructor (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]), their
+<I>exception-specification</I>s do not contribute to the
+<I>exception-specification</I> of the constructor, because an
+exception thrown from such a destructor could never escape the
+constructor (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>], 14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+&#8212;<I>end note</I>]</INS></P>
+
+<LI><P><INS>the sets of potential exceptions of the initialization
+of non-static data members from <I>brace-or-equal-initializer</I>s
+that are not ignored (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]);</INS></P></LI>
+
+</UL>
+
+<LI><P><INS>if <TT>f</TT> is an assignment operator, the sets of
+potential exceptions of the assignment operator invocations for
+<TT>X</TT>'s non-variant non-static data members and for
+<TT>X</TT>'s direct base classes (including default argument
+expressions used in such invocations), as selected by overload
+resolution for the implicit definition of <TT>f</TT>
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]);</INS></P></LI>
+
+<LI><P><INS>if <TT>f</TT> is a destructor, the sets of potential
+exceptions of the destructor invocations for <TT>X</TT>'s
+non-variant non-static data members and for <TT>X</TT>'s virtual
+and direct base classes.</INS></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An inheriting constructor (_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]) and an
+<DEL>implicitly declared</DEL> <INS>implicitly-declared</INS>
+special member function (11.4.4 [<A href="https://wg21.link/special">special</A>]) <INS>are
+considered to</INS> have an <INS>implicit</INS>
+<I>exception-specification</I><INS>, as follows, where <TT>f</TT> is
+the member function and <I>S</I> is the set of potential exceptions
+of the implicitly-declared member function <TT>f</TT>:</INS>.</P>
+
+<UL>
+<LI><P><INS>if <I>S</I> contains the pseudo-type &#8220;any&#8221;,
+the implicit <I>exception-specification</I> is
+<TT>noexcept(false)</TT>;</INS></P></LI>
+
+<LI><P><INS>otherwise, if <I>S</I> contains at least one type, the
+implicit <I>exception-specification</I> specifies each type <TT>T</TT>
+contained in <I>S</I>;</INS></P></LI>
+
+<LI><P><INS>otherwise, the implicit <I>exception-specification</I> is
+<TT>noexcept(true)</TT>.</INS></P></LI>
+
+</UL>
+
+<P>
+<DEL>If <TT>f</TT> is an inheriting
+constructor or an implicitly declared default constructor, copy
+constructor, move constructor, destructor, copy assignment
+operator, or move assignment operator, its
+implicit <I>exception-specification</I> specifies
+the <I>type-id</I> <TT>T</TT> if and only if <TT>T</TT> is
+allowed by the <I>exception-specification</I> of a function
+directly invoked by <TT>f</TT>'s implicit definition; <TT>f</TT>
+allows all exceptions if any function it directly invokes allows
+all exceptions, and <TT>f</TT> has
+the <I>exception-specification</I> <TT>noexcept(true)</TT> if
+every function it directly invokes allows no
+exceptions. [<I>Note:</I> It follows that <TT>f</TT> has
+the <I>exception-specification</I>
+<TT>noexcept(true)</TT> if it invokes no other functions. &#8212;<I>end
+note</I>]</DEL> [<I>Note:</I> An instantiation of an inheriting
+constructor template has an
+implied <I>exception-specification</I> as if it were a
+non-template inheriting constructor. &#8212;<I>end note</I>]
+[<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    A(<INS>int = (A(5), 0)</INS>) <INS>noexcept</INS>;
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) = default; //<SPAN CLASS="cmnt"> Declaration of </SPAN>B::B(const B&amp;) noexcept(true)
+    B(B&amp;&amp;<INS>, int = (throw Y(), 0)</INS>) <DEL>throw(Y)</DEL> <INS>noexcept</INS>;
+    ~B() throw(Y);
+  };
+<INS>  int n = 7;</INS>
+  struct D : public A, public B {
+<INS>    int * p = new (std::nothrow) int[n];
+    //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D() throw(X, std::bad_array_new_length);</INS>
+<DEL>    //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D();</DEL>
+    //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D(const D&amp;) noexcept(true);
+    //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D(D&amp;&amp;) throw(Y);
+    //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::~D() throw(X, Y);
+  };
+</PRE>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept#3">expr.unary.noexcept</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The result of the <TT>noexcept</TT> operator
+is <DEL><TT>false</TT></DEL> <INS><TT>true</TT></INS> if <DEL>in a
+potentially-evaluated context</DEL> the <INS>set of potential
+exceptions of the</INS> expression <DEL>would contain</DEL>
+<INS>is empty, and <TT>false</TT> otherwise.</INS>
+</P>
+
+<UL>
+<LI><P><DEL>a potentially-evaluated call<SUP>83</SUP> to a
+function, member function, function pointer, or member function
+pointer that does not have a
+non-throwing <I>exception-specification</I>
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), unless the call is a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</DEL></P></LI>
+
+<LI><P><DEL>a potentially-evaluated <I>throw-expression</I>
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]),</DEL></P></LI>
+
+<LI><P><DEL>a potentially-evaluated <TT>dynamic_cast</TT> expression
+<TT>dynamic_cast&lt;T&gt;(v)</TT>, where <TT>T</TT> is a reference type, that
+requires a run-time check (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), or</DEL></P></LI>
+
+<LI><P><DEL>a potentially-evaluated <TT>typeid</TT> expression
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) applied to a glvalue expression
+whose type is a polymorphic class type
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]).</DEL></P></LI>
+
+</UL>
+
+<P><DEL>Otherwise, the result is <TT>true</TT>.</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues
+<A HREF="1356.html">1356</A>, <A HREF="1465.html">1465</A>,
+and <A HREF="1639.html">1639</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

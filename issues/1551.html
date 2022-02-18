@@ -1,0 +1,203 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1551</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1551"></A><H4>1551.
+  
+Wording problems in <I>using-declaration</I> specification
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-09-06<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>There are at least a couple of problems with the current wording of
+9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>].  First is the use of the word &#8220;entity&#8221;
+to describe what the <I>using-declaration</I> represents.  For example,
+in paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+If a <I>using-declaration</I> names a constructor (6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]), it implicitly declares a set of constructors in the
+class in which the <I>using-declaration</I> appears (_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]); otherwise the name specified in a
+<I>using-declaration</I> is a synonym for the name of some entity
+declared elsewhere.
+
+</BLOCKQUOTE>
+
+<P>An overload set of functions and function templates is not an
+&#8220;entity,&#8221; according to 6.1 [<A href="https://wg21.link/basic.pre#3">basic.pre</A>] paragraph 3.
+A better phrasing might be something like, &#8220;...a synonym for a
+set of declarations in a different declarative region.&#8221;</P>
+
+<P>The other problem is in paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+The entity declared by a <I>using-declaration</I> shall be known in
+the context using it according to its definition at the point of the
+<I>using-declaration</I>. Definitions added to the namespace after the
+<I>using-declaration</I> are not considered when a use of the name is
+made.
+
+</BLOCKQUOTE>
+
+<P>This has the same problem with use of the term &#8220;entity,&#8221;
+and it also refers to &#8220;definitions&#8221; when presumably it
+means &#8220;declarations.&#8221;</P>
+
+<P><B>Proposed resolution (October, 2012) [superseded]:</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph after 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#3">basic.scope.pdecl</A>] paragraph 3:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The point of declaration for a class or class template first declared
+by a <I>class-specifier</I> is immediately after the identifier or
+<I>simple-template-id</I> (if any) in its <I>class-head</I> (
+Clause 11 [<A href="https://wg21.link/class">class</A>]).  The point of declaration for an enumeration
+is immediately after the identifier (if any) in either its
+<I>enum-specifier</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) or its first
+<I>opaque-enum-declaration</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), whichever
+comes first. The point of declaration of an alias or alias template
+immediately follows the <I>type-id</I> to which the alias refers.</P>
+
+<P><INS>The point of declaration of a <I>using-declaration</I> that
+does not name a constructor is immediately after the
+<I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]).</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.9 [<A href="https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...If a <I>using-declaration</I> names a constructor (6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]), it implicitly declares a set of constructors in the
+class in which the <I>using-declaration</I> appears (_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]); otherwise the name specified in a
+<I>using-declaration</I> is a synonym for <DEL>the name of some entity
+declared elsewhere</DEL> <INS>a set of declarations in another
+namespace or class</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The entity declared by a <I>using-declaration</I> shall be known in
+the context using it according to its definition at the point of the
+<I>using-declaration</I>. Definitions</DEL> <INS>Declarations</INS>
+added to the namespace after the <I>using-declaration</I> are not
+considered when a use of the name is made. <INS>[<I>Note:</I> Thus,
+additional overloads and default arguments (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]) added after the <I>using-declaration</I> are ignored,
+but template specializations (13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
+13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]) are considered. &#8212;<I>end
+note</I>]</INS> [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional note (October, 2012):</B></P>
+
+<P>The note added by this resolution to 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11
+regarding the treatment of default arguments directly
+contradicts the normative statement of 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#9">dcl.fct.default</A>] paragraph 9:
+</P>
+
+<BLOCKQUOTE>
+
+When a declaration of a function is introduced by way of a
+<I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]), any default
+argument information associated with the declaration is made known as
+well.  If the function is redeclared thereafter in the namespace with
+additional default arguments, the additional arguments are also known
+at any point following the redeclaration where the
+<I>using-declaration</I> is in scope.
+
+</BLOCKQUOTE>
+
+<P>The issue has been returned to "review" status for reconciliation
+of these two passages.</P>
+
+<P><B>Proposed resolution (June, 2013):</B></P>
+
+<OL>
+<LI><P>Insert a new paragraph following 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#3">basic.scope.pdecl</A>] paragraph 3,
+ as follows</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...whichever comes first. The point of declaration of an alias or alias
+template immediately follows the <I>type-id</I> to which the alias refers.</P>
+
+<P><INS>The point of declaration of a <I>using-declaration</I> that does
+not name a constructor is immediately after the <I>using-declaration</I>
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]).</INS></P>
+
+<P>The point of declaration for an enumerator...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.9 [<A href="https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...If a <I>using-declaration</I> names a constructor
+(6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]), it implicitly declares a set of
+constructors in the class in which the <I>using-declaration</I> appears
+(_N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]); otherwise the name specified in
+a <I>using-declaration</I> is a synonym for <DEL>the name of some entity
+declared elsewhere</DEL> <INS>a set of declarations in another namespace
+or class</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The entity declared by a <I>using-declaration</I> shall be known in
+the context using it according to its definition at the point of
+the <I>using-declaration</I>. Definitions</DEL> <INS>Members</INS> added to
+the namespace after the <I>using-declaration</I> are not considered when a
+use of the name is made. <INS>[<I>Note:</I> Thus, additional overloads
+added after the <I>using-declaration</I> are ignored, but default
+function arguments (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]), default template
+arguments (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), and template specializations
+(13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>], 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]) are
+considered. &#8212;<I>end note</I>]</INS> [<I>Example:</I>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

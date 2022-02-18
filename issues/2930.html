@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2930</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2930"></A><H4>2930.
+  
+Unclear term "copy/move operation" in specification of copy elision
+</H4>
+<B>Section: </B>11.9.6&#160; [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-16<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>The specification of copy elision in 11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
+uses the undefined term "copy/move operation", even though the
+constructor actually selected might not be a copy or move constructor
+as specified in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>].  It is thus unclear
+whether copy elision can be applied even in the case a non-copy/move
+constructor is selected.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-22):</B></P>
+
+<P>Change in 11.9.6 [<A href="https://wg21.link/class.copy.elision#1">class.copy.elision</A>] paragraph 1 through 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When certain criteria are met, an implementation is allowed to omit
+the <DEL>copy/move construction of</DEL> <INS>creation of</INS> a
+class object <INS>from a source object of the same type (ignoring
+cv-qualification)</INS>, even if the <INS>selected</INS> constructor
+<DEL>selected for the copy/move operation</DEL> and/or the destructor
+for the object have side effects. In such cases, the implementation
+treats the source and target of the omitted <DEL>copy/move
+operation</DEL> <INS>initialization</INS> as simply two different ways
+of referring to the same object. If the first parameter of the
+selected constructor is an rvalue reference to the object's type, the
+destruction of that object occurs when the target would have been
+destroyed; otherwise, the destruction occurs at the later of the times
+when the two objects would have been destroyed without the
+optimization.  [ <DEL>Footnote:</DEL> <INS>Note:</INS> Because only one object is destroyed instead
+of two, and <DEL>one copy/move constructor is not executed</DEL>
+<INS>the creation of one object is omitted</INS>, there is still one object destroyed
+for each one constructed. -- end <DEL>footnote</DEL> <INS>note</INS> ] This elision
+of <DEL>copy/move operations</DEL> <INS>object creation</INS>,
+called <I>copy elision</I>, is permitted in the following
+circumstances (which may be combined to eliminate multiple copies):
+<UL>
+<LI>in a <TT>return</TT>
+statement <INS>(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</INS> in a function with a
+class return type, when the <I>expression</I> is the name of a
+non-volatile object <INS><I>o</I></INS> with automatic storage
+duration (other than a function parameter or a variable introduced by
+the <I>exception-declaration</I> of a <I>handler</I>
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])) <DEL>with the same type (ignoring
+cv-qualification) as the function return type</DEL>, the
+<DEL>copy/move operation</DEL> <INS>copy-initialization of the result
+object</INS> can be omitted by constructing <DEL>the
+object</DEL> <INS><I>o</I></INS> directly into the function call's
+<DEL>return</DEL> <INS>result</INS> object<INS>;</INS>
+</LI>
+<LI>
+in a <I>throw-expression</I> (7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>]), when the
+operand is the name of a non-volatile object <INS><I>o</I></INS> with
+automatic storage duration (other than a function <DEL>or
+catch-clause</DEL> parameter <INS>or a variable introduced by
+the <I>exception-declaration</I> of a <I>handler</I></INS>) that
+belongs to a scope that does not contain the innermost
+enclosing <I>compound-statement</I> associated with a <I>try-block</I>
+(if there is one), the <DEL>copy/move
+operation</DEL> <INS>copy-initialization of the exception object</INS>
+can be omitted by constructing <DEL>the object</DEL>
+<INS><I>o</I></INS> directly into the exception object<INS>;</INS>
+</LI>
+<LI>in a coroutine (9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]), a copy of a coroutine
+parameter can be omitted and references to that copy replaced with
+references to the corresponding parameter if the meaning of the
+program will be unchanged except for the execution of a constructor
+and destructor for the parameter copy object<INS>;</INS>
+</LI>
+<LI>when the <I>exception-declaration</I> of a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) declares an object <INS><I>o</I></INS> <DEL>of
+the same type (except for cv-qualification) as the exception object
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>])</DEL>, the <DEL>copy operation</DEL>
+<INS>copy-initialization of <I>o</I></INS> can be
+omitted by treating the <I>exception-declaration</I> as an alias for
+the exception object if the meaning of the program will be unchanged
+except for the execution of constructors and destructors for the
+object declared by the <I>exception-declaration</I>.  [<I>Note 1:</I>
+There cannot be a move from the exception object because it is always
+an lvalue. &#8212;<I>end note</I>]
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

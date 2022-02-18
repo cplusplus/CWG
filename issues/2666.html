@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2666</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2666"></A><H4>2666.
+  
+Lifetime extension through <TT>static_cast</TT>
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-10-17<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S { S(int) {} };
+
+  const S&amp; r1 = 0; //<SPAN CLASS="cmnt"> #1</SPAN>
+  const S&amp; r2 = static_cast&lt;const S&amp;&gt;(S(0)); //<SPAN CLASS="cmnt"> #2</SPAN>
+  const S&amp; r3 = static_cast&lt;const S&amp;&gt;(0); //<SPAN CLASS="cmnt"> #3</SPAN>
+  //<SPAN CLASS="cmnt"> Are r1, r2, and r3 dangling past this point?</SPAN>
+</PRE>
+
+<P>For #1, a temporary object is materialized and the reference binds
+to the result of the materialization conversion. This results in
+lifetime extension per 6.7.7 [<A href="https://wg21.link/class.temporary#6.1">class.temporary</A>] bullet 6.1.</P>
+
+<P>For #2, 6.7.7 [<A href="https://wg21.link/class.temporary#6.6">class.temporary</A>] bullet 6.6 requires the cast
+to convert "without a user-defined conversion", but <TT>S(0)</TT> is
+such.</P>
+
+<P>For #3, a user-defined conversion is clearly required.</P>
+
+<P>However, implementations treat all three cases the same and do
+extend the lifetime of the temporary.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#6.6">class.temporary</A>] bullet 6.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>a
+<UL>
+<LI>const_cast (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]),</LI>
+<LI>static_cast (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]),</LI>
+<LI>dynamic_cast (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), or</LI>
+<LI>reinterpret_cast (7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>])</LI>
+</UL>
+<DEL>converting, without a user-defined conversion, a glvalue operand that
+is one of these expressions to a glvalue that refers to the object
+designated by the operand, or to its complete object or a subobject
+thereof</DEL>,
+
+<INS>where</INS>
+<UL class="ins">
+<LI>the cast does not invoke a user-defined conversion, or</LI>
+<LI>the cast invokes a user-defined conversion that yields a prvalue,
+and the glvalue result of the cast is bound directly
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to that prvalue,</LI>
+</UL>
+
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (October, 2024)</B></P>
+
+<P>The suggested resolution does not use the "is one of these
+expressions" structure that limits the tracking of temporary objects
+through the expression tree required from implementation. For
+example:</P>
+
+<PRE>
+  int glob;
+  struct A {
+   constexpr ~A() { arr[0] = &amp;glob; }
+   int *arr[1];
+  };
+  constexpr int f() {
+   int *&amp;&amp;ref = static_cast&lt;int *&amp;&amp;&gt;(0[+A().arr]); //<SPAN CLASS="cmnt"> note unary +; lifetime is not extended</SPAN>
+   delete ref; //<SPAN CLASS="cmnt"> error: attempt to delete `&amp;glob`</SPAN>
+   return 0;
+  }
+  extern constexpr int x = f();
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#6.6">class.temporary</A>] bullet 6.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>a
+<UL>
+<LI>const_cast (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]),</LI>
+<LI>static_cast (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]),</LI>
+<LI>dynamic_cast (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), or</LI>
+<LI>reinterpret_cast (7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>])</LI>
+</UL>
+<DEL>converting, without a user-defined conversion, a glvalue operand that
+is one of these expressions to a glvalue that refers to the object
+designated by the operand, or to its complete object or a subobject
+thereof,</DEL>
+
+<INS>expression where</INS>
+<UL class="ins">
+<LI>the operand is one of these expressions and the cast does not invoke a user-defined conversion, or</LI>
+<LI>the result of the cast refers to an object created by a temporary materialization conversion that is required or performed by the cast, or to a subobject of such an object, where
+<UL>
+<LI>the cast does not invoke a user-defined conversion, or</LI>
+<LI>the temporary materialization conversion is applied to the prvalue result of a user-defined conversion that is applied to the operand.</LI>
+</UL>
+</LI>
+</UL>
+
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

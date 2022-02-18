@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1278</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1278"></A><H4>1278.
+  
+Incorrect treatment of contrived object
+</H4>
+<B>Section: </B>12.2.2.2.2&#160; [<A href="https://wg21.link/over.call.func">over.call.func</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-03-27<BR>
+
+
+
+
+<P>Footnote 127 of 12.2.2.2.2 [<A href="https://wg21.link/over.call.func#3">over.call.func</A>] paragraph 3 reads,</P>
+
+<BLOCKQUOTE>
+
+An implied object argument must be contrived to correspond to the
+implicit object parameter attributed to member functions during
+overload resolution.  It is not used in the call to the selected
+function.  Since the member functions all have the same implicit
+object parameter, the contrived object will not be the cause to select
+or reject a function.
+
+</BLOCKQUOTE>
+
+<P>It is not true that &#8220;the member functions all have the same
+implicit object parameter.&#8221;  This statement does not take into
+account member functions brought into the class by <I>using-declaration</I>s
+or <I>cv-qualifier</I>s and <I>ref-qualifier</I>s on the non-static
+member functions:</P>
+
+<PRE>
+    struct B
+    {
+      char f();         // B &amp;
+    };
+
+    struct D : B
+    {
+      using B::f;
+      long f();         // D &amp;
+
+      char g() const;   // D const &amp;
+      long g();         // D &amp;
+
+      char h() &amp;;       // D &amp;
+      long h() &amp;&amp;;      // D &amp;&amp;
+    };
+
+    int main()
+    {
+      //<SPAN CLASS="cmnt"> </SPAN>D::f()<SPAN CLASS="cmnt"> has better match than </SPAN>B::f()<SPAN CLASS="cmnt"></SPAN>
+      decltype(D().f()) *p1 = (long *)0;
+
+      //<SPAN CLASS="cmnt"> </SPAN>D::g()<SPAN CLASS="cmnt"> has better match than </SPAN>D::g() const<SPAN CLASS="cmnt"></SPAN>
+      decltype(D().g()) *p2 = (long *)0;
+
+      //<SPAN CLASS="cmnt"> </SPAN>D::h() &amp;<SPAN CLASS="cmnt"> is not viable function</SPAN>
+      //<SPAN CLASS="cmnt"> </SPAN>D::h() &amp;&amp;<SPAN CLASS="cmnt"> is viable function</SPAN>
+      decltype(D().h()) *p3 = (long *)0;
+    }
+</PRE>
+
+<P>The value category of a contrived object expression is not
+specified by the rules and, probably, cannot be properly specified in
+presence of <I>ref-qualifier</I>s, so the statement &#8220;the
+contrived object will not be the cause to select or reject a
+function&#8221; should be normative rather than informative:</P>
+
+<PRE>
+    struct X
+    {
+      static void f(double) {}
+      void f(int) &amp; {}
+      void f(int) &amp;&amp; {}
+    };
+
+    int main()
+    {
+      X::f(0); //<SPAN CLASS="cmnt"> ???</SPAN>
+    }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

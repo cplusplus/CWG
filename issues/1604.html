@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1604</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1604"></A><H4>1604.
+  
+Double temporaries in reference initialization
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-10<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA30">N3690 comment
+  CA&#160;30<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>Bullet 2 sub-bullet 2 of 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 says,</P>
+
+<BLOCKQUOTE>
+
+Otherwise, a temporary of type &#8220;cv1 T1&#8221; is created and
+initialized from the initializer expression using the rules for a
+non-reference copy-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).  The
+reference is then bound to the temporary.
+
+</BLOCKQUOTE>
+
+<P>It is not clear what &#8220;using the rules for a non-reference
+copy-initialization&#8221; means.  If it means that the temporary
+is initialized as if it were a standalone variable, the last bullet
+of 9.4 [<A href="https://wg21.link/dcl.init#17">dcl.init</A>] paragraph 17 could apply:</P>
+
+<BLOCKQUOTE>
+
+Otherwise (i.e., for the remaining copy-initialization cases),
+user-defined conversion sequences that can convert from the source
+type to the destination type or (when a conversion function is used)
+to a derived class thereof are enumerated as described in 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], and the best one is chosen through overload
+resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]). If the conversion cannot be
+done or is ambiguous, the initialization is ill-formed.  The function
+selected is called with the initializer expression as its argument; if
+the function is a constructor, the call initializes a temporary of the
+cv-unqualified version of the destination type. The temporary is a
+prvalue. The result of the call (which is the temporary for the
+constructor case) is then used to direct-initialize, according to the
+rules above, the object that is the destination of the
+copy-initialization.
+
+</BLOCKQUOTE>
+
+<P>That is, for an example like</P>
+
+<PRE>
+  struct X {
+    X(int) {}
+      X(X const &amp;) = delete;
+    };
+
+  void f() {
+    X const &amp;x = 0;
+  }
+</PRE>
+
+<P>the specification requires creation of a temporary <TT>X(0)</TT>,
+copying that tempoary to another temporary (subject to copy elision),
+and binding the reference to that second temporary.  In the example
+above, because the copy constructor is deleted, the example is
+ill-formed, although current implementations fail to diagnose it as
+an error.</P>
+
+<P>Is this intended?</P>
+
+
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<OL>
+<LI><P>Change the last bullet of 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] paragraph
+5, breaking it into sub-bullets, and the subsequent example as
+follows:</P></LI>
+
+<UL>
+<LI><P>Otherwise<INS>:</INS>
+</P></LI>
+
+<UL>
+<LI><P><INS>If <TT>T1</TT> is a class type, user-defined conversions
+are considered using the rules for copy-initialization of an object of type
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; by user-defined conversion
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>]); the program is
+ill-formed if the corresponding non-reference copy-initialization would be
+ill-formed. The result of the call to the conversion function, as described
+for the non-reference copy-initialization, is then used to
+direct-initialize the reference. The program is ill-formed if the
+direct-initialization does not result in a direct binding or if it involves
+a user-defined conversion.</INS></P></LI>
+
+<LI>
+
+<P>
+<INS>If <TT>T1</TT> is a non-class type</INS>, a temporary of type
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is created
+and <INS>copy-</INS>initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the
+initializer expression <DEL>using the rules for a non-reference
+copy-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])</DEL>. The reference is then
+bound to the temporary.</P>
+</LI>
+
+</UL>
+
+<P>If <TT>T1</TT> is reference-related
+to <TT>T2</TT><DEL>,</DEL><INS>:</INS>
+</P>
+
+<UL>
+<LI><P>
+<I>cv1</I> shall be the same cv-qualification as, or greater
+cv-qualification than, <I>cv2</I><DEL>.</DEL><INS>; and</INS>
+</P></LI>
+
+<LI><P>
+<DEL>If <TT>T1</TT> is reference-related to <TT>T2</TT> and</DEL>
+<INS>if</INS> the reference is an rvalue reference, the initializer
+expression shall not be an lvalue.</P></LI>
+
+</UL>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+<INS>  struct Banana { };
+  struct Enigma { operator const Banana(); };
+  void enigmatic() {
+    typedef const Banana ConstBanana;
+    Banana &amp;&amp;banana1 = ConstBanana(); //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    Banana &amp;&amp;banana2 = Enigma();      //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+  }</INS>
+
+  const double&amp; rcd2 = 2;             //<SPAN CLASS="cmnt"> </SPAN>rcd2<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  ...
+</PRE>
+
+<LI><P>Change 12.2.2.5 [<A href="https://wg21.link/over.match.copy#1">over.match.copy</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Under the conditions specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], as part of a
+copy-initialization of an object of class type, a user-defined conversion
+can be invoked to convert an initializer expression to the type of the
+object being initialized.  Overload resolution is used to select the
+user-defined conversion to be invoked. <INS>[<I>Note:</I> The conversion
+performed for indirect binding to a reference to a possibly cv-qualified
+class type is determined in terms of a corresponding non-reference
+copy-initialization. &#8212;<I>end note</I>]</INS> Assuming that
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

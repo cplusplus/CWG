@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2470</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2470"></A><H4>2470.
+  
+Multiple array objects providing storage for one object
+</H4>
+<B>Section: </B>6.7.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-01-29<BR>
+
+
+<P>According to 6.7.2 [<A href="https://wg21.link/intro.object#3">intro.object</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+<P>If a complete object is created
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) in storage associated with
+another object <I>e</I> of type &#8220;array of <I>N</I>
+<TT>unsigned char</TT>&#8221; or of type &#8220;array of <I>N</I>
+<TT>std::byte</TT>&#8221; (17.2.1 [<A href="https://wg21.link/cstddef.syn">cstddef.syn</A>]),
+that array <I>provides storage</I> for the created object
+if:</P>
+
+<UL>
+<LI><P>the lifetime of <I>e</I> has begun and not ended,
+and</P></LI>
+
+<LI><P>the storage for the new object fits entirely
+within <I>e</I>, and</P></LI>
+
+<LI><P>there is no smaller array object that satisfies these
+constraints.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>The intent of the third bullet is to select a unique array
+object among those satisfying the first two bullets. However,
+it is possible to have multiple array objects of the same
+size satisfying the first two bullets. For example:</P>
+
+<PRE>
+  unsigned char buffer[8];
+  struct OhNo { std::byte data[8]; };
+  static_assert(sizeof(OhNo) == 8 &amp;&amp; sizeof(int) == 4);
+  OhNo *p = new (buffer) OhNo;   //<SPAN CLASS="cmnt"> </SPAN>buffer<SPAN CLASS="cmnt"> provides storage for </SPAN>OhNo
+  int *q = new (p-&gt;data) int;    //<SPAN CLASS="cmnt"> who provides storage for this?</SPAN>
+  int *r = new (buffer + 4) int; //<SPAN CLASS="cmnt"> who provides storage for this?</SPAN>
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 6.7.2 [<A href="https://wg21.link/intro.object#3.3">intro.object</A>] bullet 3.3 as follows:</P>
+
+<UL>
+<LI><P>there is no <DEL>smaller</DEL>
+array object that satisfies these
+constraints <INS>nested within <I>e</I></INS>.</P></LI>
+
+</UL>
+
+<P><B>Proposed resolution (February, 2021):</B></P>
+
+<P>Change 6.7.2 [<A href="https://wg21.link/intro.object#3.3">intro.object</A>] bullet 3.3 as follows:</P>
+
+<UL>
+<LI><P>there is no <DEL>smaller</DEL>
+array object that satisfies these
+constraints <INS>nested within <I>e</I></INS>.</P></LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

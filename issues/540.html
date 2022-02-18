@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 540</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="540"></A><H4>540.
+  
+Propagation of cv-qualifiers in reference-to-reference collapse
+</H4>
+<B>Section: </B>9.8.2&#160; [<A href="https://wg21.link/namespace.def">namespace.def</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Russell Yanofsky
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 September 2005<BR>
+
+
+<P>[Voted into the WP at the October, 2006 meeting as part of
+paper J16/06-0188 = WG21 N2118.]</P>
+
+
+
+<P>The resolution of <A HREF="106.html">issue 106</A> specifies
+that an attempt to create a type &#8220;reference to <I>cv1</I>
+<TT>T</TT>,&#8221; where <TT>T</TT> is a typedef or template parameter
+of the type &#8220;reference to <I>cv2</I> <TT>S</TT>,&#8221; actually
+creates the type &#8220;reference to <I>cv12</I> <TT>S</TT>,&#8221;
+where <I>cv12</I> is the union of the two sets of cv-qualifiers.</P>
+
+<P>One objection that has been raised to this resolution is that it
+is inconsistent with the treatment of cv-qualification and references
+specified in 9.3.4.3 [<A href="https://wg21.link/dcl.ref#1">dcl.ref</A>] paragraph 1, which says
+that cv-qualifiers applied to a typedef or template argument that is
+a reference type are ignored.  For example:</P>
+
+<PRE>
+    typedef int&amp; intref;
+    const intref r1;       //<SPAN CLASS="cmnt"> reference to int</SPAN>
+    const intref&amp; r2;      //<SPAN CLASS="cmnt"> reference to const int</SPAN>
+</PRE>
+
+<P>In fact, however, these two declarations are quite different. In the
+declaration of <TT>r1</TT>, <TT>const</TT> applies to a
+&#8220;top-level&#8221; reference, while in the declaration of <TT>t2</TT>,
+it occurs under a reference.  In general, cv-qualifiers that appear under
+a reference are preserved, even if the type appears in a context in which
+top-level cv-qualification is removed, for example, in determining the
+type of a function from parameter types (9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3)
+ and in template argument deduction
+(13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#2">temp.deduct.call</A>] paragraph 2).</P>
+
+<P>Another objection to the resolution is that type composition gives
+different results in a single declaration than it does when separated
+into two declarations.  For example:</P>
+
+<PRE>
+    template &lt;class T&gt;
+    struct X {
+       typedef T const T_const;
+       typedef T_const&amp; type1;
+       typedef T const&amp; type2;
+    };
+
+    X&lt;int&amp;&gt;::type1 t1;    // int&amp;
+    X&lt;int&amp;&gt;::type2 t2;    // int const&amp;
+</PRE>
+
+<P>The initial motivation for the propagation of cv-qualification
+during reference-to-reference collapse was to prevent inadvertent
+loss of cv-qualifiers in contexts in which it could make a
+difference.  For example, if the resolution were changed to discard,
+rather than propagate, embedded cv-qualification, overload
+resolution could surprisingly select a non-const version of a member
+function:</P>
+
+<PRE>
+   struct X {
+       void g();
+       void g() const;
+   };
+
+   template &lt;typename T&gt; struct S {
+       static void f(const T&amp; t) {
+           t.g();    //<SPAN CLASS="cmnt"> const or non-const???</SPAN>
+       }
+   };
+
+   X x;
+
+   void q() {
+       S&lt;X&gt;::f(x);    //<SPAN CLASS="cmnt"> calls </SPAN>X::g() const
+       S&lt;X&amp;&gt;::f(x);   //<SPAN CLASS="cmnt"> calls </SPAN>X::g()
+   }
+</PRE>
+
+<P>Another potentially-surprising outcome of dropping embedded
+cv-qualifiers would be:</P>
+
+<PRE>
+   template &lt;typename T&gt; struct A {
+       void f(T&amp;);          //<SPAN CLASS="cmnt"> mutating version</SPAN>
+       void f(const T&amp;);    //<SPAN CLASS="cmnt"> non-mutating version</SPAN>
+   };
+
+   A&lt;int&amp;&gt; ai;    //<SPAN CLASS="cmnt"> Ill-formed: </SPAN>A&lt;int&amp;&gt;<SPAN CLASS="cmnt"> declares</SPAN> f(int&amp;)<SPAN CLASS="cmnt"> twice</SPAN>
+
+</PRE>
+
+<P>On the other hand, those who would like to see the resolution
+changed to discard embedded cv-qualifiers observe that these examples
+are too simple to be representative of real-world code.  In general,
+it is unrealistic to expect that a template written with non-reference
+type parameters in mind will automatically work correctly with
+reference type parameters as a result of applying the issue 106
+resolution.  Instead, template metaprogramming allows the template
+author to choose explicitly whether cv-qualifiers are propagated or
+dropped, according to the intended use of the template, and it is more
+important to respect the reasonable intuition that a declaration
+involving a template parameter will not change the type that the
+parameter represents.</P>
+
+<P>As a sample of real-world code, <TT>tr1::tuple</TT> was examined.
+In both cases &#8212; the current resolution of issue 106 and one in
+which embedded cv-qualifiers were dropped &#8212; some metaprogramming
+was required to implement the intended interface, although the version
+reflecting the revised resolution was somewhat simpler.</P>
+
+<P><B>Notes from the October, 2005 meeting:</B></P>
+
+<P>The consensus of the CWG was that the resolution of
+<A HREF="106.html">issue 106</A> should be revised not to
+propagate embedded cv-qualification.</P>
+
+<P><B>Note (February, 2006):</B></P>
+
+<P>The wording included in the rvalue-reference paper,
+J16/06-0022 = WG21 N1952, incorporates changes intended to implement
+the October, 2005 consensus of the CWG.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,166 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 156</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="156"></A><H4>156.
+  
+Name lookup for conversion functions
+</H4>
+<B>Section: </B>_N4868_.6.5.6&#160; [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Derek Inglis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Aug 1999<BR>
+
+
+
+
+
+<P>Paragraph 7 of
+_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ says,</P>
+
+<BLOCKQUOTE>
+If the <I>id-expression</I> is a <I>conversion-function-id</I>, its
+<I>conversion-type-id</I> shall denote the same
+type in both the context in which the
+entire <I>postfix-expression</I> occurs
+and in the context of the class of the object
+expression (or the class pointed to by the pointer expression).
+</BLOCKQUOTE>
+
+Does this mean that the following example is ill-formed?
+
+<PRE>
+    struct A { operator int(); } a;
+    void foo() {
+      typedef int T;
+      a.operator T(); // 1) error T is not found in the context
+		      // of the class of the object expression?
+    }
+</PRE>
+
+The second bullet in paragraph 1 of
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]
+ says,
+
+<BLOCKQUOTE>
+a <I>conversion-type-id</I> of an
+<I>operator-function-id</I> is looked up both
+in the scope of the class and in the
+context in which the entire <I>postfix-expression</I>
+occurs and shall refer to the
+same type in both contexts
+</BLOCKQUOTE>
+
+How about:
+
+<PRE>
+    struct A { typedef int T; operator T(); };
+    struct B : A { operator T(); } b;
+    void foo() {
+      b.A::operator T(); // 2) error T is not found in the context
+			 // of the postfix-expression?
+    }
+</PRE>
+
+Is this interpretation correct?  Or was the intent for
+this to be an error only if
+<TT>T</TT> was found in both scopes and referred to different entities?
+
+<P>If the intent was for these to be errors,
+how do these rules apply to template
+arguments?</P>
+
+<PRE>
+    template &lt;class T1&gt; struct A { operator T1(); }
+    template &lt;class T2&gt; struct B : A&lt;T2&gt; {
+      operator T2();
+      void foo() {
+	T2 a = A&lt;T2&gt;::operator T2(); // 3) error? when instantiated T2 is not
+				     // found in the scope of the class
+	T2 b = ((A&lt;T2&gt;*)this)-&gt;operator T2(); // 4) error when instantiated?
+      }
+    }
+</PRE>
+
+<P>(Note bullets 2 and 3 in paragraph 1 of
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]
+ refer to
+<I>postfix-expression</I>.  It would be better to use
+<I>qualified-id</I> in both cases.)</P>
+
+<P>
+<U>Erwin Unruh</U>:
+The intent was that you look in both contexts. If you find it only once,
+that's the symbol. If you find it in both, both symbols must be "the same"
+in some respect. (If you don't find it, its an error).</P>
+
+<P>
+<U>Mike Miller</U>:
+What's not clear to me in these examples is whether what is
+being looked up is <TT>T</TT> or <TT>int</TT>.
+Clearly the <TT>T</TT> has to be
+looked up somehow, but the "name" of a conversion function
+clearly involves the base (non-typedefed) type, not typedefs
+that might be used in a definition or reference (cf
+6.1 [<A href="https://wg21.link/basic.pre#7">basic.pre</A>] paragraph 7
+and
+11.4.8 [<A href="https://wg21.link/class.conv#5">class.conv</A>] paragraph 5)
+.
+(This is true even for types that must be written
+using typedefs because of the limited syntax in
+<I>conversion-type-id</I>s &#8212; e.g., the "name" of the conversion
+function in the following example</P>
+
+<PRE>
+    typedef void (*pf)();
+    struct S {
+	operator pf();
+    };
+</PRE>
+
+is <TT>S::operator void(*)()</TT>, even though you can't write its name
+directly.)
+
+<P>My guess is that this means that in each scope you look up
+the type named in the reference and form the canonical
+operator name; if the name used in the reference isn't found
+in one or the other scope, the canonical name constructed
+from the other scope is used.  These names must be identical,
+and the <I>conversion-type-id</I> in the canonical operator name must
+not denote different types in the two scopes (i.e., the type
+might not be found in one or the other scope, but if it's found
+in both, they must be the same type).</P>
+
+<P>I think this is all very vague in the current wording.</P>
+
+<P><B>Rationale (February, 2021):</B></P>
+
+<P>This issue was resolved by the resolution of
+<A HREF="1111.html">issue 1111</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

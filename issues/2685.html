@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2685</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2685"></A><H4>2685.
+  
+Aggregate CTAD, string, and brace elision
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-07-14<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;class T&gt;
+  struct A {
+    T ar[4];
+  };
+  A a = { "foo" }; 
+</PRE>
+
+<P>Subclause 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.5">over.match.class.deduct</A>] bullet 1.5 specifies:</P>
+
+<BLOCKQUOTE>
+
+For each xi, let ei be the corresponding aggregate element of C or of
+one of its (possibly recursive) subaggregates that would be
+initialized by xi (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) if
+
+<UL>
+<LI>
+brace elision is not considered for any aggregate element that has a
+dependent non-array type or an array type with a value-dependent
+bound, and
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>The normative rule does not properly consider arrays with dependent
+element type, initialized by a string literal.  MSVC accepts, gcc and
+clang reject the example.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.5">over.match.class.deduct</A>] bullet 1.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+For each xi, let ei be the corresponding aggregate element of C or of
+one of its (possibly recursive) subaggregates that would be
+initialized by xi (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) if
+
+<UL>
+<LI>
+brace elision is not considered for any aggregate element that has
+<UL>
+<LI>a dependent non-array type <DEL>or</DEL> <INS>,</INS>
+</LI>
+<LI>an array type with a value-dependent bound, <INS>or</INS>
+</LI>
+<LI>
+<INS>a string literal as the corresponding initializer and that
+has an array type whose element type is a (possibly cv-qualified)
+template parameter or is a dependent type specified with
+a <I>qualified-id</I> whose <I>nested-name-specifier</I> is dependent
+or with a <I>decltype-specifier</I>;</INS> and</LI>
+</UL>
+
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-09):</B></P>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.5">over.match.class.deduct</A>] bullet 1.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+For each xi, let ei be the corresponding aggregate element of C or of
+one of its (possibly recursive) subaggregates that would be
+initialized by xi (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) if
+
+<UL>
+<LI>
+brace elision is not considered for any aggregate element that has
+<UL>
+<LI>a dependent non-array type <DEL>or</DEL> <INS>,</INS>
+</LI>
+<LI>an array type with a value-dependent bound, <INS>or</INS>
+</LI>
+<LI>
+<INS>an array type with a dependent array element type
+and x<sub>i</sub> is a string literal;</INS> and</LI>
+</UL>
+
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

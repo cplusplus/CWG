@@ -1,0 +1,269 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1517</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1517"></A><H4>1517.
+  
+Unclear/missing description of behavior during construction/destruction
+</H4>
+<B>Section: </B>11.9.5&#160; [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-07-07<BR>
+
+
+<P>The current wording of 11.9.5 [<A href="https://wg21.link/class.cdtor#4">class.cdtor</A>] paragraph 4 does
+not describe the behavior of calling a virtual function in a
+<I>mem-initializer</I> for a base class, only for a non-static data
+member.  Also, the changes for <A HREF="1202.html">issue 1202</A>
+should have been, but were not, applied to the description of the
+behavior of <TT>typeid</TT> and <TT>dynamic_cast</TT> in paragraphs 5
+and 6.</P>
+
+<P>In addition, the resolution of <A HREF="597.html">issue 597</A>
+allowing the out-of-lifetime conversion of pointers/lvalues to
+non-virtual base classes, should have been, but were not, applied to
+paragraph 3.</P>
+
+<P>(See also <A HREF="2056.html">issue 2056</A>.)</P>
+
+<P><B>Proposed resolution (August, 2013):</B></P>
+
+<OL>
+<LI><P>Change 11.9.5 [<A href="https://wg21.link/class.cdtor#1">class.cdtor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For an object with a non-trivial constructor, referring to any
+non-static member or <INS>virtual</INS> base class of the object
+before the constructor begins execution results in undefined behavior.
+For an object with a non-trivial destructor, referring to any
+non-static member or <INS>virtual</INS> base class of the object after
+the destructor finishes execution results in undefined
+behavior. [<I>Example:</I>
+
+<PRE>
+  struct X { int i; };
+  struct Y : X { Y(); };                       //<SPAN CLASS="cmnt"> non-trivial</SPAN>
+  struct A { int a; };
+  struct B : <DEL>public</DEL> <INS>virtual</INS> A { int j; Y y; }; //<SPAN CLASS="cmnt"> non-trivial</SPAN>
+
+  extern B bobj;
+  B* pb = &amp;bobj;                               //<SPAN CLASS="cmnt"> OK</SPAN>
+  int* p1 = &amp;bobj.a;                           //<SPAN CLASS="cmnt"> undefined, refers to base class member</SPAN>
+  int* p2 = &amp;bobj.y.i;                         //<SPAN CLASS="cmnt"> undefined, refers to member's member</SPAN>
+
+  A* pa = &amp;bobj;                               //<SPAN CLASS="cmnt"> undefined, upcast to a <INS>virtual</INS> base class type</SPAN>
+  B bobj;                                      //<SPAN CLASS="cmnt"> definition of </SPAN>bobj
+
+  extern X xobj;
+  int* p3 = &amp;xobj.i;                           //<SPAN CLASS="cmnt">OK, </SPAN>X<SPAN CLASS="cmnt"> is a trivial class</SPAN>
+  X xobj;
+</PRE>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>] paragraphs 3-6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>To explicitly or implicitly convert a pointer (a glvalue) referring to
+an object of class <TT>X</TT> to a pointer (reference) to a direct or
+indirect <INS>virtual</INS> base class <TT>B</TT> of <TT>X</TT>, the
+construction of <TT>X</TT> and the construction of all of its direct or
+indirect bases <DEL>that directly or indirectly derive from</DEL>
+<INS>for which</INS> <TT>B</TT> <INS>is a direct or indirect virtual
+base</INS> shall have started and the destruction of these classes
+shall not have completed, otherwise the conversion results in
+undefined behavior. To form a pointer to (or access the value of) a
+direct non-static member...</P>
+
+<P>
+<DEL>Member functions, including virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]), can be called during construction or
+destruction (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).  When a virtual function is
+called directly or indirectly from a constructor or from a destructor,
+including during the construction or destruction of the class's non-static
+data members, and the object to which the call applies is the object (call
+it <TT>x</TT>) under construction or destruction, the function called is
+the final overrider in the constructor's or destructor's class and not one
+overriding it in a more-derived class.  If the virtual function call uses
+an explicit class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) and the object
+expression refers to the complete object of x or one of that object's base
+class subobjects but not to <TT>x</TT> or one of its base class subobjects,
+the behavior is undefined.</DEL>
+
+<INS>The <I>period of construction</I> of an object or subobject whose type
+is a class type <TT>C</TT> begins immediately after the construction of all
+its base class subobjects is complete and concludes when the last
+constructor of class <TT>C</TT> exits.  The <I>period of destruction</I> of
+an object or subobject whose type is a class type <TT>C</TT> begins when
+the destructor for <TT>C</TT> begins execution and concludes immediately
+before beginning the destruction of its base class
+subobjects. A <I>polymorphic operation</I> is a virtual function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), the <TT>typeid</TT> operator
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) when applied to a glvalue of polymorphic type,
+or the <TT>dynamic_cast</TT> operator (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]) when
+applied to a pointer to or glvalue of a polymorphic type. A <I>polymorphic
+operand</I> is the object expression in a virtual function call or the
+operand of a polymorphic <TT>typeid</TT>
+or <TT>dynamic_cast</TT>.</INS>
+</P>
+
+<P>
+<INS> During the period of construction or period of destruction of
+an object or subobject whose type is a class type <TT>C</TT> (call
+it <TT>x</TT>), the effect of performing a polymorphic operation in
+which the polymorphic operand designates <TT>x</TT> or a base class
+subobject thereof is as if the dynamic type of the object were
+class <TT>C</TT>.  [<I>Footnote:</I> This is true even if <TT>C</TT>
+is an abstract class, which cannot be the type of a most-derived
+object. &#8212;<I>end footnote</I>] If a polymorphic operand refers to
+an object or subobject having class type <TT>C</TT> before its period
+of construction begins or after its period of destruction is complete,
+the behavior is undefined. [<I>Note:</I> This includes the evaluation
+of an expression appearing in a <I>mem-initializer</I> of <TT>C</TT>
+in which the <I>mem-initializer-id</I> designates <TT>C</TT> or one of
+its base classes. &#8212;<I>end note</I>]</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct V {
+<INS>    V();
+    V(int);</INS>
+    virtual void f();
+    virtual void g();
+  };
+
+  struct A : virtual V {
+    virtual void f();
+<INS>    virtual int h();
+    A() : V(h()) { }     //<SPAN CLASS="cmnt"> undefined behavior: virtual function </SPAN>h<SPAN CLASS="cmnt"> called</SPAN>
+                         //<SPAN CLASS="cmnt"> before </SPAN>A<SPAN CLASS="cmnt">'s period of construction begins</SPAN></INS>
+  };
+
+  struct B : virtual V {
+    virtual void g();
+    B(V*, A*);
+  };
+
+  struct D : A, B {
+    virtual void f();
+    virtual void g();
+    D() : B((A*)this, this) { }
+  };
+
+  B::B(V* v, A* a) {
+    f();                 //<SPAN CLASS="cmnt"> calls </SPAN>V::f<SPAN CLASS="cmnt">, not </SPAN>A::f
+    g();                 //<SPAN CLASS="cmnt"> calls </SPAN>B::g<SPAN CLASS="cmnt">, not </SPAN>D::g
+    v-&gt;g();              //<SPAN CLASS="cmnt"> </SPAN>v<SPAN CLASS="cmnt"> is base of </SPAN>B<SPAN CLASS="cmnt">, the call is well-defined, calls </SPAN>B::g
+    a-&gt;f();              //<SPAN CLASS="cmnt"> undefined behavior, </SPAN>a<SPAN CLASS="cmnt">'s type not a base of </SPAN>B
+<INS>    typeid(*this);       //<SPAN CLASS="cmnt"> </SPAN>type_info<SPAN CLASS="cmnt"> for </SPAN>B
+    typeid(*v);          //<SPAN CLASS="cmnt"> well-defined: </SPAN>*v<SPAN CLASS="cmnt"> has type </SPAN>V<SPAN CLASS="cmnt">, a base of </SPAN>B<SPAN CLASS="cmnt">,</SPAN>
+                         //<SPAN CLASS="cmnt"> so its period of construction is complete;</SPAN>
+                         //<SPAN CLASS="cmnt"> yields </SPAN>type_info<SPAN CLASS="cmnt"> for </SPAN>B
+    typeid(*a);          //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>A<SPAN CLASS="cmnt"> is not a base of </SPAN>B<SPAN CLASS="cmnt">,</SPAN>
+                         //<SPAN CLASS="cmnt"> so its period of construction has not begun</SPAN>
+    dynamic_cast&lt;B*&gt;(v); //<SPAN CLASS="cmnt"> well-defined: </SPAN>v<SPAN CLASS="cmnt"> has type </SPAN>V*<SPAN CLASS="cmnt">, </SPAN>V<SPAN CLASS="cmnt"> is a base of </SPAN>B<SPAN CLASS="cmnt">,</SPAN>
+                         //<SPAN CLASS="cmnt"> so its period of construction is complete;</SPAN>
+                         //<SPAN CLASS="cmnt"> results in </SPAN>this
+    dynamic_cast&lt;B*&gt;(a); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>A<SPAN CLASS="cmnt"> is not a base of </SPAN>B<SPAN CLASS="cmnt">,</SPAN>
+                         //<SPAN CLASS="cmnt"> so its period of construction has not begun</SPAN></INS>
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>
+<DEL>The <TT>typeid</TT> operator (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) can be
+used during construction or destruction
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]). When <TT>typeid</TT> is used in a
+constructor (including the <I>mem-initializer</I> or
+<I>brace-or-equal-initializer</I> for a non-static data member) or in a
+destructor, or used in a function called (directly or indirectly) from a
+constructor or destructor, if the operand of <TT>typeid</TT> refers to the
+object under construction or destruction,
+<TT>typeid</TT> yields the <TT>std::type_info</TT> object representing
+the constructor or destructor's class. If the operand of
+<TT>typeid</TT> refers to the object under construction or destruction
+and the static type of the operand is neither the constructor or
+destructor's class nor one of its bases, the result of <TT>typeid</TT>
+is undefined.</DEL>
+</P>
+
+<P>
+<DEL><TT>dynamic_cast</TT>s (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]) can be used
+during construction or destruction (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).  When
+a <TT>dynamic_cast</TT> is used in a constructor (including
+the <I>mem-initializer</I> or <I>brace-or-equal-initializer</I> for a
+non-static data member) or in a destructor, or used in a function called
+(directly or indirectly) from a constructor or destructor, if the operand
+of the <TT>dynamic_cast</TT> refers to the object under construction or
+destruction, this object is considered to be a most derived object that has
+the type of the constructor or destructor's class. If the operand of
+the <TT>dynamic_cast</TT> refers to the object under construction or
+destruction and the static type of the operand is not a pointer to or
+object of the constructor or destructor's own class or one of its bases,
+the <TT>dynamic_cast</TT> results in undefined behavior.
+[<I>Example:</I></DEL>
+</P>
+
+<PRE>
+<DEL>  struct V {
+    virtual void f();
+  };
+
+  struct A : virtual V { };
+
+  struct B : virtual V {
+    B(V*, A*);
+  };
+
+  struct D : A, B {
+    D() : B((A*)this, this) { }
+  };
+
+  B::B(V* v, A* a) {
+    typeid(*this);       //<SPAN CLASS="cmnt"> </SPAN>type_info<SPAN CLASS="cmnt"> for </SPAN>B
+    typeid(*v);          //<SPAN CLASS="cmnt"> well-defined: </SPAN>*v<SPAN CLASS="cmnt"> has type </SPAN>V<SPAN CLASS="cmnt">, a base of </SPAN>B
+                         //<SPAN CLASS="cmnt"> yields </SPAN>type_info<SPAN CLASS="cmnt"> for </SPAN>B
+    typeid(*a);          //<SPAN CLASS="cmnt"> undefined behavior: type </SPAN>A<SPAN CLASS="cmnt"> not a base of </SPAN>B
+    dynamic_cast&lt;B*&gt;(v); //<SPAN CLASS="cmnt"> well-defined: </SPAN>v<SPAN CLASS="cmnt"> of type </SPAN>V*<SPAN CLASS="cmnt">, </SPAN>V<SPAN CLASS="cmnt"> base of </SPAN>B
+                         //<SPAN CLASS="cmnt"> results in </SPAN>B*
+    dynamic_cast&lt;B*&gt;(a); //<SPAN CLASS="cmnt"> undefined behavior,</SPAN>
+                         //<SPAN CLASS="cmnt"> </SPAN>a<SPAN CLASS="cmnt"> has type </SPAN>A*<SPAN CLASS="cmnt">, </SPAN>A<SPAN CLASS="cmnt"> not a base of </SPAN>B</DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

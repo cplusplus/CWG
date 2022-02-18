@@ -1,0 +1,237 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1135</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1135"></A><H4>1135.
+  
+Explicitly-defaulted non-public special member functions
+</H4>
+<B>Section: </B>9.5.2&#160; [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>FI
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#FI1">N3092 comment
+  FI&#160;1<BR></A>
+
+<P>It should be allowed to explicitly default a non-public
+special member function on its first declaration. It is very
+likely that users will want to default protected/private
+constructors and copy constructors without having to write
+such defaulting outside the class.</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<OL>
+<LI><P>Change 9.5.2 [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>] paragraphs 1-5 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A function definition of the form:</P>
+
+<UL>
+<I>attribute-specifier<SUB>opt</SUB> decl-specifier-seq<SUB>opt</SUB> declarator </I> <TT>= default ;</TT>
+</UL>
+
+<P>is called an <I>explicitly-defaulted</I> definition. A function
+that is explicitly defaulted shall</P>
+
+<UL>
+<LI><P>be a special member function,</P></LI>
+
+<LI><P>have the same declared function type (except for possibly
+differing <I>ref-qualifier</I>s and except that in the case of a copy
+constructor or copy assignment operator, the parameter type may be
+&#8220;reference to non-const <TT>T</TT>&#8221;, where <TT>T</TT> is
+the name of the member function's class) as if it had been
+implicitly declared, <INS>and</INS>
+</P></LI>
+
+<LI><P>not have default arguments<DEL>, and</DEL><INS>.</INS>
+</P></LI>
+
+<LI><P><DEL>not have an <I>exception-specification</I>.</DEL></P></LI>
+
+</UL>
+
+<P><DEL>[<I>Note:</I> This implies that parameter types, return type, and
+cv-qualifiers must match the hypothetical implicit declaration.
+&#8212;<I>end note</I>]</DEL></P>
+
+<P>An explicitly-defaulted function may be declared <TT>constexpr</TT>
+only if it would have been implicitly declared as
+<TT>constexpr</TT><INS>, and may have an explicit
+<I>exception-specification</I> only if it is compatible (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]) with the <I>exception-specification</I> on the implicit
+declaration</INS>. If <DEL>it</DEL> <INS>a function</INS> is
+explicitly defaulted on its first declaration,</P>
+
+<UL>
+<LI><P><DEL>it shall be public,</DEL></P></LI>
+
+<LI><P><DEL>it shall not be explicit,</DEL></P></LI>
+
+<LI><P><DEL>it shall not be virtual,</DEL></P></LI>
+
+<LI><P><INS>it is implicitly considered to be <TT>constexpr</TT>
+if the implicit declaration would be,</INS></P></LI>
+
+<LI><P>it is implicitly considered to have the same
+<I>exception-specification</I> as if it had been implicitly declared
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), and</P></LI>
+
+<LI><P>in the case of a copy constructor, move constructor, copy
+assignment operator, or move assignment operator, it shall have the
+same parameter type as if it had been implicitly declared.</P></LI>
+
+</UL>
+
+<P>
+<DEL>[<I>Note:</I> Such a special member function may be trivial, and
+thus its accessibility and explicitness should match the hypothetical
+implicit definition; see below. &#8212;<I>end note</I>]</DEL>
+[<I>Example:</I>
+</P>
+
+<PRE>
+  struct S {
+<INS>    constexpr S() = default;                 //<SPAN CLASS="cmnt">ill-formed: implicit </SPAN>S()<SPAN CLASS="cmnt"> is not </SPAN>constexpr</INS>
+    S(int a = 0) = default;                  //<SPAN CLASS="cmnt"> ill-formed: default argument</SPAN>
+    void operator=(const S&amp;) = default;      //<SPAN CLASS="cmnt"> ill-formed: non-matching return type</SPAN>
+    ~S() throw(<INS>int</INS>) = default;               //<SPAN CLASS="cmnt"> ill-formed: exception specification <INS>doesn't match</INS></SPAN>
+  private:
+<INS>    int i;</INS>
+    S(S&amp;);                                   //<SPAN CLASS="cmnt"> OK: private copy constructor</SPAN>
+  };
+  S::S(S&amp;) = default;                        //<SPAN CLASS="cmnt"> OK: defines copy constructor</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>Explicitly-defaulted functions and implicitly-declared functions
+are collectively called <I>defaulted</I> functions, and the implementation
+shall provide implicit definitions for them (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]), which
+might mean defining them as deleted. A special member function is
+<I>user-provided</I> if it is user-declared and not explicitly
+defaulted <INS>or deleted</INS> on its first declaration. A
+user-provided explicitly-defaulted function <INS>(i.e., explicitly
+defaulted after its first declaration)</INS> is defined at the point
+where it is explicitly defaulted; if such a function is implicitly
+defined as deleted, the program is ill-formed. [<I>Note:</I>
+<DEL>while an implicitly-declared special member function is inline
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), an explicitly-defaulted definition
+may be non-inline.  Non-inline definitions are user-provided, and
+hence non-trivial (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>], 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]).  This rule enables</DEL>
+<INS>Declaring a function as defaulted after its first declaration can
+provide</INS> efficient execution and concise definition while
+enabling a stable binary interface to an evolving code
+base. &#8212;<I>end note</I>]</P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  struct trivial {
+    trivial() = default;
+    trivial(const trivial&amp;) = default;
+    trivial(trivial&amp;&amp;) = default;
+    trivial&amp; operator=(const trivial&amp;) = default;
+    trivial&amp; operator=(trivial&amp;&amp;) = default;
+    ~trivial() = default;
+  };
+
+  struct nontrivial1 {
+    nontrivial1();
+  };
+
+  nontrivial1::nontrivial1() = default;           //<SPAN CLASS="cmnt"> not <DEL>inline</DEL> <INS>first declaration</INS></SPAN>
+
+<DEL>  struct nontrivial2 {
+    nontrivial2();
+  };
+  inline nontrivial2::nontrivial2() = default;    //<SPAN CLASS="cmnt"> not first declaration</SPAN>
+
+  struct nontrivial3 {
+    virtual ~nontrivial3() = 0;                   //<SPAN CLASS="cmnt"> virtual</SPAN>
+  };
+  inline nontrivial3::~nontrivial3() = default;   //<SPAN CLASS="cmnt"> not first declaration</SPAN></DEL>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#5">class.ctor</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKUOTE>
+
+...A default constructor is trivial if it is <DEL>neither</DEL>
+<INS>not</INS> user-provided <DEL>nor deleted</DEL> and...
+
+</BLOCKUOTE>
+
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#3">class.dtor</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A destructor is trivial if it is <DEL>neither</DEL> <INS>not</INS>
+user-provided <DEL>nor deleted</DEL> and...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#13">class.copy.ctor</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A copy/move constructor for class X is trivial if it is
+<DEL>neither</DEL> <INS>not</INS> user-provided <DEL>nor deleted</DEL>
+and...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#27">class.copy.ctor</A>] paragraph 27 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A copy/move assignment operator for class <TT>X</TT> is
+<DEL><I>trivial</I></DEL> <INS>trivial</INS> if it is <DEL>neither</DEL>
+<INS>not</INS> user-provided <DEL>nor deleted</DEL> and...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1136.html">1136</A>,
+<A HREF="1137.html">1137</A>, <A HREF="1140.html">1140</A>,
+<A HREF="1145.html">1145</A>, <A HREF="1149.html">1149</A>, and
+<A HREF="1208.html">1208</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

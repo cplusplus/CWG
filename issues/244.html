@@ -1,0 +1,293 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 244</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="244"></A><H4>244.
+  
+Destructor lookup
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 Sep 2000<BR>
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+
+
+<P>11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>] contains this example:</P>
+
+<PRE>
+    struct B {
+        virtual ~B() { }
+    };
+    struct D : B {
+        ~D() { }
+    };
+
+    D D_object;
+    typedef B B_alias;
+    B* B_ptr = &amp;D_object;
+
+    void f() {
+        D_object.B::~B();               // calls B's destructor
+        B_ptr-&gt;~B();                    // calls D's destructor
+        B_ptr-&gt;~B_alias();              // calls D's destructor
+        B_ptr-&gt;B_alias::~B();           // calls B's destructor
+        B_ptr-&gt;B_alias::~B_alias();     // error, no B_alias in class B
+    }
+</PRE>
+
+<P>On the other hand, 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] contains this
+example:</P>
+
+<PRE>
+    struct C {
+        typedef int I;
+    };
+    typedef int I1, I2;
+    extern int* p;
+    extern int* q;
+    p-&gt;C::I::~I();       // I is looked up in the scope of C
+    q-&gt;I1::~I2();        // I2 is looked up in the scope of
+                         // the postfix-expression
+    struct A {
+        ~A();
+    };
+    typedef A AB;
+    int main()
+    {
+        AB *p;
+        p-&gt;AB::~AB();    // explicitly calls the destructor for A
+    }
+</PRE>
+
+<P>Note that</P>
+
+<PRE>
+     B_ptr-&gt;B_alias::~B_alias();
+</PRE>
+
+<P>is claimed to be an error, while the equivalent</P>
+
+<PRE>
+     p-&gt;AB::~AB();
+</PRE>
+
+<P>is claimed to be well-formed.</P>
+
+<P>I believe that clause 3 is correct and that clause 12 is in error.
+We worked hard to get the destructor lookup rules in clause 3 to be
+right, and I think we failed to notice that a change was also needed
+in clause 12.</P>
+
+<P>
+<U>Mike Miller</U>:</P>
+
+<P>Unfortunately, I don't believe 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] covers
+the case of <TT>p-&gt;AB::~AB()</TT>.  It's clearly intended to do so, as
+evidenced by 6.5.5.2 [<A href="https://wg21.link/class.qual#1">class.qual</A>] paragraph 1 ("a
+destructor name is looked up as specified in 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]"), but I don't think the language there does so.</P>
+
+<P>The relevant paragraph is 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] paragraph
+5.  (None of the other paragraphs in that section deal with this topic
+at all.)  It has two parts.  The first is</P>
+
+<BLOCKQUOTE>
+If a <I>pseudo-destructor-name</I> (_N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>])
+contains a <I>nested-name-specifier</I>, the <I>type-name</I>s are
+looked up as types in the scope designated by the
+<I>nested-name-specifier</I>.
+</BLOCKQUOTE>
+
+<P>This sentence doesn't apply, because <TT>~AB</TT> isn't a
+<I>pseudo-destructor-name</I>.  _N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>] makes
+clear that this syntactic production (7.6.1 [<A href="https://wg21.link/expr.post#1">expr.post</A>] paragraph 1)
+ only applies to cases where the <I>type-name</I> is not a
+<I>class-name</I>.  <TT>p-&gt;AB::~AB</TT> is covered by the production
+using <I>id-expression</I>.</P>
+
+<P>The second part of 6.5.5 [<A href="https://wg21.link/basic.lookup.qual#5">basic.lookup.qual</A>] paragraph 5 says</P>
+
+<BLOCKQUOTE>
+<P>In a <I>qualified-id</I> of the form:</P>
+
+<OL>
+<TT>::</TT><SUB>opt</SUB>&#160;<I>nested-name-specifier</I>&#160;<TT>~</TT>&#160;<I>class-name</I>
+</OL>
+
+<P>where the <I>nested-name-specifier</I> designates a namespace name,
+and in a <I>qualified-id</I> of the form:</P>
+
+<OL>
+<TT>::</TT><SUB>opt</SUB>&#160;<I>nested-name-specifier&#160;class-name</I>&#160;<TT>::</TT>&#160;<TT>~</TT>&#160;<I>class-name</I>
+</OL>
+
+<P>the <I>class-name</I>s are looked up as types in the scope
+designated by the <I>nested-name-specifier</I>.</P>
+</BLOCKQUOTE>
+
+<P>This wording doesn't apply, either.  The first one doesn't because
+the <I>nested-name-specifier</I> is a <I>class-name</I>, not a
+namespace name.  The second doesn't because there's only one layer of
+qualification.</P>
+
+<P>As far as I can tell, there's no normative text that specifies how
+the <TT>~AB</TT> is looked up in <TT>p-&gt;AB::~AB()</TT>.
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>], where all the other
+class member qualified lookups are handled, defers to
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>], and 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]
+doesn't cover the case.</P>
+
+<P>See also <A HREF="305.html">issue 305</A>.</P>
+
+<P>
+<U>Jason Merrill</U>:
+My thoughts on the subject were that the name we use in a destructor call
+is really meaningless; as soon as we see the <TT>~</TT> we know what the
+user means,
+all we're doing from that point is testing their ability to name the
+destructor in a conformant way.  I think that everyone will agree that
+<PRE>
+  anything::B::~B()
+</PRE>
+should be well-formed, regardless of the origins of the name "B".  I
+believe that the rule about looking up the second "B" in the same context
+as the first was intended to provide this behavior, but to me this seems
+much more heavyweight than necessary.  We don't need a whole new type of
+lookup to be able to use the same name before and after the <TT>~</TT>;
+we can just
+say that if the two names match, the call is well-formed.  This is
+significantly simpler to express, both in the standard and in an
+implementation.</P>
+
+<P>Anyone writing two different names here is either deliberately writing
+obfuscated code, trying to call the destructor of a nested class, or
+fighting an ornery compiler (i.e. one that still wants to see
+<TT>B_alias::~B()</TT>).  I think we can ignore the first case.
+The third would be
+handled by reverting to the old rule (look up the name after <TT>~</TT> in the
+normal way) with the lexical matching exception described above -- or we
+could decide to break such code, do no lookup at all, and only accept a
+matching name.  In a good implementation, the second should probably get an
+error message telling them to write <TT>Outer::Inner::~Inner</TT> instead.</P>
+
+<P>We discussed this at the meetings, but I don't remember if we came to
+any sort of consensus on a direction.  I see three options:</P>
+<OL>
+<LI>
+Stick with the status quo, i.e. the special lookup rule such that if the
+name before <TT>::~</TT> is a class name, the name after <TT>::~</TT>
+is looked up in the
+same scope as the previous one.  If we choose this option, we just need
+better wording that actually expresses this, as suggested in the issue
+list.  This option breaks old <TT>B_alias::~B</TT> code where <TT>B_alias</TT>
+is declared in a different scope from <TT>B</TT>.
+</LI>
+<LI>
+Revert to the old rules, whereby the name after <TT>::~</TT> is looked up just
+like a name after <TT>::</TT>, with the exception that if it matches the name
+before <TT>::~</TT> then it is considered to name the same class.  This option
+supports old code and code that writes <TT>B_alias::~B_alias</TT>.  It does not
+support the <TT>q-&gt;I1::~I2</TT> usage of 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>],
+but that seems like deliberate
+obfuscation.  This option is simpler to implement than #1.
+</LI>
+<LI>
+Do no lookup for a name after <TT>::~</TT>; it must match the
+name before.  This
+breaks old code as #1, but supports the most important case where the
+names match.  This option may be slightly simpler to implement than #2.
+It is certainly easier to teach.
+</LI>
+</OL>
+
+<P>My order of preference is 2, 3, 1.</P>
+
+<P>Incidentally, it seems to me oddly inconsistent to allow
+<I>Namespace</I><TT>::~</TT><I>Class</I>,
+but not <I>Outer</I><TT>::~</TT><I>Inner</I>.
+Prohibiting the latter makes sense from the
+standpoint of avoiding ambiguity, but what was the rationale for allowing
+the former?</P>
+
+<P>
+<U>John Spicer</U>:
+I agree that allowing <I>Namespace</I><TT>::~</TT><I>Class</I> is odd.
+I'm not sure where this
+came from.  If we eliminated that special case, then I believe the #1
+rule would just be that in <TT>A::B1::~B2</TT> you look up <TT>B1</TT>
+and <TT>B2</TT> in the same place in all cases.</P>
+
+<P>I don't like #2.  I don't think the "old" rules represent a deliberate
+design choice, just an error in the way the lookup was described.  The
+usage that rule permits <TT>p-&gt;X::~Y</TT>
+(where <TT>Y</TT> is a typedef to <TT>X</TT> defined in <TT>X</TT>),
+but I doubt people really do that.  In other words, I think that #1
+a more useful special case than #2 does, not that I think either special
+case is very important.</P>
+
+<P>One problem with the name matching rule is handling cases like:
+<PRE>
+  A&lt;int&gt; *aip;
+
+  aip-&gt;A&lt;int&gt;::~A&lt;int&gt;();  // should work
+  aip-&gt;A&lt;int&gt;::~A&lt;char&gt;(); // should not
+</PRE>
+I would favor #1, while eliminating the special case of
+<I>Namespace</I><TT>::~</TT><I>Class</I>.</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P>Replace the normative text of 6.5.5 [<A href="https://wg21.link/basic.lookup.qual#5">basic.lookup.qual</A>] paragraph 5
+after the first sentence with:</P>
+<BLOCKQUOTE>
+<P>Similarly, in a <I>qualified-id</I> of the form:
+<PRE>    ::<SUB>opt</SUB> <I>nested-name-specifier</I><SUB>opt</SUB> <I>class-name</I> :: ~ <I>class-name</I>
+</PRE>
+the second <I>class-name</I> is looked up in the same scope as the first.</P>
+</BLOCKQUOTE>
+<P>In 11.4.7 [<A href="https://wg21.link/class.dtor#12">class.dtor</A>] paragraph 12, change the example to</P>
+<BLOCKQUOTE><PRE>
+D D_object;
+typedef B B_alias;
+B* B_ptr = &amp;D_object;
+
+void f() {
+  D_object.B::~B();                //<I>  calls  </I>B<I>'s destructor</I>
+  B_ptr-&gt;~B();                    //<I>  calls  </I>D<I>'s destructor</I>
+  B_ptr-&gt;~B_alias();              //<I>  calls  </I>D<I>'s destructor</I>
+  B_ptr-&gt;B_alias::~B();           //<I>  calls  </I>B<I>'s destructor</I>
+  B_ptr-&gt;B_alias::~B_alias();     //<I>  calls  </I>B<I>'s destructor</I>
+}
+</PRE></BLOCKQUOTE>
+
+<P>
+<B>April 2003:</B> See <A HREF="399.html">issue 399</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

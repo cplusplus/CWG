@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 20</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="20"></A><H4>20.
+  
+Some clarifications needed for 12.8 para 15
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>unknown
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<P><B><U>Issue 1</U></B></P>
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+
+
+(From J16/99-0005 = WG21 N1182, "Proposed Resolutions for Core
+Language Issues 6, 14, 20, 40, and 89")</P>
+
+<P>There are three related sub-issues in this issue, all dealing with the
+elision of copy constructors as described in
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+
+paragraph 15:</P>
+<OL>
+<LI>
+The text should make clear that the requirement that the copy constructor
+be accessible and unambiguous is not relaxed in cases where a call to a
+copy constructor is elided.</LI>
+
+<LI>
+It is not clear from the text that the two optimizations described can
+be applied transitively, and, if so, the implications for the order of
+destruction are not spelled out.</LI>
+
+<LI>
+The text should exclude applying the function-return optimization if the
+expression names a static or volatile local object.</LI>
+</OL>
+<U>Analysis</U>
+
+<P>After discussion in Santa Cruz, the core group decided that sub-issue
+#1 required no change; the necessity of an accessible and unambiguous copy
+constructor is made clear in
+6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+
+paragraph 1 and need not be repeated in this text. The remaining two sub-issues
+appear to be valid criticisms and should be addressed.</P>
+
+<P><B>Proposed Resolution (10/99):</B></P>
+
+<P><I>[Note: a small portion of this wording is superseded by the
+resolution of <A HREF="185.html">issue 185</A>.]</I></P>
+
+<P>The paragraph in question should be rewritten as follows.
+In addition,
+references to this section should be added to the index under "temporary,
+elimination of," "elimination of temporary," and "copy, constructor elision."</P>
+<UL>When certain criteria are met, an implementation is allowed to omit
+the copy construction of a class object, even if the copy constructor
+and/or destructor
+for the object have side effects. In such cases, the implementation treats
+the source and target of the omitted copy operation as simply two different
+ways of referring to the same object, and the destruction of that object
+occurs at the later of the times when the two objects would have been destroyed
+without the optimization [<I>footnote:</I> Because only one object is destroyed
+instead of two, and one copy constructor is not executed, there is still
+one object destroyed for each one constructed. <I>end footnote</I>].
+This elision
+of copy operations is permitted in the following circumstances (which may
+be combined to eliminate multiple copies):
+<BR>
+<UL>
+<LI>
+<P>in a return statement in a function with a class return type, where the
+expression is the name of a non-volatile automatic object with the same
+cv-unqualified type as the function return type, the copy operation can
+be omitted by constructing the automatic object directly into the function's
+return value</P>
+</LI>
+</UL>
+</UL>
+
+<UL>
+<UL>
+<LI>
+when a temporary class object
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+)
+would be copied to a class object with the same cv-unqualified type,
+the copy operation can be omitted by constructing the temporary object
+directly into the target of the omitted copy</LI>
+</UL>
+</UL>
+
+<UL>[<I>Example:</I>
+</UL>
+
+<UL>
+<PRE>
+    class Thing {
+    public:
+        Thing();
+        ~Thing();
+        Thing(const Thing&amp;);
+    };
+
+    Thing f() {
+        Thing t;
+        return t;
+    }
+
+    Thing t2 = f();
+</PRE>
+</UL>
+Here the criteria for elision can be combined to eliminate two calls to
+the copy constructor of class <TT>Thing</TT>: the copying of the local
+automatic object <TT>t</TT> into the temporary object for the return value
+of function <TT>f()</TT> and the copying of that temporary object into
+object <TT>t2</TT>. Effectively, the construction of the local object <TT>t</TT>
+can be viewed as directly initializing the global object <TT>t2</TT>, and
+that object's destruction will occur at program exit.
+&#8212;<I>end example</I>]
+<BR><BR>
+</BODY>
+</HTML>

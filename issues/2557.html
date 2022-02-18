@@ -1,0 +1,178 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2557</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2557"></A><H4>2557.
+  
+Class member access referring to an unrelated class
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-25<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static int x;
+  };
+
+  struct B {
+    using type = A;
+  };
+
+  int y = B().type::x;
+</PRE>
+
+<P>There seems to be no requirement that the member named in a class
+member access actually is a member of the class of the object
+expression. Subclause 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#3">expr.prim.id.general</A>] paragraph 3 does not cover static members:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> that denotes a non-static data member or
+non-static member function of a class can only be used:
+<UL>
+<LI>
+as part of a class member access in which the object expression refers
+to the member's class or a class derived from that class, or
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#5">expr.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+Otherwise, the object expression shall be of class type. The class
+type shall be complete unless the class member access appears in the
+definition of that class.<br> [<I>Note</I>: The program is ill-formed
+if the result differs from that when the class is complete
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]). &#8212;<I>end note</I>]<br>
+[<I>Note</I>: 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] describes how names are
+looked up after the <TT>.</TT> and <TT>-&gt;</TT> operators. &#8212;<I>end note</I>]
+<INS>If <TT>E2</TT> is a <I>qualified-id</I>, the terminal name of
+its <I>nested-name-specifier</I> shall denote the type of <TT>E1</TT>
+or a base class thereof.</INS>
+
+</P>
+
+<P><INS>[<I>Example</I>:</INS></P>
+
+<PRE class="ins">
+  struct A {
+    static int x;
+  };
+
+  struct B {
+    static int x;
+  };
+
+  struct D : B {
+    using type = A;
+  };
+
+  int y1 = D().B::x;         //<SPAN CLASS="cmnt"> OK, </SPAN>B<SPAN CLASS="cmnt"> is a base class of </SPAN>D
+  int y2 = D().type::x;      //<SPAN CLASS="cmnt"> error: </SPAN>A<SPAN CLASS="cmnt"> is not a base class of </SPAN>D
+  int y3 = D::type::x;       //<SPAN CLASS="cmnt"> OK, evaluates </SPAN>A::x
+</PRE>
+<P><INS>&#8212;<I>end example</I> ]</INS></P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#7.5">expr.ref</A>] bullet 7.5 as follows:</P>
+
+<UL>
+<LI>...</LI>
+<LI>
+If <TT>E2</TT> is <DEL>a member</DEL> <INS>an</INS> enumerator and
+the type of <TT>E2</TT> is <TT>T</TT>, the expression <TT>E1.E2</TT>
+is a prvalue. The type of <TT>E1.E2</TT> is <TT>T</TT>.
+
+<P><INS>[<I>Example</I>:</INS></P>
+
+<PRE class="ins">
+  enum E { e };
+  struct X {
+    using E::e;
+  };
+  int f(X x) {
+    return x.e;
+  }
+</PRE>
+<P><INS>&#8212;<I>end example</I> ]</INS></P>
+
+</LI>
+</UL>
+
+</LI>
+
+<LI>
+
+<P>Change in 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#4">expr.prim.id.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> that denotes a non-static data member or
+non-static member function of a class can only be used:
+
+<UL>
+
+<LI>as part of a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+<DEL>in which the object expression refers to the member's class</DEL>
+[ Footnote: ... ] <DEL>or a class derived from that class</DEL>, or
+</LI>
+
+<LI>to form a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]), or
+</LI>
+
+<LI>if that <I>id-expression</I> denotes a non-static data member and
+it appears in an unevaluated operand.
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

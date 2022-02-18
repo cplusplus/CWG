@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 740</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="740"></A><H4>740.
+  
+Incorrect note on data races
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Wolf Lammen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 November, 2008<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>6.9.2 [<A href="https://wg21.link/intro.multithread#12">intro.multithread</A>] paragraph 12 says,</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>visible side effect A</I> on an object <I>M</I> with
+respect to a value computation <I>B</I> of <I>M</I> satisfies the
+conditions:</P>
+
+<UL>
+<LI><P>
+<I>A</I> happens before <I>B</I>, and</P></LI>
+
+<LI><P>there is no other side effect <I>X</I> to <I>M</I> such that
+<I>A</I> happens before <I>X</I> and <I>X</I> happens before
+<I>B</I>.</P></LI>
+
+</UL>
+
+<P>The value of a non-atomic scalar object <I>M</I>, as determined by
+evaluation <I>B</I>, shall be the value stored by the visible side
+effect <I>A</I>. [<I>Note:</I> If there is ambiguity about which side
+effect to a non-atomic object is visible, then there is a data race,
+and the behavior is undefined.  &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>The note here suggests that, except in the case of a data race,
+visible side effects to value computation can always be determined.
+But unsequenced and indeterminately sequenced side effects on the same
+object create ambiguities with respect to a later value computation as
+well. So the wording needs to be revisited, see the following
+examples.</P>
+
+<PRE>
+    int main(){
+      int i = 0;
+      i = // unsequenced side effect A
+      i++; // unsequenced side effect B
+      return i; // value computation C
+    }
+</PRE>
+
+<P>According to the definition in the draft, both A and B are visible
+side effects to C. However, there is no data race, because (paragraph
+14) a race involves at least two threads. So the note in paragraph 12
+is logically false.</P>
+
+<P>The model introduces the special case of indeterminately sequenced
+side effects, that leave open what execution order is taken in a
+concrete situation. If the execution paths access the same data,
+unpredictable results are possible, just as it is the case with data
+races. Whereas data races constitute undefined behavior,
+indeterminatedly sequenced side effects on the same object do not. As
+a consequence of this disparity, indeterminately sequenced execution
+occasionally needs exceptional treatment.</P>
+
+<PRE>
+    int i = 0;
+    int f(){
+      return
+      i = 1; // side effect A
+    }
+    int g(){
+      return
+      i = 2; // side effect B
+    }
+    int h(int, int){
+      return i; // value computation C
+    }
+    int main(){
+      return h(f(),g()); // function call D returns 1 or 2?
+    }
+</PRE>
+
+<P>Here, either A or B is the visible side effect on the value
+computation C, but you cannot tell which (cf. 6.9.1 [<A href="https://wg21.link/intro.execution#16">intro.execution</A>] paragraph 16)
+.  Although an ambiguity is present, it is neither
+because of a data race, nor is the behavior undefined, in total
+contradiction to the note.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 6.9.2 [<A href="https://wg21.link/intro.multithread#12">intro.multithread</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+...The value of a non-atomic scalar object or bit-field <I>M</I>, as
+determined by evaluation <I>B</I>, shall be the value stored by the
+visible side effect <I>A</I>. [<I>Note:</I> If there is ambiguity
+about which side effect to a non-atomic object or bit-field is
+visible, then <DEL>there is a data race, and</DEL> the behavior is
+<INS>either unspecified or</INS> undefined. &#8212;<I>end note</I>]...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 568</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="568"></A><H4>568.
+  
+Definition of POD is too strict
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matt Austern
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 March 2006<BR>
+
+
+<P>[Voted into the WP at the July, 2007 meeting as part of paper
+J16/07-0202 = WG21 N2342.]</P>
+
+<P>A POD struct (Clause 11 [<A href="https://wg21.link/class#4">class</A>] paragraph 4) is &#8220;an
+aggregate class that has no non-static data members of type
+non-POD-struct, non-POD-union (or array of such types), or reference,
+and that has no user-defined copy assignment operator and no
+user-defined destructor.&#8221; Meanwhile, an aggregate class
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr#1">dcl.init.aggr</A>] paragraph 1) must have &#8220;no
+user-declared constructors, no private or protecte non-static data
+members, no base classes, and no virtual functions.&#8221;</P>
+
+<P>This is too strict. The whole reason we define the notion of POD is
+for the layout compatibility guarantees in 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]
+paragraphs 14-17 and the byte-for-byte copying guarantees of
+6.8 [<A href="https://wg21.link/basic.types#2">basic.types</A>] paragraph 2. None of those guarantees
+should be affected by the presence of ordinary constructors, any more
+than they're affected by the presence of any other member
+function. It&#8217;s silly for the standard to make layout and memcpy
+guarantees for this class:</P>
+
+<PRE>
+ struct A {
+    int n;
+ };
+</PRE>
+
+<P>but not for this one:</P>
+
+<PRE>
+  struct B {
+    int n;
+    B(n_) : n(n_) { }
+  };
+</PRE>
+
+<P>With either <TT>A</TT> or <TT>B</TT>, it ought to be possible to
+save an array of those objects to disk with a single call to
+Unix&#8217;s write(2) system call or the equivalent. At present the
+standard says that it&#8217;s legal for <TT>A</TT> but not <TT>B</TT>,
+and there isn&#8217;t any good reason for that distinction.</P>
+
+<P>Suggested resolution:</P>
+
+<P>The following doesn&#8217;t fix all problems (in particular it
+still doesn&#8217;t let us treat <TT>pair&lt;int, int&gt;</TT> as a
+POD), but at least it goes a long way toward fixing the problem: in
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr#1">dcl.init.aggr</A>] paragraph 1, change &#8220;no
+user-declared constructors&#8221; to &#8220;no nontrivial default
+constructor and no user-declared copy constructor.&#8221;</P>
+
+<P>(Yes, I&#8217;m aware that this proposed change would also allow
+brace initialization for some types that don't currently allow it. I
+consider this to be a feature, not a bug.)</P>
+
+<P>
+<U>Mike Miller</U>: I agree that something needs to be done about
+&#8220;POD,&#8221; but I&#8217;m not sure that this is it.  My own
+take is that &#8220;POD&#8221; is used for too many different things
+&#8212; things that are related but not identical &#8212; and the
+concept should be split.  The current definition is useful, as is, for
+issues regarding initialization and lifetime.  For example, I
+wouldn&#8217;t want to relax the prohibition of jumping over a
+constructor call in 8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>] (which is currently
+phrased in terms of POD types).  On the other hand, I agree that the
+presence of a user-declared constructor says nothing about layout and
+bitwise copying.  This needs (IMHO) a non-trivial amount of further
+study to determine how many categories we need (instead of just POD
+versus non-POD), which guarantees and prohibitions go with which
+category, the interaction of &#8220;memcpy initialization&#8221; (for
+want of a better term) with object lifetime, etc.</P>
+
+<P>(See paper J16/06-0172 = WG21 N2102.)</P>
+
+<P><B>Proposed resolution (April, 2007):</B></P>
+
+<P>Adoption of the POD proposal (currently J16/07-0090 =
+WG21 N2230) will resolve this issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

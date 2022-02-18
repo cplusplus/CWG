@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 172</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="172"></A><H4>172.
+  
+Unsigned int as underlying type of enum
+</H4>
+<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bjarne Stroustrup
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Sep 1999<BR>
+
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+
+
+<P>According to 9.7.1 [<A href="https://wg21.link/dcl.enum#5">dcl.enum</A>] paragraph 5,
+
+the underlying type of an enum is an unspecified integral type,
+which could potentially be <TT>unsigned int</TT>.  The promotion
+rules in 7.3.7 [<A href="https://wg21.link/conv.prom#2">conv.prom</A>] paragraph 2
+say
+that such an enumeration value used in an expression will be promoted
+to <TT>unsigned int</TT>.  This means that a conforming
+implementation could give the value <TT>false</TT> for the
+following code:</P>
+
+<PRE>
+    enum { zero };
+    -1 &lt; zero;       // might be false
+</PRE>
+
+This is counterintuitive.  Perhaps the description of the underlying
+type of an enumeration should say that an unsigned underlying type
+can be used only if the values of the enumerators cannot be
+represented in the corresponding signed type.  This approach would
+be consistent with the treatment of integral promotion of
+bitfields (7.3.7 [<A href="https://wg21.link/conv.prom#3">conv.prom</A>] paragraph 3)
+.
+
+<P>On a related note,
+9.7.1 [<A href="https://wg21.link/dcl.enum#5">dcl.enum</A>] paragraph 5
+says,</P>
+
+<BLOCKQUOTE>
+the underlying type shall not be larger than <TT>int</TT> unless
+the value of an enumerator cannot fit in an <TT>int</TT> or
+<TT>unsigned int</TT>.
+</BLOCKQUOTE>
+
+<P>This specification does not allow for an enumeration like</P>
+
+<PRE>
+    enum { a = -1, b = UINT_MAX };
+</PRE>
+
+<P>Since each enumerator can fit in an <TT>int</TT>
+or <TT>unsigned int</TT>, the underlying type is required to be
+no larger than <TT>int</TT>, even though there is no such type that
+can represent all the enumerators.</P>
+
+<P><B>Proposed resolution (04/01; obsolete, see below):</B></P>
+
+<P>Change 9.7.1 [<A href="https://wg21.link/dcl.enum#5">dcl.enum</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+It is implementation-defined which integral type is used as
+the underlying type for an enumeration except that the
+underlying type shall not be larger than <TT>int</TT> unless
+<DEL>the value of an enumerator cannot fit in an <TT>int</TT>
+or <TT>unsigned int</TT></DEL> <INS>neither <TT>int</TT> nor
+<TT>unsigned int</TT> can represent all the enumerator values.
+Furthermore, the underlying type shall not be an unsigned
+type if the corresponding signed type can represent all the
+enumerator values.</INS>
+
+</BLOCKQUOTE>
+
+<P>See also <A HREF="58.html">issue 58</A>.</P>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>It was noted that 7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>] promotes unsigned
+types smaller than <TT>int</TT> to (signed) <TT>int</TT>.  The
+signedness chosen by an implementation for small underlying types
+is therefore unobservable, so the last sentence of the proposed
+resolution above should apply only to <TT>int</TT> and larger
+types.  This observation also prompted discussion of an
+alternative approach to resolving the issue, in which the
+<I>b<sub>min</sub></I> and <I>b<sub>max</sub></I> of the enumeration
+would determine the promoted type rather than the underlying type.
+
+</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P>Change 7.3.7 [<A href="https://wg21.link/conv.prom#2">conv.prom</A>] paragraph 2 from
+<BLOCKQUOTE>
+An rvalue of type <TT>wchar_t</TT> (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+or an enumeration type
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted to an rvalue of
+the first of the following
+types  that  can represent all the values of its underlying type:
+<TT>int</TT>, <TT>unsigned int</TT>, <TT>long</TT>, or <TT>unsigned long</TT>.
+</BLOCKQUOTE>
+to
+<BLOCKQUOTE>
+An rvalue of type <TT>wchar_t</TT> (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+can be converted to an rvalue of the first of the following
+types  that  can represent all the values of its underlying type:
+<TT>int</TT>, <TT>unsigned int</TT>, <TT>long</TT>, or <TT>unsigned long</TT>.
+An rvalue of an enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>])
+can be converted to an rvalue of the first of the following
+types  that  can represent all the values of the enumeration (i.e., the
+values in the range <I>b<SUB>min</SUB></I> to <I>b<SUB>max</SUB></I> as
+described in 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]):
+<TT>int</TT>, <TT>unsigned int</TT>, <TT>long</TT>, or <TT>unsigned long</TT>.
+</BLOCKQUOTE>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

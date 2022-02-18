@@ -1,0 +1,189 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1286</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1286"></A><H4>1286.
+  
+Equivalence of alias templates
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-04-03<BR>
+
+
+
+
+<P>
+<A HREF="1244.html">Issue 1244</A> was resolved by changing the
+example in 13.6 [<A href="https://wg21.link/temp.type#1">temp.type</A>] paragraph 1 from</P>
+
+<PRE>
+  template&lt;template&lt;class&gt; class TT&gt; struct X { };
+  template&lt;class&gt; struct Y { };
+  template&lt;class T&gt; using Z = Y&lt;T&gt;;
+  X&lt;Y&gt; y;
+  X&lt;Z&gt; z;
+</PRE>
+
+<P>to</P>
+
+<PRE>
+  template&lt;class T&gt; struct X { };
+  template&lt;class&gt; struct Y { };
+  template&lt;class T&gt; using Z = Y&lt;T&gt;;
+  X&lt;Y&lt;int&gt; &gt; y;
+  X&lt;Z&lt;int&gt; &gt; z;
+</PRE>
+
+<P>In fact, the original intent was that the example should have been
+correct as written; however, the normative wording to make it so was
+missing.  The current wording of 13.7.8 [<A href="https://wg21.link/temp.alias">temp.alias</A>] deals
+only with the equivalence of a specialization of an alias template
+with the <I>type-id</I> after substitution.  Wording needs to be added
+specifying under what circumstances an alias template itself is
+equivalent to a class template.</P>
+
+<P><B>Proposed resolution (September, 2012):</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph following 13.7.8 [<A href="https://wg21.link/temp.alias#2">temp.alias</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>When the <I>type-id</I> in the declaration of alias template (call
+it <TT>A</TT>) consists of a <I>simple-template-id</I> in which the
+<I>template-argument-list</I> consists of a list of <I>identifier</I>s
+naming each <I>template-parameter</I> of <TT>A</TT> exactly once in
+the same order in which they appear in <TT>A</TT>'s
+<I>template-parameter-list</I>, the alias template is equivalent to
+the template named in the <I>simple-template-id</I> (call it
+<TT>T</TT>) if <TT>A</TT> and <TT>T</TT> have the same number of
+<I>template-parameter</I>s. [<I>Footnote:</I> This rule is transitive:
+if an alias template <TT>A</TT> is equivalent to another alias
+template <TT>B</TT> that is equivalent to a class template <TT>C</TT>,
+then <TT>A</TT> is also equivalent to <TT>C</TT>, and <TT>A</TT> and
+<TT>B</TT> are also equivalent to each other. &#8212;<I>end
+footnote</I>] [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;typename T, U = T&gt; struct A;
+
+  template&lt;typename V, typename W&gt;
+    using B = A&lt;V, W&gt;;                //<SPAN CLASS="cmnt"> equivalent to </SPAN>A
+
+  template&lt;typename V, typename W&gt;
+    using C = A&lt;V&gt;;                   //<SPAN CLASS="cmnt"> not equivalent to </SPAN>A<SPAN CLASS="cmnt">:</SPAN>
+                                      //<SPAN CLASS="cmnt"> not all parameters used</SPAN>
+
+  template&lt;typename V&gt;
+    using D = A&lt;V&gt;;                   //<SPAN CLASS="cmnt"> not equivalent to </SPAN>A<SPAN CLASS="cmnt">:</SPAN>
+                                      //<SPAN CLASS="cmnt"> different number of parameters</SPAN>
+
+  template&lt;typename V, typename W&gt;
+    using E = A&lt;W, V&gt;;                //<SPAN CLASS="cmnt"> not equivalent to </SPAN>A<SPAN CLASS="cmnt">:</SPAN>
+                                      //<SPAN CLASS="cmnt"> template-arguments in wrong order</SPAN>
+
+  template&lt;typename V, typename W = int&gt;
+    using F = A&lt;V, W&gt;;                //<SPAN CLASS="cmnt"> equivalent to </SPAN>A<SPAN CLASS="cmnt">:</SPAN>
+                                      //<SPAN CLASS="cmnt"> default arguments not considered</SPAN>
+
+  template&lt;typename V, typename W&gt;
+    using G = A&lt;V, W&gt;;                //<SPAN CLASS="cmnt"> equivalent to </SPAN>A<SPAN CLASS="cmnt"> and </SPAN>B
+
+  template&lt;typename V, typename W&gt;
+    using H = E&lt;V, W&gt;;                //<SPAN CLASS="cmnt"> equivalent to </SPAN>E
+
+  template&lt;typename V, typename W&gt;
+    using I = A&lt;V, typename W::type&gt;; //<SPAN CLASS="cmnt"> not equivalent to </SPAN>A<SPAN CLASS="cmnt">:</SPAN>
+                                      //<SPAN CLASS="cmnt"> argument not identifier</SPAN></INS>
+
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.6 [<A href="https://wg21.link/temp.type#1">temp.type</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Two <I>template-id</I>s refer to the same class or function if</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>their corresponding template <I>template-argument</I>s refer to
+the same <INS>or equivalent (13.7.8 [<A href="https://wg21.link/temp.alias">temp.alias</A>])</INS>
+template<INS>s</INS>.
+</P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<P>...declares <TT>x2</TT> and <TT>x3</TT> to be of the same type. Their type differs from the types of <TT>x1</TT> and <TT>x4</TT>.</P>
+
+<PRE>
+  template&lt;<DEL>class T</DEL> <INS>template&lt;class&gt; class TT</INS>&gt; struct X { };
+  template&lt;class&gt; struct Y { };
+  template&lt;class T&gt; using Z = Y&lt;T&gt;;
+  X&lt;<DEL>Y&lt;int&gt;</DEL> <INS>Y</INS>&gt; y;
+  X&lt;<DEL>Z&lt;int&gt;</DEL> <INS>Z</INS>&gt; z;
+</PRE>
+
+<P>declares <TT>y</TT> and <TT>z</TT> to be of the same type.
+&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>Concern has been expressed over the proposed resolution with
+regard to its handling of default template arguments that differ
+between the template and its alias, e.g.,</P>
+
+<PRE>
+   template&lt;typename T, typename U = int&gt; struct A {};
+   template&lt;typename T, typename U = char&gt; using B = A&lt;T, U&gt;;
+   template&lt;template&lt;typename...&gt; typename C&gt; struct X { C&lt;int&gt; c; };
+</PRE>
+
+
+
+<P><B>Notes from the May, 2015 meeting:</B></P>
+
+<P>See also <A HREF="1979.html">issue 1979</A>, which CWG
+is suggesting to be resolved by defining a
+&#8220;simple&#8221; alias, one in which the SFINAE
+conditions are the same as the referenced template and that
+uses all template parameters.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

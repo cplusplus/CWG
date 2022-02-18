@@ -1,0 +1,180 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 364</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="364"></A><H4>364.
+  
+Calling overloaded function with static in set, with no object
+</H4>
+<B>Section: </B>12.2.2.2.2&#160; [<A href="https://wg21.link/over.call.func">over.call.func</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 July 2002<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>Consider this program:</P>
+<PRE>
+   struct S {
+     static void f (int);
+     void f (char);
+   };
+
+   void g () {
+     S::f ('a');
+   }
+</PRE>
+<P>G++ 3.1 rejects it, saying:</P>
+<PRE>
+   test.C:7: cannot call member function `void S::f(char)' without object
+</PRE>
+
+<P>
+<U>Mark Mitchell</U>:
+It looks to me like G++ is correct, given 12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>].
+This case is the "unqualified function call" case described in paragraph
+3 of that section.  ("Unqualified" here means that there is no "x-&gt;" or
+"x." in front of the call, not that the name is unqualified.)</P>
+
+<P>That paragraph says that you first do name lookup.  It then asks you
+to look at what declaration is returned.  (That's a bit confusing; you
+presumably get a set of declarations.  Or maybe not; the name lookup
+section says that if name lookup finds a non-static member in a context
+like this the program is in error.  But surely this program is not
+erroneous.  Hmm.)</P>
+
+<P>Anyhow, you have -- at least -- "S::f(char)" as the result of the
+lookup.</P>
+
+<P>The keyword "this" is not in scope, so "all overloaded declarations of
+the function name in T become candidate functions and a contrived object
+of type T becomes the implied object argument."  That means we get
+both  versions of "f" at this point.  Then, "the call is ill-formed,
+however, if overload resolution selects one of the non-static members
+of T in this case."  Since, in this case, "S::f(char)" is the winner,
+the program is ill-formed.</P>
+
+<P>
+<U>Steve Adamczyk</U>:
+This result is surprising, because we've selected a function
+that we cannot call, when there is another function that can be
+called.  This should either be ambiguous, or it should select the static
+member function.  See also 12.2.2 [<A href="https://wg21.link/over.match.funcs#2">over.match.funcs</A>] paragraph 2:
+"Similarly, when
+appropriate, the context can construct an argument list that
+contains an implied object argument..."</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>We agreed that g++ has it right, but the standard needs to be clearer.</P>
+
+<P><B>Proposed resolution (October 2002, revised April 2003):</B></P>
+
+<P>Change 12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>] paragraphs 2 and 3 as
+follows:</P>
+<BLOCKQUOTE>
+<P>In qualified function calls, the name to be resolved is an
+<I>id-expression</I> and is preceded by an <TT>-&gt;</TT> or <TT>.</TT>
+operator. Since the construct <TT>A-&gt;B</TT> is generally equivalent
+to <TT>(*A).B</TT>, the rest of Clause 12 [<A href="https://wg21.link/over">over</A>]
+assumes, without loss of generality, that all member function calls have been
+normalized to the form that uses an object and the <TT>.</TT> operator.
+Furthermore, Clause 12 [<A href="https://wg21.link/over">over</A>]
+assumes that the <I>postfix-expression</I> that is the left
+operand of the <TT>.</TT> operator has type ``<I>cv</I> <TT>T</TT>''
+where <TT>T</TT> denotes a class.
+[Footnote: Note that cv-qualifiers on the type of
+objects are significant in overload resolution for both lvalue and
+class rvalue objects. --- end footnote]
+Under this assumption, the <I>id-expression</I> in the
+call is looked up as a member function of <TT>T</TT> following the rules for
+looking up names in classes (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]).
+<DEL>If a member function is found, that function and its overloaded
+declarations</DEL> <INS>The function declarations found by that lookup</INS>
+constitute the set of candidate functions. The argument list is the
+<I>expression-list</I> in the call augmented by the addition of the
+left operand of the <TT>.</TT> operator in the normalized member
+function call as the implied object argument (12.2.2 [<A href="https://wg21.link/over.match.funcs">over.match.funcs</A>]).
+</P>
+<P>In unqualified function calls, the name is
+not qualified by an <TT>-&gt;</TT> or <TT>.</TT> operator and has the more
+general form of a <I>primary-expression</I>. The name is looked up in the
+context of the function call following the normal rules for name lookup in
+function calls (<DEL>6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]</DEL>
+6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]).
+<DEL>If the name resolves to a non-member function declaration, that
+function and its overloaded declarations</DEL>
+<INS>The function declarations found by that lookup</INS>
+constitute the set of candidate functions.
+<DEL>[Footnote: Because of the usual name hiding rules,
+these will be introduced by declarations or by <I>using-directive</I>s all
+found in the same block or all found at namespace scope. --- end footnote]</DEL>
+<INS>Because of the rules for name lookup,
+the set of candidate functions consists (1) entirely of non-member functions
+or (2) entirely of member functions of some class </INS><TT><INS>T</INS></TT><INS>. In
+case (1), t</INS><DEL>T</DEL>he argument list is the same as
+the <I>expression-list</I> in the call.
+<DEL>If the name resolves to a nonstatic member function, then the
+function call is actually a member function call.</DEL>
+<INS>In case (2), the argument list is the <I>expression-list</I> in the
+call augmented by the addition of an implied object argument as in
+a qualified function call.</INS>
+If the keyword <TT>this</TT> (_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>])
+is in scope and refers to <DEL>the </DEL>class <TT><INS>T</INS></TT> <DEL>of that member
+function</DEL>, or a derived class <DEL>thereof</DEL> <INS>of <TT>T</TT></INS>, then
+the <DEL>function call is transformed into a normalized qualified
+function call using</DEL>
+<INS>implied object argument is</INS><TT>(*this)</TT> <DEL>as the
+<I>postfix-expression</I>
+to the left of the <TT>.</TT> operator</DEL>. <DEL>The candidate
+functions and argument list are as described for qualified function calls
+above.</DEL> If the keyword <TT>this</TT> is not in scope or refers to
+another class, then <DEL>name resolution found a static member of some
+class </DEL><TT><DEL>T</DEL></TT><DEL>.
+In this case,</DEL> <DEL>all overloaded declarations of the function name in
+<TT>T</TT> become candidate functions and</DEL> a contrived object of
+type <TT>T</TT> becomes the implied object argument.
+[Footnote: An implied object argument must be
+contrived to correspond to the implicit object parameter attributed to member
+functions during overload resolution. It is not used in the call to the
+selected function. Since the member functions all have the same implicit
+object
+parameter, the contrived object will not be the cause to select or reject a
+function. --- end footnote]
+<INS>If the argument list is augmented by a contrived object
+and </INS><DEL>The call is ill-formed, however, if</DEL> overload
+resolution selects one of the non-static member functions of
+<TT>T</TT><INS>, the
+call is ill-formed</INS><DEL> in this case</DEL>.
+</P>
+</BLOCKQUOTE>
+
+<P>Note that <A HREF="239.html">issue 239</A> also edits
+paragraph 3.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

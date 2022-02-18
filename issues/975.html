@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 975</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="975"></A><H4>975.
+  
+Restrictions on return type deduction for lambdas
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 September, 2009<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US30">N3092 comment
+  US&#160;30<BR></A>
+
+<P>[Moved to DR status at the April, 2013 meeting as part of paper N3638.]</P>
+
+
+
+<P>There does not appear to be any technical difficulty that would
+require the current restriction that the return type of a lambda can
+be deduced only if the body of the lambda consists of a single return
+statement.  In particular, multiple return statements could be
+permitted if they all return the same type.</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#4">expr.prim.lambda</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...If a <I>lambda-expression</I> does not include a
+<I>trailing-return-type</I>, it is as if the <I>trailing-return-type</I>
+denotes the following type:</P>
+
+<UL>
+<LI>
+<P><DEL>if the compound-statement is of the form</DEL></P>
+
+<UL><DEL><TT>{</TT> <I>attribute-specifier-seq<SUB>opt</SUB></I> <TT>return</TT> <I>expression</I> <TT>;</TT></DEL></UL>
+
+<P><DEL>the type of the returned expression after lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer conversion
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer conversion
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]);</DEL></P>
+
+</LI>
+
+<LI><P><DEL>otherwise, <TT>void</TT>.</DEL></P></LI>
+
+<LI><P><INS>if there are no <TT>return</TT> statements in the
+<I>compound-statement</I>, or all <TT>return</TT> statements return
+either an expression of type <TT>void</TT> or no <I>expression</I>
+or <I>braced-init-list</I>, the type <TT>void</TT>;</INS></P></LI>
+
+<LI><P><INS>otherwise, if all <TT>return</TT> statements return an
+expression and the types of the returned expressions after
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer conversion (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and
+function-to-pointer conversion (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) are
+the same, that common type;</INS></P></LI>
+
+<LI><P><INS>otherwise, the program is ill-formed.</INS></P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  auto x1 = [](int i){ return i; }; //<SPAN CLASS="cmnt"> OK: return type is </SPAN>int
+  auto x2 = []{ return { 1, 2 }; }; //<SPAN CLASS="cmnt"> error: the return type is </SPAN>void<SPAN CLASS="cmnt"> (a</SPAN>
+                                    //<SPAN CLASS="cmnt"> braced-init-list is not an expression)</SPAN>
+<INS>  struct A { int fn1(); const int&amp; fn2(); };
+  template &lt;class T&gt; void f () {
+    [](T t, bool b){
+      if (b)
+        return t.fn1();
+      else
+        return t.fn2();
+    };
+  }
+  template void f&lt;A&gt;();             //<SPAN CLASS="cmnt"> OK: lambda return type is </SPAN>int</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (February, 2012):</B></P>
+
+<P>EWG requested that the adoption of this proposed resolution be
+postponed to allow them to discuss it.  The issue has thus been
+returned to "review" status pending EWG action.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

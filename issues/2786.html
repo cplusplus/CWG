@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2786</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2786"></A><H4>2786.
+  
+Comparing pointers to complete objects
+</H4>
+<B>Section: </B>7.6.10&#160; [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-23<BR>
+
+
+
+
+<P>Subclause 7.6.10 [<A href="https://wg21.link/expr.eq#3.1">expr.eq</A>] bullet 3.1 specifies:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>If one pointer represents the address of a complete object, and
+another pointer represents the address one past the last element of a
+different complete object, [ Footnote: ... ] the result of the
+comparison is unspecified.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This phrasing does not properly handle the case where addresses of
+subobjects are compared, yet those subobjects happen to have the same
+address as their respective complete objects.</P>
+
+<P>The rule in question was introduced by <A HREF="1652.html">issue 1652</A> for purposes of constant evaluation: comparing a pointer
+to an object X with a pointer past the end of another object Y ought
+not to be possible during contant evaluation.  However, that issue
+resolution also caused a change to runtime behavior, departing from
+the prior "address comparison" model.  It turns out that
+implementations nowadays rely on that rule for optimization purposes
+(see the reflector discussion).</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.6.10 [<A href="https://wg21.link/expr.eq#3.1">expr.eq</A>] bullet 3.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>If one pointer <INS>points to an object and</INS> represents the
+address of <INS>the first byte in memory occupied by that
+object's</INS> <DEL>a</DEL> complete object, and another <INS>pointer
+points past the end of an object whose complete object is different
+and</INS> represents the address <INS>of the first byte in memory
+after the end of the storage occupied by that object's</INS> <DEL>one
+past the last element of a different</DEL> complete object, the result
+of the comparison is unspecified.</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

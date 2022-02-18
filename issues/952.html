@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 952</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="952"></A><H4>952.
+  
+Insufficient description of &#8220;naming class&#8221;
+</H4>
+<B>Section: </B>11.8.3&#160; [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 August, 2009<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The access rules in 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>] do not appear to
+handle references in nested classes and outside of nonstatic member
+functions correctly.  For example,</P>
+
+<PRE>
+    struct A {
+        typedef int I;    //<SPAN CLASS="cmnt"> public</SPAN>
+    };
+    struct B: private A { };
+    struct C: B {
+        void f() {
+            I i1;         //<SPAN CLASS="cmnt"> error: access violation</SPAN>
+        }
+        I i2;             //<SPAN CLASS="cmnt"> OK</SPAN>
+        struct D {
+            I i3;         //<SPAN CLASS="cmnt"> OK</SPAN>
+            void g() {
+                I i4;     //<SPAN CLASS="cmnt"> OK</SPAN>
+            }
+        };
+    };
+</PRE>
+
+<P>The reason for this discrepancy is that the naming class in
+the reference to <TT>I</TT> is different in these cases.  According
+to 11.8.3 [<A href="https://wg21.link/class.access.base#5">class.access.base</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+The access to a member is affected by the class in which the member is
+named. This naming class is the class in which the member name was
+looked up and found.
+
+</BLOCKQUOTE>
+
+<P>In the case of <TT>i1</TT>, the reference to <TT>I</TT> is subject
+to the transformation described in 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3:
+</P>
+
+<BLOCKQUOTE>
+
+Similarly during name lookup, when an <I>unqualified-id</I>
+(7.5 [<A href="https://wg21.link/expr.prim">expr.prim</A>]) used in the definition of a member function
+for class <TT>X</TT> resolves to a <TT>static</TT> member, an
+enumerator or a nested type of class <TT>X</TT> or of a base class of <TT>X</TT>, the
+<I>unqualified-id</I> is transformed into a
+<I>qualified-id</I> (7.5 [<A href="https://wg21.link/expr.prim">expr.prim</A>]) in which the
+<I>nested-name-specifier</I> names the class of the member function.
+
+</BLOCKQUOTE>
+
+<P>As a result, the reference to <TT>I</TT> in the declaration of
+<TT>i1</TT> is transformed to <TT>C::I</TT>, so that the naming class
+is <TT>C</TT>, and <TT>I</TT> is inacessible in <TT>C</TT>.  In the
+remaining cases, however, the transformation does not apply.  Thus,
+the naming class of <TT>I</TT> in these references is <TT>A</TT>, and
+<TT>I</TT> is publicly accessible in <TT>A</TT>.</P>
+
+<P>Presumably either the definition of &#8220;naming class&#8221;
+must be changed or the transformation of <I>unqualified-id</I>s must
+be broadened to include all uses within the scope of a class and not
+just within nonstatic member functions (and following the
+<I>declarator-id</I> in the definition of a static member, per
+11.4.9 [<A href="https://wg21.link/class.static#4">class.static</A>] paragraph 4).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

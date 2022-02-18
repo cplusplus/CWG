@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1907</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1907"></A><H4>1907.
+  
+<I>using-declaration</I>s and default arguments
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-03-30<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The status of an example like the following is not clear:</P>
+
+<PRE>
+  void f(int, int);
+  template&lt;typename T&gt; void g(T t) { f(t); }
+  void f(int, int = 0);
+  void h() { g(0); }
+</PRE>
+
+<P>According to 13.8.4 [<A href="https://wg21.link/temp.dep.res#1">temp.dep.res</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+<P>In resolving dependent names, names from the following sources are
+considered:</P>
+
+<UL>
+<LI><P>Declarations that are visible at the point of definition of the
+template.</P></LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>If this is to be interpreted as meaning that only the declarations
+that are visible at the point of definition can be used in overload
+resolution for dependent calls, the call <TT>g(0)</TT> is ill-formed.
+If, however, it is the names, not the declarations, that are captured,
+then presumably the second declaration of <TT>f</TT> should be
+considered, making the call well-formed.  There is implementation
+divergence for this example.</P>
+
+<P>The resolution of <A HREF="1551.html">issue 1551</A> recently
+clarified the requirements in similar cases
+involving <I>using-declaration</I>s:</P>
+
+<PRE>
+  namespace N { void f(int, int); }
+  using N::f;
+  template&lt;typename T&gt; void g(T t) { f(t); }
+  namespace N { void f(int, int = 0); }
+  void h() { g(0); }
+</PRE>
+
+<P>The note added to 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11
+makes clear that the call <TT>g(0)</TT> is well-formed in this
+example.</P>
+
+<P>This outcome results in an unfortunate discrepancy between how default
+arguments and overloaded functions are treated, even though default
+arguments could conceptually be viewed as simply adding extra overloads for
+the additional arguments.</P>
+
+<P><B>Notes from the June, 2014 meeting:</B></P>
+
+<P>CWG was unable to come to consensus regarding the desired outcome,
+with an approximately equal split between desiring the first example
+to be well-formed or ill-formed.  It was noted that the resolution of
+<A HREF="1850.html">issue 1850</A> makes the corresponding case
+for non-dependent references ill-formed, with no diagnostic required.
+Similar questions also apply to completing an array type, which also
+involves a modification to an existing entity declaration in a given
+scope.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>CWG determined that the case should be ill-formed, no diagnostic
+required, to allow implementations to continue to use either
+strategy.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

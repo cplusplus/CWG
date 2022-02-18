@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 850</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="850"></A><H4>850.
+  
+Restrictions on use of non-static data members
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 April, 2009<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="613.html">issue 613</A>, as
+reflected in the sixth bullet of _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>] paragraph
+10, allows an <I>id-expression</I> designating a non-static data member
+to be used</P>
+
+<BLOCKQUOTE>
+
+<UL><LI>if... it is the sole constituent of an unevaluated operand,
+except for optional enclosing parentheses.</LI></UL>
+
+</BLOCKQUOTE>
+
+<P>The requirement that the <I>id-expression</I> be the &#8220;sole
+constituent&#8221; of the unevaluated operand seems unnecessarily
+strict, forbidding such plausible use cases as</P>
+
+<PRE>
+    struct S {
+        int ar[42];
+    };
+    int i = sizeof(S::ar[0]);
+</PRE>
+
+<P>or the use of the member as a function argument in template
+metaprogramming.  The more general version of the restriction seems
+not to be very difficult to implement and may actually represent a
+simplification in some implementations.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<P>Change _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#10">expr.prim.general</A>] paragraph 10 as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+<P>if that <I>id-expression</I> denotes a non-static data member
+and it <DEL>is the sole constituent of</DEL> <INS>appears in</INS> an
+unevaluated operand<DEL>, except for optional enclosing
+parentheses</DEL>. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct S {
+    int m;
+  };
+  int i = sizeof(S::m);        //<SPAN CLASS="cmnt"> OK</SPAN>
+  int j = sizeof(S::m + 42);   //<SPAN CLASS="cmnt"> <DEL>error: reference to non-static member in subexpression</DEL> <INS>OK</INS></SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

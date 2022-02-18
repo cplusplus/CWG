@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 444</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="444"></A><H4>444.
+  
+Overriding and the generated copy assignment operator
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Kerch Holt
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Nov 2003<BR>
+
+
+<P>EDG (and g++, for that matter) picks the explicit copy assignment
+operator, which we think is wrong in this case:</P>
+<PRE>
+#include &lt;stdio.h&gt;
+struct D;   // fwd declaration
+struct B {
+    D&amp; operator=(D&amp;);
+};
+struct D : B {
+    D() {}
+    D(int ii) { s = ii; }
+    using B::operator=;
+    int s;
+};
+int main() {
+    D od, od1(10);
+    od = od1; // implicit D::operator=(D&amp;) called, not BASE::operator=(D&amp;)
+}
+D&amp; B::operator=(D&amp; d) {
+    printf("B::operator called\n");
+    return d;
+}
+</PRE>
+
+<P>If you look at 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#10">class.copy.ctor</A>] paragraph 10 it
+explicitly states that
+in such a case the "using B::operator=" will not be considered.</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+The fact that the operator= you declared is (D&amp;) and not (const D&amp;)
+is fooling you.  As the standard says, the operator= introduced
+by the using-declaration does not suppress the generation of
+the implicit operator=.  However, the generated operator= has the
+(const D&amp;) signature, so it does not hide B::operator=;
+it overloads it.</P>
+
+<P>
+<U>Kerch Holt:</U>
+I'm not sure this is correct. Going by 12.8 P10 first paragraph
+we think that the other form "operator=(D&amp;)" is generated because
+the two conditions mentioned were not met in this case.
+1) there is no direct base with a "const [volatile] B&amp;" or "B" operator
+2) And no member has a operator= either.
+This implies the implicit operator is "operator=(D&amp;)".
+So, if that is the case the "hiding" should happen.</P>
+
+<P>Also, in the last paragraph it seems to state that operators
+brought in from "using", no matter what the parameter is, are
+always hidden.</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+Not really.  I think this section is pretty clear about the fact that
+the implicit copy assignment operator is generated.  The question is whether it
+hides or overloads the one imported by the using-declaration.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>(a) Class B does get an implicitly-generated
+<TT>operator=(const B&amp;)</TT>; (b) the using-declaration brings in
+two <TT>operator=</TT> functions from B, the explicitly-declared
+one and the implicitly-generated one; (c) those two functions overload
+with the implicitly-generated <TT>operator=(const D&amp;)</TT> in
+the derived class, rather than being hidden by the derived-class
+function, because it does not match either of their signatures;
+(d) overload resolution picks the explicitly-declared
+function from the base class because it's the best match in this
+case.  We think the standard wording says this clearly enough.</P>
+<BR><BR>
+</BODY>
+</HTML>

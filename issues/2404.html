@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2404</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2404"></A><H4>2404.
+  
+<TT>[[no_unique_address]]</TT> and allocation order
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-12-13<BR>
+
+
+<P>[Accepted as a DR at the July, 2019 meeting.]</P>
+
+<P>According to 11.4 [<A href="https://wg21.link/class.mem#19">class.mem</A>] paragraph 19,</P>
+
+<BLOCKQUOTE>
+
+Non-static data members of a (non-union) class with the same
+access control (11.8 [<A href="https://wg21.link/class.access">class.access</A>]) are allocated so
+that later members have higher addresses within a class
+object.
+
+</BLOCKQUOTE>
+
+<P>With the advent of the <TT>[[no_unique_address]]</TT>
+attribute, &#8220;higher addresses&#8221; is no longer
+strictly accurate. According to the FAQ in
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0840r2.html">
+P0840R2</A>, next-to-last question:</P>
+
+<BLOCKQUOTE>
+
+<P>Q: Suppose I have members <TT>a</TT>, <TT>b</TT>, <TT>c</TT>
+(in that order, with the
+same access). Today we guarantee that <TT>&amp;a
+&lt; &amp;b
+&lt; &amp;c</TT>. What happens if <TT>b</TT>
+has the attribute? </P>
+
+<P>Two cases:</P>
+
+<OL>
+<LI><P>If the type of <TT>b</TT> is empty, then there is
+no guarantee about the address of <TT>b</TT> (other than that
+it is somewhere within the containing object).</P></LI>
+
+<LI><P>If the type of <TT>b</TT>
+is nonempty, then we still guarantee that
+<TT>&amp;a &lt; &amp;b &lt; &amp;c</TT>.</P></LI>
+
+</OL>
+
+</BLOCKQUOTE>
+
+<P>Presumably the wording in 11.4 [<A href="https://wg21.link/class.mem#19">class.mem</A>] paragraph 19
+needs to be changed to reflect that intent.</P>
+
+<P><B>Proposed resolution, March, 2019:</B></P>
+
+<P>Change 11.4 [<A href="https://wg21.link/class.mem#19">class.mem</A>] paragraph 19 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>[<I>Note:</I></INS> Non-static data members of a
+(non-union) class with the same access control
+(11.8 [<A href="https://wg21.link/class.access">class.access</A>]) <INS>and non-zero size
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])</INS> are allocated so that
+later members have higher addresses within a class
+object. The order of allocation of non-static data members
+with different access control is unspecified
+<DEL>(11.8 [<A href="https://wg21.link/class.access">class.access</A>])</DEL>. Implementation alignment
+requirements might cause two adjacent members not to be
+allocated immediately after each other; so might
+requirements for space for managing virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and virtual base classes
+(11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]). <INS>&#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

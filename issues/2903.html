@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2903</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2903"></A><H4>2903.
+  
+Can we omit the <TT>template</TT> disambiguator in <I>nested-name-specifier</I>s in type-only contexts?
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-13<BR>
+
+
+
+
+<P>Are the following examples well-formed?  Note the absence of
+a <TT>template</TT> disambiguator:</P>
+
+<PRE>
+  template&lt;typename T&gt; class C {
+   T::X&lt;int&gt; g1();      // <SPAN CLASS="cmnt">#1</SPAN>
+   T::X&lt;int&gt;::Y g2();   // <SPAN CLASS="cmnt">#2</SPAN>
+  };
+
+  template&lt;typename T&gt;
+  T::X&lt;int&gt; h1();       // <SPAN CLASS="cmnt">#3</SPAN>
+  template&lt;typename T&gt;
+  T::X&lt;int&gt;::Y h2();    // <SPAN CLASS="cmnt">#4</SPAN>
+</PRE>
+
+<P>The return type is a type-only context per
+13.8.1 [<A href="https://wg21.link/temp.res.general#4">temp.res.general</A>] paragraph 4.  However,
+13.3 [<A href="https://wg21.link/temp.names#3">temp.names</A>] paragraph 3
+excludes <I>nested-name-specifier</I>s from the set of situations
+where <TT>template</TT> can be omitted. That means that #1 and #3
+are valid; <TT>X</TT> is not part of a <I>nested-name-specifier</I>.
+However, #2 and #4 are invalid; the <TT>template</TT> disambiguator is
+missing.  Those examples ought to be valid, too.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-14):</B></P>
+
+<P>Change in 13.3 [<A href="https://wg21.link/temp.names#3">temp.names</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A name is in a <I>transitive type-only context</I>
+if</INS>
+<UL class="ins">
+<LI>
+it is in a type-only context (13.8.1 [<A href="https://wg21.link/temp.res.general">temp.res.general</A>]) and is not
+the terminal name of a <I>nested-name-specifier</I>, or</LI>
+<LI>it is the terminal name of a <I>nested-name-specifier</I> that
+precedes a name in a transitive type-only context (possibly with an
+intervening <TT>template</TT> keyword).
+</LI>
+</UL>
+
+A &lt; is interpreted as the delimiter of
+a <I>template-argument-list</I> if it follows a name that is not
+a <I>conversion-function-id</I> and
+<UL>
+<LI>that follows the keyword template or a ~ after
+a <I>nested-name-specifier</I> or in a class member access expression,
+or</LI>
+<LI>for which name lookup finds the injected-class-name of a class
+template or finds any declaration of a template, or
+</LI>
+<LI>that is an unqualified name for which name lookup either finds one
+or more functions or finds nothing, or</LI>
+<LI>that is a terminal name in a <I>using-declarator</I>
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]), in a <I>declarator-id</I>
+(9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]), or in a <INS>transitive</INS> type-only context <DEL>other than
+a <I>nested-name-specifier</I> (13.8 [<A href="https://wg21.link/temp.res">temp.res</A>])</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

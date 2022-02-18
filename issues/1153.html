@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1153</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1153"></A><H4>1153.
+  
+Type matching in address of overloaded function
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-03<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US68">N3092 comment
+  US&#160;68<BR></A>
+
+<P>Overload resolution within the operand of a unary &amp;
+operator is done by selecting the function &#8220;whose type
+matches the target type required in the context.&#8221; The
+criterion for determining whether the types match,
+however, is not defined. At least three possibilities
+suggest themselves:</P>
+
+<OL>
+<LI><P>The types are identical.</P></LI>
+
+<LI><P>The source type can be implicitly converted to
+the target type.</P></LI>
+
+<LI><P>The expression would be well-formed if the
+function under consideration were not
+overloaded.</P></LI>
+
+</OL>
+
+<P>This question arises for pointer-to-member types, where
+there is an implicit conversion from a
+pointer-to-base-member to a pointer-to-derived-member, as
+well as when the context is an explicit type conversion
+(which allows, for <TT>static_cast</TT>, a conversion from
+pointer-to-derived-member to a pointer-to-base-member and,
+in the <TT>reinterpret_cast</TT> interpretation of
+functional and old-style casts, essentially any
+conversion).</P>
+
+<P><B>Notes from the August, 2010 meeting:</B></P>
+
+<P>CWG observed that the only case in which the types might not
+match exactly was for pointers to member functions.  In this case,
+the approach should be to ignore the class of which the functions
+are members and just match (exactly) on the function type.</P>
+
+<P><B>Proposed resolution (September, 2010):</B></P>
+
+<OL>
+<LI><P>Change 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The function selected is the one whose type <DEL>matches</DEL>
+<INS>is identical to</INS> the <INS>function type of the</INS> target
+type required in the context.  <INS>[<I>Note:</I> That is, the class
+of which the function is a member is ignored when matching a
+pointer-to-member-function type. &#8212;<I>end note</I>]</INS> The
+target can be...
+
+</BLOCKQUOTE>
+
+<LI>Change 12.3 [<A href="https://wg21.link/over.over#3">over.over</A>] paragraph 3 as follows:</LI>
+
+<BLOCKQUOTE>
+
+Non-member functions and static member functions match targets of
+type &#8220;pointer-to-function&#8221; or &#8220;reference-
+to-function.&#8221; Nonstatic member functions match targets of type
+&#8220;pointer-to-member-function<DEL>;</DEL><INS>.</INS>&#8221;
+<DEL>the function type of the pointer to member is used to select the
+member function from the set of overloaded member functions.</DEL> If
+a non-static member function is selected, the reference to the
+overloaded function name is required to have the form of a pointer to
+member as described in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>].
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 751</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="751"></A><H4>751.
+  
+Deriving from closure classes
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 December, 2008<BR>
+
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+
+
+<P>During the discussion of <A HREF="750.html">issue 750</A>, it
+was suggested that an implementation might be permitted to omit fields
+in the closure object of a lambda expression if the implementation does
+not need them to address the corresponding automatic variables.  If
+permitted, this implementation choice might be visible to the program
+via inheritance.  Consider:</P>
+
+<PRE>
+    void f() {
+      int const N = 10;
+      typedef decltype([&amp;N](){}) F;
+      struct X: F {
+        void n() { float z[N]; } // Error?
+      };
+    }
+</PRE>
+
+<P>If it is implementation-defined or unspecified whether the reference
+member <TT>F::N</TT> will exist, then it is unknown whether the
+the reference to <TT>N</TT> in <TT>X::n()</TT> will be an error
+(because lookup finds <TT>F::N</TT>, which is private) or well-formed
+(because there is no <TT>F::N</TT>, so the reference is to the local
+automatic variable).</P>
+
+<P>If implementations can omit fields, the implementation dependency
+might be addressed by either treating the lookup &#8220;as if&#8221;
+the fields existed, even if they are not present in the object
+layout, or by defining the names of the fields in the closure class
+to be unique identifiers, similar to the names of unnamed namespaces
+(9.8.2.2 [<A href="https://wg21.link/namespace.unnamed">namespace.unnamed</A>]).</P>
+
+<P>Another suggestion was made that derivation from a closure class
+should be prohibited, at least for now.  However, it was pointed out
+that inheritance is frequently used to give stateless function objects
+some state, suggesting a use case along the lines of:</P>
+
+<PRE>
+    template&lt;class T&gt; struct SomeState: T {
+      // ...
+    };
+    template&lt;class F, typename T&lt; void algo(T functor, ...) {
+      SomeState&lt;T&lt; state(functor);
+      ...
+    }
+
+    ... algo([](int a){ return 2*a; }) ...
+</PRE>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

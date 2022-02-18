@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2123</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2123"></A><H4>2123.
+  
+Omitted constant initialization of local static variables
+</H4>
+<B>Section: </B>8.8&#160; [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-02<BR>
+
+
+
+
+<p>According to 8.8 [<A href="https://wg21.link/stmt.dcl#4">stmt.dcl</A>] paragraph 4,
+
+<BLOCKQUOTE>
+
+The zero-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of all
+block-scope variables with static storage duration
+(6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread storage duration
+(6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is performed before any other
+initialization takes place. Constant initialization
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]) of a block-scope entity with
+static storage duration, if applicable, is performed before
+its block is first entered.
+
+</BLOCKQUOTE></p>
+
+<P>The fact that a variable need not be constant-initialized if its
+block is not entered appears to allow inspection of the variable
+after zero-initialization but before constant initialization:</P>
+
+<PRE>
+  constexpr int x = 0;
+
+  auto foo() {
+    constexpr static const int *p = &amp;x;
+    struct A {
+      const int *const &amp;getPtr() { return p; }
+    } a;
+    return a;
+  }
+
+  int xcpy = *decltype(foo()){ }.getPtr();
+
+  int main(void) {
+    return xcpy;
+  }
+</PRE>
+
+<P>For a related example, consider:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> tu1.cpp</SPAN>
+  extern const int a = 1;
+  inline auto f() {
+    static const int b = a;
+    struct A { auto operator()() { return &amp;b; } } a;
+    return a;
+  }
+
+  //<SPAN CLASS="cmnt"> tu2.cpp</SPAN>
+  extern const int a;
+  inline auto f() {
+    static const int b = a;
+    struct A { auto operator()() { return &amp;b; } } a;
+    return a;
+  }
+  int main() {
+    return *decltype(f())()();
+  }
+</PRE>
+
+<P>Here, <TT>b</TT> may or may not have constant initialization,
+but we don't have an ODR violation.</P>
+
+<P>If we want to support such code, the nicest option would be
+to say that the ODR requires us to act as if we pick one of the
+definitions of the inline function, which requires us to make a
+consistent choice for all static storage duration variables
+within a given function.  Alternatively, we could say that if
+multiple definitions of a variable disagree over whether it has
+constant initialization, then it does not, allowing more
+implementation simplicity and no functional change outside of
+pathological cases.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>The second example will be dealt with separately under
+<A HREF="2242.html">issue 2242</A>. For the first example,
+the Standard should require that local types can be used outside
+their function only via a returned object. It was still to be
+decided whether this should be undefined behavior or an error
+on use of such a type. It was also noted that the same issue can
+arise with static member functions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

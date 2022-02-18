@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 31</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="31"></A><H4>31.
+  
+Looking up new/delete
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Jun 1998<BR>
+
+
+
+
+
+<P>Section 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4
+says:</P>
+<BLOCKQUOTE>If a <I>delete-expression</I> begins with a unary <TT>::</TT> operator, the
+deallocation function's name is looked up in global scope. Otherwise,
+if the <I>delete-expression</I> is used to deallocate a class object whose static
+type has a virtual destructor, the deallocation function is the one found
+by the lookup in the definition of the dynamic type's virtual destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+).
+Otherwise, if the <I>delete-expression</I> is used to deallocate
+an object of class <TT>T</TT> or array thereof, the static and dynamic types of
+the object shall be identical and the deallocation function's name is
+looked up in the scope of <TT>T</TT>. If this lookup fails to find the name, the
+name is looked up in the global scope. If the result of the lookup is ambiguous
+or inaccessible, or if the lookup selects a placement deallocation function,
+the program is ill-formed.</BLOCKQUOTE>
+I contrast that with 7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]
+
+paragraphs 16 and 17:
+<BLOCKQUOTE>If the <I>new-expression</I> creates an object or an array of objects
+of class type, access and ambiguity control are done for the allocation
+function, the deallocation function (11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]
+), and the constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+). If the <I>new-expression</I> creates an array of objects of class
+type, access and ambiguity control are done for the destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+).
+
+<P>If any part of the object initialization described above terminates
+by throwing an exception and a suitable deallocation function can be found,
+the deallocation function is called to free the memory in which the object
+was being constructed, after which the exception continues to propagate
+in the context of the <I>new-expression</I>. If no unambiguous matching deallocation
+function can be found, propagating the exception does not cause the object's
+memory to be freed. [<I>Note:</I> This is appropriate when the called allocation
+function does not allocate memory; otherwise, it is likely to result in
+a memory leak. ]</P>
+</BLOCKQUOTE>
+I think nothing in the latter paragraphs implies that the deallocation
+function found is the same as that for a corresponding <I>delete-expression</I>.
+I suspect that may not have been intended and that the lookup should occur
+"as if for a <I>delete-expression</I>".
+
+<P><B>Rationale:</B></P>
+
+<P>Paragraphs 16 through 18 are sufficiently correct and unambiguous as
+written.</P>
+<BR><BR>
+</BODY>
+</HTML>

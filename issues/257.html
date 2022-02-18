@@ -1,0 +1,257 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 257</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="257"></A><H4>257.
+  
+Abstract base constructors and virtual base initialization
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 Nov 2000<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>Must a constructor for an abstract base class provide a
+<I>mem-initializer</I> for each virtual base class from which it is
+directly or indirectly derived?  Since the initialization of
+virtual base classes is performed by the most-derived class, and
+since an abstract base class can never be the most-derived class,
+there would seem to be no reason to require constructors for
+abstract base classes to initialize virtual base classes.</P>
+
+<P>It is not clear from the Standard whether there actually is
+such a requirement or not.  The relevant text is found in
+11.9.3 [<A href="https://wg21.link/class.base.init#6">class.base.init</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+All sub-objects representing virtual base classes are initialized by
+the constructor of the most derived class (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]). If the constructor of the most derived class does not
+specify a <I>mem-initializer</I> for a virtual base class <TT>V</TT>,
+then <TT>V</TT>'s default constructor is called to initialize the virtual
+base class subobject. If <TT>V</TT> does not have an accessible default
+constructor, the initialization is ill-formed. A <I>mem-initializer</I>
+naming a virtual base class shall be ignored during execution of the
+constructor of any class that is not the most derived class.
+
+</BLOCKQUOTE>
+
+<P>This paragraph requires only that the most-derived class's
+constructor have a <I>mem-initializer</I> for virtual base classes.
+Should the silence be construed as permission for constructors
+of classes that are not the most-derived to omit such
+<I>mem-initializer</I>s?</P>
+
+<P>
+<U>Christopher Lester</U>, on comp.std.c++, March 19, 2004:
+If any of you reading this posting happen to be members of the above
+working group, I would like to encourage you to review the suggestion
+contained therein, as it seems to me that the final tenor of the
+submission is both (a) correct (the silence of the standard DOES
+mandate the omission) and (b) describes what most users would
+intuitively expect and desire from the C++ language as well.</P>
+
+<P>The suggestion is to make it clearer that constructors for abstract
+base classes should not be required to provide initialisers for any
+virtual base classes they contain (as only the most-derived class has
+the job of initialising virtual base classes, and an abstract base
+class cannot possibly be a most-derived class).</P>
+
+<P>For example:</P>
+<PRE>
+struct A {
+  A(const int i, const int j) {};
+};
+
+struct B1 : virtual public A {
+  virtual void moo()=0;
+  B1() {};   // (1) Look! not "B1() : A(5,6) {};"
+};
+
+struct B2 : virtual public A {
+  virtual void cow()=0;
+  B2() {};   // (2) Look! not "B2() : A(7,8) {};"
+};
+
+struct C : public B1, public B2 {
+  C() : A(2,3) {};
+  void moo() {};
+  void cow() {};
+};
+
+int main() {
+  C c;
+  return 0;
+};
+</PRE>
+
+<P>I believe that, by not expressly forbidding it, the standard does
+(and should!) allow the above code.  However, as the standard doesn't
+expressly allow it either (have I missed something?) there appears to
+be room for misunderstanding. For example, g++ version 3.2.3 (and
+maybe other versions as well) rejects the above code with messages
+like:</P>
+<PRE>
+	In constructor `B1::B1()':
+	no matching function for call to `A::A()'
+	candidates are: A::A(const A&amp;)
+         	        A::A(int, int)
+</PRE>
+
+<P>Fair enough, the standard is perhaps not clear enough.  But it seems
+to be a shame that although this issue was first raised in 2000, we
+are still living with it today.</P>
+
+<P>Note that we can work-around, and persuade g++ to compile the above
+by either (a) providing a default constructor A() for A, or (b)
+supplying default values for i and j in A(i,j), or (c) replace the
+construtors B1() and B2() with the forms shown in the two comments in
+the above example.</P>
+
+<P>All three of these workarounds may at times be appropriate, but
+equally there are other times when all of these workarounds are
+particularly bad.  (a) and (b) may be very bad if you are trying to
+enforce string contracts among objects, while (c) is just barmy (I
+mean why did I have to invent random numbers like 5, 6, 7 and 8 just
+to get the code to compile?).</P>
+
+<P>So to to round up, then, my plea to the working group is:
+
+	"at the very least, please make the standard clearer on
+this issue, but preferrably make the decision to expressly allow
+code that looks something like the above"</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<OL>
+<LI><P>Add the indicated text (moved from paragraph 11) to the end
+of 11.9.3 [<A href="https://wg21.link/class.base.init#7">class.base.init</A>] paragraph 7:</P></LI>
+
+<BLOCKQUOTE>
+
+...The initialization of each base and member constitutes a
+full-expression.  Any expression in a <I>mem-initializer</I> is
+evaluated as part of the full-expression that performs the
+initialization. <INS>A <I>mem-initializer</I> where the
+<I>mem-initializer-id</I> names a virtual base class is ignored during
+execution of a constructor of any class that is not the most derived
+class.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#8">class.base.init</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a given non-static data member or base class is not named by a
+<I>mem-initializer-id</I> (including the case where there is no
+<I>mem-initializer-list</I> because the constructor has no
+<I>ctor-initializer</I>) <INS>and the entity is not a virtual base
+class of an abstract class (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>])</INS>, then</P>
+
+<UL>
+<LI><P>if the entity is a non-static data member that has a
+<I>brace-or-equal-initializer</I>, the entity is initialized as
+specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>];</P></LI>
+
+<LI><P>otherwise, if the entity is a variant member (11.5 [<A href="https://wg21.link/class.union">class.union</A>]), no initialization is performed;</P></LI>
+
+<LI><P>otherwise, the entity is default-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</P></LI>
+
+</UL>
+
+<P>
+<INS>[<I>Note:</I> An abstract class (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]) is
+never a most derived class, thus its constructors never initialize
+virtual base classes, therefore the corresponding
+<I>mem-initializer</I>s may be omitted. &#8212;<I>end note</I>]</INS>
+After the call to a constructor for class <TT>X</TT> has
+completed...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#10">class.base.init</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Initialization <DEL>shall proceed</DEL> <INS>proceeds</INS> in the
+following order:</P>
+
+<UL>
+<LI><P>First, and only for the constructor of the most derived
+class <DEL>as described below</DEL> <INS>(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])</INS>, virtual base classes <DEL>shall be</DEL>
+<INS>are</INS> initialized in the order they appear on a depth-first
+left-to-right traversal of the directed acyclic graph of base classes,
+where &#8220;left-to-right&#8221; is the order of appearance of the
+base class names in the derived class <I>base-specifier-list</I>.</P></LI>
+
+<LI><P>Then, direct base classes <DEL>shall be</DEL> <INS>are</INS>
+initialized in declaration order as they appear in the
+<I>base-specifier-list</I> (regardless of the order of the
+<I>mem-initializer</I>s).</P></LI>
+
+<LI><P>Then, non-static data members <DEL>shall be</DEL>
+<INS>are</INS> initialized in the order they were declared in the
+class definition (again regardless of the order of the
+<I>mem-initializer</I>s).</P></LI>
+
+<LI><P>Finally, the <I>compound-statement</I> of the constructor body
+is executed.</P></LI>
+
+</UL>
+
+<P>[<I>Note:</I> the declaration order is mandated to ensure that base and
+member subobjects are destroyed in the reverse order of
+initialization. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Remove all normative text in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] paragraph
+11, keeping the example:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>All subobjects representing virtual base classes are initialized
+by the constructor of the most derived class (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).  If the constructor of the most derived class does not
+specify a <I>mem-initializer</I> for a virtual base class <TT>V</TT>,
+then <TT>V</TT>'s default constructor is called to initialize the
+virtual base class subobject. If <TT>V</TT> does not have an
+accessible default constructor, the initialization is ill-formed.  A
+<I>mem-initializer</I> naming a virtual base class shall be ignored during
+execution of the constructor of any class that is not the most derived
+class.</DEL> [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

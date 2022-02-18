@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2459</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2459"></A><H4>2459.
+  
+Template parameter initialization
+</H4>
+<B>Section: </B>13.4.3&#160; [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-09-21<BR>
+
+
+<P>[ Resolved by paper P2308R1 (Template parameter initialization), adopted in November, 2023. ]</P>
+
+<P>The initialization of template parameters is severely
+underspecified. The only descriptions in the existing wording
+that apply are that the argument is &#8220;[converted] to
+the type of the <I>template-parameter</I>&#8221;
+(13.6 [<A href="https://wg21.link/temp.type#1.3">temp.type</A>] bullet 1.3) and, in
+13.4.3 [<A href="https://wg21.link/temp.arg.nontype#2">temp.arg.nontype</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+A <I>template-argument</I> for a
+non-type <I>template-parameter</I> shall be a converted
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) of the type
+of the <I>template-parameter</I>.
+
+</BLOCKQUOTE>
+
+<P>This omission is particularly important for template
+parameters of class type with lvalue template parameter
+objects whose addresses can be examined during construction.
+See also <A HREF="2450.html">issue 2450</A>.</P>
+
+
+
+<P><U>Suggested resolution:</U></P>
+
+<P>To avoid address-based paradoxes, template arguments for
+a template parameter of class type <TT>C</TT> that are not
+of that type or a derived type are converted to <TT>C</TT>
+to produce an exemplar. No restrictions are imposed on the
+conversion from a template argument to a constructor
+parameter, since explicit and list-initialization may
+already be used to limit conversions in a similar
+fashion. Template arguments that are of such a type are used
+directly as the exemplar (potentially after a
+materialization conversion); the effect is as if the
+template parameter were of type <TT>const C&amp;</TT>
+(except that temporaries are allowed). (In the latter case,
+we must impose some restrictions on glvalue template
+parameters to interpret them.) Each exemplar is used to
+copy-initialize the template parameter object to which it is
+(to be) template-argument-equivalent; the initialization is
+required to produce a template-argument-equivalent
+value. The multiple initializations of the template
+parameter object are (required to be) all equivalent and
+produce no side effects, so it is unobservable which
+happen.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

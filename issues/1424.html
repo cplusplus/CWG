@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1424</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1424"></A><H4>1424.
+  
+When must sub-object destructors be accessible?
+</H4>
+<B>Section: </B>14.3&#160; [<A href="https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-12-07<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>The current specification does not appear to say whether an implementation
+is permitted/required/forbidden to complain when a sub-object's destructor
+is inaccessible.  In particular, if there is no possibility for an
+exception to be thrown following a given sub-object's construction,
+should an implementation issue an error if that sub-object's destructor is
+inaccessible?</P>
+
+<P><B>Proposed resolution (February, 2013):</B></P>
+
+<OL>
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A destructor for a class is odr-used <DEL>as specified in</DEL>
+<INS>if it is potentially invoked (</INS>11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]<INS>)</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#17">expr.new</A>] paragraph 17 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the <I>new-expression</I> creates an object or an array of objects
+of class type, access and ambiguity control are done for the
+allocation function, the deallocation function (11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]), and the constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]).  If
+the <DEL>new expression</DEL> <INS><I>new-expression</I></INS> creates
+an array of objects of class type, <DEL>access and ambiguity control
+are done for</DEL> the destructor <INS>is potentially invoked</INS>
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#11">class.dtor</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>Destructors are</DEL> <INS>A destructor is</INS> invoked implicitly</P>
+
+<UL>
+<LI><P>for <INS>a</INS> constructed object<DEL>s</DEL> with static
+storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) at program termination
+(6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]),</P></LI>
+
+<LI><P>for <INS>a</INS> constructed object<DEL>s</DEL> with thread
+storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) at thread exit,</P></LI>
+
+<LI><P>for <INS>a</INS> constructed object<DEL>s</DEL> with automatic
+storage duration (6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) when the block in which
+an object is created exits (8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]),</P></LI>
+
+<LI><P>for <INS>a</INS> constructed temporary object<DEL>s</DEL> when
+<DEL>the</DEL> <INS>its</INS> lifetime <DEL>of a temporary
+object</DEL> ends (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>])<DEL>,</DEL><INS>.</INS>
+</P></LI>
+
+<LI><P><DEL>for constructed objects allocated by a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), through use of a
+<I>delete-expression</I> (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]),</DEL></P></LI>
+
+<LI><P><DEL>in several situations due to the handling of exceptions
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).</DEL></P></LI>
+
+</UL>
+
+<P>
+<INS>In each case, the context of the invocation is the context of
+the construction of the object. A destructor is also invoked
+implicitly through use of a <I>delete-expression</I> (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]) for a constructed object allocated by a
+<I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]); the context of the
+invocation is the <I>delete-expression</I>. [<I>Note:</I> An array of
+class type contains several subobjects for each of which the
+destructor is invoked. &#8212;<I>end note</I>] A destructor can also
+be invoked explicitly. A destructor is <I>potentially invoked</I> if
+it is invoked or as specified in 7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>] and
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>].</INS> A program is ill-formed if <DEL>an
+object of class type or array thereof is declared and the destructor
+for the class is not accessible at the point of the declaration</DEL>
+<INS>a destructor that is potentially invoked is deleted or not
+accessible from the context of the invocation</INS>. <DEL>Destructors
+can also be invoked explicitly.</DEL>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+11.9.3 [<A href="https://wg21.link/class.base.init#9">class.base.init</A>] paragraph 9:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a given non-static data member has both...</P>
+
+<P><INS>In a non-delegating constructor, the destructor for each
+direct or virtual base class and for each non-static data member of
+class type is potentially invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). [<I>Note:</I> This provision ensures that destructors
+can be called for fully-constructed sub-objects in case an exception
+is thrown (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]). &#8212;<I>end
+note</I>]</INS></P>
+
+<P>In a non-delegating constructor, initialization proceeds...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

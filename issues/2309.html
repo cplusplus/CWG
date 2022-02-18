@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2309</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2309"></A><H4>2309.
+  
+Restrictions on nested statements within <TT>constexpr</TT> functions
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Faisal Vali
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-07-30<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>Section 9.2.6 [<A href="https://wg21.link/dcl.constexpr#3.4">dcl.constexpr</A>] bullet 3.4 specifies a list of
+constructs that that the body of a <TT>constexpr</TT> function shall
+not contain. However, the meaning of the word &#8220;contain&#8221; is
+not clear. For example, are things appearing in the body of a nested
+<TT>constexpr</TT> lambda &#8220;contained&#8221; in the body of the
+<TT>constexpr</TT> function?
+</P>
+
+
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<OL>
+<LI><P>Add the following two paragraphs after
+Clause 8 [<A href="https://wg21.link/stmt.stmt#1">stmt.stmt</A>] paragraph 1:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...The optional <I>attribute-specifier-seq</I> appertains to the
+respective statement.</P>
+
+<P><INS>A <I>substatement</I> of a <I>statement</I> is one of the
+following:</INS></P>
+
+<UL>
+<LI><P><INS>for a <I>labeled-statement</I>, its
+contained <I>statement</I>,</INS></P></LI>
+
+<LI><P><INS>for a <I>compound-statement</I>, any <I>statement</I> of
+its <I>statement-seq</I>,</INS></P></LI>
+
+<LI><P><INS>for a <I>selection-statement</I>, any of its <I>statement</I>s
+(but not its <I>init-statement</I>), or</INS></P></LI>
+
+<LI><P><INS>for an <I>iteration-statement</I>, its contained
+<I>statement</I> (but not an <I>init-statement</I>).</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> The <I>compound-statement</I> of
+a <I>lambda-expression</I> is not a substatement of
+the <I>statement</I> (if any) in which the <I>lambda-expression</I>
+lexically appears. &#8212;<I>end note</I>]</INS></P>
+
+<P><INS>A <I>statement</I> <TT>S1</TT> <I>encloses</I> a
+<I>statement</I> <TT>S2</TT> if</INS></P>
+
+<UL>
+<LI><P><INS><TT>S2</TT> is a substatement of <TT>S1</TT>
+(Clause 9 [<A href="https://wg21.link/dcl.dcl">dcl.dcl</A>]),</INS></P></LI>
+
+<LI><P><INS><TT>S1</TT> is a <I>selection-statement</I> or
+<I>iteration-statement</I> and <TT>S2</TT> is the
+<I>init-statement</I> of <TT>S1</TT>,</INS></P></LI>
+
+<LI><P><INS><TT>S1</TT> is a <I>try-block</I> and <TT>S2</TT>
+is its <I>compound-statement</I> or any of the
+<I>compound-statement</I>s of its <I>handler</I>s, or</INS></P></LI>
+
+<LI><P><INS><TT>S1</TT> encloses a statement <TT>S3</TT> and
+<TT>S3</TT> encloses <TT>S2</TT>.</INS></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the following sentence from 8.5 [<A href="https://wg21.link/stmt.select#1">stmt.select</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>In Clause 8 [<A href="https://wg21.link/stmt.stmt">stmt.stmt</A>], the term substatement refers to
+the contained statement or statements that appear in the syntax
+notation.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#3.3">dcl.constexpr</A>] bullet 3.3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The definition of a constexpr function shall satisfy the
+following requirements:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>its <I>function-body</I> shall be <TT>= delete</TT>, <TT>=
+default</TT>, or a <I>compound-statement</I> that does not
+<DEL>contain</DEL> <INS>enclose (Clause 8 [<A href="https://wg21.link/stmt.stmt">stmt.stmt</A>]
+</INS>
+</P>
+</LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

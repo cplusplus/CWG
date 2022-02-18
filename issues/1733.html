@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1733</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1733"></A><H4>1733.
+  
+Return type and value for <TT>operator=</TT> with <I>ref-qualifier</I>
+</H4>
+<B>Section: </B>9.5.2&#160; [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-09<BR>
+
+
+<P>[Accepted as a DR at the October, 2021 meeting.]</P>
+
+
+
+<P>9.5.2 [<A href="https://wg21.link/dcl.fct.def.default#1">dcl.fct.def.default</A>] paragraph 1 specifies that an
+explicitly-defaulted function shall</P>
+
+<BLOCKQUOTE>
+
+have the same declared function type (except for possibly
+differing <I>ref-qualifier</I>s and except that in the case of a copy
+constructor or copy assignment operator, the parameter type may be
+&#8220;reference to non-const <TT>T</TT>&#8221;, where <TT>T</TT> is the
+name of the member function's class) as if it had been implicitly
+declared...
+
+</BLOCKQUOTE>
+
+<P>This allows an example like</P>
+
+<PRE>
+  struct A {
+    A&amp; operator=(A const&amp;) &amp;&amp; = default;
+  };
+</PRE>
+
+<P>but forbids</P>
+
+<PRE>
+  struct B {
+    B&amp;&amp; operator=(B const&amp;) &amp;&amp; = default;
+  };
+</PRE>
+
+<P>which seems backward.</P>
+
+<P>In addition, 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#22">class.copy.ctor</A>] paragraph 22 only specifies the
+return value for implicitly-declared copy/move assignment operators,
+not for explicitly-defaulted ones.</P>
+
+<P><B>Proposed resolution (August, 2021):</B></P>
+
+<OL>
+<LI><P>Change 11.4.6 [<A href="https://wg21.link/class.copy.assign#6">class.copy.assign</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-declared copy/move assignment operator for
+class <TT>X</TT> has the return type <TT>X&amp;</TT><DEL>;
+it returns the object for which the assignment operator is
+invoked, that is, the object assigned to</DEL>. An
+implicitly-declared copy/move assignment operator is an
+inline public member of its class.
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+11.4.6 [<A href="https://wg21.link/class.copy.assign#13">class.copy.assign</A>] paragraph 13:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The implicitly-defined copy assignment operator for a union
+<TT>X</TT> copies the object representation
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>. If the source and
+destination of the assignment are not the same object, then
+for each object nested within (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+the object that is the source of the copy, a corresponding
+object <I>o</I> nested within the destination is created,
+and the lifetime of <I>o</I> begins before the copy is
+performed.</P>
+
+<P><INS>The implicitly-defined copy/move assignment operator
+for a class returns the object for which the assignment
+operator is invoked, that is, the object assigned
+to.</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Note: The first point in the issue, that of the
+relationship between the ref-qualifier and the return type,
+will be referred to EWG for consideration. The draft
+resolution above addresses only the second point of the
+issue.</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

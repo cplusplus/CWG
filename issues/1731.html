@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1731</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1731"></A><H4>1731.
+  
+<TT>is_trivially_</TT><I>X</I> and definitions of special member functions
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-07<BR>
+
+
+
+
+<P>Consider an example like,</P>
+
+<PRE>
+  struct A {
+    A() = default;
+    A(A&amp;) = default;
+    A(const A&amp;) = default;
+  };
+  static_assert(!__is_trivially_copyable(A),"");
+
+  struct B {
+    A a;
+    B() = default;
+    B(const B&amp;) = default;
+  };
+  static_assert(__is_trivially_copyable(B),"");
+
+  struct C {
+    mutable A a;
+    C() = default;
+    C(const C&amp;) = default;
+  };
+  static_assert(!__is_trivially_copyable(C),"");
+</PRE>
+
+<P>Presumably, all <TT>static_assert()</TT> conditions above are desired to
+evaluate <TT>true</TT>. Implementations diverge on this.</P>
+
+<P>To decide whether a class is trivially copyable (Clause 11 [<A href="https://wg21.link/class#6">class</A>] paragraph 6)
+, we need to see whether it has a non-trivial copy
+constructor. So eventually we hit 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraph
+12:</P>
+
+<BLOCKQUOTE>
+
+<P>A copy/move constructor for class <TT>X</TT> is trivial if it is not
+user-provided, its declared parameter type is the same as if it had been
+implicitly declared, and if</P>
+
+<UL>
+<LI><P>class <TT>X</TT> has no virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes
+(11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]), and</P></LI>
+
+<LI><P>the constructor selected to copy/move each direct base class
+subobject is trivial, and</P></LI>
+
+<LI><P>for each non-static data member of <TT>X</TT> that is of class type
+(or array thereof), the constructor selected to copy/move that member is
+trivial;</P></LI>
+
+</UL>
+
+<P>otherwise the copy/move constructor is <I>non-trivial</I>.</P>
+
+</BLOCKQUOTE>
+
+<P>which seem to imply that the copy constructor needs to have been
+implicitly defined before we consider this rule. But copy ctors are not
+odr-used in this example, so they're not implicitly-defined (paragraph
+13).</P>
+
+<P>The same considerations apply to copy/move assignment operators.</P>
+
+<P>It might be sufficient to clarify this specification by replacing
+&#8220;selected to&#8221; with &#8220;that would be selected to.&#8221;</P>
+
+<P><B>Rationale (September, 2013):</B></P>
+
+<P>CWG felt that the existing wording was clear enough.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 861</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="861"></A><H4>861.
+  
+Unintended ambiguity in inline namespace lookup
+</H4>
+<B>Section: </B>6.5.5.3&#160; [<A href="https://wg21.link/namespace.qual">namespace.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 April, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting as part of document N3079.]</P>
+
+<P>The algorithm for namespace-qualified lookup is given in
+6.5.5.3 [<A href="https://wg21.link/namespace.qual#2">namespace.qual</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+Given <TT>X::m</TT> (where <TT>X</TT> is a user-declared namespace),
+or given <TT>::m</TT> (where <TT>X</TT> is the global namespace), let
+<TT>S</TT> be the set of all declarations of <TT>m</TT> in <TT>X</TT>
+and in the transitive closure of all namespaces nominated by
+<I>using-directive</I>s in <TT>X</TT> and its used namespaces, except that
+<I>using-directive</I>s that nominate non-inline namespaces
+(9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]) are ignored in any namespace, including
+<TT>X</TT>, directly containing one or more declarations of
+<TT>m</TT>.
+
+</BLOCKQUOTE>
+
+<P>Consider the following example:</P>
+
+<PRE>
+    namespace A {
+        inline namespace B {
+            namespace C {
+                int i;
+            }
+            using namespace C;
+        }
+        int i;
+    }
+
+    int j = A::i;     // ambiguous
+</PRE>
+
+<P>The transitive closure includes <TT>B</TT> because it is
+<TT>inline</TT>, and it includes <TT>C</TT> because there is
+no declaration of <TT>i</TT> in <TT>B</TT>.  As a result,
+<TT>A::i</TT> finds both the <TT>i</TT> declared in <TT>A</TT>
+and the one declared in <TT>C</TT>, and the lookup is ambiguous.</P>
+
+<P>This result is apparently unintended.</P>
+
+<P><B>Proposed resolution (November, 2009):</B></P>
+
+<OL>
+<LI><P>Change 9.8.2 [<A href="https://wg21.link/namespace.def#9">namespace.def</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+These properties are transitive: if a namespace <TT>N</TT> contains an
+inline namespace <TT>M</TT>, which in turn contains an inline
+namespace <TT>O</TT>, then the members of <TT>O</TT> can be used as
+though they were members of <TT>M</TT> or <TT>N</TT>. <INS>The
+transitive closure of all inline namespaces in <TT>N</TT> is the
+<I>inline namespace set</I> of <TT>N</TT>.</INS> The set of namespaces
+consisting of the innermost non-inline namespace enclosing an inline
+namespace <TT>O</TT>, together with any intervening inline namespaces,
+is the <I>enclosing namespace set</I> of <TT>O</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>Insert a new paragraph before 6.5.5.3 [<A href="https://wg21.link/namespace.qual#2">namespace.qual</A>] paragraph 2
+and change the existing paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>For a namespace <TT>X</TT> and name <TT>m</TT>, the
+namespace-qualified lookup set <TT>S(X,m)</TT> is defined as
+follows: Let <TT>S'(X,m)</TT> be the set of all declarations of
+<TT>m</TT> in <TT>X</TT> and the inline namespace set of
+<TT>X</TT> (9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]). If <TT>S'(X,m)</TT> is
+not empty, <TT>S(X,m)</TT> is <TT>S'(X,m)</TT>; otherwise,
+<TT>S(X,m)</TT> is the union of <TT>S(N<SUB>i</SUB>,m)</TT> for
+all non-inline namespaces <TT>N<SUB>i</SUB></TT> nominated by
+<I>using-directive</I>s in <TT>X</TT> and its inline namespace
+set.</INS></P>
+
+<P>Given <TT>X::m</TT> (where <TT>X</TT> is a user-declared
+namespace), or given <TT>::m</TT> (where <TT>X</TT> is the global
+namespace), <DEL>let <TT>S</TT> be the set of all declarations of
+<TT>m</TT> in <TT>X</TT> and in the transitive closure of all
+namespaces nominated by <I>using-directive</I>s in <TT>X</TT> and
+its used namespaces, except that <I>using-directive</I>s that
+nominate non-inline namespaces (9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]) are
+ignored in any namespace, including <TT>X</TT>, directly
+containing one or more declarations of <TT>m</TT>.  No namespace
+is searched more than once in the lookup of a name.  If</DEL>
+<INS>if</INS> <TT>S<INS>(X,m)</INS></TT> is the empty set, the
+program is ill-formed. Otherwise, if <TT>S<INS>(X,m)</INS></TT>
+has exactly one member, or if the context of the reference is a
+<I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]),
+<TT>S<INS>(X,m)</INS></TT> is the required set of declarations of
+<TT>m</TT>. Otherwise if the use of <TT>m</TT> is not one that
+allows a unique declaration to be chosen from
+<TT>S<INS>(X,m)</INS></TT>, the program is
+ill-formed. [<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

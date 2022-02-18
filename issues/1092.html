@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1092</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1092"></A><H4>1092.
+  
+Cycles in overload resolution during instantiation
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-07-15<BR>
+
+
+
+
+<P>Moving to always doing overload resolution for determining exception
+specifications and implicit deletion creates some unfortunate cycles:</P>
+
+<PRE>
+    template&lt;typename T&gt; struct A {
+       T t;
+    };
+
+    template &lt;typename T&gt; struct B {
+       typename T::U u;
+    };
+
+    template &lt;typename T&gt; struct C {
+       C(const T&amp;);
+    };
+
+    template &lt;typename T&gt; struct D {
+       C&lt;B&lt;T&gt; &gt; v;
+    };
+
+    struct E {
+       typedef A&lt;D&lt;E&gt; &gt; U;
+    };
+
+    extern A&lt;D&lt;E&gt; &gt; a;
+    A&lt;D&lt;E&gt; &gt; a2(a);
+</PRE>
+
+<P>If declaring the copy constructor for
+<TT>A&lt;D&lt;E&gt;&gt;</TT> is part of instantiating the
+class, then we need to do overload resolution on
+<TT>D&lt;E&gt;</TT>, and thus <TT>C&lt;B&lt;E&gt;&gt;</TT>.
+We consider <TT>C(const B&lt;E&gt;&amp;)</TT>, and therefore
+look to see if there's a conversion from
+<TT>C&lt;B&lt;E&gt;&gt;</TT> to <TT>B&lt;E&gt;</TT>, which
+instantiates <TT>B&lt;E&gt;</TT>, which fails because it has
+a field of type <TT>A&lt;D&lt;E&gt;&gt;</TT> which is
+already being instantiated.</P>
+
+<P>Even if we wait until <TT>A&lt;D&lt;E&gt;&gt;</TT> is
+considered complete before finalizing the copy constructor
+declaration, declaring the copy constructor for
+<TT>B&lt;E&gt;</TT> will want to look at the copy
+constructor for <TT>A&lt;D&lt;E&gt;&gt;</TT>, so we still
+have the cycle.</P>
+
+<P>I think that to avoid this cycle we need to short-circuit
+consideration of <TT>C(const T&amp;)</TT> somehow.  But I
+don't see how we can do that without breaking</P>
+
+<PRE>
+    struct F {
+       F(F&amp;);
+    };
+
+    struct G;
+    struct G2 {
+       G2(const G&amp;);
+    };
+
+    struct G {
+       G(G&amp;&amp;);
+       G(const G2&amp;);
+    };
+
+    struct H: F, G { };
+
+    extern H h;
+    H h2(h);
+</PRE>
+
+<P>Here, since <TT>G</TT>'s move constructor suppresses the
+implicit copy constructor, the defaulted <TT>H</TT> copy
+constructor calls <TT>G(const G2&amp;)</TT> instead.  If the
+move constructor did not suppress the implicit copy
+constructor, I believe the implicit copy constructor would
+always be viable, and therefore a better match than a
+constructor taking a reference to another type.</P>
+
+<P>So perhaps the answer is to reconsider that suppression
+and then disqualify any constructor taking (a reference to)
+a type other than the constructor's class from consideration
+when looking up a subobject constructor in an implicitly
+defined constructor.  (Or assignment operator,
+presumably.)</P>
+
+<P>Another possibility would be that when we're looking for
+a conversion from <TT>C&lt;B&lt;E&gt;&gt;</TT> to
+<TT>B&lt;E&gt;</TT> we could somehow avoid considering, or
+even declaring, the <TT>B&lt;E&gt;</TT> copy constructor.
+But that seems a bit dodgy.</P>
+
+<P><B>Additional note (October, 2010):</B></P>
+
+<P>An explicitly declared move constructor/op= should not suppress the
+implicitly declared copy constructor/op=; it should cause it to be
+deleted instead.  This should prevent a member function taking a
+(reference to) an un-reference-related type from being chosen by
+overload resolution in a defaulted member function.</P>
+
+<P>And we should clarify that member functions taking
+un-reference-related types are not even considered during overload
+resolution in a defaulted member function, to avoid requiring their
+parameter types to be complete.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

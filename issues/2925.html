@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2925</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2925"></A><H4>2925.
+  
+Deleting a pointer to an incomplete enumeration type
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/597">#597</A>.)</P>
+
+<P>Paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3144r2.pdf">P3144R2</A>
+(Deleting a Pointer to an Incomplete Type Should be Ill-formed),
+approved in June, 2024, only covered deletion of incomplete class
+types.  However, enumeration types can also be incomplete per
+9.7.1 [<A href="https://wg21.link/dcl.enum#6">dcl.enum</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+An enumeration whose underlying type is fixed is an incomplete type
+until immediately after its <I>enum-base</I> (if any), at which point
+it becomes a complete type. An enumeration whose underlying type is
+not fixed is an incomplete type until the closing } of
+its <I>enum-specifier</I> , at which point it becomes a complete type.
+
+</BLOCKQUOTE>
+
+<P>This leads to the following example that ought to be ill-formed as well:</P>
+
+<PRE>
+  enum E {
+    zero = decltype(delete static_cast&lt;E*&gt;(nullptr), 0){}
+  };
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <INS>static type of the</INS> object <DEL>being</DEL> <INS>to
+be</INS> deleted has incomplete <DEL>class</DEL> type at the point of
+deletion, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-09-13</B></P>
+
+<P>Since an enumeration type can never have a user-declared
+destructor, there is no risk of introducing undefined behavior that
+would be prevented by making deletions involving incomplete
+enumeration types ill-formed.  In short, the situation discussed in
+this issue is harmless and thus lacks rationale to be made
+ill-formed.</P>
+<BR><BR>
+</BODY>
+</HTML>

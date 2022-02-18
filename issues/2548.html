@@ -1,0 +1,219 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2548</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2548"></A><H4>2548.
+  
+Array prvalues and additive operators
+</H4>
+<B>Section: </B>7.6.6&#160; [<A href="https://wg21.link/expr.add">expr.add</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-08
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Consider</P>
+
+<PRE>
+  int main()
+  {
+    using IA = int[];
+    IA{ 1, 2, 3 } + 0;
+  }
+</PRE>
+
+<P>This appears to be ill-formed given the current wording, because
+the operand is already a prvalue, thus 7.2.1 [<A href="https://wg21.link/basic.lval#6">basic.lval</A>] paragraph 6 does not apply and the array-to-pointer conversion is not
+applied:</P>
+
+<BLOCKQUOTE>
+
+Whenever a glvalue appears as an operand of an operator that expects a
+prvalue for that operand, the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), or function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are applied to
+convert the expression to a prvalue.
+
+</BLOCKQUOTE>
+
+<P>This outcome might be an oversight in the resolution for
+<A HREF="1232.html">issue 1232</A>.</P>
+
+<P>See also
+<A HREF="https://github.com/llvm/llvm-project/issues/54016">clang issue 54016</A>.</P>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#1">expr.add</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The additive operators + and - group left-to-right. The usual
+arithmetic conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed for
+operands of arithmetic or enumeration type. <INS>The array-to-pointer
+conversion (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) is applied to an operand of
+array type.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-07-14</B></P>
+
+<P>CWG is generally in favor of the proposed resolution, but the
+interaction with the surrounding text needs to be checked in more
+detail after a Working Draft reflecting the Varna straw polls has
+become available.</P>
+
+<P><B>Additional notes (September, 2023)</B></P>
+
+<P>It is questionable which use-cases are being addressed by this
+change.  On the other hand, <TT>IA{1,2,3}[1]</TT> already works today
+(7.2.1 [<A href="https://wg21.link/basic.lval#6">basic.lval</A>] paragraph 6 and 7.6.1.2 [<A href="https://wg21.link/expr.sub#2">expr.sub</A>] paragraph 2).  However, the latter does cause temporary lifetime
+extension (6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6), whereas the
+near-equivalent <TT>*(IA{1,2,3} + 1)</TT> does not.
+</P>
+
+<P>Similar to the addition case, indirection through an array prvalue
+is also not valid today.  Consistency seems desirable.</P>
+
+<P>
+<I>Related vendor tickets</I>:
+<A HREF="https://github.com/llvm/llvm-project/issues/54016">clang</A>,
+<A HREF="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94264">gcc</A>.</P>
+
+<P><U>Possible resolution (amended 2023-10-09):</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#1">expr.unary.op</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The unary <TT>*</TT> operator performs indirection. <INS>The
+array-to-pointer conversion (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) is applied to
+an operand of array type; the possibly converted</INS> <DEL>Its</DEL>
+operand shall be a prvalue of type &#8220;pointer to T&#8221;, where T
+is an object or function type. The operator yields an lvalue of type T
+denoting the object or function to which the operand points.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#7">expr.unary.op</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <INS>unary <TT>+</TT> operator performs promotion.  The
+array-to-pointer conversion (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) is applied to
+an operand of array type; the possibly converted</INS> operand <DEL>of
+the unary + operator</DEL> shall be a prvalue of arithmetic, unscoped
+enumeration, or pointer type <DEL>and the result is the value of the
+argument</DEL>. Integral
+promotion <INS>(7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>])</INS> is performed on
+integral or enumeration operands. <DEL>The type of the result is the
+type of the promoted operand.</DEL>
+<INS>The operator yields a prvalue of the type of the converted
+operand; the result is the value of the converted operand.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#1">expr.add</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The additive operators + and - group left-to-right. Each operand shall
+be a prvalue. If both operands have arithmetic or unscoped enumeration
+type, the usual arithmetic conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are
+performed. Otherwise, if one operand has arithmetic or unscoped
+enumeration type, integral promotion is applied
+(7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]) to that operand.  <INS>The
+array-to-pointer conversion (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) is applied to
+an operand of array type.</INS> A converted or promoted operand is
+used in place of the corresponding original operand for the remainder
+of this section.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.2 [<A href="https://wg21.link/expr.sub#2">expr.sub</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The <INS>result of the</INS> expression <TT>E1[E2]</TT> is identical (by definition)
+to <INS>that of</INS> <TT>*((E1)+(E2))</TT>, except that in the case of an array operand,
+the result is an lvalue if that operand is an lvalue and an xvalue
+otherwise.
+<div class="ins">
+[ Note: The semantics of <TT>E1[E2]</TT> differ from
+those of <TT>*((E1)+(E2))</TT> also for
+<UL>
+<LI>lifetime extension of temporaries (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) and</LI>
+<LI>changing the active member of a union via assignment
+(11.5.1 [<A href="https://wg21.link/class.union.general">class.union.general</A>]).</LI>
+</UL>
+-- end note ]</div>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2023-09-15 (amended 2023-10-09)</B></P>
+
+<P>CWG seeks advice from EWG whether support for array prvalue
+operands should be added for the indirection operator, the
+unary <TT>+</TT> operator, and the additive operators, along the lines
+of the wording above.  Similar to the <TT>[]</TT> operator, the
+specification of the indirection operation could be amended to yield
+an xvalue if the argument is a prvalue. The unary <TT>+</TT> operator
+is occasionally used to force an array-to-pointer decay.</P>
+
+<P>Forwarded to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1633">paper issue 1633</A>.</P>
+
+<P>Paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2865r2.pdf">P2865R2</A>
+seeks to remove the array-to-pointer conversion for the operands of
+relational operators, wheras this issue suggests adding more
+applications for the array-to-pointer conversion.  These two
+directions appear not to be in harmony.</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>The lack of support for the corner-case in this issue is not a
+defect given the direction in P2865 (Remove Deprecated Array
+Comparisons from C++26).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

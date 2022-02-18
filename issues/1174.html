@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1174</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1174"></A><H4>1174.
+  
+When is a pure virtual function &#8220;used?&#8221;
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-07<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+
+
+<P>According to 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+A variable or non-overloaded function whose name appears as a
+potentially-evaluated expression is <I>used</I>... A virtual member
+function is used if it is not pure.
+
+</BLOCKQUOTE>
+
+<P>However, that does not adequately address when a pure virtual
+function is used or not used.  For example,</P>
+
+<PRE>
+    struct S {
+      virtual void pure1() = 0;
+      virtual void pure2() = 0;
+    };
+    void f(S* p) {
+      p-&gt;pure1();
+      p-&gt;S::pure2();
+    };
+</PRE>
+
+<P>Both <TT>pure1</TT> and <TT>pure2</TT> satisfy the criterion that
+their name appears in a potentially-evaluated expression, but
+<TT>pure1</TT> should not be considered &#8220;used&#8221; (which
+would require that it be defined); <TT>pure2</TT> <I>is</I>
+&#8220;used&#8221; and must be defined.</P>
+
+<P><B>Proposed resolution (November, 2010) [SUPERSEDED]:</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...A variable <DEL>or non-overloaded function</DEL> whose name appears
+as a potentially-evaluated expression is odr-used unless it is an
+object that satisfies the requirements for appearing in a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is immediately applied...  A
+virtual member function is odr-used if it is not pure.  A
+<INS>non-overloaded function whose name appears as a
+potentially-evaluated expression or a</INS> member of a set of
+candidate functions <DEL>is odr-used</DEL> if <DEL>it is</DEL>
+selected by overload resolution when referred to from a
+potentially-evaluated expression<INS>, are odr-used, unless the
+function is pure and its name is not explicitly
+qualified</INS>. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

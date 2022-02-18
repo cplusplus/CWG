@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1824</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1824"></A><H4>1824.
+  
+Completeness of return type vs point of instantiation
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-12-19<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    T t;
+  };
+  struct S {
+    A&lt;S&gt; f() { return A&lt;S&gt;(); }
+  };
+</PRE>
+
+<P>According to 9.3.4.6 [<A href="https://wg21.link/dcl.fct#9">dcl.fct</A>] paragraph 9,</P>
+
+<BLOCKQUOTE>
+
+The type of a parameter or the return type for a function
+definition shall not be an incomplete class type (possibly
+cv-qualified) unless the function is deleted
+(9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]) or the definition is nested
+within the <I>member-specification</I> for that class
+(including definitions in nested classes defined within the
+class).
+
+</BLOCKQUOTE>
+
+<P>Thus type <TT>A&lt;S&gt;</TT> must be a complete type.
+The requirement for a complete type triggers the instantiation
+of the template, which requires that its template argument be
+complete in order to use it as the type of a non-static data
+member.</P>
+
+<P>According to 13.8.4.1 [<A href="https://wg21.link/temp.point#4">temp.point</A>] paragraph 4,
+the point of instantiation of <TT>A&lt;S&gt;</TT> is
+&#8220;immediately preced[ing] the namespace scope
+declaration or definition that refers to the specialization.&#8221;
+Thus the point of instantiation precedes the definition of
+<TT>S</TT>, making this example ill-formed.  Most or all current
+implementations accept the example, however.</P>
+
+<P>Perhaps the specification in 9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] ought
+to say that the completeness of the type is checked from the
+context of the function body (at which S is a complete type)?</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 9.3.4.6 [<A href="https://wg21.link/dcl.fct#9">dcl.fct</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+Types shall not be defined in return or parameter types. The type of a
+parameter or the return type for a function definition shall not be an
+incomplete class type (possibly cv-qualified) <INS>in the context of the
+function definition</INS> unless the function is deleted
+(9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]) <DEL>or the definition is nested within
+the <I>member-specification</I> for that class (including definitions in
+nested classes defined within the class)</DEL>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

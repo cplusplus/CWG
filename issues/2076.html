@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2076</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2076"></A><H4>2076.
+  
+List-initialization of arguments for constructor parameters
+</H4>
+<B>Section: </B>12.2.4.2&#160; [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-01-27<BR>
+
+
+<P>[Adopted at the June, 2016 meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="1467.html">issue 1467</A> made
+some plausible constructs ill-formed.  For example,</P>
+
+<PRE>
+   struct A { A(int); };
+   struct B { B(A); };
+   B b{{0}};
+</PRE>
+
+<P>This is now ambiguous, because the text disallowing
+user-defined conversions for <TT>B</TT>'s copy and move
+constructors was removed from 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4.
+  Another example:</P>
+
+<PRE>
+  struct Params { int a; int b; };
+  class Foo {
+  public:
+    Foo(Params);
+  };
+  Foo foo{{1, 2}};
+</PRE>
+
+<P>This is now ambiguous between <TT>Foo(Params)</TT> and
+<TT>Foo(Foo&amp;&amp;)</TT>.</P>
+
+<P>For non-class types, we allow initialization from a
+single-item list to perform a copy only if the element
+within the list is not itself a list
+(12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#9.1">over.ics.list</A>] bullet 9.1).  The analogous
+rule for this case would be to add back the bullet in
+12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4, but only in the
+case where the initializer is itself an initializer list:</P>
+
+<BLOCKQUOTE>
+
+the second phase of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+when the initializer list has exactly one
+element <INS>that is itself an initializer list</INS>, where the
+target is the first parameter of a constructor of class <TT>X</TT>,
+and the conversion is to <TT>X</TT> or reference to (possibly
+cv-qualified) <TT>X</TT>,
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (March, 2016):</B></P>
+
+<P>Change 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...and the constructor or user-defined conversion function is a
+candidate by</P>
+
+<UL>
+<LI><P>12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], when the argument is
+the temporary in the second step of a class
+copy-initialization, <DEL>or</DEL>
+</P></LI>
+
+<LI><P>12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+(in all cases), <INS>or</INS>
+</P></LI>
+
+<LI><P><INS>the second phase of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when the
+initializer list has exactly one element that is itself an initializer
+list, and the target is the first parameter of a constructor of
+class <TT>X</TT>, and the conversion is to <TT>X</TT> or reference to
+(possibly cv-qualified) <TT>X</TT>,</INS></P></LI>
+
+</UL>
+
+<P>user-defined conversion sequences are not
+considered. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

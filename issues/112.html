@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 112</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="112"></A><H4>112.
+  
+Array types and cv-qualifiers
+</H4>
+<B>Section: </B>9.3.4.5&#160; [<A href="https://wg21.link/dcl.array">dcl.array</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 May 1999<BR>
+
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>
+<U>Steve Clamage:</U>
+Section 9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1
+
+reads in part as follows:</P>
+
+<BLOCKQUOTE>
+Any type of the form "<I>cv-qualifier-seq</I> array of <TT>N T</TT>"
+is adjusted to
+"array of <TT>N</TT> <I>cv-qualifier-seq</I> <TT>T</TT>,"
+and similarly for "array of unknown
+bound of <TT>T</TT>." [<I>Example:</I>
+<PRE>
+    typedef int A[5], AA[2][3];
+    typedef const A CA;     // <I>type is "array of 5 const int"</I>
+    typedef const AA CAA;   // <I>type is "array of 2 array of 3 const int"</I>
+</PRE>
+&#8212;<I>end example</I>]
+[<I>Note:</I> an "array of <TT>N</TT> <I>cv-qualifier-seq</I> <TT>T</TT>"
+has cv-qualified type; such
+an array has internal linkage unless explicitly declared <TT>extern</TT>
+(9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>]
+)
+and must be initialized as specified in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+. ]
+</BLOCKQUOTE>
+
+The Note appears to contradict the sentence that precedes it.
+
+<P>
+<U>Mike Miller:</U>
+I disagree; all it says is that whether the qualification on
+the element type is direct ("<TT>const int x[5]</TT>") or indirect
+("<TT>const A CA</TT>"), the array itself is qualified in the same way
+the elements are.</P>
+
+<P>
+<U>Steve Clamage:</U> In addition, section
+6.8.5 [<A href="https://wg21.link/basic.type.qualifier#2">basic.type.qualifier</A>] paragraph 2
+says:</P>
+
+<BLOCKQUOTE>
+A compound type (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]
+)
+is not cv-qualified by the cv-qualifiers (if
+any) of the types from which it is compounded.  Any cv-qualifiers
+applied to an array type affect the array element type, not the
+array type (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]
+)."
+</BLOCKQUOTE>
+
+The Note appears to contradict that section as well.
+
+<P>
+<U>Mike Miller:</U>
+Yes, but consider the last two sentences of
+6.8.5 [<A href="https://wg21.link/basic.type.qualifier#5">basic.type.qualifier</A>] paragraph 5:
+</P>
+<BLOCKQUOTE>
+Cv-qualifiers applied to an array type attach to the
+underlying element type, so the notation "<I>cv</I> <TT>T</TT>,"
+where <TT>T</TT> is
+an array type, refers to an array whose elements are
+so-qualified.  Such array types can be said to be more (or
+less) cv-qualified than other types based on the cv-qualification
+of the underlying element types.
+</BLOCKQUOTE>
+
+I think this says essentially the same thing as
+9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1
+and
+its note: the qualification of an array is (bidirectionally)
+equivalent to the qualification of its members.
+
+<P>
+<U>Mike Ball:</U>
+I find this a very far reach.  The text in
+9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]
+ is essentially that which
+is in the C standard (and is a change from early versions of C++).
+I don't see any justification at all for the bidirectional equivalence.
+It seems to me that
+the note is left over from the earlier version of the language.</P>
+
+<P>
+<U>Steve Clamage:</U> Finally, the Note seems to say that the declaration</P>
+<PRE>
+    volatile char greet[6] = "Hello";
+</PRE>
+gives "greet" internal linkage, which makes no sense.
+
+<P>Have I missed something, or should that Note be entirely removed?</P>
+
+<P>
+<U>Mike Miller:</U>
+At least the wording in the note
+should be repaired not to indicate that volatile-qualification
+gives an array internal linkage.  Also, depending on how the
+discussion goes, either the wording in
+6.8.5 [<A href="https://wg21.link/basic.type.qualifier#2">basic.type.qualifier</A>] paragraph 2
+
+or in paragraph 5 needs
+to be amended to be consistent regarding whether an array type
+is considered qualified by the qualification of its element
+type.</P>
+
+<P>
+<U>Steve Adamczyk</U> pointed out that
+the current state of affairs resulted from the need to handle
+reference binding consistently.  The wording is intended to define
+the question, "Is an array type cv-qualified?" as being equivalent
+to the question, "Is the element type of the array cv-qualified?"</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Replace the portion of the note in 9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1
+reading</P>
+
+<BLOCKQUOTE>
+
+such an array has internal linkage unless explicitly declared
+<TT>extern</TT> (9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>]) and must be
+initialized as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>].
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+see 6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>].
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

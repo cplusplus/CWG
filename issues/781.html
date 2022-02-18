@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 781</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="781"></A><H4>781.
+  
+Missing requirement in constrained function example
+</H4>
+<B>Section: </B>_N2914_.14.11.2&#160; [<A href="https://wg21.link/temp.archetype">temp.archetype</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 March, 2009<BR>
+
+
+
+
+<P>The example at the end of _N2914_.14.11.2 [<A href="https://wg21.link/temp.archetype#13">temp.archetype</A>] paragraph 13
+reads,</P>
+
+<PRE>
+    auto concept CopyConstructible&lt;typename T&gt; {
+      T::T(const T&amp;);
+    }
+
+    template&lt;CopyConstructible T&gt; struct vector;
+
+    auto concept VectorLike&lt;typename X&gt; {
+      typename value_type = typename X::value_type;
+      X::X();
+      void X::push_back(const value_type&amp;);
+      value_type&amp; X::front();
+    }
+
+    template&lt;CopyConstructible T&gt;
+    requires VectorLike&lt;vector&lt;T&gt;&gt;  //<SPAN CLASS="cmnt"> </SPAN>vector&lt;T&gt;<SPAN CLASS="cmnt"> is an archetype (but not an instantiated archetype)</SPAN>
+    void f(const T&amp; value) {
+      vector&lt;T&gt; x;                  //<SPAN CLASS="cmnt"> OK: default constructor in </SPAN>VectorLike&lt;vector&lt;T&gt; &gt;
+      x.push_back(value);           //<SPAN CLASS="cmnt"> OK: </SPAN>push_back<SPAN CLASS="cmnt"> in </SPAN>VectorLike&lt;vector&lt;T&gt; &gt;
+      VectorLike&lt;vector&lt;T&gt;&gt;::value_type&amp; val = x.front();  //<SPAN CLASS="cmnt"> OK: </SPAN>front<SPAN CLASS="cmnt"> in </SPAN>VectorLike&lt;vector&lt;T&gt; &gt;
+    }
+</PRE>
+
+<P>However, <TT>x.push_back(value)</TT> is, in fact, ill-formed: there
+is no relationship between
+<TT>VectorLike&lt;vector&lt;T&gt;&gt;::value_type</TT> and T in this
+example.  The function needs one further requirement, e.g.,
+<TT>std::SameType&lt;VectorLike&lt;vector&lt;T&gt;&gt;::value_type, T&gt;</TT>
+to allow use of the function parameter <TT>value</TT> as the argument
+of the <TT>push_back</TT> call.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

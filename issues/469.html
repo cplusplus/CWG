@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 469</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="469"></A><H4>469.
+  
+Const template specializations and reference arguments
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matt Austern
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Mar 2004<BR>
+
+
+
+
+<P>Consider the following:</P>
+<PRE>
+	template &lt;typename T&gt; struct X {};  // #1
+	template &lt;typename T&gt; struct X&lt;const T&gt;; //#2
+	template struct X&lt;int&amp;&gt;; //#3
+</PRE>
+
+<P>Which specialization are we instantiating in #3?  The "obvious" answer
+is #1, because "int&amp;" doesn't have a top level cv-qualification.
+However, there's also an argument saying that we should actually be
+instantiating #2.  The argument is: int&amp; can be taken as a match for
+either one (top-level cv-qualifiers are ignored on references, so
+they're equally good), and given two equally good matches we must
+choose the more specialized one.</P>
+
+<P>Is this a valid argument?  If so, is this behavior intentional?</P>
+
+<P>
+<U>John Spicer:</U>
+I don't see the rationale for any choice other than #1.  While it is
+true that if you attempt to apply const to a reference type it just
+gets dropped, that is very different from saying that a reference type
+is acceptable where a const-qualified type is required.</P>
+
+<P>
+<I>If</I> the type matched both templates, the const one would be
+more specialized, but "int&amp;" does not match "const T".</P>
+
+<P>
+<U>Nathan Sidwell:</U>
+thanks for bringing this one to the committee.  However this is
+resolved, I'd like clarification on the followup questions in the
+gcc bug report regarding deduced and non-deduced contexts and
+function templates.  Here're those questions for y'all,</P>
+<PRE>
+template &lt;typename T&gt; void Foo (T *); // #1
+template &lt;typename T&gt; void Foo (T const *); // #2
+void Baz ();
+Foo (Baz); // which?
+
+template &lt;typename T&gt; T const *Foo (T *); // #1
+void Baz ();
+Foo (Baz); // well formed?
+
+template &lt;typename T&gt; void Foo (T *, T const * = 0);
+void Baz ();
+Foo (Baz); // well formed?
+</PRE>
+<P>BTW, I didn't go trying to break things, I implemented the cv-qualifier
+ignoring requirements and fell over this.  I could find nothing in the
+standard saying 'don't do this ignoring during deduction'.</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

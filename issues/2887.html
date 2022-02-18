@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2887</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2887"></A><H4>2887.
+  
+Missing compatibility entries for xvalues
+</H4>
+<B>Section: </B>C.6.3&#160; [<A href="https://wg21.link/diff.cpp03.expr">diff.cpp03.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-18<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/528">#528</A>.)</P>
+
+<P>Paper N3055 (A Taxonomy of Expression Value Categories) introduced
+xvalues.  This changed the behavior of well-formed code
+for <TT>typeid</TT> and the conditional operator, but corresponding
+entries in Annex C are missing.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-31):</B></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph to C.6.3 [<A href="https://wg21.link/diff.cpp03.expr">diff.cpp03.expr</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]<BR>
+<B>Change:</B> Evaluation of operands in <TT>typeid</TT>.<BR>
+<B>Rationale:</B> Introduce additional expression value categories.<BR>
+<B>Effect on original feature:</B> Valid C++ 2003 code that uses
+xvalues as operands for <TT>typeid</TT> may change behavior. For
+example,<BR>
+
+<PRE>
+  void f() {
+    struct B {
+      B() {}
+      virtual ~B() { }
+    };
+
+    struct C { B b; };
+    typeid(C().b); //<SPAN CLASS="cmnt"> unevaluated in C++03, evaluated in C++11</SPAN>
+  }
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph to C.6.3 [<A href="https://wg21.link/diff.cpp03.expr">diff.cpp03.expr</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]<BR>
+<B>Change:</B> Fewer copies in the conditional operator.<BR>
+<B>Rationale:</B> Introduce additional expression value categories.<BR>
+<B>Effect on original feature:</B> Valid C++ 2003 code that uses
+xvalues as operands for the conditional operator may change behavior. For
+example,<BR>
+
+<PRE>
+  void f() {
+    struct B {
+      B() {}
+      B(const B&amp;) { }
+    };
+    struct D : B {};
+
+    struct BB { B b; };
+    struct DD { D d; };
+
+    true ? BB().b : DD().d; //<SPAN CLASS="cmnt"> additional copy in C++03, no copy or move in C++11</SPAN>
+  }
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

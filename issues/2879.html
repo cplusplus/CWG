@@ -1,0 +1,517 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2879</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2879"></A><H4>2879.
+  
+Undesired outcomes with <TT>const_cast</TT>
+</H4>
+<B>Section: </B>7.6.1.11&#160; [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-15<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/526">#526</A>,
+<A HREF="https://github.com/cplusplus/CWG/issues/232">#232</A>, and
+<A HREF="https://github.com/cplusplus/CWG/issues/342">#342</A>.)</P>
+
+<P>The resolution of <A HREF="891.html">issue 891</A> intended to
+make <TT>const_cast&lt;int&amp;&amp;&gt;(2)</TT> ill-formed.  However,
+combined with the temporary materialization conversion turning
+prvalues into glvalues (7.1 [<A href="https://wg21.link/expr.pre#7">expr.pre</A>] paragraph 7, this is now
+well-formed.</P>
+
+<P>Also, the current rules regrettably allow
+<TT>const_cast&lt;int&gt;(0)</TT> and const_casts involving function
+pointers and pointers to member functions. The latter is
+non-normatively considered disallowed by the note in
+7.6.1.11 [<A href="https://wg21.link/expr.const.cast#9">expr.const.cast</A>] paragraph 9.</P>
+
+<P>Major implementations except MSVC agree with the proposed direction
+of this issue.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#3">expr.const.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="del">For two similar types T1 and T2 (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), a
+prvalue of type T1 may be explicitly converted to the type T2 using a
+const_cast if, considering the qualification-decompositions of both
+types, each Pi1 is the same as Pi2 for all i. The result of a
+const_cast refers to the original entity.</P>
+
+<P class="ins">
+If <TT>T</TT> is an object pointer type or pointer to data member
+type, the type of <TT>v</TT> shall be similar to <TT>T</TT> and the
+corresponding P<SUB>i</SUB> components of the qualification
+decompositions of <TT>T</TT> and the type of <TT>v</TT> shall be the same
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]).
+If <TT>v</TT> is a null pointer or null member pointer, the
+result is a null pointer or null member pointer,
+respectively. Otherwise, the result points to or past the end of the
+same object or member, respectively, as <TT>v</TT>.
+</P>
+
+<P>[ Example: ... ]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#4">expr.const.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="del">
+For two object types T1 and T2, if a pointer to T1 can be explicitly
+converted to the type &#8220;pointer to T2&#8221; using a const_cast,
+then the following conversions can also be made:</P>
+<UL class="del">
+<LI>an lvalue of type T1 can be explicitly converted to an lvalue of
+type T2 using the cast const_cast&lt;T2&amp;&gt;;</LI>
+<LI>a glvalue of type T1 can be
+explicitly converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;; and</LI>
+<LI>if T1 is a class type, a prvalue of type T1 can be explicitly
+converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;.</LI>
+</UL>
+<P class="del">The result of a reference const_cast refers to the
+original object if the operand is a glvalue and to the result of
+applying the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) otherwise.
+</P>
+
+<P class="ins">
+Otherwise, T shall be a reference type. Let T1 be the type of v and T2
+be the type referred to by T. A const_cast from "pointer to T1" to
+"pointer to T2" shall be valid. If T is an lvalue reference type, v
+shall be an lvalue. Otherwise, if T2 is a class type and v is a
+prvalue, the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied. Otherwise, the temporary
+materialization conversion is not applied and v shall be a
+glvalue. The result refers to the same object as the (possibly
+converted) operand.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#5">expr.const.cast</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+A null pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) is converted to the
+null pointer value of the destination type. The null member pointer
+value (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) is converted to the null member
+pointer value of the destination type.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The result of the expression const_cast&lt;T&gt;(v) is of type T. If T
+is an lvalue reference to object type, the result is an lvalue; if T
+is an rvalue reference to object type, the result is an xvalue;
+otherwise, the result is a prvalue and the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the
+expression v. <INS>The temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is not performed on <TT>v</TT>, other
+than as specified below.</INS> Conversions that can be performed
+explicitly using const_cast are listed below. No other conversion
+shall be performed explicitly using const_cast.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#3">expr.const.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two similar <INS>object pointer or pointer to data member</INS>
+types T1 and T2 (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), a prvalue of type
+T1 <DEL>may</DEL> <INS>can</INS> be explicitly converted to the type
+T2 using a const_cast if, considering the qualification-decompositions
+of both types, each Pi1 is the same as Pi2 for all i. <DEL>The result of a
+const_cast refers to the original entity.</DEL>
+<INS>If <TT>v</TT> is a null pointer or null member pointer, the
+result is a null pointer or null member pointer,
+respectively. Otherwise, the result points to or past the end of the
+same object, or points to the same member, respectively,
+as <TT>v</TT>.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#4">expr.const.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two object types T1 and T2, if a pointer to T1 can be explicitly
+converted to the type &#8220;pointer to T2&#8221; using a const_cast,
+then the following conversions can also be made:
+<UL>
+<LI>an lvalue of type T1 can be explicitly converted to an lvalue of
+type T2 using the cast const_cast&lt;T2&amp;&gt;;</LI>
+<LI>a glvalue of type T1 can be
+explicitly converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;; and</LI>
+<LI>if T1 is a class type, a prvalue of type T1 can be explicitly
+converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;. <INS>The temporary materialization
+conversion is performed on <TT>v</TT></INS>.</LI>
+</UL>
+The result <DEL>of a reference const_cast</DEL> refers to the
+<DEL>original</DEL> <INS>same</INS> object <DEL>if</DEL> <INS>as</INS>
+the <INS>(possibly converted)</INS> operand <DEL>is a glvalue and to
+the result of applying the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) otherwise</DEL>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#5">expr.const.cast</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+A null pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) is converted to the
+null pointer value of the destination type. The null member pointer
+value (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) is converted to the null member
+pointer value of the destination type.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2024-05-31</B></P>
+
+<P>The existing example in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#3">expr.const.cast</A>] paragraph 3
+shows the temporary materialization conversion applied to an array
+type.  The example would be made ill-formed by the suggested
+resolution above.  More investigation is advised.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The result of the expression const_cast&lt;T&gt;(v) is of type T. If T
+is an lvalue reference to object type, the result is an lvalue; if T
+is an rvalue reference to object type, the result is an xvalue;
+otherwise, the result is a prvalue and the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the
+expression v. <INS>The temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is not performed on <TT>v</TT>, other
+than as specified below.</INS> Conversions that can be performed
+explicitly using const_cast are listed below. No other conversion
+shall be performed explicitly using const_cast.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#3">expr.const.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two similar <INS>object pointer or pointer to data member</INS>
+types T1 and T2 (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), a prvalue of type
+T1 <DEL>may</DEL> <INS>can</INS> be explicitly converted to the type
+T2 using a const_cast if, considering the qualification-decompositions
+of both types, each Pi1 is the same as Pi2 for all i. <DEL>The result of a
+const_cast refers to the original entity.</DEL>
+<INS>If <TT>v</TT> is a null pointer or null member pointer, the
+result is a null pointer or null member pointer,
+respectively. Otherwise, the result points to or past the end of the
+same object, or points to the same member, respectively,
+as <TT>v</TT>.</INS>
+
+<DEL>[Example 1:</DEL>
+<PRE class="del">
+  typedef int *A[3];                //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const CA[3];   //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+  CA &amp;&amp;r = A{};        //<SPAN CLASS="cmnt"> OK, reference binds to temporary array object</SPAN>
+                       //<SPAN CLASS="cmnt"> after qualification conversion to type CA</SPAN>
+  A &amp;&amp;r1 = const_cast&lt;A&gt;(CA{});     //<SPAN CLASS="cmnt"> error: temporary array decayed to pointer</SPAN>
+
+  A &amp;&amp;r2 = const_cast&lt;A&amp;&amp;&gt;(CA{});    //<SPAN CLASS="cmnt"> OK</SPAN>
+</PRE>
+<DEL>-- end example]</DEL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#4">expr.const.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two object types T1 and T2, if a pointer to T1 can be explicitly
+converted to the type &#8220;pointer to T2&#8221; using a const_cast,
+then the following conversions can also be made:
+<UL>
+<LI>an lvalue of type T1 can be explicitly converted to an lvalue of
+type T2 using the cast const_cast&lt;T2&amp;&gt;;</LI>
+<LI>a glvalue of type T1 can be
+explicitly converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;; and</LI>
+<LI>if T1 is a class <INS>or array</INS> type, a prvalue of type T1 can be explicitly
+converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;. <INS>The temporary materialization
+conversion is performed on <TT>v</TT></INS>.</LI>
+</UL>
+The result <DEL>of a reference const_cast</DEL> refers to the
+<DEL>original</DEL> <INS>same</INS> object <DEL>if</DEL> <INS>as</INS>
+the <INS>(possibly converted)</INS> operand <DEL>is a glvalue and to
+the result of applying the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) otherwise</DEL>.
+
+<P class="ins">[Example 2:</P>
+<PRE class="ins">
+  typedef int *A[3];                //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const CA[3];   //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+
+  auto &amp;&amp;r2 = const_cast&lt;A&amp;&amp;&gt;(CA{}); //<SPAN CLASS="cmnt"> OK, temporary materialization conversion is performed</SPAN>
+</PRE>
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#5">expr.const.cast</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+A null pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) is converted to the
+null pointer value of the destination type. The null member pointer
+value (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) is converted to the null member
+pointer value of the destination type.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
+
+<BLOCKQUOTE>
+[Example 5: ...
+<PRE>
+  constexpr int f() {
+    const int &amp;x = 42;
+    const_cast&lt;int &amp;&gt;(x) = 1;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+    return x;
+  }
+  constexpr int z = f();          //<SPAN CLASS="cmnt"> error: not a constant expression</SPAN>
+</PRE>
+<PRE class="ins">
+  typedef int *AP[3];        //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const ACPC[3]; //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+  ACPC &amp;&amp;r = AP{};          //<SPAN CLASS="cmnt"> binds directly</SPAN>
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P>This resolution also resolve <A HREF="1965.html">issue 1965</A>.</P>
+
+<P><B>CWG 2024-10-11</B></P>
+
+<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7 should be amended
+with "unless otherwise specified" and cross-references to the exceptions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-25)</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Whenever</DEL> <INS>Unless otherwise specified
+(7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]), whenever</INS> a prvalue appears as
+an operand of an operator that expects a glvalue for that operand, the
+temporary materialization conversion (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is
+applied to convert the expression to an xvalue.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The result of the expression const_cast&lt;T&gt;(v) is of type T. If T
+is an lvalue reference to object type, the result is an lvalue; if T
+is an rvalue reference to object type, the result is an xvalue;
+otherwise, the result is a prvalue and the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the
+expression v. <INS>The temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is not performed on <TT>v</TT>, other
+than as specified below.</INS> Conversions that can be performed
+explicitly using const_cast are listed below. No other conversion
+shall be performed explicitly using const_cast.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#3">expr.const.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two similar <INS>object pointer or pointer to data member</INS>
+types T1 and T2 (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), a prvalue of type
+T1 <DEL>may</DEL> <INS>can</INS> be explicitly converted to the type
+T2 using a const_cast if, considering the qualification-decompositions
+of both types, each Pi1 is the same as Pi2 for all i. <DEL>The result of a
+const_cast refers to the original entity.</DEL>
+<INS>If <TT>v</TT> is a null pointer or null member pointer, the
+result is a null pointer or null member pointer,
+respectively. Otherwise, the result points to or past the end of the
+same object, or points to the same member, respectively,
+as <TT>v</TT>.</INS>
+
+<DEL>[Example 1:</DEL>
+<PRE class="del">
+  typedef int *A[3];                //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const CA[3];   //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+  CA &amp;&amp;r = A{};        //<SPAN CLASS="cmnt"> OK, reference binds to temporary array object</SPAN>
+                       //<SPAN CLASS="cmnt"> after qualification conversion to type CA</SPAN>
+  A &amp;&amp;r1 = const_cast&lt;A&gt;(CA{});     //<SPAN CLASS="cmnt"> error: temporary array decayed to pointer</SPAN>
+
+  A &amp;&amp;r2 = const_cast&lt;A&amp;&amp;&gt;(CA{});    //<SPAN CLASS="cmnt"> OK</SPAN>
+</PRE>
+<DEL>-- end example]</DEL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#4">expr.const.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+For two object types T1 and T2, if a pointer to T1 can be explicitly
+converted to the type &#8220;pointer to T2&#8221; using a const_cast,
+then the following conversions can also be made:
+<UL>
+<LI>an lvalue of type T1 can be explicitly converted to an lvalue of
+type T2 using the cast const_cast&lt;T2&amp;&gt;;</LI>
+<LI>a glvalue of type T1 can be
+explicitly converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;; and</LI>
+<LI>if T1 is a class <INS>or array</INS> type, a prvalue of type T1 can be explicitly
+converted to an xvalue of type T2 using the cast
+const_cast&lt;T2&amp;&amp;&gt;. <INS>The temporary materialization
+conversion is performed on <TT>v</TT></INS>.</LI>
+</UL>
+The result <DEL>of a reference const_cast</DEL> refers to the
+<DEL>original</DEL> <INS>same</INS> object <DEL>if</DEL> <INS>as</INS>
+the <INS>(possibly converted)</INS> operand <DEL>is a glvalue and to
+the result of applying the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) otherwise</DEL>.
+
+<P class="ins">[Example 2:</P>
+<PRE class="ins">
+  typedef int *A[3];                //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const CA[3];   //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+
+  auto &amp;&amp;r2 = const_cast&lt;A&amp;&amp;&gt;(CA{}); //<SPAN CLASS="cmnt"> OK, temporary materialization conversion is performed</SPAN>
+</PRE>
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#5">expr.const.cast</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+A null pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) is converted to the
+null pointer value of the destination type. The null member pointer
+value (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) is converted to the null member
+pointer value of the destination type.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
+
+<BLOCKQUOTE>
+[Example 5: ...
+<PRE>
+  constexpr int f() {
+    const int &amp;x = 42;
+    const_cast&lt;int &amp;&gt;(x) = 1;  //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+    return x;
+  }
+  constexpr int z = f();          //<SPAN CLASS="cmnt"> error: not a constant expression</SPAN>
+</PRE>
+<PRE class="ins">
+  typedef int *AP[3];        //<SPAN CLASS="cmnt"> array of 3 pointer to int</SPAN>
+  typedef const int *const ACPC[3]; //<SPAN CLASS="cmnt"> array of 3 const pointer to const int</SPAN>
+  ACPC &amp;&amp;r = AP{};          //<SPAN CLASS="cmnt"> binds directly</SPAN>
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P>This resolution also resolve <A HREF="1965.html">issue 1965</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

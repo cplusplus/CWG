@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 325</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="325"></A><H4>325.
+  
+When are default arguments parsed?
+</H4>
+<B>Section: </B>9.3.4.7&#160; [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Nov 2001<BR>
+
+
+<P>The standard is not precise enough about when the default arguments of
+member functions are parsed.  This leads to confusion over whether certain
+constructs are legal or not, and the validity of certain compiler
+implementation algorithms.</P>
+
+<P>9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5 says "names in the
+expression are bound, and
+the semantic constraints are checked, at the point where the default
+argument expression appears"</P>
+
+<P>However, further on at paragraph 9 in the same section there is an example,
+where the salient parts are
+<PRE>
+  int b;
+  class X {
+    int mem2 (int i = b); // OK use X::b
+    static int b;
+  };
+</PRE>
+which appears to contradict the former constraint. At the point the default
+argument expression appears in the definition of X, X::b has not been
+declared, so one would expect ::b to be bound.  This of course appears to
+violate 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1(2) "A name N used in
+a class S shall
+refer to the same declaration in its context and when reevaluated in the
+complete scope of S. No diagnostic is required."</P>
+
+<P>Furthermore 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1(1) gives the
+ scope of names declared
+in class to "consist not only of the declarative region following
+the name's declarator, but also of .. default arguments ...". Thus implying
+that X::b is in scope in the default argument of X::mem2 previously.</P>
+
+<P>That previous paragraph hints at an implementation technique of saving the
+token stream of a default argument expression and parsing it at the end of
+the class definition (much like the bodies of functions defined in the
+class).  This is a technique employed by GCC and, from its behaviour, in
+the EDG front end.  The standard leaves two things unspecified.
+Firstly, is a default argument expression permitted to call a static member
+function declared later in the class in such a way as to require evaluation of
+that function's default arguments? I.e. is the following well formed?
+<PRE>
+  class A {
+    static int Foo (int i = Baz ());
+    static int Baz (int i = Bar ());
+    static int Bar (int i = 5);
+ };
+</PRE>
+If that is well formed, at what point does the non-sensicalness of
+<PRE>
+  class B {
+    static int Foo (int i = Baz ());
+    static int Baz (int i = Foo());
+  };
+</PRE>
+become detected? Is it when B is complete? Is it when B::Foo or B::Baz is
+called in such a way to require default argument expansion? Or is no
+diagnostic required?</P>
+
+<P>The other problem is with collecting the tokens that form the default
+argument expression.  Default arguments which contain template-ids with
+more than one parameter present a difficulty in determining when the
+default argument finishes.  Consider,
+<PRE>
+  template &lt;int A, typename B&gt; struct T { static int i;};
+  class C {
+    int Foo (int i = T&lt;1, int&gt;::i);
+  };
+</PRE>
+The default argument contains a non-parenthesized comma.  Is it required
+that this comma is seen as part of the default argument expression and not
+the beginning of another of argument declaration?  To accept this as
+part of the default argument would require name lookup of T (to determine
+that the '&lt;' was part of a template argument list and not a less-than
+operator) before C is complete.  Furthermore, the more pathological
+<PRE>
+  class D {
+    int Foo (int i = T&lt;1, int&gt;::i);
+    template &lt;int A, typename B&gt; struct T {static int i;};
+  };
+</PRE>
+would be very hard to accept. Even though T is declared after Foo, T is
+in scope within Foo's default argument expression.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>Append the following text to 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#8">dcl.fct.default</A>] paragraph 8.</P>
+<BLOCKQUOTE>
+	The default argument expression of a member function declared in
+	the class definition consists of the sequence of tokens up until
+	the next non-parenthesized, non-bracketed comma or close
+	parenthesis.  Furthermore such default argument expressions shall
+	not require evaluation of a default argument of a function
+	declared later in the class.
+</BLOCKQUOTE>
+
+<P>This would make the above A, B, C and D ill formed and is in line with the
+existing compiler practice that I am aware of.</P>
+
+<P><B>Notes from the October, 2005 meeting:</B></P>
+
+<P>The CWG agreed that the first example (<TT>A</TT>) is currently
+well-formed and that it is not unreasonable to expect implementations
+to handle it by processing default arguments recursively.</P>
+
+<P><B>Additional notes, May, 2009:</B></P>
+
+<P>Presumably the following is ill-formed:</P>
+
+<PRE>
+    int f(int = f());
+</PRE>
+
+<P>However, it is not clear what in the Standard makes it so.  Perhaps
+there needs to be a statement to the effect that a default argument
+only becomes usable after the complete declarator of which it is a
+part.</P>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<P>In addition to default arguments, commas in template argument lists
+also cause problems in initializers for nonstatic data members:</P>
+
+<PRE>
+    struct S {
+      int n = T&lt;a,b&gt;(c);  //<SPAN CLASS="cmnt"> ill-formed declarator for member</SPAN> b
+                          //<SPAN CLASS="cmnt"> or template argument?</SPAN>
+    };
+</PRE>
+
+<commmittee_only><P>(This is from #16 of the
+<TT>IssuesFoundImplementingC0x.pdf</TT> document on the Bloomington
+wiki.</P></commmittee_only>
+
+<P><B>Additional notes (August, 2011):</B></P>
+
+<P>See also issues <A HREF="1352.html">1352</A> and
+<A HREF="361.html">361</A>. </P>
+
+<P><B>Notes from the February, 2012 meeting:</B></P>
+
+<P>It was decided to handle the question of parsing an initializer
+like <TT>T&lt;a,b&gt;(c)</TT> (a <I>template-id</I> or two
+declarators) in this issue and the remaining questions in <A HREF="361.html">issue 361</A>.  For this issue, a <I>template-id</I> will
+only be recognized if there is a preceding declaration of a template.</P>
+
+
+
+<P><B>Additional note (November, 2020):</B></P>
+
+<P>Paper P1787R6, adopted at the November, 2020 meeting, partially
+addresses this issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

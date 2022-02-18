@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 130</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="130"></A><H4>130.
+  
+Sequence points and <I>new-expression</I>s
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 June 1999<BR>
+
+
+
+
+
+<P>Clause 7 [<A href="https://wg21.link/expr#4">expr</A>] paragraph 4
+appears to
+grant an implementation the right to generate code for a function
+call like</P>
+
+<PRE>
+    f(new T1, new T2)
+</PRE>
+
+in the order
+
+<UL>
+<LI>allocate memory for the <TT>T1</TT> object</LI>
+<LI>allocate memory for the <TT>T2</TT> object</LI>
+<LI>call the <TT>T1</TT> constructor</LI>
+<LI>call the <TT>T2</TT> constructor</LI>
+<LI>call <TT>f</TT>
+</LI>
+</UL>
+
+However, 7.6.2.8 [<A href="https://wg21.link/expr.new#17">expr.new</A>] paragraph 17
+
+seems to require the deallocation of the storage for an object only
+if part of the initialization of that object terminates with an
+exception.  Given the ordering above, this specification would
+appear to allow the memory for the <TT>T2</TT> object to be leaked
+if the <TT>T1</TT> constructor throws an exception.
+
+<P>Suggested resolution: either forbid the ordering above or expand
+the requirement for reclaiming storage to include exceptions thrown
+in all operations between the allocation and the completion of the
+constructor.</P>
+
+<P>
+<B>Rationale (10/99):</B> Even in the "traditional" ordering of the calls
+to allocation functions and constructors, memory can still leak.  For
+instance, if <TT>T1</TT> were successfully constructed and then the
+construction of <TT>T2</TT> were terminated by an exception, the
+memory for <TT>T1</TT> would be lost.  Programmers concerned about
+memory leaks will avoid this kind of construct, so it seems
+unnecessary to provide special treatment for it to avoid the memory
+leaks associated with one particular implementation strategy.</P>
+<BR><BR>
+</BODY>
+</HTML>

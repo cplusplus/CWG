@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 162</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="162"></A><H4>162.
+  
+(<TT>&amp;C::f)()</TT> with nonstatic members
+</H4>
+<B>Section: </B>12.2.2.2&#160; [<A href="https://wg21.link/over.match.call">over.match.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Aug 1999<BR>
+
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+
+
+<P>12.2.2.2 [<A href="https://wg21.link/over.match.call#3">over.match.call</A>] paragraph 3
+
+says that when a call of the form</P>
+
+<PRE>
+   (&amp;C::f)()
+</PRE>
+
+is written, the set of overloaded functions named by <TT>C::f</TT>
+must not contain
+any nonstatic member functions.  A footnote gives the rationale: if a member
+of <TT>C::f</TT> is a nonstatic member function,
+<TT>&amp;C::f</TT> is a pointer to member
+constant, and therefore the call is invalid.
+
+<P>This is clear, it's implementable, and it doesn't directly contradict
+anything else in the standard.  However, I'm not sure it's consistent
+with some similar cases.</P>
+
+<P>In 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5,
+
+second example, it is made amply clear that when <TT>&amp;C::f</TT> is
+used as the address of a function, e.g.,</P>
+
+<PRE>
+   int (*pf)(int) = &amp;C::f;
+</PRE>
+
+the overload set can contain both static and nonstatic member functions.
+The function with the matching signature is selected, and if it is
+nonstatic <TT>&amp;C::f</TT>
+is a pointer to member function, and otherwise <TT>&amp;C::f</TT> is
+a normal pointer to function.
+
+<P>Similarly, 12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]
+
+paragraph 3 makes it clear that</P>
+
+<PRE>
+   C::f();
+</PRE>
+
+is a valid call even if the overload set contains both static and
+nonstatic member functions.  Overload resolution is done, and if a
+nonstatic member function is selected, an implicit <TT>this-&gt;</TT> is added,
+if that is possible.
+
+<P>Those paragraphs seem to suggest the general rule that you do overload
+resolution first and then you interpret the construct you have
+according to the function selected.  The fact that there are static
+and nonstatic functions in the overload set is irrelevant; it's only
+necessary that the chosen function be static or nonstatic to match
+the context.</P>
+
+<P>Given that, I think it would be more consistent if the
+<TT>(&amp;C::f)()</TT> case
+would also do overload resolution first.  If a nonstatic member is
+chosen, the program would be ill-formed.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<OL>
+
+<LI>
+<P>Change the indicated text in 12.2.2.2 [<A href="https://wg21.link/over.match.call#3">over.match.call</A>] paragraph 3:
+</P>
+
+<BLOCKQUOTE>
+The fourth case arises from a <I>postfix-expression</I> of the form
+<TT>&amp;F</TT>, where
+<TT>F</TT> names  a set of overloaded functions.
+In the context of a function call,
+<DEL>the set of functions named by <TT>F</TT> shall contain only non-member
+functions and static member functions. [Footnote:
+If <TT>F</TT> names a non-static member function, <TT>&amp;F</TT>
+is a pointer-to-member, which cannot be used with the function call syntax.]
+And in this context using <TT>&amp;F</TT> behaves the same as using</DEL>
+<INS><TT>&amp;F</TT> is treated the same as</INS>
+the name <TT>F</TT> by itself.
+Thus, <TT>(&amp;F)(</TT><I>expression-list</I><sub>opt</sub><TT>)</TT>
+is simply
+<TT>(F)(</TT><I>expression-list</I><sub>opt</sub><TT>)</TT>, which is
+discussed in 12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>].
+<INS>If the function selected by overload resolution according to
+12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>] is
+a nonstatic member function, the program is
+ill-formed. [Footnote: When <TT>F</TT> is a nonstatic member
+function, a reference of the form <TT>&amp;A::F</TT> is a
+pointer-to-member,
+which cannot be used with the function-call syntax, and
+a reference of the form <TT>&amp;F</TT> is an invalid use of the
+"<TT>&amp;</TT>" operator on a nonstatic member function.]</INS>
+(The resolution of <TT>&amp;F</TT> in other contexts is described in
+12.3 [<A href="https://wg21.link/over.over">over.over</A>].)
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

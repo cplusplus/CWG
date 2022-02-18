@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2524</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2524"></A><H4>2524.
+  
+Distinguishing user-defined conversion sequences by <I>ref-qualifier</I>
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hani Deek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-09-09<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct S  {
+      operator int() const &amp; { return 0; }
+      operator char() &amp;&amp; { return 0; }
+  };
+
+  void foo(int) {}
+  void foo(char) {}
+
+  int main() {
+    foo(S{}); //<SPAN CLASS="cmnt">OK, calls </SPAN>foo(char)
+  }
+</PRE>
+
+<P>Here, the ICS for each function is a user-defined
+conversion involving the same user-defined conversion
+function, <TT>operator char() &amp;&amp;</TT>, because of
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.2.3">over.ics.rank</A>] bullet 3.2.3:</P>
+
+<BLOCKQUOTE>
+
+<TT>S1</TT> and <TT>S2</TT> include reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and neither refers to an
+implicit object parameter of a non-static member function
+declared without a <I>ref-qualifier</I>, and <TT>S1</TT>
+binds an rvalue reference to an rvalue and <TT>S2</TT> binds
+an lvalue reference
+
+</BLOCKQUOTE>
+
+<P>
+<TT>foo(int)</TT> is a promotion,
+while <TT>foo(char)</TT> is an exact match, so the latter is
+chosen.</P>
+
+<P>Replacing <TT>int</TT> and <TT>char</TT> in this example
+with non-interconvertible types results in a different
+outcome:</P>
+
+<PRE>
+  class A{};
+  class B{};
+
+  struct S {
+    operator A() const &amp; { return A{}; }
+    operator B() &amp;&amp; { return B{}; }
+  };
+
+  void foo(A) {}
+  void foo(B) {}
+
+  int main() {
+    foo(S{}); //<SPAN CLASS="cmnt">error: call to </SPAN>foo<SPAN CLASS="cmnt"> is ambiguous</SPAN>
+  }
+</PRE>
+
+<P>Here, only one of the two user-defined conversion
+operators is viable for each overload. Consequently,
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.3">over.ics.rank</A>] bullet 3.3,</P>
+
+<BLOCKQUOTE>
+
+User-defined conversion sequence <TT>U1</TT> is a better
+conversion sequence than another user-defined conversion
+sequence <TT>U2</TT> if they contain the same user-defined
+conversion function or constructor or they initialize the
+same class in an aggregate initialization and in either case
+the second standard conversion sequence of <TT>U1</TT> is
+better than the second standard conversion sequence
+of <TT>U2</TT>.
+
+</BLOCKQUOTE>
+
+<P>does not apply, unlike the earlier case, because
+different user-defined conversion functions appear in
+each conversion sequence and thus the sequences are
+indistinghishable.</P>
+
+<P>This seems inconsistent.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.3">over.ics.rank</A>] bullet 3.3 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI><P>User-defined conversion sequence <TT>U1</TT> is a better
+conversion sequence than another user-defined conversion
+sequence <TT>U2</TT> if</P></LI>
+
+<UL>
+<LI><P><INS>the initial standard conversion sequence of
+<TT>U1</TT> is better than the initial standard conversion
+sequence of <TT>U2</TT>, or</INS></P></LI>
+
+<LI>
+<P>they contain the same user-defined conversion
+function or constructor or they initialize the same class in
+an aggregate initialization and in either case the second
+standard conversion sequence of <TT>U1</TT> is better than
+the second standard conversion sequence of <TT>U2</TT>.</P>
+</LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>This is an extension that is best addressed by a paper to EWG.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

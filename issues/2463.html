@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2463</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2463"></A><H4>2463.
+  
+Trivial copyability and unions with non-trivial members
+</H4>
+<B>Section: </B>11.2&#160; [<A href="https://wg21.link/class.prop">class.prop</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-11-30
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>According to 11.2 [<A href="https://wg21.link/class.prop#1">class.prop</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>trivially copyable class</I> is a class:</P>
+
+<UL>
+<LI><P>that has at least one eligible copy constructor, move
+constructor, copy assignment operator, or move assignment
+operator (11.4.4 [<A href="https://wg21.link/special">special</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]),</P></LI>
+
+<LI><P>where each eligible copy constructor, move
+constructor, copy assignment operator, and move assignment
+operator is trivial, and</P></LI>
+
+<LI><P>that has a trivial, non-deleted destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This definition has surprising effects in a union whose
+members are not trivial. For example:</P>
+
+<PRE>
+  struct S {
+    S&amp; operator=(const S&amp;);
+  };
+  union U {
+    S s;
+  };
+</PRE>
+
+<P>In this case, <TT>S</TT> is not trivially copyable because
+its assignment operator is non-trivial, although its copy
+constructor is trivial. <TT>U</TT>, however, is trivially
+copyable because its assignment operator is not eligible
+(11.4.4 [<A href="https://wg21.link/special#6">special</A>] paragraph 6) because it is
+deleted, but its copy constructor is trivial, thus satisfying
+the second bullet.</P>
+
+<P>It is unclear why, for example, a complete object of type
+<TT>S</TT> cannot be <TT>memcpy</TT>ed but such an object
+can be <TT>memcpy</TT>ed when embedded in a union.</P>
+
+<P>There is implementation divergence in the handling of
+this example.</P>
+
+<P><B>CWG 2022-11-10</B></P>
+
+<P>Traditionally, the rule for trivial copyability has been that each
+of the potentially user-written ways of copying a class (copy/move
+constructors, copy/move assignment operators) have to be trivial (or
+deleted). See C++17 subclause 12p6:</P>
+
+<BLOCKQUOTE>
+
+A <I>trivially copyable class</I> is a class:
+
+<UL>
+<LI>
+where each copy constructor, move constructor, copy assignment
+operator, and move assignment operator (15.8, 16.5.3) is either
+deleted or trivial,
+</LI>
+
+<LI>that has at least one non-deleted copy constructor, move
+constructor, copy assignment operator, or move assignment operator,
+and</LI>
+
+<LI>
+that has a trivial, non-deleted destructor (15.4).</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>That seems unhelpful.  The rule should instead be that if there is
+any way of copying the class such that the compiler will generate
+a <TT>memcpy</TT> (because the corresponding operation is trivial),
+the user should be allowed to perform <TT>memcpy</TT>, too. In terms
+of wording, this amounts to striking the first bullet and adding
+"trivial" to the second bullet. (The wording in the current working
+draft considers eligibility, which complicates the treatment slightly
+in terms unrelated to the present issue.)</P>
+
+<P>CWG is seeking EWG advice on this issue via
+<A HREF="https://github.com/cplusplus/papers/issues/1363">cplusplus/papers#1363</A>.</P>
+
+<P><B>Additional notes (March, 2023)</B></P>
+
+<P>
+<TT>std::tuple</TT> with trivially-copyable element types and with
+no elements (<TT>std::tuple&lt;&gt;</TT>) ought to be trivially
+copyable, but the recent addition of <TT>const</TT>-qualified
+assignment operators makes that not so under the status quo core
+language rules.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2905</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2905"></A><H4>2905.
+  
+Value-dependence of <I>noexcept-expression</I>
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mital Ashok
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-16<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/554">#554</A>.)</P>
+
+<P>The following examples of <I>noexcept-expression</I>s are not
+specified to be value-dependent, but ought to be, because
+value-initialization of <TT>T</TT> might throw an exception.</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  void f() {
+    noexcept(static_cast&lt;int&gt;(T{}));
+    noexcept(typeid(*T{}));
+    noexcept(delete T{});
+  }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-19):</B></P>
+
+<OL>
+<LI>
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Expressions of the following form are value-dependent if
+the <I>unary-expression</I> or expression is <I>type-dependent</I> or
+the <I>type-id</I> is dependent:
+<PRE>
+sizeof <I>unary-expression</I>
+sizeof ( <I>type-id</I> )
+typeid ( expression )
+typeid ( <I>type-id</I> )
+alignof ( <I>type-id</I> )
+<DEL>noexcept ( <I>expression</I> )</DEL>
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#3">temp.dep.constexpr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Expressions of the following form are value-dependent if either
+the <I>type-id</I> <DEL>or</DEL> <INS>,</INS> <I>simple-type-specifier</I><INS>,
+or <I>typename-specifier</I></INS> is dependent or the expression
+or <I>cast-expression</I> is value-dependent <INS>or
+any <I>expression</I> in the <I>expression-list</I> is value-dependent
+or any <I>assignment-expression</I> in the <I>braced-init-list</I> is
+value-dependent</INS>:
+<PRE>
+<I>simple-type-specifier</I> ( <I>expression-list<sub>opt</sub></I> )
+<INS><I>typename-specifier</I> ( <I>expression-list</I><sub>opt</sub> )
+<I>simple-type-specifier</I> <I>braced-init-list</I>
+<I>typename-specifier</I> <I>braced-init-list</I></INS>
+static_cast &lt; <I>type-id</I> &gt; ( <I>expression</I> )
+const_cast &lt; <I>type-id</I> &gt; ( <I>expression</I> )
+reinterpret_cast &lt; <I>type-id</I> &gt; ( <I>expression</I> )
+<INS>dynamic_cast &lt; <I>type-id</I> &gt; ( <I>expression</I> )</INS>
+( <I>type-id</I> ) <I>cast-expression</I>
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#5">temp.dep.constexpr</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+A <I>noexcept-expression</I> (7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>]) is
+value-dependent if its <I>expression</I> involves a template parameter.
+</P>
+
+<P>An expression of the form &amp;<I>qualified-id</I> where ...</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

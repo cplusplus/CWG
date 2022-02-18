@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 635</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="635"></A><H4>635.
+  
+Names of constructors and destructors of templates
+</H4>
+<B>Section: </B>6.5.5.2&#160; [<A href="https://wg21.link/class.qual">class.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 May 2007<BR>
+
+
+
+
+<P>There is a discrepancy between the syntaxes allowed for defining a
+constructor and a destructor of a class template.  For example:</P>
+
+<PRE>
+    template &lt;class&gt; struct S { S(); ~S (); };
+    template &lt;class T&gt; S&lt;T&gt;::S&lt;T&gt;() { }        // error
+    template &lt;class T&gt; S&lt;T&gt;::~S&lt;T&gt;() { }       // okay
+</PRE>
+
+<P>The reason for this is that 6.5.5.2 [<A href="https://wg21.link/class.qual#2">class.qual</A>] paragraph 2
+says that <TT>S::S</TT> is &#8220;considered to name
+the constructor,&#8221; which is not a template and thus cannot
+accept a template argument list.  On the other hand, the
+second <TT>S</TT> in <TT>S::~S</TT> finds the
+injected-class-name, which &#8220;can be used with or without a
+<I>template-argument-list</I>&#8221; (13.8.2 [<A href="https://wg21.link/temp.local#1">temp.local</A>] paragraph 1)
+ and thus satisfies the requirement to name the
+destructor's class (11.4.7 [<A href="https://wg21.link/class.dtor#1">class.dtor</A>] paragraph 1).</P>
+
+<P>Would it make sense to allow the <I>template-argument-list</I>
+in the constructor declaration and thus make the language just a
+little easier to use?</P>
+
+<P><B>Rationale (July, 2007):</B></P>
+
+<P>The CWG noted that the suggested change would be confusing in the
+case where the class template had both template and non-template
+constructors.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

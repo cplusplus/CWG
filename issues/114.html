@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 114</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="114"></A><H4>114.
+  
+Virtual overriding by template member function specializations
+</H4>
+<B>Section: </B>13.7.3&#160; [<A href="https://wg21.link/temp.mem">temp.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Gibbons
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 May 1999<BR>
+
+
+
+
+
+<P>According to 13.7.3 [<A href="https://wg21.link/temp.mem#4">temp.mem</A>] paragraph 4,
+</P>
+<BLOCKQUOTE>
+A specialization of a member function template does not override
+a virtual function from a base class.
+</BLOCKQUOTE>
+
+<B>Bill Gibbons:</B>
+I think that's sufficiently surprising behavior that it should be ill-formed
+instead.
+
+<P>As I recall, the main reason why a member function template cannot be
+virtual is that you can't easily construct reasonable vtables for an
+infinite set of functions.  That doesn't apply to overrides.</P>
+
+<P>Another problem is that you don't know that a specialization overrides
+until the specialization exists:</P>
+<PRE>
+    struct A {
+        virtual void f(int);
+    };
+    struct B : A {
+        template&lt;class T&gt; void f(T);  // does this override?
+    };
+</PRE>
+But this could be handled by saying:
+<UL>
+<LI>If deduction using the type of an overridable function in
+a base class succeeds, the template is implicitly specialized
+to provide the override.</LI>
+
+<LI>If this yields more than one override for a function, the program
+is ill-formed.</LI>
+
+<LI>If a specialization due to explicit template arguments creates
+an override that did not previously exist, the program is
+ill-formed.  (Or alternatively, it is not an override.)</LI>
+</UL>
+
+The last case might only involve non-deducible contexts, e.g.
+<PRE>
+    template&lt;int I&gt; struct X;
+    struct A {
+        virtual void f(A&lt;5&gt;);
+    };
+    struct B : A {
+        template&lt;int I, int J&gt; void f(A&lt;I+J&gt;);  // does not overrride
+    };
+
+    void g(B *b) {
+        X&lt;t&gt; x;
+        b-&gt;f&lt;3,2&gt;(x);  // specialization B::f(A&lt;5&gt;) makes program ill-formed
+    }
+</PRE>
+So I think there are reasonable semantics.  But is it useful?
+
+<P>If not, I think the creation of a specialization that would have been
+an override had it been declared in the class should be an error.</P>
+
+<P>
+<B>Daveed Vandevoorde:</B>
+There is real code out there that is written with this rule
+in mind. Changing the standard on them would not be good
+form, IMO.</P>
+
+<P>
+<B>Mike Ball:</B>
+Also, if you allow template functions to be specialized outside
+of the class you introduce yet another non-obvious ordering constraint.</P>
+
+<P>Please don't make such a change after the fact.</P>
+
+<P>
+<B>John Spicer:</B> This is the result of an explicit committee
+decision.  The reason for this rule is that it is too easy to
+unwittingly override a function from a base class, which was probably
+not what was intended when the template was written.  Overriding
+should be a conscious decision by the class writer, not something done
+accidentally by a template.</P>
+
+<P>
+<B>Rationale (10/99):</B> The Standard correctly reflects the
+intent of the Committee.</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>
+This was reopened because of a discussion while reviewing possible
+extensions.</P>
+
+
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>This was discussed again, and the consensus was that we did
+not want to make a change, and in particular we did not want to
+make it an error and risk breaking existing code.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

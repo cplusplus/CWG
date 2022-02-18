@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1837</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1837"></A><H4>1837.
+  
+Use of <TT>this</TT> in <TT>friend</TT> and local class declarations
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-13<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The description of the use of <TT>this</TT> found in
+_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>] paragraphs 3 and 4 allow it to appear
+in the declaration of a non-static member function following the
+optional <I>cv-qualifier-seq</I> and in the
+<I>brace-or-equal-initializer</I> of a non-static data member; all
+other uses are prohibited.  These restrictions appear to allow
+questionable uses of <TT>this</TT> in several contexts. For example:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  struct Fish { static const bool value = true; };
+
+  struct Other {
+    int p();
+    auto q() -&gt; decltype(p()) *;
+  };
+
+  class Outer {
+    //<SPAN CLASS="cmnt"> The following declares a member function of class </SPAN>Other.
+    //<SPAN CLASS="cmnt"> Is </SPAN>this<SPAN CLASS="cmnt"> interpreted as </SPAN>Other*<SPAN CLASS="cmnt"> or </SPAN>Outer*<SPAN CLASS="cmnt">?</SPAN>
+    friend auto Other::q() -&gt; decltype(this-&gt;p()) *;
+    int g();
+    int f() {
+     extern void f(decltype(this-&gt;g()) *);
+     struct Inner {
+       //<SPAN CLASS="cmnt"> The following are all within the declaration of </SPAN>Outer::f().
+       //<SPAN CLASS="cmnt"> Is </SPAN>this Outer*<SPAN CLASS="cmnt"> or </SPAN>Inner*<SPAN CLASS="cmnt">?</SPAN>
+       static_assert(Fish&lt;decltype(this-&gt;g())&gt;::value, "");
+       enum { X = Fish&lt;decltype(this-&gt;f())&gt;::value };
+       struct Inner2 : Fish&lt;decltype(this-&gt;g())&gt; { };
+       friend void f(decltype(this-&gt;g()) *);
+       friend auto Other::q() -&gt; decltype(this-&gt;p()) *;
+     };
+     return 0;
+    }
+  };
+</PRE>
+
+<PRE>
+  struct A {
+   int f();
+   bool b = [] {
+    struct Local {
+     static_assert(sizeof this-&gt;f() == sizeof(int), ""); // A<SPAN CLASS="cmnt"> or </SPAN>Local<SPAN CLASS="cmnt">?</SPAN>
+    };
+   };
+  };
+</PRE>
+
+<P>There is implementation divergence on the treatment of these
+examples.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

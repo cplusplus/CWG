@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1037</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1037"></A><H4>1037.
+  
+Requirements for operands of <I>delete-expression</I>s and deallocation functions
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-01<BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<P>According to 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+...in the first alternative (<I>delete object</I>), the value of
+the operand of <TT>delete</TT> shall be a pointer to a non-array
+object or a pointer to a subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+representing a base class of such an object (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]).  If not, the behavior is undefined.  In the second
+alternative (<I>delete array</I>), the value of the operand of
+<TT>delete</TT> shall be the pointer value which resulted from a
+previous array <I>new-expression</I>.<SUP>79</SUP> If not, the
+behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>The second part of this specification makes it clear that an array
+object being deleted must have been allocated via <TT>new</TT>.
+However, the first part, for the non-array object, completely omits
+this vital requirement, requiring only that it not be an array.</P>
+
+<P>The corresponding requirement for an argument to a deallocation
+function is found in 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#3">basic.stc.dynamic.deallocation</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+...the value supplied to <TT>operator delete(void*)</TT> in the
+standard library shall be one of the values returned by a
+previous invocation of either <TT>operator new(std::size_t)</TT>
+or <TT>operator new(std::size_t, const std::nothrow_t&amp;)</TT>
+in the standard library, and the value supplied to <TT>operator
+delete[](void*)</TT> in the standard library shall be one of the
+values returned by a previous invocation of either <TT>operator
+new[](std::size_t)</TT> or <TT>operator new[](std::size_t, const
+std::nothrow_t&amp;)</TT> in the standard library.
+
+</BLOCKQUOTE>
+
+<P>This correctly states the required provenance of the pointer,
+but it does so using &#8220;shall,&#8221; which is inappropriate
+for a runtime requirement.  This wording should be recast in terms
+of undefined behavior if the requirement is not met.</P>
+
+<P><B>Proposed resolution (October, 2010):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the operand has a class type, the operand is converted to a
+pointer type by calling the above-mentioned conversion function,
+and the converted operand is used in place of the original
+operand for the remainder of this section.  <DEL>In either
+alternative, the value of the operand of <TT>delete</TT> may be a
+null pointer value.  If it is not a null pointer value, in</DEL>
+<INS>In</INS> the first alternative (<I>delete object</I>), the
+value of the operand of <TT>delete</TT> <DEL>shall</DEL>
+<INS>may</INS> be <INS>a null pointer value,</INS> a pointer to
+a non-array object <INS>created by a previous
+<I>new-expression,</I></INS> or a pointer to a subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) representing a base class of such an object (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]).  If not, the behavior is undefined.  In the
+second alternative (<I>delete array</I>), the value of the operand of
+<TT>delete</TT> <DEL>shall</DEL> <INS>may</INS> be <DEL>the</DEL>
+<INS>a null pointer value or a</INS> pointer value <DEL>which</DEL>
+<INS>that</INS> resulted from a previous array
+<I>new-expression</I>.<SUP>79</SUP> If not, the behavior is
+undefined. [<I>Note:</I> this means that the syntax of the
+<I>delete-expression</I> must match the type of the object
+allocated by <DEL>new</DEL> <INS><TT>new</TT></INS>, not the
+syntax of the <I>new-expression</I>. &#8212;<I>end note</I>]...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#3">basic.stc.dynamic.deallocation</A>] paragraph 3 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Otherwise, <INS>the behavior is undefined if</INS> the value
+supplied to <TT>operator delete(void*)</TT> in the standard
+library <DEL>shall be</DEL> <INS>is not</INS> one of the values
+returned by a previous invocation of either <TT>operator
+new(std::size_t)</TT> or <TT>operator new(std::size_t, const
+std::nothrow_t&amp;)</TT> in the standard library, and <INS>the
+behavior is undefined if</INS> the value supplied to <TT>operator
+delete[](void*)</TT> in the standard library <DEL>shall be</DEL>
+<INS>is not</INS> one of the values returned by a previous
+invocation of either <TT>operator new[](std::size_t)</TT> or
+<TT>operator new[](std::size_t, const std::nothrow_t&amp;)</TT>
+in the standard library.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

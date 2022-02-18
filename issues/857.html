@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 857</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="857"></A><H4>857.
+  
+Implying requirements from enclosing scopes
+</H4>
+<B>Section: </B>_N2914_.14.11.1.2&#160; [<A href="https://wg21.link/temp.req.impl">temp.req.impl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 April, 2009<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    auto concept A&lt;class T&gt; {
+         int f(T);
+    }
+
+    auto concept B&lt;class T&gt; {
+
+         int f(T)
+
+         template&lt;class U&gt;
+             requires A&lt;U&gt; // brings f(U') into scope
+         auto g(T p, U q) -&gt;
+             decltype(f(p) + f(q));
+             // Both B&lt;T&gt;::f(T) and A&lt;U&gt;::f(U) needed here
+             // but B&lt;T&gt;::f(T) is hidden by A&lt;U&gt;::f(U)
+             // (declared in the same scope as g's template parameters)
+    }
+</PRE>
+
+<P>This is similar to the case that motivated 11.4 [<A href="https://wg21.link/class.mem#19">class.mem</A>] paragraph 19:
+</P>
+
+<BLOCKQUOTE>
+
+A constrained member is treated as a constrained template
+(_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>]) whose template requirements include the
+requirements specified in its <I>member-requirement</I> clause and the
+requirements of each enclosing constrained template.
+
+</BLOCKQUOTE>
+
+<P>See also _N2914_.14.10.1.1 [<A href="https://wg21.link/concept.fct#10">concept.fct</A>] paragraph 10 for a similar rule
+for default implementations.</P>
+
+<P>A more general version of this merging of requirements is needed,
+but it does not appear to exist.  _N2914_.14.11.1.2 [<A href="https://wg21.link/temp.req.impl">temp.req.impl</A>]
+would seem to be the logical place for such a rule.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2194</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2194"></A><H4>2194.
+  
+Impossible case in list initialization
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Robert Haberlach
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-11-04<BR>
+
+
+<P>According to 12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+If the initializer list has no elements and <TT>T</TT> has a default
+constructor, the first phase is omitted.
+
+</BLOCKQUOTE>
+
+<P>However, this case cannot occur. If <TT>T</TT> is a non-aggregate
+class type with a default constructor and the initializer is an
+empty initializer list, the object will be value-constructed, per
+9.4.5 [<A href="https://wg21.link/dcl.init.list#3.4">dcl.init.list</A>] bullet 3.4. Overload resolution is only
+necessary if default-initialization (or a check of its semantic
+constraints) is implied, with the relevant section concerning
+candidates for overload resolution being 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>].</P>
+
+<P>See also <A HREF="1518.html">issue 1518</A>.</P>
+
+<P><B>Proposed resolution (January, 2017):</B></P>
+
+<P>Change 12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>When objects of non-aggregate class type <TT>T</TT> are list-initialized
+such that 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>] specifies that overload resolution is
+performed according to the rules in this section, overload resolution
+selects the constructor in two phases:</P>
+
+<UL>
+<LI><P>Initially, the candidate functions are the initializer-list
+constructors (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) of the class <TT>T</TT> and the
+argument list consists of the initializer list as a single
+argument.</P></LI>
+
+<LI><P>If no viable initializer-list constructor is found, overload
+resolution is performed again, where the candidate functions are all the
+constructors of the class <TT>T</TT> and the argument list consists of the
+elements of the initializer list.</P></LI>
+
+</UL>
+
+<P>
+<DEL>If the initializer list has no elements and <TT>T</TT> has a
+default constructor, the first phase is omitted.</DEL> In
+copy-list-initialization, if an explicit constructor is chosen...</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes, February, 2017:</B></P>
+
+<P>The statement of the issue is incorrect. In an example like</P>
+
+<PRE>
+  struct A { A(); A(initializer_list&lt;int&gt;); };
+  void f(A a);
+  int main() { f({}); }
+</PRE>
+
+<P>the rule in question is not used for the initialization of the
+parameter. However, it is used to determine whether a valid implicit
+conversion sequence exists for <TT>a</TT>. It is unclear whether an
+additional change to resolve this discrepancy is needed or not.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

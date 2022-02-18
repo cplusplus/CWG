@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 934</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="934"></A><H4>934.
+  
+List-initialization of references
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 July, 2009<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>According to 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if <TT>T</TT> is a reference type, an rvalue temporary of
+the type referenced by <TT>T</TT> is list-initialized, and the
+reference is bound to that temporary.
+
+</BLOCKQUOTE>
+
+<P>This means, for an example like</P>
+
+<PRE>
+    int i;
+    const int&amp; r1{ i };
+    int&amp;&amp; r2{ i };
+</PRE>
+
+<P>
+<TT>r1</TT> is bound to a temporary containing the value of
+<TT>i</TT>, not to <TT>i</TT> itself, which seems surprising. Also,
+there's no prohibition here against binding the rvalue reference to an
+lvalue, as there is in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 bullet
+2, so the initialization of <TT>r2</TT> is well-formed, even though
+the corresponding non-list initialization <TT>int&amp;&amp; r3(i)</TT>
+is ill-formed.</P>
+
+<P>There's also a question as to whether this bullet even applies to
+these examples.  According to the decision tree in 9.4 [<A href="https://wg21.link/dcl.init#16">dcl.init</A>] paragraph 16, initialization of a reference is dispatched
+to 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] in the first bullet, so these cases
+never make it to the third bullet sending the remaining
+braced-init-list cases to 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>].  If that's the
+correct interpretation, there's a problem with 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>], since it doesn't deal with the <I>braced-init-list</I>
+cases, and the bullet in 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3
+dealing with references is dead code that's never used.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<OL>
+<LI><P>Move the third bullet of the list in 9.4 [<A href="https://wg21.link/dcl.init#16">dcl.init</A>] paragraph 16
+to the top of the list:</P></LI>
+
+<UL>
+<LI><P><INS>If the initializer is a <I>braced-init-list</I>, the
+object is list-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</INS></P></LI>
+
+<LI><P>If the destination type is a reference type, see 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>].</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3, bullets 4 and 5,
+as follows:</P></LI>
+
+<UL>
+<LI><P>Otherwise, if <TT>T</TT> is a reference <INS>to class</INS>
+type, <INS>or if <TT>T</TT> is any reference type and the initializer
+list has no elements,</INS> an rvalue temporary of the type referenced
+by <TT>T</TT> is list-initialized, and the reference is bound to that
+temporary. [<I>Note:</I>...</P></LI>
+
+<LI><P>Otherwise<DEL> (i.e., if <TT>T</TT> is not an aggregate, class
+type, or reference)</DEL>, if the initializer list has a single
+element...</P></LI>
+
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

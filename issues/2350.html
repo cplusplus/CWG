@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2350</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2350"></A><H4>2350.
+  
+Forwarding references and deduction guides
+</H4>
+<B>Section: </B>13.10.3.5&#160; [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-06-03<BR>
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  struct A {
+    A(const T&amp;);        //<SPAN CLASS="cmnt"> #1</SPAN>
+    A(T&amp;&amp;);             //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+
+
+  template&lt;typename U&gt;
+  A(U&amp;&amp;)-&gt;A&lt;double&gt;;    //<SPAN CLASS="cmnt"> #3</SPAN>
+
+
+  int main(){
+    int i =0;
+    const int ci =0;
+
+    A a1(0);
+    A a2(i);
+    A a3(ci);
+  }
+</PRE>
+
+<P>This example is covered by 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#9">temp.deduct.partial</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+<P>If, for a given type, deduction succeeds in both directions (i.e., the
+types are identical after the transformations above) and both P and A were
+reference types (before being replaced with the type referred to
+above):</P>
+
+<UL>
+<LI><P>if the type from the argument template was an lvalue reference
+and the type from the parameter template was not, the parameter type is not
+considered to be at least as specialized as the argument type;
+otherwise,</P></LI>
+
+<LI><P>if the type from the argument template is more cv-qualified than the
+type from the parameter template (as described above), the parameter type
+is not considered to be at least as specialized as the argument
+type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For <TT>a2(i)</TT>, the deduction guide is the best match, so this is
+an <TT>A&lt;double&gt;</TT>.</P>
+
+<P>For <TT>a3(ci)</TT>, the first bullet applies, which prefers #1 to #3
+since #1 comes from an lvalue reference and #3 does not, resulting in an
+<TT>A&lt;int&gt;</TT>.</P>
+
+<P>For <TT>a1(0)</TT>, the case is not covered by partial ordering, so
+12.2.4 [<A href="https://wg21.link/over.match.best#1.10">over.match.best</A>] bullet 1.10 applies and prefers #3 to #2, which
+is again an <TT>A&lt;double&gt;</TT>.</P>
+
+<P>It seems inconsistent to prefer #1 to #3 (<TT>T const &amp;</TT> to
+<TT>U&amp;&amp;</TT>), but to prefer #3 to #2 (<TT>U&amp;&amp;</TT> to
+<TT>T&amp;&amp;</TT>). Should the rules be expanded to basically prefer
+any non-forwarding-reference to a forwarding reference?</P>
+
+<P><B>Rationale (June, 2018):</B></P>
+
+<P>There was no consensus to make a change at this point; the behavior is
+as intended.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

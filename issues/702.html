@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 702</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="702"></A><H4>702.
+  
+Preferring conversion to <TT>std::initializer_list</TT>
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 July, 2008<BR>
+
+
+<P>[Voted into WP at July, 2009 meeting.]</P>
+
+
+
+<P>We need another bullet in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>], along
+the lines of:</P>
+
+<UL><LI><P>List-initialization sequence <TT>L1</TT> is a better
+conversion sequence than list-initialization sequence <TT>L2</TT>
+if <TT>L1</TT> converts to <TT>std::initializer_list&lt;X&gt;</TT>
+for some <TT>X</TT> and <TT>L2</TT> does not.</P></LI></UL>
+
+<P>This is necessary to make the following example work:</P>
+
+<PRE>
+    #include &lt;initializer_list&gt;
+
+    struct string {
+      string (const char *) {}
+      template &lt;class Iter&gt; string (Iter, Iter);
+    };
+
+    template &lt;class T, class U&gt;
+    struct pair {
+      pair (T t, U u) {}
+    };
+
+    template&lt;class T, class U&gt;
+    struct map {
+      void insert (pair&lt;T,U&gt;);
+      void insert (std::initializer_list&lt;pair&lt;T,U&gt; &gt;) {}
+    };
+
+    int main() {
+      map&lt;string,string&gt; m;
+      m.insert({ {"this","that"}, {"me","you"} });
+    }
+</PRE>
+
+<P><B>Proposed resolution (March, 2009):</B></P>
+
+<P>Add a new top-level bullet at the end of the current list in
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3:</P>
+
+<UL><LI>List-initialization sequence <TT>L1</TT> is a better
+conversion sequence than list-initialization sequence <TT>L2</TT> if
+<TT>L1</TT> converts to <TT>std::initializer_list&lt;X&gt;</TT> for
+some <TT>X</TT> and <TT>L2</TT> does not.</LI></UL>
+
+<BR><BR>
+</BODY>
+</HTML>

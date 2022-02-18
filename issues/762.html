@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 762</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="762"></A><H4>762.
+  
+Name lookup in the <I>compound-statement</I> of a lambda expression
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 February, 2009<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#US29">N2800 comment
+  US&#160;29<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#US30">N2800 comment
+  US&#160;30<BR></A>
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+<P>The current wording of 7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>] is not clear as to
+how name lookup is to be performed for names appearing in the
+<I>compound-statement</I> of a lambda expression.  Consider, for
+example:</P>
+
+<PRE>
+    int fac(int n) {
+      return [=]{ return n &lt;= 1 ? 1 : n*operator()(n-1); }();
+    }
+</PRE>
+
+<P>There is no <TT>operator()</TT> in scope in the context of the
+lambda expression.  Consequently, according to bullet 5 of paragraph 10,
+the reference to <TT>operator()</TT> is not transformed to the class
+member access syntax but appears untransformed in the closure object's
+function call operator, where presumably it is interpreted as a
+recursive call to itself.</P>
+
+<P>A similar question (although it does not involve name lookup per
+se) arises with respect to use of <TT>this</TT> in the
+<I>compound-statement</I> of a lambda expression that does not appear
+in the body of a non-static member function; for example,</P>
+
+<PRE>
+    void f() {
+      float v;
+      [v]() { return v+this-&gt;v; }
+    }
+</PRE>
+
+<P>
+<TT>this</TT> cannot refer to anything except the closure object,
+so are the two references to <TT>v</TT> equivalent?</P>
+
+<P>The crux of this question is whether the lookups for names in the
+<I>compound-statement</I> are done in the context of the lambda
+expression or from the call operator of the closure object.  The note at
+the end of bullet 10.5 would tend to support the latter
+interpretation:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Reference to captured variables or references within
+the <I>compound-statement</I> refer to the data members of <TT>F</TT>.
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>Another possible interpretation of the current wording is that
+there are two distinct <I>compound-statement</I>s in view: the
+<I>compound-statement</I> that is part of the <I>lambda-expression</I>
+and the body of the closure object's function call operator that is
+&#8220;obtained from&#8221; the former.  If this is the intended
+interpretation, one way of addressing the issues regarding the
+<TT>operator()</TT> example above would be to state that it is an
+error if the lookup of a name in the <I>compound-statement</I> fails,
+making the example ill-formed.</P>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

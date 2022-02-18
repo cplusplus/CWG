@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2176</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2176"></A><H4>2176.
+  
+Destroying the returned object when a destructor throws
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-09-28<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  #include &lt;stdio.h&gt;
+
+  struct X {
+    X() { puts("X()"); }
+    X(const X&amp;) { puts("X(const X&amp;)"); }
+    ~X() { puts("~X()"); }
+  };
+
+  struct Y { ~Y() noexcept(false) { throw 0; } };
+
+  X f() {
+    try {
+      Y y;
+      return {};
+    } catch (...) {
+    }
+    return {};
+  }
+
+  int main() {
+    f();
+  }
+</PRE>
+
+<P>Current implementations print <TT>X()</TT> twice but
+<TT>~X()</TT> only once.  That is obviously wrong, but it is
+not clear that the current wording covers this case.</P>
+
+<P><B>Proposed resolution (February, 2016):</B></P>
+
+<P>Change 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The destructor is invoked for each automatic object of
+class type constructed<INS>, but not yet destroyed,</INS>
+since the try block was entered.  <INS>If an exception is
+thrown during the destruction of temporaries or local
+variables for a <TT>return</TT> statement
+(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]), the destructor for the
+returned object (if any) is also invoked.</INS> The
+<DEL>automatic</DEL> objects are destroyed in the reverse
+order of the completion of their construction.
+<INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct A { };
+
+  struct Y { ~Y() noexcept(false) { throw 0; } };
+
+  A f() {
+    try {
+      A a;
+      Y y;
+      A b;
+      return {};   //<SPAN CLASS="cmnt"> #1</SPAN>
+    } catch (...) {
+    }
+    return {};     //<SPAN CLASS="cmnt"> #2</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>At <TT>#1</TT>, the returned object of type <TT>A</TT>
+is constructed.  Then, the local variable <TT>b</TT> is
+destroyed (8.7 [<A href="https://wg21.link/stmt.jump">stmt.jump</A>]).  Next, the local variable
+<TT>y</TT> is destroyed, causing stack unwinding, resulting in
+the destruction of the returned object, followed by the
+destruction of the local variable <TT>a</TT>.  Finally, the
+returned object is constructed again at <TT>#2</TT>.
+&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

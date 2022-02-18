@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 692</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="692"></A><H4>692.
+  
+Partial ordering of variadic class template partial specializations
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Doug Gregor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 April, 2008<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as paper N3281.]</P>
+
+
+
+<P>13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#22">temp.deduct.type</A>] paragraph 22 describes how we
+cope with partial ordering between two function templates that
+differ because one has a function parameter pack while the other
+has a normal function parameter.  However, this paragraph was
+meant to apply to template parameter packs as well, e.g., to help
+with partial ordering of class template partial specializations:</P>
+
+<PRE>
+   template &lt;class T1, class ...Z&gt; class S; // #1
+   template &lt;class T1, class ...Z&gt; class S&lt;T1, const Z&amp;...&gt; {}; // #2
+   template &lt;class T1, class T2&gt; class S&lt;T1, const T2&amp;&gt; {};; // #3
+   S&lt;int, const int&amp;&gt; s; // both #2 and #3 match; #3 is more specialized
+</PRE>
+
+<P>(See also <A HREF="818.html">issue 818</A>.)</P>
+
+<P><B>Proposed resolution (March, 2009):</B></P>
+
+<P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraphs 9-10 as follows
+(and add the example above to paragraph 9):</P>
+
+<BLOCKQUOTE>
+
+<P>If <TT>P</TT> has a form that contains &lt;<TT>T</TT>&gt; or
+&lt;<TT>i</TT>&gt;, then each argument
+<TT>P</TT><SUB><I>i</I></SUB> of the respective template argument
+list of <TT>P</TT> is compared with the corresponding argument
+<TT>A</TT><SUB><I>i</I></SUB> of the corresponding template
+argument list of <TT>A</TT>. If the template argument list of
+<TT>P</TT> contains a pack expansion that is not the last
+template argument, the entire template argument list is a
+non-deduced context. If <TT>P</TT><SUB><I>i</I></SUB> is a pack
+expansion, then the pattern of <TT>P</TT><SUB><I>i</I></SUB> is
+compared with each remaining argument in the template argument
+list of <TT>A</TT>. Each comparison deduces template arguments
+for subsequent positions in the template parameter packs expanded
+by <TT>P</TT><SUB><I>i</I></SUB>. <INS>During partial ordering
+(13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]), if <TT>A</TT><SUB><I>i</I></SUB>
+was originally a pack expansion and <TT>P</TT><SUB><I>i</I></SUB>
+is not a pack expansion, or if <TT>P</TT> does not contain a
+template argument corresponding to <TT>A</TT><SUB><I>i</I></SUB>,
+argument deduction fails.</INS>
+</P>
+
+<P>Similarly, if <TT>P</TT> has a form that contains
+<TT>(T)</TT>, then each parameter type
+<TT>P</TT><SUB><I>i</I></SUB> of the respective
+<I>parameter-type-list</I> of <TT>P</TT> is compared with the
+corresponding parameter type <TT>A</TT><SUB><I>i</I></SUB> of the
+corresponding <I>parameter-type-list</I> of <TT>A</TT>. If the
+<I>parameter-declaration</I> corresponding to
+<TT>P</TT><SUB><I>i</I></SUB> is a function parameter pack, then
+the type of its <I>declarator-id</I> is compared with each
+remaining parameter type in the <I>parameter-type-list</I> of
+<TT>A</TT>. Each comparison deduces template arguments for
+subsequent positions in the template parameter packs expanded by
+the function parameter pack. <INS>During partial ordering
+(13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]), if <TT>A</TT><SUB><I>i</I></SUB>
+was originally a function parameter pack and
+<TT>P</TT><SUB><I>i</I></SUB> is not a function parameter
+pack, or if <TT>P</TT> does not contain a function parameter type
+corresponding to <TT>A</TT><SUB><I>i</I></SUB>, argument deduction
+fails.</INS> [<I>Note:</I> A function parameter pack
+can only occur at the end of a <I>parameter-declaration-list</I>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]). &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

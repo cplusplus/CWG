@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2267</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2267"></A><H4>2267.
+  
+Copy-initialization of temporary in reference direct-initialization
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-05-25<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+   struct A {} a;
+   struct B { explicit B(const A&amp;); };
+
+   struct D { D(); };
+   struct C { explicit operator D(); } c;
+
+   B b1(a);            //<SPAN CLASS="cmnt"> #1, ok </SPAN>
+   const B &amp;b2{a};     //<SPAN CLASS="cmnt"> #2. ok </SPAN>
+   const B &amp;b3(a);     //<SPAN CLASS="cmnt"> #3, error </SPAN>
+
+   D d1(c);            //<SPAN CLASS="cmnt"> ok </SPAN>
+   const D &amp;d2{c};     //<SPAN CLASS="cmnt"> ok </SPAN>
+   const D &amp;d3(c);     //<SPAN CLASS="cmnt"> #6, ok </SPAN>
+</PRE>
+
+<P>The disparity between #3 and #6 is suprising, as is the difference from
+#1 and #2. The reason for this difference is in 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+bullet 3.10:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if <TT>T</TT> is a reference type, a prvalue of the type
+referenced by <TT>T</TT> is generated. The prvalue initializes its result
+object by copy-list-initialization or direct-list-initialization, depending
+on the kind of initialization for the reference. The prvalue is then used
+to direct-initialize the reference.
+
+</BLOCKQUOTE>
+
+<P>(reflecting the resolution of <A HREF="1494.html">issue 1494</A>).</P>
+
+<P><B>Notes from the March, 2018 meeting:</B></P>
+
+<P>CWG felt that initialization of the temporary should always be copy
+initialization, regardless of whether the top-level initialization is
+copy or direct initialization. This would make #2, #3, #5, and #6 all
+ill-formed.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<OL>
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.10">dcl.init.list</A>] bullet 3.10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Otherwise, if <TT>T</TT> is a reference type, a prvalue of
+the type referenced by <TT>T</TT> is generated. The prvalue
+initializes its result object by
+copy-list-initialization <DEL>or direct-list-initialization,
+depending on the kind of initialization for the
+reference</DEL>. The prvalue is then used to
+direct-initialize the reference. [Note: As usual, the
+binding will fail and the program is ill-formed if the
+reference type is an lvalue reference to a non-const type.
+&#8212;end note]
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following to the example in 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+bullet 3.10:</P></LI>
+
+<PRE>
+<INS>  struct A { } a;
+  struct B { explicit B(const A&amp;); };
+  const B &amp;b2(a);  //<SPAN CLASS="cmnt"> error: cannot copy-initialize </SPAN>B<SPAN CLASS="cmnt"> temporary from </SPAN>A</INS>
+</PRE>
+
+<LI><P>Change 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1.1">over.match.ref</A>] bullet 1.1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...For direct-initialization, those explicit conversion
+functions that are not hidden within <TT>S</TT>
+and yield type
+&#8220;lvalue reference to <I>cv2</I>
+<TT>T2</TT>&#8221; <INS>(when initializing an lvalue reference or
+an rvalue reference to function)</INS> <DEL> or &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221;</DEL>
+or &#8220;rvalue reference to <I>cv2</I>
+<TT>T2</TT>&#8221; <INS>(when initializing an rvalue
+reference or an lvalue reference to
+function)</INS>, <DEL>respectively,</DEL> where <TT>T2</TT>
+is the same type as <TT>T</TT> or can be converted to
+type <TT>T</TT> with a qualification conversion
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), are also candidate functions.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

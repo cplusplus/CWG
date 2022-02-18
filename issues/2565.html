@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2565</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2565"></A><H4>2565.
+  
+Invalid types in the <I>parameter-declaration-clause</I> of a <I>requires-expression</I>
+</H4>
+<B>Section: </B>7.5.8.1&#160; [<A href="https://wg21.link/expr.prim.req.general">expr.prim.req.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-07
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  concept C = requires (typename T::type x) {
+    x + 1;
+  };
+
+  static_assert(!C&lt;int&gt;);
+</PRE>
+
+<P>All implementations accept this translation unit.  However, the
+rule in 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#5">expr.prim.req.general</A>] paragraph 5 does not cover
+the <I>parameter-declaration-clause</I>::</P>
+
+<BLOCKQUOTE>
+
+The substitution of template arguments into
+a <I>requires-expression</I> may result in the formation of invalid
+types or expressions in its requirements or the violation of the
+semantic constraints of those requirements. In such cases,
+the <I>requires-expression</I> evaluates to <CODE>false</CODE>; it
+does not cause the program to be ill-formed. The substitution and
+semantic constraint checking proceeds in lexical order and stops when
+a condition that determines the result of
+the <I>requires-expression</I> is encountered. If substitution (if
+any) and semantic constraint checking succeed,
+the <I>requires-expression</I> evaluates to <CODE>true</CODE>.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-17):</B></P>
+
+<P>Change in 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#5">expr.prim.req.general</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+The substitution of template arguments into
+a <I>requires-expression</I> may result in the formation of invalid
+types or expressions in <INS>its <I>parameter-declaration-clause</I>
+(if any) or</INS> its requirements or the violation of the semantic
+constraints of those requirements. In such cases, ...
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-11-09</B></P>
+
+<P>The initial example is not the point of the issue, but the very
+similar following case:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  constexpr bool b = requires (T::type x) { x + 1; };
+
+  static_assert(!b&lt;int&gt;);  //<SPAN CLASS="cmnt"> de-jure ill-formed, but widely accepted by implementations</SPAN>
+</PRE>
+
+<P>Users were vocal they wanted this not to be an error, but just a
+substitution failure. Reportedly, the original design intent was that
+this situation is a hard error, though.</P>
+
+<P>Soliciting guidance from EWG how to handle this issue via
+<A HREF="https://github.com/cplusplus/papers/issues/1695">paper issue 1695</A>.</P>
+
+<P><B>EWG 2024-03-18</B></P>
+
+<P>EWG invites a paper to propose a change.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

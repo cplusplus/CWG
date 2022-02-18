@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2012</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2012"></A><H4>2012.
+  
+Lifetime of references
+</H4>
+<B>Section: </B>6.7.6&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-09-29<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>According to 6.7.6 [<A href="https://wg21.link/basic.stc#3">basic.stc</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+The storage duration categories apply to references as
+well. The lifetime of a reference is its storage duration.
+
+</BLOCKQUOTE>
+
+<P>This is clearly not correct; references can have static
+storage duration but be dynamically initialized.  Consider an
+example like:</P>
+
+<PRE>
+  extern int&amp; r1;
+  int&amp; f();
+  int&amp; r2 = r1;  //<SPAN CLASS="cmnt"> #1</SPAN>
+  int&amp; r1 = f();
+  int i = r2;    //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>
+<TT>r1</TT> is not initialized until after its use at #1, so
+the initialization of <TT>r2</TT> should produce undefined
+behavior, as should the use of <TT>r2</TT> at #2.</P>
+
+<P>The description of the lifetime of a reference should be
+deleted from 6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>] and it should be described
+properly in 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>].</P>
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<OL>
+<LI><P>Change 6.7.6 [<A href="https://wg21.link/basic.stc#3">basic.stc</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The storage duration categories apply to references as well. <DEL>The lifetime
+of a reference is its storage duration.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The <I>lifetime</I> of an object <INS>or reference</INS> is a runtime
+property of the object <INS>or reference</INS>. An object is said to
+have...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+6.7.6 [<A href="https://wg21.link/basic.stc#2">basic.stc</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>[<I>Note:</I> The lifetime of an array object starts as soon as storage
+with proper size and alignment is obtained, and its lifetime ends when the
+storage which the array occupies is reused or
+released. 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] describes the lifetime of base and
+member subobjects. &#8212;<I>end note</I>]</P>
+
+<P><INS>The lifetime of a reference begins when its initialization is
+complete. The lifetime of a reference ends as if it were a scalar
+object.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#3">basic.life</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The properties ascribed to objects <INS>and references</INS> throughout
+this International Standard apply for a given object <INS>or
+reference</INS> only during its lifetime. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<PLI><P>Change Clause 7 [<A href="https://wg21.link/expr#5">expr</A>] paragraph 5 as follows:</P></PLI>
+
+<BLOCKQUOTE>
+
+If an expression initially has the type &#8220;reference
+to <TT>T</TT>&#8221; (9.3.4.3 [<A href="https://wg21.link/dcl.ref">dcl.ref</A>],
+9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), the type is adjusted to <TT>T</TT> prior to
+any further analysis. The expression designates the object or function
+denoted by the reference, and the expression is an lvalue or an xvalue,
+depending on the expression. <INS>[<I>Note:</I> Before the lifetime of
+the reference has started or after it has ended, the behavior is
+undefined (see 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>
+<I>Drafting note:</I> there is no change to 6.7.4 [<A href="https://wg21.link/basic.life#4">basic.life</A>] paragraph 4:
+</P>
+
+<BLOCKQUOTE>
+
+A program may end the lifetime of any object by reusing the storage which
+the object occupies or by explicitly calling the destructor for an object
+of a class type with a non-trivial destructor. For an object of a class
+type...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

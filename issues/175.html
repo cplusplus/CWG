@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 175</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="175"></A><H4>175.
+  
+Class name injection and base name access
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 February 1999<BR>
+
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+<P>With class name injection, when a base class name is used in a derived
+class, the name found is the injected name in the base class, not the
+name of the class in the scope containing the base class.
+Consequently, if the base class name is not accessible (e.g., because
+is is in a private base class), the base class name cannot be used
+unless a qualified name is used to name the class in the class or
+namespace of which it is a member.</P>
+
+<P>Without class name injection the following example is valid.  With
+class name injection, <TT>A</TT> is inaccessible in class <TT>C</TT>.</P>
+
+<PRE>
+    class A { };
+    class B: private A { };
+    class C: public B {
+        A* p;    // error: A inaccessible
+    };
+</PRE>
+
+<P>At the least, the standard should be more explicit that this is, in
+fact, ill-formed.</P>
+
+<P>(See paper J16/99-0010 = WG21 N1187.)</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>Add to the end of 11.8.2 [<A href="https://wg21.link/class.access.spec#3">class.access.spec</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+<P>[<I>Note:</I> In a derived class, the lookup of a base class name
+will find the injected-class-name instead of the name of the base
+class in the scope in which it was declared.  The
+injected-class-name might be less accessible than the name of the
+base class in the scope in which it was declared.] [<I>Example:</I>
+</P>
+
+<PRE>
+    class A { };
+    class B : private A { };
+    class C : public B {
+        A* p;    // error: injected-class-name A is inaccessible
+        ::A* q;  // OK
+    };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

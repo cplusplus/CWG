@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2458</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2458"></A><H4>2458.
+  
+Value category of expressions denoting non-static member functions
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-07-04<BR>
+
+
+<P>[Accepted as a DR at the June, 2021 meeting.]</P>
+
+
+
+<P>Expressions denoting non-static member functions are currently
+classified as prvalues (7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual#2">expr.prim.id.qual</A>] paragraph 2;
+7.6.1.5 [<A href="https://wg21.link/expr.ref#6.3.2">expr.ref</A>] bullet 6.3.2; and
+7.6.4 [<A href="https://wg21.link/expr.mptr.oper#6">expr.mptr.oper</A>] paragraph 6). It would simplify the
+specification if such expressions were categorized as lvalues.
+(See also <A HREF="https://github.com/cplusplus/draft/pull/3262">
+this pull request</A>.)</P>
+
+<P><B>Notes from the August, 2020 teleconference:</B></P>
+
+<P>CWG preferred that the unbound case (i.e., <TT>&amp;X::f</TT>)
+should be an lvalue, while the bound case should be a prvalue.</P>
+
+<P><B>Proposed resolution (April, 2021):</B></P>
+
+<OL>
+<LI><P>Change 7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual#5">expr.prim.id.qual</A>] paragraph 5, converting
+the running text into a bulleted list, as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The result of a <I>qualified-id</I> <INS><I>Q</I></INS>
+is the entity it denotes (6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]). The
+type of the expression is the type of the result.  The
+result is an lvalue if the member is</P>
+
+<UL>
+<LI><P>a function <INS>other than a non-static member
+function</INS>,</P></LI>
+
+<LI><P><INS>a non-static member function if <I>Q</I> is the operand
+of a unary <TT>&amp;</TT> operator,</INS></P></LI>
+
+<LI><P>a variable,</P></LI>
+
+<LI><P>a structured binding
+(9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]), <INS>or</INS>
+</P></LI>
+
+<LI><P><DEL>a static member function, or</DEL></P></LI>
+
+<LI><P>a data member,</P></LI>
+
+</UL>
+
+<P>and a prvalue otherwise.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The result of the</DEL> <INS>The operand of
+the</INS> unary<TT> &amp;</TT> operator <INS>shall be an
+lvalue of some type <TT>T</TT>. The result</INS> is a
+<DEL>pointer to its operand</DEL> <INS>prvalue</INS>.</P>
+
+<UL>
+<LI><P>If the operand is a <I>qualified-id</I> naming a
+non-static or variant member <TT>m</TT> of some
+class <TT>C</TT> <DEL>with type <TT>T</TT></DEL>, the result
+has type &#8220;pointer to member of class <TT>C</TT> of
+type <TT>T</TT>&#8221; and <DEL>is a prvalue
+designating</DEL> <INS>designates</INS>
+<TT>C::m</TT>.</P></LI>
+
+<LI><P>Otherwise, <DEL>if the operand is an lvalue of
+type <TT>T</TT>,</DEL> the <DEL>resulting expression is a
+prvalue of</DEL> <INS>result has</INS> type &#8220;pointer
+to <TT>T</TT>&#8221; <DEL>whose result is a pointer</DEL>
+<INS>and points</INS> to the designated object
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) or
+function <INS>(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>])</INS>. [<I>Note
+2:</I> In particular, taking the address of a variable of
+type &#8220;<I>cv</I> <TT>T</TT>&#8221; yields a pointer of
+type &#8220;pointer to <I>cv</I> <TT>T</TT>&#8221;.
+&#8212;<I>end note</I>]</P></LI>
+
+<LI><P><DEL>Otherwise, the program is ill-formed.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Drafting note: neither 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+bullet 6.3.2,</I></P>
+
+<BLOCKQUOTE>
+
+<UL><LI><P>Otherwise (when <TT>E2</TT> refers to a
+non-static member function), <TT>E1.E2</TT> is a
+prvalue. The expression can be used only as the left-hand
+operand of a member function call
+(11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]).  [<I>Note 5:</I> Any
+redundant set of parentheses surrounding the expression is
+ignored (7.5.4 [<A href="https://wg21.link/expr.prim.paren">expr.prim.paren</A>]). &#8212;<I>end
+note</I>]</P></LI></UL>
+
+</BLOCKQUOTE>
+
+<P><I>nor 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#6">expr.mptr.oper</A>] paragraph 6,</I></P>
+
+<BLOCKQUOTE>
+
+...The result of a <TT>.*</TT> expression whose second operand
+is a pointer to a member function is a prvalue...
+
+</BLOCKQUOTE>
+
+<P><I>requires any change.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

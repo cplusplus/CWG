@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 450</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="450"></A><H4>450.
+  
+Binding a reference to const to a cv-qualified array rvalue
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Jan 2004<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>It's unclear whether the following is valid:</P>
+<PRE>
+const int N = 10;
+const int M = 20;
+typedef int T;
+void f(T const (&amp;x)[N][M]){}
+
+struct X {
+	int i[10][20];
+};
+
+X g();
+
+int main()
+{
+	f(g().i);
+}
+</PRE>
+<P>When you run this through 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>], you sort of end up
+falling off the end of the standard's description of reference
+binding.  The standard says in the final bullet of paragraph 5
+that an array temporary should be created and copy-initialized
+from the rvalue array, which seems implausible.</P>
+
+<P> I'm not sure what the right answer is.  I think I'd be happy with
+allowing the binding in this case.  We would have to introduce
+a special case like the one for class rvalues.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>g++ and EDG give an error.  Microsoft (8.0 beta) and Sun accept
+the example.  Our preference is to allow the direct binding (no copy).
+See the similar issue with class rvalues in
+<A HREF="391.html">issue 391</A>.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>Insert a new bullet in 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+bullet 5.2 before sub-bullet 2 (which begins,
+&#8220;Otherwise, a temporary of type &#8216;<I>cv1</I>
+<TT>T1</TT>&#8217; is created...&#8221;):</P>
+
+<BLOCKQUOTE>
+
+If the initializer expression is an rvalue, with <TT>T2</TT> an
+array type, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>&#8221;,
+the reference is bound to the object represented by the rvalue
+(see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#2">basic.lval</A>] paragraph 2 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+An lvalue refers to an object or function. Some rvalue
+expressions &#8212; those of <INS>(possibly cv-qualified)</INS> class
+<INS>or array type</INS> <DEL>or cv-qualified class type</DEL> &#8212;
+also refer to objects.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

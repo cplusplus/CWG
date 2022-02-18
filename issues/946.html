@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 946</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="946"></A><H4>946.
+  
+Order of destruction of local static objects and calls to <TT>std::atexit</TT>
+</H4>
+<B>Section: </B>6.9.3.3&#160; [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Fraser Ross
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 July, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>17.5 [<A href="https://wg21.link/support.start.term#7">support.start.term</A>] paragraph 7 says that the order of
+destruction of objects with static storage duration and calls to
+functions registered by calling <TT>std::atexit</TT> is given in
+6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>].  Paragraph 1 of 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+says,</P>
+
+<BLOCKQUOTE>
+
+If the completion of the constructor or dynamic initialization of an
+object with static storage duration is sequenced before that of
+another, the completion of the destructor of the second is sequenced
+before the initiation of the destructor of the first.
+
+</BLOCKQUOTE>
+
+<P>This wording covers both local and namespace-scope objects, so it
+fixes the relative ordering of local object destructors with respect
+to those of namespace scope.  Paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+If the completion of the initialization of a non-local object with
+static storage duration is sequenced before a call to
+<TT>std::atexit</TT> (see <TT>&lt;cstdlib&gt;</TT>, 17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]), the call to the function passed to <TT>std::atexit</TT> is
+sequenced before the call to the destructor for the object. If a call
+to <TT>std::atexit</TT> is sequenced before the completion of the
+initialization of a non-local object with static storage duration, the
+call to the destructor for the object is sequenced before the call to
+the function passed to <TT>std::atexit</TT>.
+
+</BLOCKQUOTE>
+
+<P>This fixes the relative ordering of destructors for namespace
+scope objects with respect to calls of <TT>atexit</TT> functions.
+However, the relative ordering of local destructors and
+<TT>atexit</TT> functions is left unspecified.</P>
+
+<P>In the 2003 Standard, this was clear: 18.3 paragraph 8 said,</P>
+
+<BLOCKQUOTE>
+
+A local static object <TT>obj3</TT> is destroyed at the same time it
+would be if a function calling the <TT>obj3</TT> destructor were
+registered with <TT>atexit</TT> at the completion of the <TT>obj3</TT>
+constructor.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#3">basic.start.dynamic</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the completion of the initialization of <DEL>a non-local</DEL>
+<INS>an</INS> object with static storage duration is sequenced before
+a call to <TT>std::atexit</TT> (see <TT>&lt;cstdlib&gt;</TT>,
+17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]), the call to the function passed to
+<TT>std::atexit</TT> is sequenced before the call to the destructor
+for the object. If a call to <TT>std::atexit</TT> is sequenced before
+the completion of the initialization of <DEL>a non-local</DEL>
+<INS>an</INS> object with static storage duration, the call to the
+destructor for the object is sequenced before the call to the function
+passed to <TT>std::atexit</TT>...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1615</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1615"></A><H4>1615.
+  
+Alignment of types, variables, and members
+</H4>
+<B>Section: </B>9.12.2&#160; [<A href="https://wg21.link/dcl.align">dcl.align</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-02-01<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>According to 9.12.2 [<A href="https://wg21.link/dcl.align#5">dcl.align</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+The combined effect of all <I>alignment-specifier</I>s in a declaration
+shall not specify an alignment that is less strict than the alignment that
+would be required for the entity being declared if
+all <I>alignment-specifier</I>s were omitted (including those in other
+declarations).
+
+</BLOCKQUOTE>
+
+<P>Presumably the intent was &#8220;other declarations of the same
+entity,&#8221; but the wording as written could be read to make the
+following example well-formed (assuming <TT>alignof(int)</TT> is 4):</P>
+
+<PRE>
+  struct alignas(4) A {
+    alignas(8) int n;
+  };
+  struct alignas(8) B {
+    char c;
+  };
+  alignas(1) B b;
+  struct alignas(1) C : B {};
+  enum alignas(8) E : int { k };
+  alignas(4) E e = k;
+</PRE>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 9.12.2 [<A href="https://wg21.link/dcl.align#5">dcl.align</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...if all <I>alignment-specifier</I>s <INS>appertaining to that
+entity</INS> were omitted <DEL>(including those in other
+declarations)</DEL>. <INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct alignas(8) S {};
+  struct alignas(1) U {
+    S s;
+  };   //<SPAN CLASS="cmnt"> Error: </SPAN>U<SPAN CLASS="cmnt"> specifies an alignment that is less strict than</SPAN>
+       //<SPAN CLASS="cmnt"> if the </SPAN>alignas(1)<SPAN CLASS="cmnt"> were omitted.</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

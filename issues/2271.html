@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2271</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2271"></A><H4>2271.
+  
+Aliasing <TT>this</TT>
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-20<BR>
+
+
+<P>[Moved to DR at the November, 2016 meeting.]</P>
+
+<P>The restrictions against aliasing <TT>this</TT> inside a constructor
+should apply to all objects, not just to const objects.</P>
+
+<P><B>Proposed resolution (June, 2016):</B></P>
+
+<P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#12">class.ctor</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>During the construction of <DEL>a <TT>const</TT></DEL> <INS>an</INS>
+object, if the value of the object or any of its subobjects is accessed
+through a glvalue that is not obtained, directly or indirectly, from the
+constructor's <TT>this</TT> pointer, the value of the object or subobject
+thus obtained is unspecified. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct C;
+  void no_opt(C*);
+
+  struct C {
+    int c;
+    C() : c(0) { no_opt(this); }
+  };
+
+  const C cobj;
+
+  void no_opt(C* cptr) {
+    int i = cobj.c * 100; //<SPAN CLASS="cmnt"> value of </SPAN>cobj.c<SPAN CLASS="cmnt"> is unspecified</SPAN>
+    cptr-&gt;c = 1;
+    cout &lt;&lt; cobj.c * 100  //<SPAN CLASS="cmnt"> value of </SPAN>cobj.c<SPAN CLASS="cmnt"> is unspecified</SPAN>
+         &lt;&lt; '\n';
+  }
+
+<INS>  extern struct D d;
+  struct D {
+    D(int a) : a(a), b(d.a) {}
+    int a, b;
+  };
+  D d = D(1);             //<SPAN CLASS="cmnt"> value of </SPAN>d.b<SPAN CLASS="cmnt"> is unspecified</SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

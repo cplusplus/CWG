@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2437</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2437"></A><H4>2437.
+  
+Conversion of <TT>std::strong_ordering</TT> in a defaulted <TT>operator&lt;=&gt;</TT>
+</H4>
+<B>Section: </B>11.10.3&#160; [<A href="https://wg21.link/class.spaceship">class.spaceship</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-14<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+<P>According to 11.10.3 [<A href="https://wg21.link/class.spaceship#3">class.spaceship</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+The return value <TT>V</TT> of type <TT>R</TT> of the
+defaulted three-way comparison operator function with
+parameters <TT>x</TT> and <TT>y</TT> of the same type is
+determined by comparing corresponding elements
+<TT>x</TT><I><SUB>i</SUB></I>
+and <TT>y</TT><I><SUB>i</SUB></I> in the expanded lists of
+subobjects for <TT>x</TT> and <TT>y</TT> (in increasing
+index order) until the first index <I>i</I> where the
+synthesized three-way comparison for comparison category
+type <TT>R</TT> between <TT>x</TT><I><SUB>i</SUB></I>
+and <TT>y</TT><I><SUB>i</SUB></I> yields a result
+value <TT>v</TT><I><SUB>i</SUB></I>
+where <TT>v</TT><I><SUB>i</SUB></I>
+<TT>!=</TT> 0, contextually converted to <TT>bool</TT>,
+yields <TT>true</TT>; <TT>V</TT>
+is <TT>v</TT><I><SUB>i</SUB></I>
+converted to <TT>R</TT>. If no such
+index exists, <TT>V</TT>
+is <TT>std::strong_ordering::equal</TT>
+converted to
+<TT>R</TT>.
+
+</BLOCKQUOTE>
+
+<P>This is meaningless, however, because the kind of conversion
+is not specified. According to bullet 1.1,</P>
+
+<UL>
+<LI><P>If overload resolution for <TT>a &lt;=&gt; b</TT>
+finds a usable
+function (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), <TT>static_cast&lt;R&gt;(a
+&lt;=&gt; b)</TT>.</P></LI>
+
+</UL>
+
+<P>so consistency would suggest that
+<TT>static_cast&lt;R&gt;(std::strong_ordering::equal)</TT> is
+probably the right answer.</P>
+
+<P><B>Proposed resolution (October, 2019):</B></P>
+
+<P>Change 11.10.3 [<A href="https://wg21.link/class.spaceship#3">class.spaceship</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+...If no such index exists, <TT>V</TT> is
+<INS><TT>static_cast&lt;R&gt;(</TT></INS><TT>std::strong_ordering::equal</TT><INS><TT>)</TT></INS>
+<DEL>converted to <TT>R</TT></DEL>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 481</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="481"></A><H4>481.
+  
+Scope of template parameters
+</H4>
+<B>Section: </B>6.4&#160; [<A href="https://wg21.link/basic.scope">basic.scope</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>01 Nov 2004<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#FR16">N2800 comment
+  FR&#160;16<BR></A>
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>Sections 6.4.3 [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>] to 6.4.7 [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>] define and summarize different kinds of scopes
+in a C++ program.  However it is missing a description for the
+scope of template parameters.  I believe a section is needed
+there &#8212; even though some information may be found in clause
+14.</P>
+
+<P><B>Proposed resolution (September, 2009):</B></P>
+
+<OL>
+<LI><P>Insert the following as a new paragraph following
+6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#8">basic.scope.pdecl</A>] paragraph 8:</P></LI>
+
+<BLOCKQUOTE>
+
+The point of declaration of a template parameter is immediately after
+its complete <I>template-parameter</I>. [<I>Example:</I>
+
+<PRE>
+  typedef unsigned char T;
+  template&lt;class T
+       = T         //<SPAN CLASS="cmnt"> Lookup finds the typedef name of </SPAN>unsigned char.
+
+       , T         //<SPAN CLASS="cmnt">Lookup finds the template parameter.</SPAN>
+           N = 0&gt; struct A {};
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 13.2 [<A href="https://wg21.link/temp.param#14">temp.param</A>] paragraph 14:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>A <I>template-parameter</I> shall not be used in its own default
+argument.</DEL>
+
+</BLOCKQUOTE>
+
+<I>[Drafting note: This change conflicts with the resolution for
+<A HREF="187.html">issue 187</A> but is in accord with widespread
+implementation practice.]</I>
+
+<LI><P>Insert the following as a new section following
+6.4.8 [<A href="https://wg21.link/basic.scope.enum">basic.scope.enum</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><B>Template Parameter Scope [basic.scope.temp]</B></P>
+
+<P>The declarative region of the name of a template parameter of a
+template <I>template-parameter</I> is the smallest
+<I>template-parameter-list</I> in which the name was introduced.</P>
+
+<P>The declarative region of the name of a template parameter of a
+template is the smallest <I>template-declaration</I> in which the name was
+introduced. Only template parameter names belong to this declarative
+region; any other kind of name introduced by the <I>declaration</I> of a
+<I>template-declaration</I> is instead introduced into the same declarative
+region where it would be introduced as a result of a non-template
+declaration of the same name. [<I>Example:</I>
+</P>
+
+<PRE>
+  namespace N {
+    template&lt;class T&gt; struct A{};               //<SPAN CLASS="cmnt"> line 2</SPAN>
+    template&lt;class U&gt; void f(U){}               //<SPAN CLASS="cmnt"> line 3</SPAN>
+    struct B {
+      template&lt;class V&gt;friend int g(struct C*); //<SPAN CLASS="cmnt"> line 5</SPAN>
+    };
+  }
+</PRE>
+
+<P>The declarative regions of <TT>T</TT>, <TT>U</TT> and <TT>V</TT>
+are the <I>template-declaration</I>s on lines 2, 3 and 5,
+respectively. But the names <TT>A</TT>, <TT>f</TT>, <TT>g</TT> and
+<TT>C</TT> all belong to the same declarative region&#8212;namely, the
+<I>namespace-body</I> of <TT>N</TT>. (<TT>g</TT> is still considered
+to belong to this declarative region in spite of its being hidden
+during qualified and unqualified name lookup.) &#8212;<I>end
+example</I>]</P>
+
+<P>The potential scope of a template parameter name begins at its
+point of declaration (6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]) and ends at the end
+of its declarative region. [<I>Note:</I> this implies that a
+<I>template-parameter</I> can be used in the declaration of subsequent
+<I>template-parameter</I>s and their default arguments but cannot be
+used in preceding <I>template-parameter</I>s or their default
+arguments. For example,</P>
+
+<PRE>
+  template&lt;class T, T* p, class U = T&gt; class X { /* ... */ };
+  template&lt;class T&gt; void f(T* p = new T);
+</PRE>
+
+<P>This also implies that a <I>template-parameter</I> can be used in the
+specification of base classes. For example,</P>
+
+<PRE>
+  template&lt;class T&gt; class X : public Array&lt;T&gt; { /* ... */ };
+  template&lt;class T&gt; class Y : public T { /* ... */ };
+</PRE>
+
+<P>The use of a template parameter as a base class implies that a
+class used as a template argument must be defined and not just
+declared when the class template is instantiated. &#8212;<I>end
+note</I>]</P>
+
+<P>The declarative region of the name of a template parameter is
+nested within the immediately-enclosing declarative
+region. [<I>Note:</I> as a result, a <I>template-parameter</I> hides
+any entity with the same name in an enclosing scope
+(_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>]). [<I>Example:</I>
+</P>
+
+<PRE>
+  typedef int N;
+  template&lt;N X, typename N, template&lt;N Y&gt; class T&gt;
+    struct A;
+</PRE>
+
+<P>Here, <TT>X</TT> is a non-type template parameter of type
+<TT>int</TT> and <TT>Y</TT> is a non-type template parameter of the
+same type as the second template parameter of
+<TT>A</TT>. &#8212;<I>end example</I>] &#8212;<I>end note</I>]</P>
+
+<P>[<I>Note:</I> because the name of a template parameter cannot be
+redeclared within its potential scope (13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]), a
+template parameter's scope is often its potential scope. However, it
+is still possible for a template parameter name to be hidden; see
+13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 13.2 [<A href="https://wg21.link/temp.param#13">temp.param</A>] paragraph 13, including the
+example:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The scope of a <I>template-parameter</I> extends...</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 13.8.2 [<A href="https://wg21.link/temp.local#6">temp.local</A>] paragraph 6, including the
+note and example:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The scope of a <I>template-parameter</I> extends...</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

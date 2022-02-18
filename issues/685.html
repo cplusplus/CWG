@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 685</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="685"></A><H4>685.
+  
+Integral promotion of enumeration ignores fixed underlying type
+</H4>
+<B>Section: </B>7.3.7&#160; [<A href="https://wg21.link/conv.prom">conv.prom</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alberto Ganesh Barbati
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 January, 2008<BR>
+
+
+<P>[Voted into WP at July, 2009 meeting.]</P>
+
+<P>According to 7.3.7 [<A href="https://wg21.link/conv.prom#2">conv.prom</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+An rvalue of an unscoped enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted to an rvalue of the first of the
+following types that can represent all the values of the
+enumeration (i.e. the values in the range <I>b<SUB>min</SUB></I>
+to <I>b<SUB>max</SUB></I> as described in 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]): <TT>int</TT>, <TT>unsigned int</TT>, <TT>long
+int</TT>, <TT>unsigned long int</TT>, <TT>long long int</TT>, or
+<TT>unsigned long long int</TT>.
+
+</BLOCKQUOTE>
+
+<P>This wording may have surprising behavior in this case:</P>
+
+<PRE>
+    enum E: long { e };
+
+    void f(int);
+    void f(long);
+
+    void g() {
+        f(e);    //<SPAN CLASS="cmnt"> Which </SPAN>f<SPAN CLASS="cmnt"> is called?</SPAN>
+    }
+</PRE>
+
+<P>Intuitively,  as the programmer has explicitly expressed
+preference for <TT>long</TT> as the underlying type, he/she might
+expect <TT>f(long)</TT> to be called.  However, if <TT>long</TT>
+and <TT>int</TT> happen to have the same size, then <TT>e</TT> is
+promoted to <TT>int</TT> (as it is the first type in the list that
+can represent all values of <TT>E</TT>) and <TT>f(int)</TT> is
+called instead.</P>
+
+<P>According to 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>] the underlying type of an
+enumeration is always well-defined for both the fixed and the
+non-fixed cases, so it makes sense simply to promote to the
+underlying type unless such a type would itself require promotion.</P>
+
+<P>
+<U>Suggested resolution</U>:</P>
+
+<P>In 7.3.7 [<A href="https://wg21.link/conv.prom#2">conv.prom</A>] paragraph 2, replace all the text
+from &#8220;An rvalue of an unscoped enumeration type&#8221; through
+the end of the paragraph with the following:</P>
+
+<BLOCKQUOTE>
+
+An rvalue of an unscoped enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>])
+is converted to an rvalue of its underlying type if it is different
+from <TT>char16_t</TT>, <TT>char32_t</TT>, <TT>wchar_t</TT>, or has
+integer conversion rank greater than or equal to <TT>int</TT>.
+Otherwise, it is converted to an rvalue of the first of the following
+types that can represent all the values of its underlying type:
+<TT>int</TT>, <TT>unsigned int</TT>, <TT>long int</TT>,
+<TT>unsigned long int</TT>, <TT>long long int</TT>, or
+<TT>unsigned long long int</TT>.
+
+</BLOCKQUOTE>
+
+<P>(Note that this wording no longer needs to mention extended
+integer types as special cases.)</P>
+
+<P><B>Proposed resolution (August, 2008):</B></P>
+
+<P>Move the following text from 7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>] paragraph
+2 into a separate paragraph, making the indicated changes, and add
+the following new paragraph after it:</P>
+
+<BLOCKQUOTE>
+
+<P>An rvalue of an unscoped enumeration type <INS>whose underlying
+type is not fixed</INS> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted
+to an rvalue of the first of the following types that can
+represent all the values of the enumeration (i.e. the values in
+the range <I>b<SUB>min</SUB></I> to <I>b<SUB>max</SUB></I> as
+described in 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]): <TT>int</TT>,
+<TT>unsigned int</TT>, <TT>long int</TT>, <TT>unsigned long
+int</TT>, <TT>long long int</TT>, or <TT>unsigned long long
+int</TT>.  If none of the types in that list can represent all
+the values of the enumeration, an rvalue of an unscoped
+enumeration type can be converted to an rvalue of the extended
+integer type with lowest integer conversion rank (7.3.15 [<A href="https://wg21.link/conv.bool">conv.bool</A>]) greater than the rank of <TT>long long</TT> in
+which all the values of the enumeration can be represented.  If
+there are two such extended types, the signed one is chosen.</P>
+
+<P><INS>An rvalue of an unscoped enumeration type whose underlying
+type is fixed (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted to an
+rvalue of its underlying type. Moreover, if integral promotion
+can be applied to its underlying type, an rvalue of an unscoped
+enumeration type whose underlying type is fixed can also be
+converted to an rvalue of the promoted underlying type.</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

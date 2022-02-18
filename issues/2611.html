@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2611</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2611"></A><H4>2611.
+  
+Missing parentheses in expansion of fold-expression could cause syntactic reinterpretation
+</H4>
+<B>Section: </B>13.7.4&#160; [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-05<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>
+13.7.4 [<A href="https://wg21.link/temp.variadic#10">temp.variadic</A>] paragraph 10 expands
+a <I>fold-expression</I> (including its enclosing parentheses) to an
+unparenthesized expression. If interpreted literally, this could
+result in reassociation and misinterpretation of the expression. For
+example, given:</P>
+
+<PRE>
+template&lt;int ...N&gt; int k = 2 * (... + N);
+</PRE>
+
+<P>
+... <TT>k&lt;1, 2, 3&gt;</TT> is specified as expanding to <TT>int
+k&lt;1, 2, 3&gt; = 2 * 1 + (2 + 3);</TT> resulting in a value of 7
+rather than the intended value of 12.
+</P>
+
+<P>Further, there is implementation divergence for the following example:</P>
+
+<PRE>
+#include &lt;type_traits&gt;
+template&lt;class ...TT&gt;
+void f(TT ...tt) {
+  static_assert(std::is_same_v&lt;decltype((tt, ...)), int&amp;&gt;);
+}
+template void f(int /*,int*/);
+</PRE>
+
+<P>gcc and MSVC apply the general <I>expression</I> interpretation
+of <code>decltype</code>, whereas clang and icc apply
+the <I>identifier</I> special case.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-08-26):</B></P>
+
+Change in 13.7.4 [<A href="https://wg21.link/temp.variadic#10">temp.variadic</A>] paragraph 10 as follows:
+
+<BLOCKQUOTE>
+
+The instantiation of a <I>fold-expression</I>
+(7.5.7 [<A href="https://wg21.link/expr.prim.fold">expr.prim.fold</A>]) produces:
+
+<UL>
+<LI>
+<TT><INS>(</INS> ((E<SUB>1</SUB> <I>op</I> E<SUB>2</SUB> ) <I>op</I> . . . ) <I>op</I> E<SUB>N</SUB> <INS>)</INS></TT> for a unary left fold,</LI>
+<LI>
+<TT><INS>(</INS> E<SUB>1</SUB> <I>op</I> (. . . <I>op</I> (E<SUB>N-1</SUB> <I>op</I> E<SUB>N</SUB> )) <INS>)</INS></TT> for a unary right fold,</LI>
+<LI>
+<TT><INS>(</INS> (((E <I>op</I> E<SUB>1</SUB> ) <I>op</I> E<SUB>2</SUB> ) <I>op</I> . . . ) <I>op</I> E<SUB>N</SUB> <INS>)</INS></TT> for a binary left fold, and</LI>
+<LI>
+<TT><INS>(</INS> E<SUB>1</SUB> <I>op</I> (. . . <I>op</I> (E<SUB>N-1</SUB> <I>op</I> (E<SUB>N</SUB> <I>op</I> E))) <INS>)</INS></TT> for a binary right fold.</LI>
+</UL>
+...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 243</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="243"></A><H4>243.
+  
+Weighting of conversion functions in direct-initialization
+</H4>
+<B>Section: </B>12.2.4.2.3&#160; [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 Sep 2000<BR>
+
+
+
+
+<P>There is a moderately serious problem with
+the definition of overload resolution.  Consider this example:</P>
+
+<PRE>
+    struct B;
+    struct A {
+        A(B);
+    };
+    struct B {
+        operator A();
+    } b;
+    int main() {
+        (void)A(b);
+    }
+</PRE>
+
+<P>This is pretty much the definition of "ambiguous," right?  You want
+to convert a <TT>B</TT> to an <TT>A</TT>, and there are two equally
+good ways of doing that: a constructor of <TT>A</TT> that takes a
+<TT>B</TT>, and a conversion function of <TT>B</TT> that returns an
+<TT>A</TT>.</P>
+
+<P>What we discover when we trace this through the standard,
+unfortunately, is that the constructor is favored over the conversion
+function.  The definition of direct-initialization (the parenthesized
+form) of a class considers only constructors of that class.  In this
+case, the constructors are the <TT>A(B)</TT> constructor and the
+(implicitly-generated) <TT>A(const A&amp;)</TT> copy constructor.
+Here's how they are ranked on the argument match:</P>
+
+<TABLE BORDER="1" CELLSPACING="0" CELLPADDING="4">
+<TR>
+<TD><TT>A(B)</TT></TD>
+<TD>exact match (need a <TT>B</TT>, have a <TT>B</TT>)</TD>
+</TR>
+<TR>
+<TD><TT>A(const A&amp;)</TT></TD>
+<TD>user-defined conversion (<TT>B::operator A</TT> used to
+convert <TT>B</TT> to <TT>A</TT>)</TD>
+</TR>
+</TABLE>
+
+<P>In other words, the conversion function does get considered, but
+it's operating with, in effect, a handicap of one user defined
+conversion.  To put that a different way, this problem is a problem of
+weighting, not a problem that certain conversion paths are not
+considered.</P>
+
+<P>I believe the reason that the
+standard's approach doesn't yield the "intuitive" result is
+that programmers expect copy constructor elision
+to be done whenever reasonable, so the intuitive cost of using
+the conversion function in the example above is simply the cost
+of the conversion function, not the cost of the conversion function
+plus the cost of the copy constructor (which is what the standard
+counts).</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>In a direct-initialization overload
+resolution case, if the candidate function being called is a copy
+constructor and its argument (after any implicit conversions) is a
+temporary that is the return value of a conversion function, and the
+temporary can be optimized away, the cost of the argument match for
+the copy constructor should be considered to be the cost of the
+argument match on the conversion function argument.</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>It turns out that there is existing practice both ways on this
+issue, so it's not clear that it is "broken". There is some reason to
+feel that something that looks like a "constructor call" should call a
+constructor if possible, rather than a conversion function.
+The CWG decided to leave it alone.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

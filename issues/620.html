@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 620</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="620"></A><H4>620.
+  
+Declaration order in layout-compatible POD structs
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 March 2007<BR>
+
+
+<P>[Voted into the WP at the July, 2007 meeting as part of paper
+J16/07-0202 = WG21 N2342.]</P>
+
+
+
+<P>It should be made clear in 11.4 [<A href="https://wg21.link/class.mem#15">class.mem</A>] paragraph 15,</P>
+
+<BLOCKQUOTE>
+
+Two POD-struct (Clause 11 [<A href="https://wg21.link/class">class</A>]) types are
+layout-compatible if they have the same number of non-static data
+members, and corresponding non-static data members (in order) have
+layout-compatible types (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).
+
+</BLOCKQUOTE>
+
+<P>that &#8220;corresponding... (in order)&#8221; refers to declaration
+order and not the order in which the members are laid out in memory.</P>
+
+<P>However, this raises the point that, in cases where an
+<I>access-specifier</I> is involved, the declaration and layout
+order can be different (see paragraph 12).  Thus, for two POD-struct
+classes <TT>A</TT> and <TT>B</TT>,</P>
+
+<PRE>
+    struct A {
+        char c;
+        int i;
+    }
+    struct B {
+        char c;
+      public:
+        int i;
+    };
+</PRE>
+
+<P>a compiler could move <TT>B::i</TT> before <TT>B::c</TT>, but
+<TT>A::c</TT> must precede <TT>A::i</TT>.  It does not seem
+reasonable that these two POD-structs would be considered
+layout-compatible, even though they satisfy the requirement that
+corresponding members in declaration order are layout-compatible.</P>
+
+<P>One possibility would be to require that neither POD-struct have
+an <I>access-specifier</I> in order to be considered
+layout-compatible.  (It's not sufficient to require that they have
+the same <I>access-specifier</I>s, because the compiler is not
+required to lay out the storage the same way for different classes.)</P>
+
+<P>9.4.2 [<A href="https://wg21.link/dcl.init.aggr#2">dcl.init.aggr</A>] paragraph 2 should also be clarified
+to make explicit that &#8220;increasing... member order&#8221; refers
+to declaration order.</P>
+
+<P><B>Proposed resolution (April, 2007):</B></P>
+
+<P>This issue will be resolved by the adoption of the POD proposal
+(currently J16/07-0090 = WG21 N2230).  That paper does not propose
+a change to the wording of 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#2">dcl.init.aggr</A>] paragraph 2,
+but the CWG feels that the intent of that paragraph (that the
+initializers are used in declaration order) is clear enough not to
+require revision.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

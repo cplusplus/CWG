@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 752</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="752"></A><H4>752.
+  
+Name lookup in nested <I>lambda-expression</I>s
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 December, 2008<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#US31">N2800 comment
+  US&#160;31<BR></A>
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+
+
+<P>How does name binding work in nested <I>lambda-expression</I>s? For
+example,</P>
+
+<PRE>
+    void f1() {
+      float v;
+      []() { return [v]() { return v; } }
+    }
+
+    void f2() {
+      float v;
+      [v]() { return [v]() { return v; } }
+    }
+</PRE>
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#3">expr.prim.lambda</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+A name in the <I>lambda-capture</I> shall be in scope in the context
+of the lambda expression, and shall be <TT>this</TT> or shall refer to
+a local variable or reference with automatic storage duration.
+
+</BLOCKQUOTE>
+
+<P>One possible interpretation is that the lambda expression in
+<TT>f1</TT> is ill-formed because <TT>v</TT> is used in the
+<I>compound-statement</I> of the outer lambda expression but does not
+appear in its effective capture set.  However, the appearance of
+<TT>v</TT> in the inner <I>lambda-capture</I> is not a
+&#8220;use&#8221; in the sense of 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] paragraph
+2, because a <I>lambda-capture</I> is not an <I>expression</I>, and
+it's not clear whether the reference in the inner lambda expression's
+<TT>return</TT> expression should be considered a use of the automatic
+variable or of the member of the inner lambda expression's closure
+object.</P>
+
+<P>Similarly, the lambda expression in <TT>f2</TT> could be deemed
+to be ill-formed because the reference to <TT>v</TT> in the inner
+lambda expression's <I>lambda-capture</I> would refer to the field
+of the outer lambda-expression's closure object, not to a local
+automatic variable; however, it's not clear whether the inner
+lambda expression should be evaluated <I>in situ</I> or as part of
+the generated <TT>operator()</TT> member of the outer lambda
+expression's closure object.</P>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

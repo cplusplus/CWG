@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 260</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="260"></A><H4>260.
+  
+User-defined conversions and built-in <TT>operator=</TT>
+</H4>
+<B>Section: </B>12.5&#160; [<A href="https://wg21.link/over.built">over.built</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Scott Douglas
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 Nov 2000<BR>
+
+
+<P>According to the Standard (although not implemented this way
+in most implementations), the following code exhibits non-intuitive
+behavior:</P>
+
+<PRE>
+  struct T {
+    operator short() const;
+    operator int() const;
+  };
+
+  short s;
+
+  void f(const T&amp; t) {
+    s = t;  // surprisingly calls T::operator int() const
+  }
+</PRE>
+
+<P>The reason for this choice is 12.5 [<A href="https://wg21.link/over.built#18">over.built</A>] paragraph 18:
+</P>
+
+<BLOCKQUOTE>
+
+<P>For every triple (<I>L</I>, <I>VQ</I>, <I>R</I>), where <I>L</I> is an
+arithmetic type, <I>VQ</I> is either <TT>volatile</TT> or empty, and
+<I>R</I> is a promoted arithmetic type, there exist candidate operator
+functions of the form</P>
+
+<UL>
+<I>VQ</I> <I>L</I><TT>&amp; operator=(</TT><I>VQ L</I><TT>&amp;,</TT> <I>R</I><TT>);</TT>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Because <I>R</I> is a "promoted arithmetic type," the second argument
+to the built-in assignment operator is <TT>int</TT>, causing the
+unexpected choice of conversion function.</P>
+
+<P>
+<B>Suggested resolution:</B> Provide built-in assignment operators
+for the unpromoted arithmetic types.</P>
+
+<P>Related to the preceding, but not resolved by the suggested
+resolution, is the following problem.  Given:</P>
+
+<PRE>
+    struct T {
+	 operator int() const;
+	 operator double() const;
+    };
+</PRE>
+
+<P>I believe the standard requires the following assignment to be
+ambiguous (even though I expect that would surprise the user):</P>
+
+<PRE>
+    double x;
+    void f(const T&amp; t) { x = t; }
+</PRE>
+
+<P>The problem is that both of these built-in <TT>operator=()</TT>s exist
+(12.5 [<A href="https://wg21.link/over.built#18">over.built</A>] paragraph 18):</P>
+
+<PRE>
+    double&amp; operator=(double&amp;, int);
+    double&amp; operator=(double&amp;, double);
+</PRE>
+
+<P>Both are an exact match on the first argument and a user conversion
+on the second.  There is no rule that says one is a better match than
+the other.</P>
+
+<P>The compilers that I have tried (even in their strictest setting)
+do not give a peep.  I think they are not following the standard.
+They pick <TT>double&amp; operator=(double&amp;, double)</TT> and use
+<TT>T::operator double() const</TT>.</P>
+
+<P>I hesitate to suggest changes to overload resolution, but a
+possible resolution might be to introduce a rule that, for built-in
+<TT>operator=</TT> only, also considers the conversion sequence from
+the second to the first type.  This would also resolve the earlier
+question.</P>
+
+<P>It would still leave <TT>x += t</TT> etc. ambiguous -- which might
+be the desired behavior and is the current behavior of some
+compilers.</P>
+
+<P><B>Notes from the 04/01 meeting:</B></P>
+
+<P>The difference between initialization and assignment is
+disturbing.  On the other hand, promotion is ubiquitous in the
+language, and this is the beginning of a very slippery slope (as
+the second report above demonstrates).
+</P>
+
+<P><B>Additional note (August, 2010):</B></P>
+
+<P>See <A HREF="507.html">issue 507</A> for a similar example
+involving comparison operators.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

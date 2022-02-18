@@ -1,0 +1,250 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 54</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="54"></A><H4>54.
+  
+Static_cast from private base to derived class
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 Oct 1998<BR>
+
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+<P>Is it okay to use a <TT>static_cast</TT> to cast from a private base
+class to a derived class? That depends on what the words "valid standard
+conversion" in paragraph 8 mean &#8212; do they mean the conversion exists,
+or that it would not get an error if it were done? I think the former
+was intended &#8212; and therefore a <TT>static_cast</TT> from a private base
+to a derived class would be allowed.</P>
+
+<P>
+<B>Rationale (04/99):</B> A <TT>static_cast</TT> from a private
+base to a derived class is not allowed outside a member from the
+derived class, because 7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]
+
+paragraph 3 implies that the conversion is not valid. (Classic style
+casts work.)</P>
+
+<P><B>Reopened September 2003:</B></P>
+
+<P>
+<U>Steve Adamczyk:</U>
+It makes some sense to disallow the inverse conversion that is
+pointer-to-member of derived to pointer-to-member of private base.
+There's less justification for the pointer-to-private-base to
+pointer-to-derived case.  EDG, g++ 3.2, and MSVC++ 7.1 allow
+the pointer case and disallow the pointer-to-member case.
+Sun disallows the pointer case as well.</P>
+
+<PRE>
+  struct B {};
+  struct D : private B {};
+  int main() {
+    B *p = 0;
+    static_cast&lt;D *&gt;(p);  // Pointer case: should be allowed
+    int D::*pm = 0;
+    static_cast&lt;int B::*&gt;(pm);  // Pointer-to-member case: should get error
+  }
+</PRE>
+
+<P>There's a tricky case with old-style casts: because the
+static_cast interpretation is tried first, you want a case
+like the above to be considered a static_cast, but then issue
+an error, not be rejected as not a static cast; if you did the
+latter, you would then try the cast as a reinterpret_cast.</P>
+
+<P>Ambiguity and casting to a virtual base should likewise be
+errors after the static_cast interpretation is selected.</P>
+
+<P><B>Notes from the October 2003 meeting:</B></P>
+
+<P>There was lots of sentiment for making things symmetrical:
+the pointer case should be the same as the pointer-to-member case.
+g++ 3.3 now issues errors on both cases.</P>
+
+<P>We decided an error should be issued on both cases.
+The access part of the check should be done later; by some
+definition of the word the static_cast is valid, and then
+later an access error is issued.
+This is similar to the way standard conversions work.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>Replace paragraph 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/6:</P>
+
+<BLOCKQUOTE>
+The inverse of any standard conversion sequence (
+7.3 [<A href="https://wg21.link/conv">conv</A>]), other than the
+lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]), and
+boolean (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]) conversions, can be performed
+explicitly using <TT>static_cast</TT>.
+The lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>])
+conversions are applied to the operand.
+Such a
+<TT>static_cast</TT>
+is subject to the restriction that the explicit conversion does not
+cast away constness (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]), and the following
+additional rules for specific cases:
+</BLOCKQUOTE>
+
+<P>with two paragraphs:</P>
+
+<BLOCKQUOTE>
+The inverse of any standard conversion sequence (
+7.3 [<A href="https://wg21.link/conv">conv</A>]), other than the
+lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]), and
+boolean (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]) conversions, can be performed
+explicitly using <TT>static_cast</TT>.
+<INS>A program is ill-formed if it
+uses <TT>static_cast</TT> to perform the inverse of an ill-formed
+standard conversion sequence.[<I>Example:</I>
+
+<BLOCKQUOTE>
+<PRE><INS>
+struct B {};
+struct D : private B {};
+void f() {
+  static_cast&lt;D*&gt;((B*)0); // Error: B is a private base of D.
+  static_cast&lt;int B::*&gt;((int D::*)0); // Error: B is a private base of D.
+}
+</INS></PRE>
+</BLOCKQUOTE>
+--- end example]
+</INS>
+
+<P>
+The lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>])
+conversions are applied to the operand.
+Such a
+<TT>static_cast</TT>
+is subject to the restriction that the explicit conversion does not
+cast away constness (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]), and the following
+additional rules for specific cases:
+</P>
+</BLOCKQUOTE>
+
+<P>In addition, modify the second sentence of
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]/5.  The first two
+sentences of 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]/5 presently read:</P>
+
+<BLOCKQUOTE>
+The conversions performed by
+<UL>
+<LI>
+a <TT>const_cast</TT> (5.2.11),
+</LI>
+<LI>
+a <TT>static_cast</TT> (5.2.9),
+</LI>
+<LI>
+a <TT>static_cast</TT> followed by a <TT>const_cast</TT>,
+</LI>
+<LI>
+a <TT>reinterpret_cast</TT> (5.2.10), or
+</LI>
+<LI>
+a <TT>reinterpret_cast</TT> followed by a <TT>const_cast</TT>,
+</LI>
+</UL>
+can be performed using the cast notation of explicit type conversion.
+The same semantic restrictions and behaviors apply.
+</BLOCKQUOTE>
+
+<P>Change the second sentence to read:</P>
+
+<BLOCKQUOTE>
+The same semantic restrictions and behaviors apply<INS>, with the exception
+that in performing a <TT>static_cast</TT> in the following situations
+the conversion is valid even if the base class is inaccessible:
+
+<UL>
+<LI><INS>a pointer to an object of derived class type or an lvalue of
+derived class type may be explicitly converted to a pointer or
+reference to an unambiguous base class type, respectively; </INS></LI>
+
+<LI><INS>a pointer to member of derived class type may be explicitly
+converted to a pointer to member of an unambiguous non-virtual base
+class type; </INS></LI>
+
+<LI><INS>a pointer to an object of an unambiguous non-virtual
+base class type, an lvalue of an unambiguous non-virtual base
+class type, or a pointer to member of an unambiguous
+non-virtual base class type may be explicitly converted to a pointer,
+a reference, or a pointer to member of a derived class type,
+respectively.</INS></LI>
+</UL>
+</INS>
+</BLOCKQUOTE>
+
+<P>Remove paragraph 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]/7, which presently reads:</P>
+
+<BLOCKQUOTE>
+In addition to
+those conversions,
+the following
+<TT>static_cast</TT>
+and
+<TT>reinterpret_cast</TT>
+operations
+(optionally followed by a
+<TT>const_cast</TT>
+operation)
+may be performed using the cast notation of explicit type conversion,
+even if the base class type is not accessible:
+<UL>
+<LI>
+a pointer to an object of derived class type or an lvalue of derived class
+type may be explicitly converted
+to a pointer or reference to an unambiguous base class type, respectively;
+</LI>
+<LI>
+a pointer to member of derived class type may be explicitly converted
+to a pointer to member of an unambiguous non-virtual base class type;
+</LI>
+<LI>
+a pointer to an object of non-virtual base class type, an lvalue
+of non-virtual base class type, or a pointer to member of non-virtual
+base class type may be explicitly converted to a pointer, a reference,
+or a pointer to member of a derived class type, respectively.
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

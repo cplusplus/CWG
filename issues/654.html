@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 654</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="654"></A><H4>654.
+  
+Conversions to and from <TT>nullptr_t</TT>
+</H4>
+<B>Section: </B>7.3.12&#160; [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 October 2007<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting as paper N2656.]</P>
+
+
+
+<P>In the interest of promoting use of <TT>nullptr</TT> instead of the
+integer literal 0 as the null pointer constant, the proposal accepted
+by the Committee does not provide for converting a zero-valued integral
+constant to type <TT>std::nullptr_t</TT>.  However, this omission reduces
+the utility of the feature for use in the library for smart pointers.
+In particular, the addition of that conversion (along with a converting
+constructor accepting a <TT>std::nullptr_t</TT>) would allow smart
+pointers to be used just like ordinary pointers in expressions like:</P>
+
+<PRE>
+    if (p == 0) { }
+    if (0 == p) { }
+    if (p != 0) { }
+    if (0 != p) { }
+    p = 0;
+</PRE>
+
+<P>The existing use of the &#8220;unspecified bool type&#8221; idiom
+supports this usage, but being able to use <TT>std::nullptr_t</TT>
+instead would be simpler and more elegant.</P>
+
+<P>
+<U>Jason Merrill</U>: I have another reason to support the
+conversion as well: it seems to me very odd for <TT>nullptr_t</TT> to
+be more restrictive than <TT>void*</TT>.  Anything we can do with an
+arbitrary pointer, we ought to be able to do with <TT>nullptr_t</TT>
+as well.  Specifically, since there is a standard conversion from
+literal 0 to <TT>void*</TT>, and there is a standard conversion
+from <TT>void*</TT> to <TT>bool</TT>, <TT>nullptr_t</TT> should
+support the same conversions.
+</P>
+
+<P>This changes two of the example lines in the proposal as
+adopted:</P>
+
+<PRE>
+    if (nullptr) ;      //<SPAN CLASS="cmnt"> error, no conversion to </SPAN>bool
+    if (nullptr == 0) ; //<SPAN CLASS="cmnt"> error</SPAN>
+</PRE>
+
+<P>become</P>
+
+<PRE>
+    if (nullptr) ;      //<SPAN CLASS="cmnt"> evaluates to </SPAN>false
+    if( nullptr == 0 ); //<SPAN CLASS="cmnt"> evaluates to </SPAN>true
+</PRE>
+
+<P>And later,</P>
+
+<PRE>
+    char* ch3 = expr ? nullptr : nullptr; //<SPAN CLASS="cmnt"> </SPAN>ch3<SPAN CLASS="cmnt"> is the null pointer value</SPAN>
+    char* ch4 = expr ? 0 : nullptr;       //<SPAN CLASS="cmnt"> </SPAN>ch4<SPAN CLASS="cmnt"> is the null pointer value</SPAN>
+    int n3 = expr ? nullptr : nullptr;    //<SPAN CLASS="cmnt"> error, </SPAN>nullptr_t<SPAN CLASS="cmnt"> can't be converted to </SPAN>int
+    int n4 = expr ? 0 : nullptr;          //<SPAN CLASS="cmnt"> error, </SPAN>nullptr_t<SPAN CLASS="cmnt"> can't be converted to </SPAN>int
+</PRE>
+
+<P>I would also allow <TT>reinterpret_cast</TT>
+from <TT>nullptr_t</TT> to integral type, with the same semantics as a
+<TT>reinterpret_cast</TT> from the null pointer value to integral type.</P>
+
+<P>Basically, I would like <TT>nullptr_t</TT> to act like
+a <TT>void*</TT> which is constrained to always
+be <TT>(void*)0</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

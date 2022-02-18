@@ -1,0 +1,470 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1330</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1330"></A><H4>1330.
+  
+Delayed instantiation of <TT>noexcept</TT> specifiers
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-06-05<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>See also issues <A HREF="595.html">595</A> and
+<A HREF="287.html">287</A>.</P>
+
+<P>The use of <TT>noexcept</TT> specifiers can cause instantiation of
+classes and functions that are not actually needed in the program,
+just to be able to complete the declaration.  The actual value of the
+expression in the <I>noexcept-specification</I> is only needed if the
+function is defined (i.e., instantiated) or called, so it would
+significantly reduce the number of instantiations (and avoid certain
+kinds of errors when the value is currently required before a class is
+complete) if <I>exception-specification</I>s were treated like default
+arguments and only instantiated when they are actually needed.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 13.7 [<A href="https://wg21.link/temp.decls#2">temp.decls</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For purposes of name lookup and instantiation, default arguments
+<INS>and <I>exception-specification</I>s</INS> of function templates
+and default arguments <INS>and <I>exception-specification</I>s</INS>
+of member functions of class templates are considered definitions;
+each default argument <INS>or <I>exception-specification</I></INS> is
+a separate definition which is unrelated to the function template
+definition or to any other default arguments <INS>or
+<I>exception-specification</I>s</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8 [<A href="https://wg21.link/temp.res#11">temp.res</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> For purposes of name lookup, default arguments <INS>and
+<I>exception-specification</I>s</INS> of function templates and
+fdefault arguments <INS>and <I>exception-specification</I>s</INS> of
+member functions of class templates are considered definitions
+(14.5). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph following 13.8.4.1 [<A href="https://wg21.link/temp.point#2">temp.point</A>] paragraph 2:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a function template or member function of a class template is
+called in a way which uses the definition of a default argument of
+that function template or member function, the point of instantiation
+of the default argument is the point of instantiation of the function
+template or member function specialization.</P>
+
+<P><INS>For an <I>exception-specification</I> of a function template
+specialization or specialization of a member function of a class
+template, if the <I>exception-specification</I> is implicitly
+instantiated because it is needed by another template specialization
+and the context that requires it depends on a template parameter, the
+point of instantiation of the <I>exception-specification</I> is the
+point of instantiation of the specialization that requires
+it. Otherwise, the point of instantiation for such an
+<I>exception-specification</I> immediately follows the namespace scope
+declaration or definition that requires the
+<I>exception-specification</I>.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The implicit instantiation of a class template specialization
+causes the implicit instantiation of the declarations, but not of the
+definitions<INS>,</INS> <DEL>or</DEL> default arguments, <INS>or
+<I>exception-specification</I>s,</INS> of the class member functions,
+member classes...
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph following 13.9.2 [<A href="https://wg21.link/temp.inst#13">temp.inst</A>] paragraph 13:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Each default argument is instantiated independently. [<I>Example:</I>
+... &#8212;<I>end example</I>]</P>
+
+<P><INS>If the <I>exception-specification</I> of a specialization of a
+function template or member function of a class template has not yet
+been instantiated, but is needed (e.g., to instantiate the function
+definition, to evaluate a <I>noexcept-expression</I> (7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>]), or to compare against the
+<I>exception-specification</I> of another declaration), the dependent
+names are looked up, the semantic constraints are checked, and the
+instantiation of any template used in the
+<I>exception-specification</I> is done as if it were being done as
+part of instantiating the declaration of the specialization. An
+<I>exception-specification</I> is not instantiated in order to calculate the
+<I>exception-specification</I> of a defaulted function in a derived
+class until the <I>exception-specification</I> of the derived member
+function becomes necessary.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the note 13.10.3 [<A href="https://wg21.link/temp.deduct#7">temp.deduct</A>] paragraph 7 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...[<I>Note:</I> The equivalent substitution in exception
+specifications is done only when the <DEL>function</DEL>
+<INS><I>exception-specification</I></INS> is instantiated, at which
+point a program is ill-formed if the substitution results in an
+invalid type or expression. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph following 14.5 [<A href="https://wg21.link/except.spec#15">except.spec</A>] paragraph 15:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]) with no explicit
+<I>exception-specification</I> is treated as if it were specified with
+<TT>noexcept(true)</TT>.</P>
+
+<P><INS>The <I>exception-specification</I> of a function template
+specialization is not instantiated along with the function
+declaration; it is instantiated when needed (13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>]). The <I>exception-specification</I> of an
+implicitly-declared special member function is also evaluated as
+needed. [<I>Note:</I> Therefore, an implicit declaration of a member
+function of a derived class does not require the
+<I>exception-specification</I> of a base member function to be
+instantiated. &#8212;<I>end note</I>] </INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the February, 2012 meeting:</B></P>
+
+<P>There should be a specific definition of when an
+<I>exception-specification</I> is needed and must thus be instantiated.</P>
+
+<P><B>Additional discussion (September, 2012):</B></P>
+
+<P>Daveed Vandevoorde brought up two additional points.  First, the
+rule should be crafted so that an example like the following is
+ill-formed:</P>
+
+<PRE>
+  template&lt;class T&gt; T f() noexcept(sizeof(T) &lt; 4);
+
+  int main() {
+    decltype(f&lt;void&gt;()) *p;
+  }
+</PRE>
+
+<P>Even though the <I>exception-specification</I> is not needed here,
+it should be instantiated (because of the unevaluated reference to
+<TT>f</TT>) in order to catch the ill-formed <TT>sizeof(T)</TT>.</P>
+
+<P>In addition, the proposed change creates an asymmetry between class
+templates and ordinary classes:</P>
+
+<PRE>
+  struct S {
+    void f() noexcept(sizeof(g()) &lt; 8); //<SPAN CLASS="cmnt"> Invalid forward reference.</SPAN>
+    static int g();
+  };
+</PRE>
+
+<P>but</P>
+
+<PRE>
+  template&lt;typename&gt; struct X {
+      void f() noexcept(sizeof(g()) &lt; 8); //<SPAN CLASS="cmnt"> Okay.</SPAN>
+      static int g();
+  };
+</PRE>
+
+<P>If the proposed change is adopted, the rules for
+<I>exception-specification</I>s in ordinary classes should be revised
+to make the parallel usage well-formed.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<OL>
+<LI><P>Change 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1 #1 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The potential scope of a name declared in a class consists not only of
+the declarative region following the name's point of declaration, but
+also of all function bodies, default arguments,
+<INS><I>exception-specification</I>s,</INS> and
+<I>brace-or-equal-initializer</I>s of non-static data members in that
+class (including such things in nested classes).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#7">basic.lookup.unqual</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A name used in the definition of a class <TT>X</TT> outside of a
+member function body, default argument,
+<INS><I>exception-specification,</I></INS>
+<I>brace-or-equal-initializer</I> of a non-static data member, or
+nested class definition<SUP>29</SUP> shall be declared in one of the
+following ways:...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#8">basic.lookup.unqual</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For the members of a class <TT>X</TT>, a name used in a member
+function body, in a default argument, <INS>in an
+<I>exception-specification</I>,</INS> in the
+<I>brace-or-equal-initializer</I> of a non-static data member
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or in the definition of a class member
+outside of the definition of <TT>X</TT>, following the member's
+<I>declarator-id</I><SUP>31</SUP> , shall be declared in one of the
+following ways:...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4 [<A href="https://wg21.link/class.mem#2">class.mem</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A class is considered a completely-defined object type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) (or complete type) at the closing } of the
+<I>class-specifier</I>.  Within the class <I>member-specification</I>,
+the class is regarded as complete within function bodies, default
+arguments, <INS><I>exception-specification</I>s,</INS> and
+<I>brace-or-equal-initializer</I>s for non-static data members
+(including such things in nested classes). Otherwise it is regarded as
+incomplete within its own class
+<I>member-specification</I>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.7 [<A href="https://wg21.link/temp.decls#2">temp.decls</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For purposes of name lookup and instantiation, default arguments
+<INS>and <I>exception-specification</I>s</INS> of function templates
+and default arguments <INS>and <I>exception-specification</I>s</INS>
+of member functions of class templates are considered definitions;
+each default argument <INS>or <I>exception-specification</I></INS> is
+a separate definition which is unrelated to the function template
+definition or to any other default arguments <INS>or
+<I>exception-specification</I>s</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8 [<A href="https://wg21.link/temp.res#11">temp.res</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> For purposes of name lookup, default arguments <INS>and
+<I>exception-specification</I>s</INS> of function templates and
+default arguments <INS>and <I>exception-specification</I>s</INS> of
+member functions of class templates are considered definitions
+(13.7 [<A href="https://wg21.link/temp.decls">temp.decls</A>]).  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph after 13.8.4.1 [<A href="https://wg21.link/temp.point#2">temp.point</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a function template or member function of a class template is
+called in a way which uses the definition of a default argument of
+that function template or member function, the point of instantiation
+of the default argument is the point of instantiation of the function
+template or member function specialization.</P>
+
+<P>
+<INS>For an <I>exception-specification</I> of a function template
+specialization or specialization of a member function of a class
+template, if the <I>exception-specification</I> is implicitly
+instantiated because it is needed by another template specialization
+and the context that requires it depends on a template parameter, the
+point of instantiation of the <I>exception-specification</I> is the
+point of instantiation of the specialization that requires
+it. Otherwise, the point of instantiation for such an
+<I>exception-specification</I> immediately follows the namespace scope
+declaration or definition that requires the
+<I>exception-specification</I>.</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Unless a class template specialization has been explicitly
+instantiated (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicitly specialized
+(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), the class template specialization is
+implicitly instantiated when the specialization is referenced in a
+context that requires a completely-defined object type or when the
+completeness of the class type affects the semantics of the program.
+The implicit instantiation of a class template specialization causes
+the implicit instantiation of the declarations, but not of the
+definitions<INS>,</INS> <DEL>or</DEL> default arguments, <INS>or
+<I>exception-specification</I>s</INS> of the class member functions,
+member classes, scoped member enumerations, static data members and
+member templates; and it causes the implicit instantiation of the
+definitions of unscoped member enumerations and member anonymous
+unions.  However, for the purpose...
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new paragraph immediately preceding
+13.9.2 [<A href="https://wg21.link/temp.inst#14">temp.inst</A>] paragraph 14:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>The <I>exception-specification</I> of a function template
+specialization is not instantiated along with the function
+declaration; it is instantiated when needed (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]). If such an <I>exception-specification</I> is needed but
+has not yet been instantiated, the dependent names are looked up, the
+semantics constraints are checked, and the instantiation of any
+template used in the <I>exception-specification</I> is done as if it
+were being done as part of instantiating the declaration of the
+specialization at that point.</INS></P>
+
+<P>[<I>Note:</I> 13.8.4.1 [<A href="https://wg21.link/temp.point">temp.point</A>] defines the point of
+instantiation of a template specialization.  &#8212;<I>end note</I>]
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3 [<A href="https://wg21.link/temp.deduct#7">temp.deduct</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The substitution occurs in all types and expressions that are used in
+the function type and in template parameter declarations. The
+expressions include not only constant expressions such as those that
+appear in array bounds or as nontype template arguments but also
+general expressions (i.e., non-constant expressions) inside sizeof,
+decltype, and other contexts that allow non-constant expressions.
+[<I>Note:</I> The equivalent substitution in exception specifications
+is done only when the <DEL>function</DEL>
+<INS><I>exception-specification</I></INS> is instantiated, at which
+point a program is ill-formed if the substitution results in an
+invalid type or expression.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.5 [<A href="https://wg21.link/except.spec#2">except.spec</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A type denoted in an <I>exception-specification</I> shall not
+denote an incomplete type <DEL>other than a class currently being
+defined</DEL>. A type denoted in an <I>exception-specification</I>
+shall not denote a pointer or reference to an incomplete type, other
+than <I>cv</I> <TT>void*</TT> <DEL>or a pointer or reference to a
+class currently being defined</DEL>.  A type <I>cv</I> <TT>T</TT>,
+&#8220;array of <TT>T</TT>&#8221;, or &#8220;function returning
+<TT>T</TT>&#8221; denoted in an <I>exception-specification</I> is
+adjusted to type <TT>T</TT>, &#8220;pointer to <TT>T</TT>&#8221;, or
+&#8220;pointer to function returning <TT>T</TT>&#8221; respectively.
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+14.5 [<A href="https://wg21.link/except.spec#15">except.spec</A>] paragraph 15:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]) with no
+explicit <I>exception-specification</I> is treated as if it were
+specified with <TT>noexcept(true)</TT>.</P>
+
+<P><INS>An <I>exception-specification</I> is considered to be
+<I>needed</I> when:</INS></P>
+
+<UL>
+<LI><P><INS>in an expression, the function is the unique lookup
+result or the selected member of a set of overloaded functions
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>], 12.2 [<A href="https://wg21.link/over.match">over.match</A>], 12.3 [<A href="https://wg21.link/over.over">over.over</A>]);</INS></P></LI>
+
+<LI><P><INS>the function is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) or, if
+it appears in an unevaluated operand, would be odr-used if the
+expression were potentially-evaluated;</INS></P></LI>
+
+<LI><P><INS>the <I>exception-specification</I> is compared to that of another
+declaration (e.g. an explicit specialization or an overriding virtual
+function);</INS></P></LI>
+
+<LI><P><INS>the function is defined; or</INS></P></LI>
+
+<LI>
+
+<P><INS>the <I>exception-specification</I> is needed for a defaulted special
+member function that calls the function. [<I>Note:</I> A defaulted
+declaration does not require the <I>exception-specification</I> of a
+base member function to be evaluated until the implicit
+<I>exception-specification</I> of the derived function is needed, but
+an explicit <I>exception-specification</I> needs the implicit
+<I>exception-specification</I> to compare
+against. &#8212;<I>end note</I>]</INS></P>
+</LI>
+
+</UL>
+<P><INS>The <I>exception-specification</I> of a defaulted special member
+function is evaluated as described above only when needed; similarly,
+the <I>exception-specification</I> of a specialization of a function
+template or member function of a class template is instantiated only
+when needed.</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Note: this resolution reverses the decision in
+<A HREF="1308.html">issue 1308</A>.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2318</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2318"></A><H4>2318.
+  
+Nondeduced contexts in deduction from a <I>braced-init-list</I>
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Caves
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-08-12<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>The status of an example like the following is unclear:</P>
+
+<PRE>
+  template&lt;typename T, int N&gt; void g(T (* const (&amp;)[N])(T)) { }
+
+  int f1(int);
+  int f4(int);
+  char f4(char);
+
+  void f() {
+    g({ &amp;f1, &amp;f4 });  //<SPAN CLASS="cmnt"> OK, </SPAN>T<SPAN CLASS="cmnt"> deduced to </SPAN>int<SPAN CLASS="cmnt">, </SPAN>N<SPAN CLASS="cmnt"> deduced to </SPAN>2<SPAN CLASS="cmnt">?</SPAN>
+  }
+</PRE>
+
+<P>The problem is the interpretation of 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4:
+</P>
+
+<BLOCKQUOTE>
+
+In most cases, the types, templates, and non-type values that are used to
+compose <TT>P</TT> participate in template argument deduction. That is,
+they may be used to determine the value of a template argument, and the
+value so determined must be consistent with the values determined
+elsewhere. In certain contexts, however, the value does not participate in
+type deduction, but instead uses the values of template arguments that were
+either deduced elsewhere or explicitly specified. If a template parameter
+is used only in non-deduced contexts and is not explicitly specified,
+template argument deduction fails.
+
+</BLOCKQUOTE>
+
+<P>According to 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1, deduction is
+performed independently for each element of the initializer list:</P>
+
+<BLOCKQUOTE>
+
+Template argument deduction is done by comparing each function template
+parameter type (call it <TT>P</TT>) that
+contains <I>template-parameter</I>s that participate in template argument
+deduction with the type of the corresponding argument of the call (call it
+<TT>A</TT>) as described below. If removing references and cv-qualifiers
+from <TT>P</TT> gives <TT>std::initializer_list&lt;P'&gt;</TT>
+or <TT>P'[[N]</TT> for some <TT>P'</TT> and <TT>N</TT> and the argument is a
+non-empty initializer list (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), then deduction is
+performed instead for each element of the initializer list,
+taking <TT>P'</TT> as a function template parameter type and the
+initializer element as its argument, and in the <TT>P'[N]</TT> case,
+if <TT>N</TT> is a non-type template parameter, <TT>N</TT> is deduced from
+the length of the initializer list. Otherwise, an initializer list argument
+causes the parameter to be considered a non-deduced context
+(13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]).
+
+</BLOCKQUOTE>
+
+<P>Deduction fails for the second element of the list, <TT>&amp;f4</TT>,
+because of ambiguity. Does this mean that deduction fails for the entire
+call, or does the successful deduction of <TT>T</TT> from the first
+element and <TT>N</TT> from the length of the list result in successful
+deduction for the call?
+</P>
+
+<P><B>Notes from the July, 2017 meeting:</B></P>
+
+<P>CWG determined that the call is well-formed.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<P>Change 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Template argument deduction is done by comparing each
+function template parameter type (call it <TT>P</TT>) that
+contains <I>template-parameter</I>s that participate in
+template argument deduction with the type of the
+corresponding argument of the call (call it <TT>A</TT>) as
+described below. If removing references and cv-qualifiers
+from <TT>P</TT>
+gives <TT>std::initializer_list&lt;<TT>P'</TT>&gt;</TT>
+or <TT>P' [N] </TT>for some <TT>P"</TT> and <TT>N</TT> and
+the argument is a non-empty initializer list
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), then deduction is performed
+instead for each element of the initializer
+list <INS>independently</INS>, taking <TT>P'</TT> as
+<DEL>a</DEL> <INS>separate</INS> function template parameter
+type<INS>s <TT>P'</TT><SUB><I>i</I></SUB></INS>
+and the <INS><I>i</I>-th</INS>
+initializer element as <DEL>its</DEL> <INS>the corresponding</INS>
+argument<INS>.</INS>
+<DEL>, and in</DEL> <INS>In</INS> the <TT>P' [N]</TT> case,
+if <TT>N</TT> is a non-type template parameter, <TT>N</TT>
+is deduced from the length of the initializer
+list. Otherwise, an initializer list argument causes the
+parameter to be considered a non-deduced context
+(13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]). [<I>Example:</I>
+</P>
+
+<PRE>
+  ...
+  template&lt;class T, int N&gt; void n(T const(&amp;)[N], T);
+  n({{1},{2},{3}},Aggr()); //<SPAN CLASS="cmnt"> OK, </SPAN>T<SPAN CLASS="cmnt"> is </SPAN>Aggr<SPAN CLASS="cmnt">, </SPAN>N<SPAN CLASS="cmnt"> is </SPAN>3
+
+<INS>  template&lt;typename T, int N&gt; void o(T (* const (&amp;)[N])(T)) { }
+  int f1(int);
+  int f4(int);
+  char f4(char);
+  o({ &amp;f1, &amp;f4 }); //<SPAN CLASS="cmnt"> OK, </SPAN>T<SPAN CLASS="cmnt"> deduced as </SPAN>int<SPAN CLASS="cmnt"> from first element, nothing deduced from second element, </SPAN>N<SPAN CLASS="cmnt"> deduced as </SPAN>2
+  o({ &amp;f1, static_cast&lt;char(*)(char)&gt;(&amp;f4) }); //<SPAN CLASS="cmnt"> error: conflicting deductions for </SPAN>T</INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

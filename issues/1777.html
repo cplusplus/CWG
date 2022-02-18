@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1777</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1777"></A><H4>1777.
+  
+Empty pack expansion in <I>dynamic-exception-specification</I>
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-24<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>According to 13.7.4 [<A href="https://wg21.link/temp.variadic#6">temp.variadic</A>] paragraph 6, describing
+an empty pack expansion,</P>
+
+<BLOCKQUOTE>
+
+When <I>N</I> is zero, the instantiation of the expansion produces an empty
+list. Such an instantiation does not alter the syntactic interpretation of
+the enclosing construct, even in cases where omitting the list entirely
+would otherwise be ill-formed or would result in an ambiguity in the
+grammar.
+
+</BLOCKQUOTE>
+
+<P>This leaves open the question of whether something like</P>
+
+<PRE>
+  template&lt;typename...T&gt; void f() throw(T...);
+</PRE>
+
+<P>should be considered to have a non-throwing
+<I>exception-specification</I> when <TT>T...</TT> is empty.  The definition
+in 14.5 [<A href="https://wg21.link/except.spec#12">except.spec</A>] paragraph 12 appears to be syntactic
+regarding <I>dynamic-exception-specification</I>s:</P>
+
+<BLOCKQUOTE>
+
+An <I>exception-specification</I> is <I>non-throwing</I> if it is of the
+form <TT>throw()</TT>, <TT>noexcept</TT>,
+or <TT>noexcept(</TT><I>constant-expression</I> <TT>)</TT> where
+the <I>constant-expression</I> yields <TT>true</TT>. A function with a
+non-throwing <I>exception-specification</I> does not allow any exceptions.
+
+</BLOCKQUOTE>
+
+<P>It seems evident, however, that a <I>dynamic-exception-specification</I>
+with an empty pack expansion &#8220;does not allow any exceptions.&#8221;</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 14.5 [<A href="https://wg21.link/except.spec#12">except.spec</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+A function with no <I>exception-specification</I> or with
+an <I>exception-specification</I> of the form
+<TT>noexcept(</TT><I>constant-expression</I> <TT>)</TT> where
+the <I>constant-expression</I> yields <TT>false</TT> allows all
+exceptions. An <I>exception-specification</I> is
+<I>non-throwing</I> if it is <DEL>of the form <TT>throw()</TT>,
+<TT>noexcept</TT>, or <TT>noexcept(</TT><I>constant-expression</I>
+<TT>)</TT> where the</DEL> <INS>a <I>dynamic-exception-specification</I>
+whose set of adjusted types is empty (after any packs are expanded) or a
+<I>noexcept-specification</I> whose</INS> <I>constant-expression</I>
+<INS>is either absent or</INS> yields <TT>true</TT>. A function with a
+non-throwing <I>exception-specification</I> does not allow any exceptions.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

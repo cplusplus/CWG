@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2480</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2480"></A><H4>2480.
+  
+Lookup for enumerators in modules
+</H4>
+<B>Section: </B>6.5.1&#160; [<A href="https://wg21.link/basic.lookup.general">basic.lookup.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-02-12<BR>
+
+
+
+
+<P>According to 6.5.1 [<A href="https://wg21.link/basic.lookup.general">basic.lookup.general</A>] paragraphs 2-3,</P>
+
+<BLOCKQUOTE>
+
+<P>...A declaration <I>X</I> precedes a program point <I>P</I>
+in a translation unit <I>L</I> if <I>P</I>
+follows <I>X</I>, <I>X</I> inhabits a class scope and is
+reachable from <I>P</I>, or else...</P>
+
+<P>A single search in a scope <I>S</I> for a name <I>N</I>
+from a program point <I>P</I> finds all declarations that
+precede <I>P</I> to which any name that is the same
+as <I>N</I> (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) is bound
+in <I>S</I>.</P>
+
+</BLOCKQUOTE>
+
+<P>These rules cause problems for finding enumerators when
+qualified by an exported name of its enumeration type,
+unlike a member of a class. For example:</P>
+
+<PRE>
+  export module A;
+  enum class X { x };
+  enum Y { y };
+
+  export module B;
+  import A;
+  export using XB = X;
+  export using YB = Y;
+
+  //<SPAN CLASS="cmnt"> client code</SPAN>
+  import B;
+  int main() {
+    XB x = XB::x; //<SPAN CLASS="cmnt"> should be OK because definition of </SPAN>X<SPAN CLASS="cmnt"> is reachable, even</SPAN>
+                  //<SPAN CLASS="cmnt"> though </SPAN>A<SPAN CLASS="cmnt"> is not imported</SPAN>
+    YB y = YB::y; //<SPAN CLASS="cmnt"> similarly OK</SPAN>
+    YB z = ::y;   //<SPAN CLASS="cmnt"> error, because </SPAN>y<SPAN CLASS="cmnt"> from module </SPAN>A<SPAN CLASS="cmnt"> is not visible</SPAN>
+  }
+</PRE>
+
+<P>It would seem that this problem could be addressed by changing
+&#8220;inhabits a class scope&#8221; to &#8220;does not
+inhabit a namespace scope.&#8221;</P>
+
+<BR><BR>
+</BODY>
+</HTML>

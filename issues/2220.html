@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2220</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2220"></A><H4>2220.
+  
+Hiding index variable in range-based <TT>for</TT>
+</H4>
+<B>Section: </B>8.6.5&#160; [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-01-08<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+<P>Given an example like</P>
+
+<PRE>
+  void f() {
+    int arr[] = { 1, 2, 3 };
+    for (int val : arr) {
+      int val;   //<SPAN CLASS="cmnt"> Redeclares index variable</SPAN>
+    }
+  }
+</PRE>
+
+<P>one might expect that the redeclaration of the index variable would
+be an error, as it is in the corresponding classic <TT>for</TT>
+statement. However, the restriction that makes the latter an error is
+phrased in terms of the <I>condition</I> nonterminal in
+8.5 [<A href="https://wg21.link/stmt.select#3">stmt.select</A>] paragraph 3, and the range-based <TT>for</TT>
+does not refer to <I>condition</I>. Should there be an explicit
+prohibition of such a redeclaration?</P>
+
+<P><B>Proposed resolution (January, 2017):</B></P>
+
+<P>Add the following as a new paragraph after 8.6 [<A href="https://wg21.link/stmt.iter#3">stmt.iter</A>] paragraph 3:
+</P>
+
+<BLOCKQUOTE>
+
+<P>Thus after the <TT>while</TT> statement, <TT>i</TT> is no longer in
+scope. &#8212;<I>end example</I>]</P>
+
+<P><INS>If a name introduced in an <I>init-statement</I>
+or <I>for-range-declaration</I> is redeclared in the outermost block of the
+substatement, the program is ill-formed. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  void f() {
+    for (int i = 0; i &lt; 10; ++i)
+      int i = 0;          //<SPAN CLASS="cmnt"> error: redeclaration</SPAN>
+    for (int i : { 1, 2, 3 })
+      int i = 1;          //<SPAN CLASS="cmnt"> error: redeclaration</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 89</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="89"></A><H4>89.
+  
+Object lifetime does not account for reference rebinding
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>AFNOR
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Oct 1998<BR>
+
+
+
+<BR>From J16/98-0026 = WG21 N1169, "Proposed Defect Reports on ISO/IEC
+14882, Programming Languages - C++":
+<BLOCKQUOTE>
+A reference is rebindable. This is surprising and unnatural. This can
+also cause subtle optimizer bugs.
+
+<P>Example:</P>
+<PRE>
+    struct T {
+        int&amp; ri;
+        T (int&amp; r) : ri (r) { }
+    };
+
+    void bar (T*);
+
+    void foo () {
+        int i;
+        T x (i);
+        x.ri = 3;   // the optimizer understands that this is really i = 3
+        bar (&amp;x);
+        x.ri = 4;   // optimizer assumes that this writes to i, but this is incorrect
+    }
+
+    int gi;
+
+    void bar (T* p) {
+        p-&gt;~T ();
+        new (p) T (gi);
+    }
+</PRE>
+If we replace <TT>T&amp;</TT> with <TT>T* const</TT> in the example then
+undefined behavior result and the optimizer is correct.
+
+<P>Proposal: make <TT>T&amp;</TT> equivalent to <TT>T* const</TT> by extending
+the scope of
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]
+paragraph
+9 to references.</P>
+</BLOCKQUOTE>
+<P>(See also J16/99-0005 = WG21 N1182, "Proposed Resolutions for Core
+Language Issues 6, 14, 20, 40, and 89")</P>
+
+<P>In addition, Lisa Lippincott pointed out the following example:</P>
+
+<PRE>
+    void f( const bool * );
+    void g();
+
+    int main() {
+       const bool *b = new const bool( false );
+       f(b);
+       if (*b)
+          g();
+    }
+
+    void f( const bool *b ) {
+       new ( const_cast&lt;bool *&gt;(b) ) const bool( true );
+    }
+</PRE>
+
+<P>The proposed wording in the paper would still permit this usage and
+thus prevent an optimizer from eliminating the call to <TT>g()</TT>.</P>
+
+<P><B>Proposed Resolution (10/00):</B></P>
+
+<P>Add a new bullet to the list of restrictions in
+6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7,
+ following the second bullet ("the new object is of the same
+type..."):</P>
+<UL>
+<LI>
+the type of the original object is not const-qualified, and,
+if a class type, does not contain any non-static
+data member whose type is const-qualified or a reference type, and</LI>
+</UL>
+<BR><BR>
+</BODY>
+</HTML>

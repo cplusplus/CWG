@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 353</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="353"></A><H4>353.
+  
+Is deallocation routine called if destructor throws exception in delete?
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Duane Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 April 2002<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+<P>In a couple of comp.std.c++ threads, people have asked
+whether the Standard guarantees that the deallocation function
+will be called in a delete-expression if the destructor throws
+an exception.  Most/all people have expressed the opinion that
+the deallocation function must be called in this case, although
+no one has been able to cite wording in the Standard supporting
+that view.</P>
+
+<PRE>
+#include &lt;new.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+static int flag = 0;
+
+inline
+void operator delete(void* p) throw()
+{
+   if (flag)
+        printf("in deallocation function\n");
+   free(p);
+}
+
+struct S {
+    ~S() { throw 0; }
+};
+
+void f() {
+    try {
+        delete new S;
+    }
+    catch(...) { }
+}
+
+int main() {
+       flag=1;
+       f();
+       flag=0;
+       return 0;
+}
+</PRE>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+<P>
+Add to 7.6.2.9 [<A href="https://wg21.link/expr.delete#7">expr.delete</A>] paragraph 7 the highlighted text:</P>
+<BLOCKQUOTE>
+The <I>delete-expression</I> will call a <I>deallocation function</I>
+(6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>])
+<INS>[<I>Note:</I> The deallocation function is called regardless of
+whether the destructor for the object or some element of the array
+throws an exception. ]</INS>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 456</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="456"></A><H4>456.
+  
+Is initialized const int or const bool variable a null pointer constant?
+</H4>
+<B>Section: </B>7.3.12&#160; [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lloyd Lewins
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Jan 2004<BR>
+
+
+<P>In the following code, I expect both "null" and "FALSE" to be null
+pointer constants -- and that the code should compile and output the
+string "int*" twice to cout:</P>
+<PRE>
+#include &lt;iostream&gt;
+
+using namespace std;
+
+void foo(int* p)
+{
+     cout &lt;&lt; "int*" &lt;&lt; endl;
+}
+
+int main(void)
+{
+     const int null = 0;
+     foo(null);
+     const bool FALSE = false;
+     foo(FALSE);
+}
+</PRE>
+<P>ISO/IEC 14882-1998 7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>] states:</P>
+<BLOCKQUOTE>
+An  integral constant expression rvalue of integer type that evaluates
+to zero (called a /null pointer constant/)  can  be  converted  to  a
+pointer  type.
+</BLOCKQUOTE>
+<P>Stroustrup appears to agree with me -- he states (3rd edition page 88):</P>
+<BLOCKQUOTE>
+In C, it has been popular to define a macro NULL to represent the zero
+pointer. Because of C++`s tighter type checking, the use of plain 0,
+rather than any suggested NULL macro, leads to fewer problems. If you
+feel you must define NULL, use:
+<PRE>
+   const int NULL = 0;
+</PRE>
+</BLOCKQUOTE>
+<P>However gcc 3.3.1 rejects this code with the errors:</P>
+<PRE>
+     bug.cc:17: error: invalid conversion from `int' to `int*'
+     bug.cc:19: error: cannot convert `const bool' to `int*' for argument `1' to `
+         void foo(int*)'
+</PRE>
+<P>I have reported this as a bug
+(http://gcc.gnu.org/bugzilla/show_bug.cgi?id=13867), but the gcc team
+states that 4.10 requires that a null pointer constant must be an rvalue
+-- and no implicit conversion from an lvalue to an rvalue is required
+(http://gcc.gnu.org/bugzilla/show_bug.cgi?id=396):</P>
+<BLOCKQUOTE>
+a null pointer constant is an integral constant expression rvalue that
+evaluates to zero [4.10/1] in this case `null' is an lvalue. The
+standard does not specify that lvalue-&gt;rvalue decay happens here, so
+`null' is not a null pointer constant.
+</BLOCKQUOTE>
+
+<P>I disagree with the gcc teams interpretation -- I don't see why
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>] doesn't apply:</P>
+<BLOCKQUOTE>
+Whenever  an  lvalue appears in a context where an rvalue is expected,
+the lvalue is converted to an rvalue;
+</BLOCKQUOTE>
+<P>The insertion of the word rvalue appears to have occurred during
+standardization -- it is not present in either Stroustrup 2nd edition or
+the 3rd edition. Does the committee deliberately intend to exclude an
+lvalue as a null pointer constant by adding the word rvalue? If so, it
+leads to the rather bizarre fact that "null" is not a null pointer
+constant, but "null + 0" is!</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>We think this is just a bug in gcc.  The const variable does
+get converted to an rvalue in this context.  This case is not
+really any different than cases like
+<PRE>
+  const int null = 0;
+  int i = null;
+</PRE>
+or
+<PRE>
+  const int i = 1;
+  int a[i];
+</PRE>
+(which are accepted by gcc).
+No one would argue that the second lines of those examples
+are invalid because the variables are lvalues, and yet the conversions
+to rvalue happen implicitly for the same reason cited above -- the
+contexts require an rvalue. </P>
+
+<BR><BR>
+</BODY>
+</HTML>

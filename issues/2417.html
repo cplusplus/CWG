@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2417</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2417"></A><H4>2417.
+  
+Explicit instantiation and exception specifications
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-06-19<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  template&lt;class T&gt;struct Y {
+    typedef typename T::value_type blah;  //<SPAN CLASS="cmnt"> #1</SPAN>
+    void swap(Y&lt;T&gt; &amp;);
+  };
+  template&lt;class T&gt;
+  void swap(Y&lt;T&gt;&amp; Left, Y&lt;T&gt;&amp; Right) noexcept(noexcept(Left.swap(Right))) { }
+
+  template &lt;class T&gt; struct Z {
+    void swap(Z&lt;T&gt; &amp;);
+  };
+  template&lt;class T&gt;
+  void swap(Z&lt;T&gt;&amp; Left, Z&lt;T&gt;&amp; Right) noexcept(noexcept(Left.swap(Right))) { }
+
+  Z&lt;int&gt; x00, y00;
+  constexpr bool b00 = noexcept(x00.swap(y00));
+  template void swap&lt;int&gt;(Z&lt;int&gt;&amp;, Z&lt;int&gt;&amp;) noexcept(b00);  //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>The question here is whether the explicit instantiation of</P>
+
+<PRE>
+  swap&lt;int&gt;(Z&lt;int&gt;&amp;, Z&lt;int&gt;&amp;)
+</PRE>
+
+<P>at #2 instantiates the exception specification of</P>
+
+<PRE>
+  swap&lt;int&gt;(Y&lt;int&gt;&amp;, Y&lt;int&gt;&amp;)
+</PRE>
+
+<P>which would instantiate <TT>Y&lt;int&gt;</TT>, resulting
+in an error on the declaration of</P>
+
+<PRE>
+  typedef typename T::value_type blah;
+</PRE>
+
+<P>at #1.</P>
+
+<P>According to 13.9.2 [<A href="https://wg21.link/temp.inst#14">temp.inst</A>] paragraph 14,</P>
+
+<BLOCKQUOTE>
+
+The <I>noexcept-specifier</I> of a function template
+specialization is not instantiated along with the function
+declaration; it is instantiated when needed
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]).
+
+</BLOCKQUOTE>
+
+<P>According to 14.5 [<A href="https://wg21.link/except.spec#13.3">except.spec</A>] bullet 13.3, one
+of the reasons an exception specification is needed is:</P>
+
+<BLOCKQUOTE>
+
+the exception specification is compared to that of another
+declaration (e.g., an explicit specialization or an
+overriding virtual function);
+
+</BLOCKQUOTE>
+
+<P>Such a comparison is presumably needed when determining
+which function template the explicit instantiation is
+referring to, making the program ill-formed. However, there is
+implementation variance on this point.</P>
+
+<P><B>CWG 2022-11-10</B></P>
+
+<P>There are related problems in this area; CWG is seeking input to
+form a holistic view.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

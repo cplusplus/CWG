@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 547</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="547"></A><H4>547.
+  
+Partial specialization on member function types
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Peter Dimov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>04 November 2005<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+
+
+<P>The following example appears to be well-formed, with the partial
+specialization matching the type of <TT>Y::f()</TT>, even though it
+is rejected by many compilers:</P>
+
+<PRE>
+    template&lt;class T&gt; struct X;
+
+    template&lt;class R&gt; struct X&lt; R() &gt; {
+    };
+
+    template&lt;class F, class T&gt; void test(F T::* pmf) {
+        X&lt;F&gt; x;
+    }
+
+    struct Y {
+        void f() {
+        }
+    };
+
+    int main() {
+        test( &amp;Y::f );
+    }
+</PRE>
+
+<P>However, 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+A <I>cv-qualifier-seq</I> shall only be part of the function type for
+a non-static member function, the function type to which a pointer to
+member refers, or the top-level function type of a function typedef
+declaration. The effect of a <I>cv-qualifier-seq</I> in a function
+declarator is not the same as adding cv-qualification on top of the
+function type. In the latter case, the cv-qualifiers are ignored.
+
+</BLOCKQUOTE>
+
+<P>This specification makes it impossible to write a partial
+specialization for a <TT>const</TT> member function:</P>
+
+<PRE>
+    template&lt;class R&gt; struct X&lt;R() const&gt; {
+    };
+</PRE>
+
+<P>A template argument is not one of the permitted contexts for
+cv-qualification of a function type.  This restriction should be
+removed.</P>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>During the meeting the CWG was of the opinion that the
+&#8220;<TT>R() const</TT>&#8221; specialization would not match
+the const member function even if it were allowed and so classified
+the issue as NAD.  Questions have been raised since the meeting,
+however, suggesting that the template argument in the partial
+specialization would, in fact, match the type of a const member
+function (see, for example, the very similar usage via typedefs
+in 11.4.2 [<A href="https://wg21.link/class.mfct#9">class.mfct</A>] paragraph 9).  The issue is thus being
+left open for renewed discussion at the next meeting.</P>
+
+<P><B>Proposed resolution (June, 2008) [SUPERSEDED]:</B></P>
+
+<P>Change 9.3.4.6 [<A href="https://wg21.link/dcl.fct#7">dcl.fct</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>cv-qualifier-seq</I> shall only be part of the function type for a
+non-static member function, the function type to which a pointer to
+member refers, <DEL>or</DEL> the top-level function type of a function typedef
+declaration<INS>, or the top-level function type of a <I>type-id</I> that is a
+<I>template-argument</I> for a type <I>template-parameter</I></INS>. The
+effect... A <I>ref-qualifier</I> shall only be part of the function type for
+a non-static member function, the function type to which a pointer to
+member refers, <DEL>or</DEL> the top-level function type of a function typedef
+declaration<INS>, or the top-level function type of a <I>type-id</I> that is a
+<I>template-argument</I> for a type <I>template-parameter</I></INS>. The
+return type...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

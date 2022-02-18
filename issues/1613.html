@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1613</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1613"></A><H4>1613.
+  
+Constant expressions and lambda capture
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-31<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA16">N3690 comment
+  CA&#160;16<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>Since instances of a variable in constant expressions may be odr-uses, the ordering of:</P>
+
+<UL>
+<LI><P>constant expression evaluation,</P></LI>
+
+<LI><P>the determination of implicit captures, and</P></LI>
+
+<LI><P>the transformation to use closure members for odr-uses of captured
+variables</P></LI>
+
+</UL>
+
+<P>may affect the semantics of a program such as the one below.</P>
+
+<P>The transformation under 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#17">expr.prim.lambda</A>] paragraph 17
+introduces uses of the <TT>this</TT> pointer of the <TT>operator()</TT>
+in its <I>function-body</I>.  These instances of <TT>this</TT> are
+invalid under <A HREF="1369.html">issue 1369</A> if the transformation
+is applied before the evaluation of the constant expressions.  Without
+the resolution of <A HREF="1369.html">issue 1369</A>, another
+situation occurs where instances of <TT>this</TT> in the
+<I>compound-statement</I> are transformed into class member access
+expressions (see the initializations of <TT>addrEqA</TT> and
+<TT>addrEqB</TT> below).</P>
+
+<P>Also, for the initialization of <TT>nonZero</TT> below, the expression
+fails to be a constant expression if the transformation is applied before
+constant expression evaluation.</P>
+
+<P>Finally, the answer to the static assertion changes depending on whether
+the constant expression evaluation is performed before the transformation
+as opposed to after and whether the proposed resolution
+<A HREF="1472.html">issue 1472</A> is enabled.</P>
+
+<P>There appears to be implementation divergence regarding</P>
+
+<UL>
+<LI><P>whether the lexical instances of <TT>this</TT> in the
+initialization of <TT>addrEqB</TT> is valid and</P></LI>
+
+<LI><P>whether the static assertion should pass.</P></LI>
+
+</UL>
+
+<P>Using explicit value captures is not a panacea, since the
+paragraph 17 transformations only apply to odr-uses.  As a result
+of the resolution of <A HREF="1472.html">issue 1472</A>, if the
+reference <TT>r</TT> below happened to have been initialized with a
+constant expression, the value of its (modifiable) target is not
+captured; if the same target were specified in the initialization
+of the reference with a non-constant expression, its value would be
+captured.</P>
+
+<PRE>
+  struct A {
+    void foo();
+  };
+
+  struct LitType { int val; };
+  constexpr int ceFunc(const LitType &amp;x) { return x.val; }
+
+  void A::foo() {
+    constexpr LitType y = { 0 };
+    static int z;
+    int x, &amp;r = z;
+    [=] {
+     constexpr bool addrEqA = &amp;x == &amp;x;         //<SPAN CLASS="cmnt"> ill-formed under <A HREF="1369.html">issue 1369</A> after transformation</SPAN>
+                                                //<SPAN CLASS="cmnt"> under paragraph 17</SPAN>
+     constexpr bool addrEqB = &amp;*this == &amp;*this; //<SPAN CLASS="cmnt"> well-formed after transformation under N3290</SPAN>
+                                                //<SPAN CLASS="cmnt"> paragraph 17</SPAN>
+     constexpr bool nonZero = ceFunc(y);        //<SPAN CLASS="cmnt"> lvalue-to-rvalue conversion occurs only after</SPAN>
+                                                //<SPAN CLASS="cmnt"> function invocation substitution; the closure member,</SPAN>
+                                                //<SPAN CLASS="cmnt"> being not a variable, cannot be </SPAN>constexpr
+     static_assert(&amp;r != &amp;z,
+       "reference which could be captured by value found to alias target");
+                                                //<SPAN CLASS="cmnt"> affected by <A HREF="1472.html">issue 1472</A></SPAN>
+    };
+  }
+</PRE>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Add the following bullet to 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>conditional-expression</I> <TT>e</TT> is a core constant expression
+unless the evaluation of <TT>e</TT>, following the rules of the abstract
+machine (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following
+expressions:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P><INS>in a <I>lambda-expression</I>, a reference to <TT>this</TT> or
+to a variable with automatic storage duration defined outside
+that <I>lambda-expression</I>, where the reference would be an odr-use
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>], 7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]);</INS></P></LI>
+
+<LI><P>a conversion from type <I>cv</I> <TT>void *</TT> to a
+pointer-to-object type;</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

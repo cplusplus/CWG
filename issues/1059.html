@@ -1,0 +1,148 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1059</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1059"></A><H4>1059.
+  
+Cv-qualified array types (with rvalues)
+</H4>
+<B>Section: </B>6.8.5&#160; [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-20<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+<P>In spite of the resolution of <A HREF="112.html">issue 112</A>,
+the exact relationship between cv-qualifiers and array types is not
+clear.  There does not appear to be a definitive normative statement
+answering the question of whether an array with a const-qualified
+element type is itself const-qualified; the statement in
+6.8.5 [<A href="https://wg21.link/basic.type.qualifier#5">basic.type.qualifier</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+Cv-qualifiers applied to an array type attach to the underlying
+element type, so the notation &#8220;<I>cv</I> <TT>T</TT>,&#8221;
+where <TT>T</TT> is an array type, refers to an array whose
+elements are so-qualified.  Such array types can be said to be
+more (or less) cv-qualified than other types based on the
+cv-qualification of the underlying element types.
+
+</BLOCKQUOTE>
+
+<P>hints at an answer but is hardly decisive.  For example, is
+the following example well-formed?</P>
+
+<PRE>
+    template &lt;class T&gt; struct is_const {
+        static const bool value = false;
+    };
+    template &lt;class T&gt; struct is_const&lt;const T&gt; {
+        static const bool value = true;
+    };
+
+    template &lt;class T&gt; void f(T &amp;) {
+        char checker[is_const&lt;T&gt;::value];
+    }
+
+    int const arr[1] = {};
+
+    int main() {
+        f(arr);
+    }
+</PRE>
+
+<P>Also, when 7.2.1 [<A href="https://wg21.link/basic.lval#4">basic.lval</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+Class prvalues can have cv-qualified types; non-class prvalues
+always have cv-unqualified types.
+
+</BLOCKQUOTE>
+
+<P>does this apply to array rvalues, as it appears?  That is,
+given</P>
+
+<PRE>
+    struct S {
+        const int arr[10];
+    };
+</PRE>
+
+<P>is the array rvalue <TT>S().arr</TT> an array of <TT>int</TT>
+or an array of <TT>const int</TT>?</P>
+
+<P>(The more general question is, when the Standard refers to
+non-class types, should it be considered to include array types?
+Or perhaps only arrays of non-class types?)</P>
+
+<P><B>Proposed resolution (December, 2011):</B></P>
+
+<OL>
+<LI><P>Change 6.8.5 [<A href="https://wg21.link/basic.type.qualifier#5">basic.type.qualifier</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Cv-qualifiers applied to an array type attach to the underlying
+element type, so the notation &#8220;<I>cv</I> <TT>T</TT>,&#8221;
+where <TT>T</TT> is an array type, refers to an array whose elements are
+so-qualified.  <DEL>Such array types can be said to be more (or less)
+cv-qualified than other types based on the cv-qualification of the
+underlying element types.</DEL> <INS>An array type whose elements are
+cv-qualified is also considered to have the same cv-qualification as
+its elements. [<I>Example:</I></INS>
+
+<PRE>
+<INS>  typedef char CA[5];
+  typedef const char CC;
+  CC arr1[5] = { 0 };
+  const CA arr2 = { 0 };</INS>
+</PRE>
+
+<P><INS>The type of both <TT>arr1</TT> and <TT>arr2</TT> is
+&#8220;array of 5 <TT>const char</TT>,&#8221; and the array type is
+considered to be <TT>const</TT>-qualified. &#8212;<I>end
+example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#4">basic.lval</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Class <INS>and array</INS> prvalues can have cv-qualified types;
+<DEL>non-class</DEL> <INS>other</INS> prvalues always have
+cv-unqualified types.  Unless otherwise indicated...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1937</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1937"></A><H4>1937.
+  
+Incomplete specification of function pointer from lambda
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-06-05<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#6">expr.prim.lambda</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+The closure type for a non-generic <I>lambda-expression</I> with
+no <I>lambda-capture</I> has a public non-virtual non-explicit
+const conversion function to pointer to function with C ++
+language linkage (9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) having the same
+parameter and return types as the closure type's function call
+operator. The value returned by this conversion function shall be
+the address of a function that, when invoked, has the same effect
+as invoking the closure type's function call operator.
+
+</BLOCKQUOTE>
+
+<P>This does not mention the object for which the function call
+operator would be invoked (although since there is no capture,
+presumably the function call operator makes no use of the
+object pointer).  This could be addressed by relating the
+behavior of the function call operator to a notional temporary,
+or the function call operator for such closure classes could be
+made static.</P>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<OL>
+<LI><P>Change 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#7">expr.prim.lambda.closure</A>] paragraph 7 as follows,
+splitting it into two paragraphs:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...The value returned by this conversion function is the
+address of a function <TT>F</TT> that, when invoked, has the
+same effect as invoking the closure type's function call
+operator <INS>on a default-constructed instance of the
+closure type</INS>. <TT>F</TT> is a constexpr function if
+the function call operator is a constexpr function.</P>
+
+<P>For a generic lambda with
+no <I>lambda-capture</I>, the closure type has...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#9">expr.prim.lambda.closure</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The value returned by any given specialization of this
+conversion function template is the address of a function <TT>F</TT>
+that, when invoked, has the same effect as invoking the
+generic lambda's corresponding function call operator
+template specialization <INS>on a default-constructed instance
+of the closure type</INS>. <TT>F</TT>
+is a constexpr function if the
+corresponding specialization is a constexpr
+function <INS>and is an immediate function if the function
+call operator template specialization is an immediate
+function</INS>. [<I>Note:</I> This will result...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

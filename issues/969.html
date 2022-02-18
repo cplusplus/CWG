@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 969</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="969"></A><H4>969.
+  
+Explicit instantiation declarations of class template specializations
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 December, 2008<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>Consider this example:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+       virtual void f() {}
+    };
+
+    extern template struct A&lt;int&gt;;
+
+    int main() {
+       A&lt;int&gt; a;
+       a.f();
+    }
+</PRE>
+
+<P>The intent is that the explicit instantiation declaration will
+suppress any compiler-generated machinery such as a virtual function
+table or typeinfo data in this translation unit, and that because of
+13.9.3 [<A href="https://wg21.link/temp.explicit#10">temp.explicit</A>] paragraph 10,</P>
+
+<BLOCKQUOTE>
+
+An entity that is the subject of an explicit instantiation declaration
+and that is also used in the translation unit shall be the subject of
+an explicit instantiation definition somewhere in the program;
+otherwise the program is ill-formed, no diagnostic required.
+
+</BLOCKQUOTE>
+
+<P>the use of <TT>A&lt;int&gt;</TT> in declaring <TT>a</TT> requires
+an explicit instantiation definition in another translation unit that
+will provide the requisite compiler-generated data.</P>
+
+<P>The existing wording of 13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>] does not
+express this intent clearly enough, however.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI><P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#7">temp.explicit</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An explicit instantiation that names a class template specialization
+is <INS>also</INS> an explicit instantion of the same kind
+(declaration or definition) of each of its members (not including
+members inherited from base classes) that has not been previously
+explicitly specialized in the translation unit containing the explicit
+instantiation, except as described below.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#9">temp.explicit</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>An explicit instantiation declaration that names a class template
+specialization has no effect on the class template specialization
+itself (except for perhaps resulting in its implicit
+instantiation).</DEL> Except for inline functions <INS>and class
+template specializations</INS>, other explicit instantiation
+declarations have the effect of suppressing the implicit instantiation
+of the entity to which they refer...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>] paragraphs 7-9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An explicit instantiation that names a class template
+specialization is <INS>also</INS> an explicit instantion of the same
+kind (declaration or definition) of each of its members (not including
+members inherited from base classes) that has not been previously
+explicitly specialized in the translation unit containing the explicit
+instantiation, except as described below. <INS>[<I>Note:</I> In
+addition, it will typically be an explicit instantiation of certain
+implementation-dependent data about the class. &#8212;<I>end
+note</I>]</INS>
+</P>
+
+<P>An explicit instantiation definition that names a class template
+specialization explicitly instantiates the class template
+specialization and is <DEL>only</DEL> an explicit instantiation
+definition of <INS>only those</INS> members whose definition is
+visible at the point of instantiation.</P>
+
+<P>
+<DEL>An explicit instantiation declaration that names a class
+template specialization has no effect on the class template
+specialization itself (except for perhaps resulting in its implicit
+instantiation).</DEL> Except for inline functions <INS>and class
+template specializations</INS>, <DEL>other</DEL> explicit
+instantiation declarations have the effect of suppressing the implicit
+instantiation of the entity to which they refer...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

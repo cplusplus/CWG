@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2627</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2627"></A><H4>2627.
+  
+Bit-fields and narrowing conversions
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tim Song
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-08-13<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+struct C {
+  long long i : 8;
+};
+
+void f() {
+  C x{1}, y{2};
+  x.i &lt;=&gt; y.i; //<SPAN CLASS="cmnt"> error: narrowing conversion required (7.6.8 [<A href="https://wg21.link/expr.spaceship#4.1">expr.spaceship</A>] bullet 4.1)</SPAN>
+}
+</PRE>
+
+<P>The rules for narrowing conversions in 9.4.5 [<A href="https://wg21.link/dcl.init.list#7">dcl.init.list</A>] paragraph 7 consider only the source type, even though integral
+promotions can change the type of a bit-field to a smaller integer
+type without loss of value range according to 7.3.7 [<A href="https://wg21.link/conv.prom#5">conv.prom</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+A prvalue for an integral bit-field (11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]) can
+be converted to a prvalue of type <TT>int</TT> if <TT>int</TT> can
+represent all the values of the bit-field; otherwise, it can be
+converted to <TT>unsigned int</TT> if <TT>unsigned int</TT> can
+represent all the values of the bit-field. If the bit-field is larger
+yet, no integral promotion applies to it. If the bit-field has
+enumeration type, it is treated as any other value of that type for
+promotion purposes.
+
+</BLOCKQUOTE>
+
+<P>There is implementation divergence in the handling of this example.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-10-07):</B></P>
+
+<P>Change in 9.4.5 [<A href="https://wg21.link/dcl.init.list#7.4">dcl.init.list</A>] bullet 7.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A narrowing conversion is an implicit conversion</P>
+
+<UL>
+<LI>...</LI>
+
+<LI>from an integer type or unscoped enumeration type to an integer
+type that cannot represent all the values of the original type, except
+where
+
+<UL>
+<LI><INS>the source is a bit-field whose width <I>w</I> is less than
+that of its type (or, for an enumeration type, its underlying type)
+and the target type can represent all the values of a hypothetical
+extended integer type with width <I>w</I> and with the same signedness
+as the original type or</INS></LI>
+<LI>the source is a constant expression whose value after integral
+promotions will fit into the target type, or
+</LI>
+</UL>
+
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

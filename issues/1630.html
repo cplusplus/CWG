@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1630</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1630"></A><H4>1630.
+  
+Multiple default constructor templates
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-03-01<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>It is unclear whether code like the following is supposed to be
+supported or not:</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+  #include &lt;type_traits&gt;
+
+  #define ENABLE_IF(...) \
+    typename std::enable_if&lt;__VA_ARGS__, int&gt;::type = 0
+  #define PRINT_VALUE(...) \
+    std::cout &lt;&lt; #__VA_ARGS__ " = " &lt;&lt; __VA_ARGS__ &lt;&lt; std::endl
+
+  struct undefined {};
+
+  template &lt;class T&gt;
+    undefined special_default_value(T *);
+
+  template &lt;class T&gt;
+    struct has_special_default_value :
+      std::integral_constant
+      &lt;
+        bool,
+        !std::is_same
+          &lt;
+            decltype(special_default_value((T *)0)),
+            undefined
+          &gt;{}
+      &gt; {};
+
+  template &lt;class T&gt; struct X {
+    template &lt;class U = T, ENABLE_IF(!has_special_default_value&lt;U&gt;{})&gt;
+      X() : value() {}
+    template &lt;class U = T, ENABLE_IF(has_special_default_value&lt;U&gt;{})&gt;
+      X() : value(special_default_value((T *)0)) {}
+    T value;
+  };
+
+  enum E {
+    e1 = 1,
+    e2 = 2
+  };
+
+  E special_default_value(E *) { return e1; }
+
+  int main() {
+    X&lt;int&gt; x_int;
+    X&lt;E&gt; x_E;
+    PRINT_VALUE(x_int.value);
+    PRINT_VALUE(x_E.value);
+
+    PRINT_VALUE(X&lt;int&gt;().value);
+    PRINT_VALUE(X&lt;E&gt;().value);
+  }
+</PRE>
+
+<P>The intent is that <TT>X&lt;int&gt;</TT> should call the first default
+constructor and <TT>X&lt;E&gt;</TT> should call the second.</P>
+
+<P>If this is intended to work, the rules for making it do so are not
+clear; current wording reads as if a class can have only a single
+default constructor, and there appears to be no mechanism for using
+overload resolution to choose between variants.</P>
+
+
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...An assignment operator function in a class is odr-used by an
+implicitly-defined copy-assignment or move-assignment function
+for another class as specified in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]. <DEL>A
+default constructor for a class is odr-used by default
+initialization or value initialization as specified in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>].</DEL> A constructor for a class is odr-used
+as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]. A destructor for a
+class is odr-used if it is potentially invoked
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.4 [<A href="https://wg21.link/dcl.init#7">dcl.init</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>To <I>default-initialize</I> an object of type <TT>T</TT> means:</P>
+
+<UL>
+<LI><P>
+<DEL>if</DEL> <INS>If</INS> <TT>T</TT> is a (possibly
+cv-qualified) class type (Clause 11 [<A href="https://wg21.link/class">class</A>]), <DEL>the
+default constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]) for <TT>T</TT> is
+called (and the initialization is ill-formed if <TT>T</TT> has no
+default constructor or overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]) results in an ambiguity or in a
+function that is deleted or inaccessible from the context of the
+initialization);</DEL> <INS>constructors are considered.  The
+applicable constructors are enumerated (12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]),
+and the best one for the <I>initializer</I> <TT>()</TT> is chosen
+through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]).  The
+constructor thus selected is called, with an empty argument list, to
+initialize the object.</INS>
+</P></LI>
+
+<LI><P>
+<DEL>if</DEL> <INS>If</INS> <TT>T</TT> is an array type,
+each element is
+default-initialized<DEL>;</DEL><INS>.</INS>
+</P></LI>
+
+<LI>
+
+<P>
+<DEL>otherwise</DEL> <INS>Otherwise</INS>, no initialization
+is performed.</P>
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#4">class.ctor</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>default</I> constructor for a class <TT>X</TT> is a constructor of
+class <TT>X</TT> that <DEL>can be called without an argument</DEL>
+<INS>either has no parameters or else each parameter that is not a
+function parameter pack has a default argument</INS>. If there
+is no user-declared constructor...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2 [<A href="https://wg21.link/over.match#2.4">over.match</A>] bullet 2.4 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Overload resolution selects the function to call in seven
+distinct contexts within the language:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>invocation of a constructor for <INS>default- or</INS>
+direct-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of a class
+object (12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]);</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), <DEL>or</DEL> copy-initialized from
+an expression of the same or a derived class type
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), <INS>or default-initialized,</INS>
+overload resolution selects the constructor. For
+direct-initialization <INS>or default-initialization</INS>, the
+candidate functions are all the constructors of the class of the
+object being initialized. For copy-initialization, the candidate
+functions are all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument list is
+the <I>expression-list</I> or <I>assignment-expression</I> of
+the <I>initializer</I>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

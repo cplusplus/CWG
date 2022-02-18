@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 520</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="520"></A><H4>520.
+  
+Old-style casts between incomplete class types
+</H4>
+<B>Section: </B>7.6.3&#160; [<A href="https://wg21.link/expr.cast">expr.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>comp.std.c++
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 May 2005<BR>
+
+
+<P>[Voted into WP at April, 2007 meeting.]</P>
+
+<P>7.6.3 [<A href="https://wg21.link/expr.cast#6">expr.cast</A>] paragraph 6 says,</P>
+
+<BLOCKQUOTE>
+
+The operand of a cast using the cast notation can be an rvalue of type
+&#8220;pointer to incomplete class type&#8221;. The destination type
+of a cast using the cast notation can be &#8220;pointer to incomplete
+class type&#8221;. In such cases, even if there is a inheritance
+relationship between the source and destination classes, whether the
+<TT>static_cast</TT> or <TT>reinterpret_cast</TT> interpretation is
+used is unspecified.
+
+</BLOCKQUOTE>
+
+<P>The wording seems to allow the following:</P>
+
+<OL>
+
+<LI><P>casting from void pointer to incomplete type</P></LI>
+
+<PRE>
+    struct A;
+    struct B;
+
+    void *v;
+    A *a = (A*)v; // allowed to choose reinterpret_cast
+</PRE>
+
+<LI><P>variant application of static or reinterpret casting</P></LI>
+
+<PRE>
+    B *b = (B*)a;    // compiler can choose static_cast here
+    A *aa = (A*)b;   // compiler can choose reinterpret_cast here
+    assert(aa == a); // might not hold
+</PRE>
+
+<LI><P>ability to somehow choose static_cast</P></LI>
+
+<P>It's not entirely clear how a compiler can
+choose <TT>static_cast</TT> as 7.6.3 [<A href="https://wg21.link/expr.cast#6">expr.cast</A>] paragraph 6
+seems to allow. I believe the intent of 7.6.3 [<A href="https://wg21.link/expr.cast#6">expr.cast</A>] paragraph 6
+is to force the use of <TT>reinterpret_cast</TT> when
+either are incomplete class types and <TT>static_cast</TT> iff the
+compiler knows both types and there is a non-ambiguous
+hierarchy-traversal between that cast (or maybe not, <A HREF="242.html">core issue 242</A> talks about this). I cannot see any
+other interpretation because it isn't intuitive, every compiler I've
+tried agrees with me, and neither standard pointer conversions
+(7.3.12 [<A href="https://wg21.link/conv.ptr#3">conv.ptr</A>] paragraph 3) nor <TT>static_cast</TT>
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast#5">expr.static.cast</A>] paragraph 5) talk about incomplete
+class types. If the committee agrees with me, I would like to see
+7.3.12 [<A href="https://wg21.link/conv.ptr#3">conv.ptr</A>] paragraph 3 and 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#5">expr.static.cast</A>] paragraph 5 explicitly disallow incomplete class
+types and the wording of 7.6.3 [<A href="https://wg21.link/expr.cast#6">expr.cast</A>] paragraph 6
+changed to not allow any other interpretation.</P>
+
+</OL>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<P>Change 7.6.3 [<A href="https://wg21.link/expr.cast#6">expr.cast</A>] paragraph 6 as indicated:</P>
+
+<BLOCKQUOTE>
+
+The operand of a cast using the cast notation can be an rvalue of type
+&#8220;pointer to incomplete class type.&#8221; The destination type
+of a cast using the cast notation can be &#8220;pointer to incomplete
+class type.&#8221; <DEL>In such cases, even if there is a inheritance
+relationship between the source and destination classes, whether
+the <TT>static_cast</TT> or <TT>reinterpret_cast</TT> interpretation
+is used is unspecified.</DEL> <INS>If both the operand and destination types
+are class types and one or both are incomplete, it is unspecified
+whether the <TT>static_cast</TT> or the <TT>reinterpret_cast</TT>
+interpretation is used, even if there is an inheritance relationship
+between the two classes. [<I>Note:</I> For example, if the classes
+were defined later in the translation unit, a multi-pass compiler
+would be permitted to interpret a cast between pointers to the classes
+as if the class types were complete at that point.  &#8212;<I>end
+note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

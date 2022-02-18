@@ -1,0 +1,151 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 724</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="724"></A><H4>724.
+  
+Qualified name lookup in a constrained context
+</H4>
+<B>Section: </B>6.5.5&#160; [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 September, 2008<BR>
+
+
+
+
+<P>According to 6.5.5 [<A href="https://wg21.link/basic.lookup.qual#7">basic.lookup.qual</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+ In a constrained context (_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>]), a name
+ prefixed by a <I>nested-name-specifier</I> that nominates a template
+ type parameter <TT>T</TT> is looked up as follows: for each template
+ requirement <TT>C&lt;</TT><I>args</I><TT>&gt;</TT> whose template
+ argument list references <TT>T</TT>, the name is looked up as if the
+<I>nested-name-specifier</I> referenced
+<TT>C&lt;</TT><I>args</I><TT>&gt;</TT> instead of <TT>T</TT>
+(_N2960_.3.4.3.3 [<A href="https://wg21.link/concept.qual">concept.qual</A>]), except that only the names of
+associated types are visible during this lookup. If an associated type
+of at least one requirement is found, then each name found shall refer
+to the same type.  Otherwise, if the reference to the name occurs
+within a constrained context, the name is looked up within the scope
+of the archetype associated with <TT>T</TT> (and no special
+restriction on name visibility is in effect for this lookup).
+
+</BLOCKQUOTE>
+
+<P>In an example like,</P>
+
+<PRE>
+    concept A&lt;typename T&gt; {
+      typename assoc_type;
+    }
+
+    concept B&lt;typename T&gt; {
+      typename assoc_type;
+    }
+
+    template&lt;typename T&gt;
+    requires A&lt;T&gt;
+    B&lt;T::assoc_type&gt;::assoc_type f();
+</PRE>
+
+<P>it is not clear whether the argument <TT>T::assoc_type</TT> of
+<TT>B</TT> &#8220;references&#8221; <TT>T</TT> or not.</P>
+
+<P>
+<U>James Widman</U>: In our mental model (and in our intentions
+while drafting), we still have a (non-archetype) dependent type for
+the <TT>T</TT> in your example, and, even after the <TT>SameType</TT>
+requirement is seen, we also have a distinct dependent type to
+represent <TT>A&lt;T&gt;::assoc_type</TT> (which itself is distinct
+from the type of the entity named <TT>assoc_type</TT> that lives in
+the scope of the concept <TT>A</TT>).  And those two dependent types
+(<TT>A&lt;T&gt;::assoc_type</TT> and <TT>T</TT>) will both alias the
+same type archetype when that archetype is established (see the
+paragraph on establishment in _N2914_.14.11.2 [<A href="https://wg21.link/temp.archetype">temp.archetype</A>]).
+</P>
+
+<P>I think 6.5.5 [<A href="https://wg21.link/basic.lookup.qual#6">basic.lookup.qual</A>] paragraph 6 will read more
+easily if we change the &#8220;references a template parameter&#8221;
+verbiage to a generalized &#8220;dependent type&#8221; verbiage.  (We
+shied away from that in the past because we wanted to say that there's
+nothing &#8220;dependent&#8221; within a constrained context.  That's
+because we wanted to say that all name references are bound to
+something, overload resolution is done, etc.  So certainly there are
+no instances of deferred name lookup or deferred overload resolution
+within a constrained context.  But we still need to be able to say
+when a type, template, value or concept instance depends on a template
+parameter.)  I propose we change this wording to read,
+</P>
+
+<BLOCKQUOTE>
+
+In a constrained context (_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>]), the identifier
+of an <I>unqualified-id</I> prefixed by a <I>nested-name-specifier</I>
+that nominates a dependent type <TT>T</TT> is looked up as follows:
+for each template requirement <TT>C&lt;</TT><I>args</I><TT>&gt;</TT>
+such that either <TT>T</TT> or an equivalent type (_N2914_.14.11.1 [<A href="https://wg21.link/temp.req">temp.req</A>]) is a template argument to <TT>C</TT>, the identifier of
+the <I>unqualified-id</I> is looked up as if the
+<I>nested-name-specifier</I> nominated
+<TT>C&lt;</TT><I>args</I><TT>&gt;</TT> instead of <TT>T</TT>
+(_N2960_.3.4.3.3 [<A href="https://wg21.link/concept.qual">concept.qual</A>]), except that only the names of
+associated types and class templates (_N2914_.14.10.1.2 [<A href="https://wg21.link/concept.assoc">concept.assoc</A>])
+are visible during this lookup.  If an associated type or class
+template of at least one requirement is found, then the
+<I>unqualified-id</I> shall refer either to the same type or to an
+equivalent type when its identifier is looked up in each of the
+concepts of the other requirements where <TT>T</TT> is a template
+argument.  [<I>Note:</I> no part of the procedure described in the
+preceding part of this paragraph results in the establishment of an
+archetype (_N2914_.14.11.2 [<A href="https://wg21.link/temp.archetype">temp.archetype</A>]).  However, in the event that
+the <I>unqualified-id</I> is a <I>template-id</I>, one of its template
+arguments could contain some construct that would force archetype
+establishment.  &#8212;<I>end note</I>] Otherwise, the name is looked
+up within the scope of the archetype aliased by <TT>T</TT> (and no
+special restriction on name visibility is in effect for this lookup).
+[<I>Note:</I> this establishes the archetype of <TT>T</TT> (if it was
+not established already).  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>(It looks like we have a wording nit to fix in the archetype
+establishment paragraph: it talks about a type archetype coming into
+existence &#8220;when it is used [in some way].&#8221; It seems odd to
+say that something is used in a particular way before it exists.  We
+should instead say something like &#8220;when <I>a
+necessarily-dependent type that would alias the archetype</I> is used
+[in some way].&#8221;)</P>
+
+<P>(It might also be nice to have a cleanup in the paragraph that
+introduces the notion of <TT>std::SameType</TT> and &#8220;equivalent
+types&#8221; (_N2914_.14.11.1 [<A href="https://wg21.link/temp.req#3">temp.req</A>] paragraph 3) so that the
+congruence relation is part of the normative text rather than a note.)
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

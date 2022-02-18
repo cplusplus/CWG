@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2624</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2624"></A><H4>2624.
+  
+Array delete expression with no array cookie
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Blacktea Hamburger
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-22<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+char *p = static_cast&lt;char*&gt;(operator new[](2));
+p = new (p) char[2];  // #1
+delete[] p;           // #2
+</PRE>
+
+<P>Subclause 7.6.2.8 [<A href="https://wg21.link/expr.new#16">expr.new</A>] paragraph 16 specifies:</P>
+
+<BLOCKQUOTE>
+
+... When a <I>new-expression</I> calls an allocation function and that
+allocation has not been extended, the <I>new-expression</I> passes the
+amount of space requested to the allocation function as the first
+argument of type std::size_t. That argument shall be no less than the
+size of the object being created; it may be greater than the size of
+the object being created only if the object is an array and the
+allocation function is not a non-allocating form
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]). ...
+
+</BLOCKQUOTE>
+
+<P>Subclause 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+... In an array delete expression, the value of the operand
+of <TT>delete</TT> may be a null pointer value or a pointer value that
+resulted from a previous array <I>new-expression</I>. [ Footnote:
+... ]  If not, the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>The non-allocating form of the <I>new-expression</I> at #1 is
+constrained not to place an array cookie at the start of the array.
+Yet, the array delete appears to be expected to divine that fact.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-10-07):</B></P>
+
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... In an array delete expression, the value of the operand
+of <TT>delete</TT> may be a null pointer value or a pointer value that
+resulted from a previous array <I>new-expression</I> <INS>whose
+allocation function was not a non-allocating form
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>])</INS>. [ Footnote: ... ]  If not, the
+behavior is undefined.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

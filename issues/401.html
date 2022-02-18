@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 401</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="401"></A><H4>401.
+  
+When is access for template parameter default arguments checked?
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Jan 2003<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>Is the following well-formed?</P>
+<PRE>
+  class policy {};
+  class policy_interface {};
+  template &lt;class POLICY_INTERFACE&gt;
+  class aph {
+  protected:
+    typedef POLICY_INTERFACE PI;
+  };
+  template &lt;class POLICY, class BASE, class PI = typename BASE::PI&gt;
+  class ConcretePolicyHolder : public BASE, protected POLICY
+  {};
+  ConcretePolicyHolder &lt; policy , aph &lt; policy_interface &gt; &gt; foo;
+  void xx() { }
+</PRE>
+<P>The issue is whether the access to the default argument type BASE::PI
+is checked before or after it is known that BASE is a base class of
+the template. To some extent, one needs to develop the list of
+template arguments (and therefore evaluate the default argument)
+before one can instantiate the template, and
+one does not know what base classes the template has until it has
+been instantiated.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>Shortened example:</P>
+<PRE>
+  class B {
+  protected:
+    typedef int A;
+  };
+  template&lt;class T, class U = typename T::A&gt;
+  class X : public T
+  { };
+</PRE>
+
+<P>The convincing argument here is that if we had only the declaration
+of the template (including the default argument), we would expect
+it to be usable in exactly the same way as the version with the
+definition.  However, the special access needed is visible only
+when the definition is available.  So the above should be an error,
+and information from the definition cannot affect the access of
+the default arguments.</P>
+
+<P><B>Proposed Resolution (April 2003):</B></P>
+
+<P> Add a new paragraph 16 to 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>] after
+paragraph 15:</P>
+<BLOCKQUOTE>
+Since a default <I>template-argument</I> is encountered before any
+<I>base-clause</I> there is no special access to members used in a default
+<I>template-argument</I>.  <I>[Example:</I>
+<PRE>
+  class B {};
+  template &lt;class T&gt; class C {
+  protected:
+     typedef T TT;
+  };
+
+  template &lt;class U, class V = typename U::TT&gt;
+  class D : public U {};
+
+  D &lt;C&lt;B&gt; &gt; d;  // access error, C::TT is protected
+</PRE>
+<I>--- end example]</I>
+</BLOCKQUOTE>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We decided that template parameter default arguments should
+have their access checked in the context where they appear
+without special access for the entity declared (i.e., they are
+different than normal function default arguments).  One reason:
+we don't know the instance of the template when we need the
+value.  Second reason: compilers want to parse and throw away the
+form of the template parameter default argument, not save it and
+check it for each instantiation.</P>
+
+<P>Class templates should be treated the same as function templates
+in this regard.  The base class information is in the same category
+as friend declarations inside the class itself -- not available.
+If the body were used one would need to instantiate it in order
+to know whether one can name it.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Add the following as a new paragraph following the last
+paragraph of 11.8 [<A href="https://wg21.link/class.access">class.access</A>] (but before the new
+paragraph inserted by the resolution of <A HREF="372.html">issue 372</A>, if adopted):</P>
+
+<BLOCKQUOTE>
+
+<P>The names in a default <I>template-argument</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) have their access checked in the context in which
+they appear rather than at any points of use of the default
+<I>template-argument</I>. [<I>Example:</I>
+</P>
+
+<PRE>
+    class B {};
+    template &lt;class T&gt; class C {
+    protected:
+       typedef T TT;
+    };
+
+    template &lt;class U, class V = typename U::TT&gt;
+    class D : public U {};
+
+    D &lt;C&lt;B&gt; &gt;* d;  // access error, C::TT is protected
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

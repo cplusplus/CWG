@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 315</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="315"></A><H4>315.
+  
+Is call of static member function through null pointer undefined?
+</H4>
+<B>Section: </B>11.4.9.2&#160; [<A href="https://wg21.link/class.static.mfct">class.static.mfct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Oct 2001<BR>
+
+
+
+
+<P>Another instance to consider is that of invoking a member function from a
+null pointer:</P>
+<PRE>
+  struct A { void f () { } };
+  int main ()
+  {
+    A* ap = 0;
+    ap-&gt;f ();
+  }
+</PRE>
+<P>Which is explicitly noted as undefined in 11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>],
+even though one could argue that since <TT>f()</TT> is empty, there is no
+lvalue-&gt;rvalue conversion.</P>
+
+<P>If <TT>f</TT> is static, however, there seems to be no such rule, and
+the call is only undefined if the dereference implicit in the <TT>-&gt;</TT>
+operator is undefined.  IMO it should be.</P>
+
+<P>Incidentally, another thing that ought to be cleaned up is the inconsistent
+use of "indirection" and "dereference".  We should pick one. <I>(This
+terminology issue has been broken out as
+<A HREF="342.html">issue 342</A>.)</I>
+</P>
+
+<P>This is related to <A HREF="232.html">issue 232</A>.</P>
+
+<P><B>Rationale (October 2003):</B></P>
+
+<P>We agreed the example should be allowed.  <TT>p-&gt;f()</TT>
+is rewritten as <TT>(*p).f()</TT> according to 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>].
+<TT>*p</TT> is not an error when <TT>p</TT> is null unless the
+lvalue is converted to an rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), which it
+isn't here.</P>
+
+<P><B>Additional notes (June, 2024)</B></P>
+
+<P>
+<A HREF="2823.html">Issue 2823</A> represents the current
+language rules; the example has undefined behavior.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1543</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1543"></A><H4>1543.
+  
+Implicit conversion sequence for empty initializer list
+</H4>
+<B>Section: </B>12.2.4.2.6&#160; [<A href="https://wg21.link/over.ics.list">over.ics.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-08-21<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+<P>According to 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#6">over.ics.list</A>] paragraph 6, when passing
+an initializer-list argument to a non-class parameter,</P>
+
+<BLOCKQUOTE>
+
+if the initializer list has no elements, the implicit conversion
+sequence is the identity conversion.
+
+</BLOCKQUOTE>
+
+<P>However, there is no similar provision for an empty initializer
+list passed to a specialization of <TT>std::initializer_list</TT> or
+an array, as described in paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+If the parameter type is <TT>std::initializer_list&lt;X&gt;</TT> or
+&#8220;array of <TT>X</TT>&#8221;<SUP>134</SUP> and all the elements of the
+initializer list can be implicitly converted to <TT>X</TT>, the implicit
+conversion sequence is the worst conversion necessary to convert an
+element of the list to <TT>X</TT>.
+
+</BLOCKQUOTE>
+
+<P>It is not clear what the result should be for a list with no
+elements.  For example, given</P>
+
+<PRE>
+  void f(int) { printf("int\n"); }
+  void f(std::initializer_list&lt;int&gt;) { printf("init list\n"); }
+  int main() {
+      f({});
+  }
+</PRE>
+
+<P>current implementations result in <TT>init list</TT> being printed,
+presumably on the basis of the last bullet of 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3:
+</P>
+
+<UL><LI><P>List-initialization sequence <TT>L1</TT> is a better
+conversion sequence than list-initialization sequence <TT>L2</TT> if
+<TT>L1</TT> converts to <TT>std::initializer_list&lt;X&gt;</TT> for
+some <TT>X</TT>\and <TT>L2</TT> does not.</P></LI></UL>
+
+<P>That would imply that both conversion sequences are the identity
+conversion, which is reasonable, but it should be stated clearly if that
+is the intent.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<P>Change 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#2">over.ics.list</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If the parameter type is <TT>std::initializer_list&lt;X&gt;</TT> or
+&#8220;array of <TT>X</TT>&#8221;<SUP>134</SUP> and all the elements
+of the initializer list can be implicitly converted to <TT>X</TT>, the
+implicit conversion sequence is the worst conversion necessary to
+convert an element of the list to <TT>X</TT><INS>, or if the
+initializer list has no elements, the identity conversion</INS>. This
+conversion can be a user-defined conversion even in the context of a
+call to an initializer-list constructor. [<I>Example:</I>
+</P>
+
+<PRE>
+  void f(std::initializer_list&lt;int&gt;);
+<INS>  f( {} );        //<SPAN CLASS="cmnt"> OK: </SPAN>f(initializer_list&lt;int&gt;)<SPAN CLASS="cmnt"> identity conversion</SPAN></INS>
+  f( {1,2,3} );   //<SPAN CLASS="cmnt"> OK: </SPAN>f(initializer_list&lt;int&gt;)<SPAN CLASS="cmnt"> identity conversion</SPAN>
+  f( {'a','b'} ); //<SPAN CLASS="cmnt"> OK: </SPAN>f(initializer_list&lt;int&gt;)<SPAN CLASS="cmnt"> integral promotion</SPAN>
+  f( {1.0} );     //<SPAN CLASS="cmnt"> error: narrowing</SPAN>
+  ...
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

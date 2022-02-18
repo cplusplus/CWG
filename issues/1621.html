@@ -1,0 +1,228 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1621</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1621"></A><H4>1621.
+  
+Member initializers in anonymous unions
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-02-12<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+<P>The effect of a non-static data member initializer in an anonymous
+union is not clearly described in the current wording.  Consider the
+following example:</P>
+
+<PRE>
+  struct A {
+    struct B {
+      union {
+        int x = 37;
+      };
+      union {
+        int y = x + 47;  //<SPAN CLASS="cmnt"> Well-formed?</SPAN>
+      };
+    } a;
+  };
+</PRE>
+
+<P>Does an anonymous union have a constructor that applies a non-static
+data member initializer?  Or is the initialization performed by the
+constructor of the class in which the anonymous union appears?  In
+particular, is the reference to <TT>x</TT> in the initializer for
+<TT>y</TT> well-formed or not?  If the initialization of <TT>y</TT>
+is performed by <TT>B</TT>'s constructor, there is no problem because
+<TT>B::x</TT> is a member of the object being initialized.  If an anonymous
+union has its own constructor, <TT>B::x</TT> is just a member of the
+containing class and is a reference to a non-static data member without an
+object, which is ill-formed.  Implementations currently appear to take the
+latter interpretation and report an error for that initializer.</P>
+
+
+
+<P>As a further example, consider:</P>
+
+<PRE>
+  union {       //<SPAN CLASS="cmnt"> #1</SPAN>
+    union {     //<SPAN CLASS="cmnt"> #2</SPAN>
+      union {   //<SPAN CLASS="cmnt"> #3</SPAN>
+        int y = 32;
+      };
+    };
+  } a { } ;
+</PRE>
+
+<P>One interpretation might be that union #3 has a non-trivial default
+constructor because of the initializer of <TT>y</TT>, which would give
+union #2 a deleted default constructor, which would make the example
+ill-formed.</P>
+
+<P>As yet another example, consider:</P>
+
+<PRE>
+  union {
+    union {
+      int x;
+    };
+    union {
+      int y = 3;
+    };
+    union {
+      int z;
+    };
+  } a { };
+</PRE>
+
+<P>Assuming the current proposed resolution of <A HREF="1502.html">issue 1502</A>, what is the correct interpretation of this code?  Is it
+well-formed, and if so, what initialization is performed?</P>
+
+<P>Finally, consider</P>
+
+<PRE>
+  struct S {
+    union { int x = 1; };
+    union { int y = 2; };
+  } s{};
+</PRE>
+
+<P>Does this violate the prohibition of aggregates containing
+member initializers in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#1">dcl.init.aggr</A>] paragraph 1?</P>
+
+<P>See also issues <A HREF="1460.html">1460</A>,
+<A HREF="1562.html">1562</A>, <A HREF="1587.html">1587</A>,
+and <A HREF="1623.html">1623</A>.</P>
+
+
+
+<P><B>Proposed resolution (October, 2019):</B></P>
+
+<OL>
+<LI><P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#1">class.mfct.non.static</A>] paragraph 1 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A non-static member function may also be called directly
+using the function call syntax
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>],
+12.2.2.2 [<A href="https://wg21.link/over.match.call">over.match.call</A>]) from within <DEL>the body of a
+member function of</DEL>
+its class or <DEL>of</DEL>
+a class derived from its
+class<INS>, or a member thereof, as described below.</INS>
+.
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (7.5.5 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>])
+that is not part of a class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) and not used to form a
+pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used in
+a member of class <TT>X</TT> in a context
+where <TT>this</TT> can be used
+(7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
+the <I>id-expression</I> to a non-static non-type member of
+some class <TT>C</TT>, and if either
+the <I>id-expression</I> is potentially evaluated
+or <TT>C</TT> is <TT>X</TT> or a base class of <TT>X</TT>,
+the <I>id-expression</I> is transformed into a class member
+access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) using
+<TT>(*this)</TT> (_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>]) as
+the <I>postfix-expression</I> to the left of the
+<TT>.</TT> operator. [<I>Note:</I> If <TT>C</TT> is
+not <TT>X</TT> or a base class of<TT> X</TT>, the class
+member access expression is ill-formed. &#8212;<I>end
+note</I>] <DEL>Similarly during name lookup, when
+an <I>unqualified-id</I> (7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]) used
+in the definition of a member function for class <TT>X</TT>
+resolves to a static member, an enumerator or a nested type
+of class <TT>X</TT> or of a base class of <TT>X</TT>,
+the <I>unqualified-id</I> is transformed into
+a <I>qualified-id</I> (7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual">expr.prim.id.qual</A>]) in
+which the <I>nested-name-specifier</I> names the class of
+the member function. These transformations do</DEL>
+<INS>This transformation does</INS> not apply in the
+template definition context
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]). [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 11.4.9 [<A href="https://wg21.link/class.static#3">class.static</A>] paragraph 3:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If an unqualified-id (7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]) is used
+in the definition of a static member following the
+member's <I>declarator-id</I>, and name lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) finds that
+the <I>unqualified-id</I> refers to a static member,
+enumerator, or nested type of the member's class (or of a
+base class of the member's class), the <I>unqualified-id</I>
+is transformed into a <I>qualified-id</I> expression in
+which the <I>nested-name-specifier</I> names the class scope
+from which the member is referenced. [<I>Note:</I> See
+7.5.5 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>] for restrictions on the use of
+non-static data members and non-static member
+functions. &#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.5.2 [<A href="https://wg21.link/class.union.anon#1">class.union.anon</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A union of the form</P>
+
+<UL>
+<TT>union {</TT> <I>member-specification</I> <TT>} ;</TT>
+</UL>
+
+<P>is called an anonymous union; it defines an unnamed type
+and an unnamed object of that type called an anonymous union
+object. Each <I>member-declaration</I> in
+the <I>member-specification</I> of an anonymous union shall
+either define a non-static data member or be a
+static_<I>assert-declaration</I>. <DEL>[<I>Note:</I></DEL>
+Nested types, anonymous unions, and functions <DEL>cannot</DEL>
+<INS>shall not</INS> be declared within an anonymous
+union. <DEL>&#8212;<I>end note</I>]</DEL> The names of the
+members...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

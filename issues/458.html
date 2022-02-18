@@ -1,0 +1,224 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 458</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="458"></A><H4>458.
+  
+Hiding of member template parameters by other members
+</H4>
+<B>Section: </B>13.8.2&#160; [<A href="https://wg21.link/temp.local">temp.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Feb 2004<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>The list of cases in 13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]
+about when a template parameter is hidden
+seems to be incomplete.</P>
+
+<P>Consider</P>
+<PRE>
+      // example-1
+    struct S {
+       int C;
+       template&lt;class&gt; void f();
+    };
+
+    template&lt;class C&gt;
+      void S::f()
+      {
+         C c;           // #1
+      }
+</PRE>
+<P>Someone asked whether line #1 is well-formed and I responded "no"
+based on my understanding of the rules in 14.6.1.
+After a second looking, I've realized that the above case is currently
+missing from the list.</P>
+
+<P>The list in 14.6.1 covers cases like
+<PRE>
+     // example-2
+   template&lt;class T&gt;
+     struct S {
+        int C;
+        void f();
+     };
+
+   template&lt;class C&gt;
+     void S&lt;C&gt;::f()
+     {
+       C c;     // ERROR: 'C' is 'S::C' not the template parameter
+     }
+</PRE>
+or
+<PRE>
+     // example-3
+   struct A { int C; }
+
+   template&lt;class C&gt;
+      struct S : A {
+        C c;    // ERROR: 'C' is 'A::C', not the template parameter
+      };
+</PRE>
+But the case of a 'member template' is missing.  I believe it should
+follow the same rule as above.  The reason is this.</P>
+
+<P>In the case listed in 14.6.1 (having to do with members of classes),
+the "algorithm" seems to be this:
+<OL>
+<LI>
+put the "template parameter scope"[1] on the top of active
+       scope stack.  That will make the template parameter
+       declarations the innermost bindings.
+</LI>
+<LI>
+Enter the class scope. That will push more scopes on the stack.
+       In particular, any bindings from non-dependent base classes or
+       from the class definition will hide any previous bindings,
+       especially the template parameter declarations.
+</LI>
+</OL>
+The above formulation uniformly covers paragraphs 5 and 7 of section
+14.6.1 and gives a general view of how name lookup is supposed to
+happen.</P>
+
+<P>I believe that any rule, coherent with 14.6.1/5 and 14.6.1/7, for
+covering the  cases of member templates (example-1) will be described
+by the above "algorithm".</P>
+
+<P>Am I missing something?</P>
+
+<P>[1] of course, the standard text does not formally speak of "template
+    parameter scope", but we all know that the template parameters
+    "live" somewhere.  I'm using that terminology to designate the
+    declarative region of the template parameters.</P>
+
+<P>
+<U>Mike Miller:</U>
+I have a somewhat different perspective on this question.  I
+think your example-1 is fundamentally different from your
+example-2 and example-3.  Looking, for instance, at your
+example-2, I see four nested scopes:</P>
+<PRE>
+     namespace scope
+       template scope (where the parameter is)
+         class S scope
+           S::f() block scope
+</PRE>
+<P>Naturally, S::C hides the template parameter C.  The same is
+true of your example-3, with three scopes:</P>
+<PRE>
+     namespace scope
+       template scope
+         class S scope (includes 10.2 base class lookup)
+</PRE>
+<P>Again, it's clear that the C inherited from A hides the template
+parameter in the containing scope.</P>
+
+<P>The scopes I see in your example-1, however, are different:</P>
+<PRE>
+     namespace scope
+       struct S scope
+         template scope (where the parameter is)
+           S::f() block scope
+</PRE>
+<P>Here it seems clear to me that the template parameter hides the
+class member.</P>
+
+<P>It might help to look at the case where the function template is
+defined inline in the class:</P>
+<PRE>
+     struct S {
+        int C;
+        template&lt;class C&gt; int f() {
+            C c;   // #1
+        }
+     };
+</PRE>
+<P>It would be pretty strange, I think, if the #1 C were the member
+and not the template parameter.  It would also be odd if the
+name lookup were different between an inline definition and an
+out-of-line definition.</P>
+
+<P>See also <A HREF="459.html">issue 459</A>.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>Basically, the standard is okay.  We think Gaby's desired
+cases like #1 should be ill-formed.</P>
+
+<P> There is a wording problem in 13.8.2 [<A href="https://wg21.link/temp.local#7">temp.local</A>] paragraph 7.
+It says:</P>
+<BLOCKQUOTE>
+In the definition of a member of a class template that appears outside of the
+class template definition, the name of a member of this template hides
+the name of a template-parameter.
+</BLOCKQUOTE>
+
+<P>It should say "hides the name of a template-parameter of the class template
+(but not a template-parameter of the member, if the member is itself a
+template)" or words to that effect.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change 13.8.2 [<A href="https://wg21.link/temp.local#8">temp.local</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>In the definition of a member of a class template that appears
+outside of the class template definition, the name of a member of
+<DEL>this</DEL> <INS>the class</INS> template hides the name of a
+<I>template-parameter</I> <INS>of any enclosing class templates
+(but not a <I>template-parameter</I> of the member, if the member
+is a class or function template)</INS>. [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class T&gt; struct A {
+    struct B { /* ... */ };
+<INS>    typedef void C;</INS>
+    void f();
+<INS>    template&lt;class U&gt; void g(U);</INS>
+  };
+
+  template&lt;class B&gt; void A&lt;B&gt;::f() {
+    B b;   // A<SPAN CLASS="cmnt">'s </SPAN>B<SPAN CLASS="cmnt">, not the template parameter</SPAN>
+  }
+
+<INS>  template&lt;class B&gt; template&lt;class C&gt; void A&lt;B&gt;::g(C) {
+    B b;   // A<SPAN CLASS="cmnt">'s </SPAN>B<SPAN CLASS="cmnt">, not the template parameter</SPAN>
+    C c;   // <SPAN CLASS="cmnt">the template parameter </SPAN>C<SPAN CLASS="cmnt">, not </SPAN>A<SPAN CLASS="cmnt">'s </SPAN>C
+  }</INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

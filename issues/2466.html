@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2466</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2466"></A><H4>2466.
+  
+<TT>co_await</TT> should be a single evaluation
+</H4>
+<B>Section: </B>7.6.2.4&#160; [<A href="https://wg21.link/expr.await">expr.await</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gor Nishanov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-10-19<BR>
+
+
+<P>[Accepted as a DR at the June, 2021 meeting.]</P>
+
+<P>The description of <TT>co_await</TT> should not permit
+reordering the subexpressions constituting the evaluation of
+a <TT>co_await</TT> expression.  For example, given </P>
+
+<PRE>
+  auto z = co_await coro + co_await coro;
+</PRE>
+
+<P>the result may be different from the expected</P>
+
+<PRE>
+  auto x = co_await coro;
+  auto y = co_await coro;
+  auto z = x + y;
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Add the following as a new paragraph following
+7.6.2.4 [<A href="https://wg21.link/expr.await#5">expr.await</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+<P><INS>With respect to an indeterminately-sequenced function
+call, the operation of <TT>co_await</TT> is a single evaluation.
+[<I>Note:</I> Therefore a function call cannot intervene between
+the subexpressions constituting evaluation of a <TT>co_await</TT>
+expression. &#8212;<I>end note</I>]</INS></P>
+
+<P>[<I>Example 1:</I>...</P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution, May, 2021:</B></P>
+
+<OL>
+<LI><P>Change 6.9.1 [<A href="https://wg21.link/intro.execution#11">intro.execution</A>] paragraph 11 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When <DEL>calling</DEL> <INS>invoking</INS> a function
+(whether or not the function is inline), every <DEL>value
+computation and side effect associated with any</DEL>
+argument expression<DEL>, or with</DEL> <INS>and</INS> the
+postfix expression designating the called function<DEL>, is</DEL>
+<INS>are</INS> sequenced before <DEL>execution of</DEL>
+every expression or statement in the body of the called
+function. For each function invocation <INS>or evaluation of an
+<I>await-expression</I></INS> <I>F</I>, <DEL>for every</DEL>
+<INS>each</INS> evaluation <DEL><I>A</I></DEL>
+that <DEL>occurs</DEL> <INS>does not occur</INS>
+within <I>F</I> <DEL>and every evaluation <I>B</I> that does
+not occur within <I>F</I></DEL> but is evaluated on the same
+thread and as part of the same signal handler (if any)<DEL>,
+either <I>A</I> is sequenced before <I>B</I> or <I>B</I> is
+sequenced before <I>A</I>.</DEL> <INS>is either sequenced
+before all evaluations that occur within <I>F</I> or
+sequenced after all evaluations that occur
+within <I>F</I>;</INS> [<I>Footnote:</I> In other words,
+function executions do not interleave with each
+other. &#8212;<I>end footnote</I>] <INS>if <I>F</I> invokes
+or resumes a coroutine (7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>]), only
+evaluations subsequent to the previous suspension (if any)
+and prior to the next suspension (if any) are considered to
+occur within <I>F</I>.</INS> [<I>Note 7:</I> If <I>A</I>
+and <I>B</I> would not otherwise be sequenced then they are
+indeterminately sequenced. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following note at the end of 7.6.2.4 [<A href="https://wg21.link/expr.await#5">expr.await</A>] paragraph 5:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <I>await-expression</I> evaluates the
+(possibly-converted) <I>o</I> expression and
+the <I>await-ready</I> expression, then:</P>
+
+<UL><LI><P>...</P></LI></UL>
+
+<P>[<I>Note:</I> With respect to sequencing, an
+<I>await-expression</I> is indivisible
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]). &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>Drafting note: No change is needed in 6.9.1 [<A href="https://wg21.link/intro.execution#8">intro.execution</A>] paragraph 8:
+</P>
+
+<BLOCKQUOTE>
+
+...An expression <I>X</I> is said to be sequenced before an
+expression <I>Y</I> if every value computation and every
+side effect associated with the expression <I>X</I> is
+sequenced before every value computation and every side
+effect associated with the expression <I>Y</I>.
+
+</BLOCKQUOTE>
+
+<P><B>Additional note, May, 2021:</B></P>
+
+<P>Note 7 in 6.9.1 [<A href="https://wg21.link/intro.execution#11">intro.execution</A>] paragraph 11 refers
+to evaluations <I>A</I> and <I>B</I>, even though the edit
+to that paragraph above removes those names. This
+discrepancy was noticed only after CWG approved the change
+to the normative wording. Since it involves only the wording
+of a non-normative note, the problem will be addressed
+editorially. See <A HREF="https://github.com/cplusplus/draft/issues/4612">
+editorial issue 4612</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

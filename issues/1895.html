@@ -1,0 +1,218 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1895</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1895"></A><H4>1895.
+  
+Deleted conversions in conditional operator operands
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-03-17<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>In an example like,</P>
+
+<PRE>
+  struct B;
+  struct A { A(); A(B&amp;) = delete; operator B&amp;(); };
+  struct B : A {} b;
+  B &amp;c = true ? A() : b;
+</PRE>
+
+<P>the rules of 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3 make this
+ambiguous: <TT>A()</TT> can be implicitly converted to the type
+&#8220;lvalue reference to <TT>B</TT>,&#8221; and <TT>b</TT> satisfies the
+constraints to be converted to an <TT>A</TT> prvalue (it's of a type
+derived from <TT>A</TT> and the cv-qualifiers are okay). Bullet 3 bullet 1
+is clear that we do not actually try to create an <TT>A</TT> temporary
+from <TT>b</TT>, so we don't notice that it invokes a deleted constructor
+and rule out that conversion.</P>
+
+<P>If the deleted conversion is in the other sense, the result is
+unambiguous:</P>
+
+<PRE>
+  struct B;
+  struct A { A(); A(B&amp;); operator B&amp;() = delete; };
+  struct B : A {} b;
+  B &amp;c = true ? A() : b;
+</PRE>
+
+<P>
+<TT>A()</TT> can no longer be implicitly converted to the type
+&#8220;lvalue reference to <TT>B</TT>&#8221;: since the declaration <TT>B
+&amp;t = A();</TT> is not well formed (it invokes a deleted function),
+there is no implicit conversion. So we unambiguously convert the third
+operand to an <TT>A</TT> prvalue.</P>
+
+<P>These should presumably either both be valid or both invalid.
+EDG and gcc call both ambiguous.</P>
+
+<P><B>Notes from the June, 2014 meeting:</B></P>
+
+<P>The wording should be changed to handle the convertibility
+test more like overload resolution: the conversion "exists" if
+the conversion function is declared, but is ill-formed if it
+would actually be used.</P>
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph following
+7.6.16 [<A href="https://wg21.link/expr.cond#2">expr.cond</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>Otherwise, if the second and third operand are glvalue
+bit-fields of the same value category and of
+types <I>cv1</I> <TT>T</TT> and
+<I>cv2</I> <TT>T</TT>, respectively, the operands are
+considered to be of type <I>cv</I> <TT>T</TT> for the
+remainder of this section, where <I>cv</I> is the union
+of <I>cv1</I> and <I>cv2</I>.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, if the second and third operand have different
+types and either has (possibly cv-qualified) class type, or
+if both are glvalues of the same value category and the same
+type except for cv-qualification, an attempt is made to
+<DEL>convert</DEL> <INS>form an implicit conversion sequence
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]) from</INS> each of those
+operands to the type of the other. <INS>[<I>Note:</I>
+Properties such as access, whether an operand is a
+bit-field, or whether a conversion function is deleted are
+ignored for that determination. &#8212;<I>end
+note</I>]</INS> <DEL>The process for determining whether an
+operand expression <TT>E1</TT> of type <TT>T1</TT> can be
+converted to match an operand expression <TT>E2</TT> of
+type <TT>T2</TT> is defined as follows:</DEL> <INS>Attempts
+are made to form an implicit conversion sequence from an
+operand expression <TT>E1</TT> of type <TT>T1</TT> to a
+target type related to the type
+<TT>T2</TT> of the operand expression <TT>E2</TT> as
+follows:</INS>
+</P>
+
+<UL>
+<LI><P>If <TT>E2</TT> is an lvalue<DEL>: <TT>E1</TT> can
+be converted to match <TT>E2</TT> if <TT>E1</TT> can be
+implicitly converted (7.3 [<A href="https://wg21.link/conv">conv</A>]) to the
+type</DEL><INS>, the target type is</INS> &#8220;lvalue
+reference to <TT>T2</TT>&#8221;, subject to the constraint
+that in the conversion the reference must bind directly
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to an lvalue.</P></LI>
+
+<LI><P>If <TT>E2</TT> is an xvalue<DEL>: <TT>E1</TT> can be
+converted to match <TT>E2</TT> if <TT>E1</TT> can be
+implicitly converted to the type</DEL><INS>, the target type
+is</INS> &#8220;rvalue reference to <TT>T2</TT>&#8221;,
+subject to the constraint that the reference must bind
+directly.</P></LI>
+
+<LI><P>If <TT>E2</TT> is a prvalue or if neither of the
+<DEL>conversions</DEL> <INS>conversion sequences</INS> above
+can be <DEL>done</DEL> <INS>formed</INS> and at least one of
+the operands has (possibly cv-qualified) class
+type:</P></LI>
+
+<UL>
+<LI><P>
+<DEL>if <TT>E1</TT> and <TT>E2</TT> have class type,
+and the underlying class types are the same or one is a base
+class of the other: <TT>E1</TT> can be converted to
+match <TT>E2</TT> if the class of <TT>T2</TT> is the same
+type as, or a base class of, the class of <TT>T1</TT>, and the
+cv-qualification of <TT>T2</TT> is the same cv-qualification as, or a
+greater cv-qualification than, the cv-qualification of
+<TT>T1</TT>. If the conversion is applied, <TT>E1</TT> is
+changed to a prvalue of type <TT>T2</TT> by
+copy-initializing a temporary of type <TT>T2</TT>
+from <TT>E1</TT> and using that temporary as the converted
+operand.</DEL> <INS>if <TT>T1</TT> and <TT>T2</TT> are the
+same class type (ignoring cv-qualification), or one is a
+base class of the other, and <TT>T2</TT> is at least as
+cv-qualified as <TT>T1</TT>, the target type is
+<TT>T2</TT>,</INS>
+</P></LI>
+
+<LI><P>
+<DEL>Otherwise (if <TT>E1</TT> or <TT>E2</TT> has a non-class
+type, or if they both have class types but the underlying
+classes are not the same and neither is a base class of the
+other): <TT>E1</TT> can be converted to match <TT>E2</TT>
+if <TT>E1</TT> can be implicitly converted to</DEL>
+<INS>otherwise, the target type is</INS> the type that
+<TT>E2</TT> would have after applying the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions.</P></LI>
+
+</UL>
+
+</UL>
+
+<P>Using this process, it is determined whether <INS>an
+implicit conversion sequence can be formed from</INS> the
+second operand <DEL>can be converted to match</DEL>
+<INS>to the target type determined for</INS> the third
+operand, and <DEL>whether the third operand can be converted
+to match the second operand</DEL> <INS>vice versa</INS>. If
+both <DEL>can be converted</DEL> <INS>sequences can be
+formed</INS>, or one <DEL>can be converted but the
+conversion is</DEL> <INS>formed, but it is the</INS> ambiguous
+<INS>conversion sequence</INS>, the program is ill-formed. If
+<DEL>neither can be converted</DEL> <INS>no conversion
+sequence can be formed</INS>, the operands are left
+unchanged and further checking is performed as described
+below. <DEL>If exactly one conversion is
+possible,</DEL> <INS>Otherwise, if exactly one conversion
+sequence can be formed,</INS> that conversion is applied to
+the chosen operand and the converted operand is used in
+place of the original operand for the remainder of this
+section. <INS>[<I>Note:</I> The conversion might be
+ill-formed even if an implicit conversion sequence could
+be formed. &#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1932.html">issue 1932</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

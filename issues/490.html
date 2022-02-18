@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 490</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="490"></A><H4>490.
+  
+Name lookup in friend declarations
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ben Hutchings
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Dec 2004<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>When 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10 says,</P>
+
+<BLOCKQUOTE>
+
+In a <TT>friend</TT> declaration naming a member function, a name used in
+the function declarator and not part of a <I>template-argument</I> in a
+<I>template-id</I> is first looked up in the scope of the member
+function's class. If it is not found, or if the name is part of a
+<I>template-argument</I> in a <I>template-id</I>, the look up is
+as described for unqualified names in the definition of the class
+granting friendship.
+
+</BLOCKQUOTE>
+
+<P>what does &#8220;in the scope of the member function's
+class&#8221; mean?  Does it mean that only members of the class
+and its base classes are considered?  Or does it mean that the
+same lookup is to be performed as if the name appeared in the
+member function's class?  Implementations vary in this regard.
+For example:</P>
+
+<PRE>
+     struct s1;
+
+     namespace ns {
+         struct s1;
+     }
+
+     struct s2 {
+         void f(s1 &amp;);
+     };
+
+     namespace ns {
+         struct s3 {
+             friend void s2::f(s1 &amp;);
+         };
+     }
+</PRE>
+
+<P>Microsoft Visual C++ and Comeau C++ resolve <TT>s1</TT> in the
+friend declaration to <TT>ns::s1</TT> and issue an error, while
+g++ resolves it to <TT>::s1</TT> and accepts the code.</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The phrase &#8220;looked up in the scope of [a] class&#8221; occurs
+frequently throughout the Standard and always refers to the member name
+lookup described in 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>].  This is the first
+interpretation mentioned above (&#8220;only members of the class and its
+base classes&#8221;), resolving <TT>s1</TT> to <TT>ns::s1</TT>.  A
+cross-reference to 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>] will be added to
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10 to make this clearer.</P>
+
+<P>In discussing this question, the CWG noticed another problem: the
+text quoted above applies to all <I>template-argument</I>s appearing in
+the function declarator.  The intention of this rule, however, is that
+only <I>template-argument</I>s in the <I>declarator-id</I> should
+ignore the member function's class scope; <I>template-argument</I>s
+used elsewhere in the function declarator should be treated like other
+names.  For example:</P>
+
+<PRE>
+     template&lt;typename T&gt; struct S;
+     struct A {
+       typedef int T;
+       void foo(S&lt;T&gt;);
+     };
+     template &lt;typename T&gt; struct B {
+       friend void A::foo(S&lt;T&gt;);  //<SPAN CLASS="cmnt"> i.e., </SPAN>S&lt;A::T&gt;
+     };
+</PRE>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>In a <TT>friend</TT> declaration naming a member function, a
+name used in the function declarator and not part of a
+<I>template-argument</I> in <DEL>a <I>template-id</I></DEL>
+<INS>the <I>declarator-id</I></INS> is first looked up in the
+scope of the member function's class <INS>(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>])</INS>. If it is not found, or if the name is part
+of a <I>template-argument</I> in <DEL>a <I>template-id</I></DEL>
+<INS>the <I>declarator-id</I></INS>, the look up is as described
+for unqualified names in the definition of the class granting
+friendship. [<I>Example:</I>
+</P>
+
+<PRE>
+    struct A {
+      typedef int AT;
+      void f1(AT);
+      void f2(float);
+<INS>      template&lt;typename T&gt; void f3();</INS>
+    };
+    struct B {
+<INS>      typedef char AT;</INS>
+      typedef float BT;
+      friend void A::f1(AT);    //<SPAN CLASS="cmnt"> parameter type is </SPAN>A::AT
+      friend void A::f2(BT);    //<SPAN CLASS="cmnt"> parameter type is </SPAN>B::BT
+<INS>      friend void A::f3&lt;AT&gt;();  //<SPAN CLASS="cmnt"> template argument is </SPAN>B::AT</INS>
+    };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

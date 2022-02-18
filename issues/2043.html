@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2043</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2043"></A><H4>2043.
+  
+Generalized template arguments and array-to-pointer decay
+</H4>
+<B>Section: </B>13.4.3&#160; [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-11-13<BR>
+
+
+<P>According to 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1 (newly revised
+by the adoption of paper N4268),</P>
+
+<BLOCKQUOTE>
+
+<P>For a non-type <I>template-parameter</I> of reference or pointer type, the
+value of the constant expression shall not refer to (or for a pointer type,
+shall not be the address of):</P>
+
+<UL>
+<LI><P>a subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]),</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This change breaks an example like</P>
+
+<PRE>
+   template&lt;int *p&gt; struct X {};
+   int arr[32];
+   X&lt;arr&gt; x;
+</PRE>
+
+<P>because the array-to-pointer decay produces a pointer to the first
+element, which is a subobject.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change the referenced bullet to read:</P>
+
+<UL>
+<LI><P>a subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+<INS>that is not the first element of a complete object of array
+type</INS>,</P></LI>
+
+</UL>
+
+<P>Note that this resolution also allows an example like</P>
+
+<PRE>
+    template&lt;char &amp;p&gt; struct S { };
+    char arr[2];
+    S&lt;arr[0]&gt; s_arr;
+</PRE>
+
+<P>which may not be exactly what we want.</P>
+
+<P>See also <A HREF="2401.html">issue 2401</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

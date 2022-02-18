@@ -1,0 +1,177 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 178</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="178"></A><H4>178.
+  
+More on value-initialization
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrew Koenig
+ &#160;&#160;&#160;
+
+ <B>Date: </B>25 Oct 1999<BR>
+
+
+
+<P>When the Committee considered
+<A HREF="35.html">issue 35</A>, another context in which
+value initialization might be relevant was overlooked:
+<I>mem-initializer</I>s.  It would seem reasonable that if
+<TT>T()</TT> as an expression invokes value initialization, that the
+same syntactic construct in a <I>mem-initializer-list</I> would do the
+same, and the usefulness of value initialization in that context is at
+least as great as the standalone case.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P><I>[Note: this resolution supersedes the resolution to
+<A HREF="35.html">issue 35</A>.]</I></P>
+
+<P>In 7.6.1.4 [<A href="https://wg21.link/expr.type.conv#2">expr.type.conv</A>] paragraph 2, replace "whose value
+is determined by default-initialization" by "which is
+value-initialized".
+</P>
+
+<P>In 7.6.2.8 [<A href="https://wg21.link/expr.new#15">expr.new</A>] paragraph 15,</P>
+
+<UL>
+
+<LI>In the first subitem of the first item, restore the missing
+period at the end of the first sentence.</LI>
+
+<LI>In the second item, replace the text after the comma by
+"the item is value-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])".</LI>
+
+</UL>
+
+<P>Replace 9.4 [<A href="https://wg21.link/dcl.init#5">dcl.init</A>] paragraph 5 by:</P>
+
+<BLOCKQUOTE>
+
+<P>To <I>zero-initialize</I> an object of type <TT>T</TT> means:</P>
+
+<UL>
+
+<LI>if <TT>T</TT> is a scalar type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), the
+object is set to the value of 0 (zero) converted to <TT>T</TT>;</LI>
+
+<LI>if <TT>T</TT> is a non-union class type, each non-static data
+member and each base-class subobject is zero-initialized;</LI>
+
+<LI>if <TT>T</TT> is a union type, the object's first named data member
+[<I>Footnote:</I> This member must not be <TT>static</TT>, by virtue
+of the requirements in 11.5 [<A href="https://wg21.link/class.union">class.union</A>]. <I>end
+footnote</I>] is zero-initialized;</LI>
+
+<LI>if <TT>T</TT> is an array type, each element is
+zero-initialized;</LI>
+
+<LI>if <TT>T</TT> is a reference type, no initialization is
+performed.</LI>
+
+</UL>
+
+<P>To <I>default-initialize</I> an object of type <TT>T</TT> means:</P>
+
+<UL>
+
+<LI>if <TT>T</TT> is a non-POD class type (Clause 11 [<A href="https://wg21.link/class">class</A>]), the default constructor for <TT>T</TT> is called (and the
+initialization is ill-formed if <TT>T</TT> has no accessible default
+constructor);</LI>
+
+<LI>if <TT>T</TT> is an array type, each element is
+default-initialized;</LI>
+
+<LI>otherwise, the object is zero-initialized.</LI>
+
+</UL>
+
+<P>To <I>value-initialize</I> an object of type <TT>T</TT> means: </P>
+
+<UL>
+
+<LI>if <TT>T</TT> is a class type (Clause 11 [<A href="https://wg21.link/class">class</A>])
+with a user-declared constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), then
+the default constructor for <TT>T</TT> is called (and the
+initialization is ill-formed if <TT>T</TT> has no accessible default
+constructor);</LI>
+
+<LI>if <TT>T</TT> is a non-union class type without a user-declared
+constructor, then every non-static data member and base-class
+component of <TT>T</TT> is value-initialized;</LI>
+
+<LI>if <TT>T</TT> is an array type, then each element is
+value-initialized; </LI>
+
+<LI>otherwise, the object is zero-initialized. </LI>
+
+</UL>
+
+<P>A program that calls for default-initialization of an entity of
+reference type is ill-formed.  If <TT>T</TT> is a cv-qualified type,
+the cv-unqualified version of <TT>T</TT> is used for these definitions
+of zero-initialization, default-initialization, and
+value-initialization.</P>
+
+</BLOCKQUOTE>
+
+<P>In 9.4 [<A href="https://wg21.link/dcl.init#6">dcl.init</A>] paragraph 6, change "The memory
+occupied by any" to "Every".</P>
+
+
+<P>In 9.4 [<A href="https://wg21.link/dcl.init#7">dcl.init</A>] paragraph 7, replace
+"default-initialized" by "value-initialized".</P>
+
+
+<P>In 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#7">dcl.init.aggr</A>] paragraph 7, replace
+"default-initialized" by "value-initialized".</P>
+
+
+<P>In 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#2">class.conv.ctor</A>] paragraph 2, insert "or
+value-initialization" after the first occurrence of
+"default-initialization".</P>
+
+
+<P>In 11.9 [<A href="https://wg21.link/class.init#1">class.init</A>] paragraph 1, replace the note by "The
+object is default-initialized if there is no initializer, or
+value-initialized if the initializer is <TT>()</TT>" [i.e., replace
+the non-normative note by different, normative text].</P>
+
+
+<P>In 11.9.2 [<A href="https://wg21.link/class.expl.init#2">class.expl.init</A>] paragraph 2, replace
+"default-initialized" by "value-initialized".</P>
+
+
+<P>In 11.9.3 [<A href="https://wg21.link/class.base.init#3">class.base.init</A>] paragraph 3, replace
+"default-initialized" by "value-initialized" in the first bulleted
+item.</P>
+
+<P>In 11.9.3 [<A href="https://wg21.link/class.base.init#4">class.base.init</A>] paragraph 4, replace
+"default-initialized, nor initialized" by "default-initialized, nor
+value-initialized, nor assigned".</P>
+
+<BR><BR>
+</BODY>
+</HTML>

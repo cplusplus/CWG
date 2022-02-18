@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2544</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2544"></A><H4>2544.
+  
+Address of past-the-end of a potentially-overlapping subobject
+</H4>
+<B>Section: </B>6.8.4&#160; [<A href="https://wg21.link/basic.compound">basic.compound</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-20<BR>
+
+
+<P>6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 states:</P>
+
+<BLOCKQUOTE>
+
+A value of a pointer type that is a pointer to or past the end of an
+object represents the address of the first byte in memory
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) occupied by the object [ <I>Footnote</I>:
+... ] or the first byte in memory after the end of the storage
+occupied by the object, respectively.
+
+</BLOCKQUOTE>
+
+<P>A potentially-overlapping subobject of type <TT>T</TT> may occupy
+fewer bytes than indicated by <TT>sizeof(T)</TT>, yet pointer
+arithmetic will only consider <TT>sizeof(T)</TT>, not the number of
+actually occupied bytes.  For example,</P>
+
+<PRE>
+struct X {
+  X() = default;
+  int x;
+  short y;
+};
+
+struct S {
+  [[no_unique_address]] X x;
+  short z;
+};
+
+static_assert(sizeof(X) == sizeof(S));
+</PRE>
+
+<P>On a popular implementation, <TT>z</TT> is actually put into the
+tail padding of <TT>x</TT>, and thus <TT>&amp;S().x + 1</TT> does not
+actually point to "the first byte in memory after the end of the
+storage occupied by" <TT>x</TT>.</P>
+
+<P><U>Suggested resolution (amended 2022-03-10):</U></P>
+
+<P>Change in 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A value <INS><I>V</I></INS> of <INS>a</INS> pointer type <DEL>that is
+a pointer to or past the end of an object</DEL> <I>represents the address</I>
+<DEL>of the first byte in memory (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) occupied by
+the object</DEL> <INS><I>A</I> as follows</INS>:
+
+<UL>
+<LI>
+<INS>If <I>V</I> is a pointer to an object, <I>A</I> is the address of the
+object as specified in 6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]</INS> [ <I>Footnote</I>:
+... ]
+<DEL>or the first byte in memory after the end of the storage
+occupied by the object, respectively</DEL>.
+</LI>
+
+<LI>
+<INS>If <I>V</I> is a pointer past the end of an object that is not a
+potentially-overlapping subobject, <I>A</I> is the address of the
+first byte in memory after the end of the storage occupied by the
+object.</INS>
+</LI>
+
+<LI>
+<INS>If <I>V</I> is a pointer past the end of a
+potentially-overlapping subobject, <I>A</I> is an
+implementation-defined choice of an address within the complete object
+or the address of the first byte in memory after the end of the
+storage occupied by the complete object.</INS>
+</LI>
+
+<LI>
+<INS>If <I>V</I> is a null pointer value or an invalid pointer value,
+<I>V</I> does not represent an address.</INS>
+</LI>
+
+</UL>
+</P>
+</BLOCKQUOTE>
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>Unify the treatment of all subobjects by saying the pointer
+past-the-end has address <TT>address(begin) + sizeof(T)</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

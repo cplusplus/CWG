@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 416</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="416"></A><H4>416.
+  
+Class must be complete to allow operator lookup?
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Greg Comeau
+ &#160;&#160;&#160;
+
+ <B>Date: </B>22 May 2003<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+<P>Normally reference semantics allow incomplete types in certain contexts,
+but isn't this:</P>
+<PRE>
+  class A;
+
+  A&amp; operator&lt;&lt;(A&amp; a, const char* msg);
+  void foo(A&amp; a)
+  {
+    a &lt;&lt; "Hello";
+  }
+</PRE>
+<P>required to be diagnosed because of the op&lt;&lt;? The reason
+being that the class may actually have an op&lt;&lt;(const char *) in it.</P>
+
+<P>What is it?   un- or ill-something?   Diagnosable?   No problem at all?</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+I don't know of any requirement in the standard that the class be complete.
+There is a rule that will instantiate a class template in order to be able
+to see whether it has any operators.  But I wouldn't think one wants to
+outlaw the above example merely because the user might have an
+operator&lt;&lt;
+in the class; if he doesn't, he would not be pleased that the above
+is considered invalid.</P>
+
+<P>
+<U>Mike Miller:</U>
+Hmm, interesting question.  My initial reaction is that it just
+uses <TT>::operator&lt;&lt;</TT>; any <TT>A::operator&lt;&lt;</TT>
+simply won't be considered in
+overload resolution.  I can't find anything in the Standard that
+would say any different.</P>
+
+<P>The closest analogy to this situation, I'd guess, would be
+deleting a pointer to an incomplete class;
+7.6.2.9 [<A href="https://wg21.link/expr.delete#5">expr.delete</A>] paragraph 5 says that that's
+undefined behavior if the complete type has a non-trivial destructor
+or an operator delete.  However, I tend to think that that's because
+it deals with storage and resource management, not just because it
+might have called a different function.  Generally, overload
+resolution that goes one way when it might have gone another with
+more declarations in scope is considered to be not an error, cf
+9.9 [<A href="https://wg21.link/namespace.udecl#9">namespace.udecl</A>] paragraph 9,
+_N4868_.13.8.4 [<A href="https://wg21.link/temp.nondep#1">temp.nondep</A>] paragraph 1, etc.</P>
+
+<P>So my bottom line take on it would be that it's okay, it's up to
+the programmer to ensure that all necessary declarations are in
+scope for overload resolution.  Worst case, it would be like the
+operator delete in an incomplete class -- undefined behavior, and
+thus not required to be diagnosed.</P>
+
+<P>12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3, bullet 1, says,
+"If T1 is a class type, the set of member candidates is the result
+of the qualified lookup of <TT>T1::operator@</TT>
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>])."  Obviously, that lookup is
+not possible if T1 is
+incomplete.  Should
+12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3, bullet 1, say
+"complete class type"?  Or does the inability to perform
+the lookup mean that the program is ill-formed?
+6.3 [<A href="https://wg21.link/basic.def.odr#4">basic.def.odr</A>] paragraph 4 doesn't apply,
+I don't think, because you don't know whether you'll be applying a
+class member access operator until you know whether the operator
+involved is a member or not.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We noticed that the title of this issue did not match the
+body.  We checked the original source and then corrected the title
+(so it no longer mentions templates).</P>
+
+<P>We decided that this is similar to other cases like
+deleting a pointer to an incomplete class, and it should not be
+necessary to have a complete class.  There is no undefined
+behavior.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>Change the first bullet of 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3
+to read:</P>
+<BLOCKQUOTE>
+If T1 is a <INS>complete</INS> class type, the set of member candidates
+is the result of the qualified lookup of <TT>T1::operator@</TT>
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]); otherwise, the set of member
+candidates is empty.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

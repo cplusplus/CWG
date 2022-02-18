@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2881</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2881"></A><H4>2881.
+  
+Type restrictions for the explicit object parameter of a lambda
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-19<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>Subclause 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#5">expr.prim.lambda.closure</A>] paragraph 5 restricts the type
+of an explicit object parameter of a lambda to the closure type or
+classes derived from the closure type.  It neglects to consider
+ambiguous or private derivation scenarios.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-26):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#5">expr.prim.lambda.closure</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+Given a lambda with a <I>lambda-capture</I>, the type of the explicit
+object parameter, if any, of the lambda's function call operator
+(possibly instantiated from a function call operator template) shall
+be either:
+<UL>
+<LI>the closure type</LI>
+<LI>a class type <INS>publicly and unambiguously</INS> derived from
+the closure type, or</LI>
+<LI>a reference to a possibly cv-qualified such type.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new bullet after 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#11.10">temp.deduct.general</A>] bullet 11.10:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+
+<LI>Attempting to create a function type in which a parameter has a
+type of void, or in which the return type is a function type or array
+type.</LI>
+
+<LI class="ins">Attempting to give to an explicit object parameter of
+a lambda's function call operator a type not permitted for such
+(7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>The following example is not supported by the proposed resolution
+and remains ill-formed:</P>
+
+<PRE>
+  int main() {
+    int x = 0;
+    auto lambda = [x] (this auto self) { return x; };
+    using Lambda = decltype(lambda);
+    struct D : private Lambda {
+      D(Lambda l) : Lambda(l) {}
+      using Lambda::operator();
+      friend Lambda;
+    } d(lambda);
+    d();
+  } 
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 981</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="981"></A><H4>981.
+  
+Constexpr constructor templates and literal types
+</H4>
+<B>Section: </B>6.8&#160; [<A href="https://wg21.link/basic.types">basic.types</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 October, 2009<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+
+
+<P>6.8 [<A href="https://wg21.link/basic.types#10">basic.types</A>] paragraph 10 requires that a class have at
+least one constexpr constructor other than the copy constructor in
+order to be considered a literal type.  However, a constexpr
+constructor template might be instantiated in such a way that the
+<TT>constexpr</TT> specifier is ignored (9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5)
+.  It is therefore not known whether a class with a
+constexpr constructor template is a literal type or not until the
+constructor template is specialized, which could mean that an example
+like</P>
+
+<PRE>
+    struct IntValue {
+      template&lt;typename T&gt;
+        constexpr IntValue(T t) : val(t) { }
+
+      constexpr intmax_t get_value() { return val; }
+
+     private:
+       intmax_t val;
+    };
+</PRE>
+
+<P>is ill-formed, because it is an error to declare a member function
+(like <TT>get_value()</TT>) of a non-literal class to be constexpr
+(9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6).</P>
+
+<P>6.8 [<A href="https://wg21.link/basic.types#10">basic.types</A>] paragraph 10 should be revised so that
+either a constexpr constructor or constexpr constructor template
+allows a class to be a literal type.</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<P>Change 6.8 [<A href="https://wg21.link/basic.types#10">basic.types</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A type is a <I>literal type</I> if it is:</P>
+
+<UL>
+<LI><P>a scalar type; or</P></LI>
+
+<LI><P>a class type (Clause 11 [<A href="https://wg21.link/class">class</A>]) <DEL>with</DEL>
+<INS>that</INS>
+</P></LI>
+
+<UL>
+<LI><P><DEL>a trivial copy constructor,</DEL></P></LI>
+
+<LI><P><DEL>no non-trivial move constructor,</DEL></P></LI>
+
+<LI><P>
+<INS>has</INS> a trivial destructor,</P></LI>
+
+<LI><P>
+<DEL>a trivial default constructor or</DEL> <INS>is an aggregate
+type (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) or has</INS> at least one constexpr
+constructor <DEL>other than the</DEL> <INS>or constructor template that
+is not a</INS> copy or move constructor, and</P></LI>
+
+<LI><P>
+<INS>has</INS> all non-static data members and base classes of
+literal types; or</P></LI>
+
+</UL>
+
+<LI><P>an array of literal type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves issues <A HREF="1071.html">1071</A>
+and <A HREF="1198.html">1198</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

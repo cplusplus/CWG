@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1786</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1786"></A><H4>1786.
+  
+Effect of merging allocations on memory leakage
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>United Kingdom
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-28<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#GB4">N3690 comment
+  GB&#160;4<BR></A>
+
+<P>[Applied to WP at the February, 2014 meeting as part of document N3914.]</P>
+
+<P>The strategy of merging allocations could turn a small memory leak
+into a big one.  For example,</P>
+
+<PRE>
+  class P {
+    int x;
+  };
+  class Q {
+  public:
+    Q(){ throw 42; }
+  private:
+    int x[LARGE_NUMBER];
+  };
+
+  {
+    P* p1 = new P();
+    Q* q1 = new Q(); //<SPAN CLASS="cmnt"> bang :-( </SPAN>
+    //<SPAN CLASS="cmnt"> don't get here </SPAN>
+    delete q1;
+    delete p1;
+  }
+</PRE>
+
+<P>Instead of just leaking the first allocation, this could result in
+leaking the combined allocation.</P>
+
+<P><B>Notes from the September, 2013 meeting:</B></P>
+
+<P>EWG was not so concerned with memory leaks, but there are problems
+with the current wording dealing with lifetime issues.  In particular,
+the existing wording did not guarantee that all of the merged allocations
+would, in fact, be executed.  The intended direction is to relax the
+strict lifetime containment requirement from the current wording but
+to ensure that all of the allocations and frees will be executed,
+which requires that the allocation and initialization of later objects
+be non-throwing.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 268</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="268"></A><H4>268.
+  
+Macro name suppression in rescanned replacement text
+</H4>
+<B>Section: </B>15.6.5&#160; [<A href="https://wg21.link/cpp.rescan">cpp.rescan</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bjarne Stroustrup
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Jan 2001
+  &#160;&#160;&#160;
+  <B>Liaison: </B>WG14<BR>
+
+
+
+
+<P>It is not clear from the Standard what the result of the
+following example should be:</P>
+
+<BLOCKQUOTE>
+<PRE>
+#define NIL(xxx) xxx
+#define G_0(arg) NIL(G_1)(arg)
+#define G_1(arg) NIL(arg)
+G_0(42)
+</PRE>
+</BLOCKQUOTE>
+
+<P>The relevant text from the Standard is found in
+15.6.5 [<A href="https://wg21.link/cpp.rescan#2">cpp.rescan</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+If the name of the macro being replaced is found during this scan of
+the replacement list (not including the rest of the source file's
+preprocessing tokens), it is not replaced. Further, if any nested
+replacements encounter the name of the macro being replaced, it is not
+replaced. These nonreplaced macro name preprocessing tokens are no
+longer available for further replacement even if they are later
+(re)examined in contexts in which that macro name preprocessing token
+would otherwise have been replaced.
+
+</BLOCKQUOTE>
+
+<P>The sequence of expansion of <TT>G0(42)</TT> is as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+G0(42)
+NIL(G_1)(42)
+G_1(42)
+NIL(42)
+</PRE>
+</BLOCKQUOTE>
+
+<P>The question is whether the use of <TT>NIL</TT> in the last
+line of this sequence qualifies for non-replacement under the
+cited text.  If it does, the result will be <TT>NIL(42)</TT>.  If
+it does not, the result will be simply <TT>42</TT>.</P>
+
+<P>The original intent of the J11 committee in this text was
+that the result should be <TT>42</TT>, as demonstrated by the
+original pseudo-code description of the replacement algorithm
+provided by Dave Prosser, its author.
+
+The English description,
+however, omits some of the subtleties of the pseudo-code and
+thus arguably gives an incorrect answer for this case.</P>
+
+<P>
+<U>Suggested resolution (Mike Miller)</U>: Replace the cited
+paragraph with the following:</P>
+
+<BLOCKQUOTE>
+
+<P>As long as the scan involves only preprocessing tokens from
+a given macro's replacement list, or tokens resulting from a
+replacement of those tokens, an occurrence of the macro's name
+will not result in further replacement, even if it is later
+(re)examined in contexts in which that macro name preprocessing
+token would otherwise have been replaced.</P>
+
+<P>Once the scan reaches the preprocessing token following a
+macro's replacement list &#8212; including as part of the
+argument list for that or another macro &#8212; the macro's
+name is once again available for replacement.  [<I>Example:</I>
+</P>
+
+<PRE>
+    #define NIL(xxx) xxx
+    #define G_0(arg) NIL(G_1)(arg)
+    #define G_1(arg) NIL(arg)
+    G_0(42)                         // result is 42, not NIL(42)
+</PRE>
+
+<P>The reason that <TT>NIL(42)</TT> is replaced is that <TT>(42)</TT>
+comes from outside the replacement list of <TT>NIL(G_1)</TT>, hence
+the occurrence of <TT>NIL</TT> within the replacement list for
+<TT>NIL(G_1)</TT> (via the replacement of <TT>G_1(42)</TT>) is not
+marked as nonreplaceable.  <I>&#8212;end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>(Note: The resolution of this issue must be coordinated with
+J11/WG14.)</P>
+
+<P><B>Notes (via Tom Plum) from April, 2004 WG14 Meeting:</B></P>
+
+<P>Back in the 1980's it was understood by several WG14 people
+that there were tiny differences between the "non-replacement"
+verbiage and the attempts to produce pseudo-code.  The
+committee's decision was that no realistic programs "in the wild"
+would venture into this area, and trying to reduce the
+uncertainties is not worth the risk of changing conformance
+status of implementations or programs.</P>
+
+<P><B>Additional notes (June, 2022):</B></P>
+
+<P>It is unclear whether the phrasing "following the macro's
+replacement list" in the suggested resolution covers this case:</P>
+
+<PRE>
+  #define f(x) b
+  #define b(x) x(1)
+
+  f(1)(f) //<SPAN CLASS="cmnt"> the result is </SPAN>1
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

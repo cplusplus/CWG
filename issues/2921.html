@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2921</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2921"></A><H4>2921.
+  
+Exporting redeclarations of entities not attached to a named module
+</H4>
+<B>Section: </B>10.2&#160; [<A href="https://wg21.link/module.interface">module.interface</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-20<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  export module mod;
+  extern "C++" void func();
+  export extern "C++" {
+    void func();
+  }
+</PRE>
+
+<P>Per 10.2 [<A href="https://wg21.link/module.interface#6">module.interface</A>] paragraph 6, this is currently
+ill-formed, but implementation treatment varies and there seems to be
+little rationale why this should be ill-formed for entities not
+attached to a named module.</P>
+
+<P>The rule also makes the following example ill-formed, which was
+intended to be well-formed:</P>
+
+<PRE>
+  export module M;
+  namespace N { //<SPAN CLASS="cmnt"> external linkage, attached to global module, not exported</SPAN>
+    void f();
+  }
+  namespace N { //<SPAN CLASS="cmnt"> error: exported namespace, redeclares non-exported namespace</SPAN>
+    export void g();
+  }
+</PRE>
+
+<P>The mental model here is that for an entity not attached to a named
+module, exportedness is not a meaningful property of that entity.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-08-16):</B></P>
+
+<P>Change in 10.2 [<A href="https://wg21.link/module.interface#6">module.interface</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A redeclaration of an entity X is implicitly exported if X was
+introduced by an exported declaration; otherwise it shall not be
+exported <INS>if it is attached to a named module</INS>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

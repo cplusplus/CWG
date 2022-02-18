@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2364</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2364"></A><H4>2364.
+  
+Constant expressions, aggregate initialization, and modifications
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-10-31<BR>
+
+
+<P>There is implementation variance in the treatment of the following
+example:</P>
+
+<PRE>
+  constexpr int f(int x) { return x; }
+  int main() {
+    struct {
+      int x = f(x = 37);
+    } constexpr a = { };
+  }
+</PRE>
+
+<P>Is the assignment to <TT>x</TT> considered to satisfy the requirememts
+of 7.7 [<A href="https://wg21.link/expr.const#2.17">expr.const</A>] bullet 2.17,</P>
+
+<BLOCKQUOTE>
+
+modification of an object (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>],
+7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>], 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>]) unless it is
+applied to a non-volatile lvalue of literal type that refers to a
+non-volatile object whose lifetime began within the evaluation
+of <TT>e</TT>;
+
+</BLOCKQUOTE>
+
+<P>assuming that <TT>e</TT> is the full-expression encompassing the
+initialization of <TT>a</TT>?</P>
+
+<P><B>Notes from the October, 2018 teleconference:</B></P>
+
+<P>This kind of example was previously ill-formed but it was
+inadvertently allowed by the change to the &#8220;non-vacuous
+initialization&#8221; rule. That rule should be restricted to
+class and array types, making this example again ill-formed.</P>
+
+<P><B>Rationale, February, 2021:</B></P>
+
+<P>The resolution of <A HREF="2256.html">2256</A> makes
+clear that the lifetime of <TT>x</TT> has not begun because
+its initialization is not yet complete, so the assignment is
+undefined behavior and thus ill-formed in a constant
+expression.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

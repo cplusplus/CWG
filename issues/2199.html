@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2199</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2199"></A><H4>2199.
+  
+Typedefs and tags
+</H4>
+<B>Section: </B>9.2.4&#160; [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-11-12<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>It is still unclear how typedefs
+and <I>elaborated-type-specifier</I>s interact in some cases.
+For example:</P>
+
+<PRE>
+    namespace A {
+      struct S {};
+    }
+    namespace B {
+      typedef int S;
+    }
+    namespace C {
+      using namespace A;
+      using namespace B;
+      struct S s; //<SPAN CLASS="cmnt"> clearly ambiguous, </SPAN>S<SPAN CLASS="cmnt"> names different entities</SPAN>
+    }
+    namespace D {
+      using A::S;
+      typedef struct S S;
+      struct S s; //<SPAN CLASS="cmnt"> OK under <A HREF="407.html">issue 407</A>: </SPAN>S<SPAN CLASS="cmnt"> could be used in an</SPAN>
+                  //<SPAN CLASS="cmnt">  elaborated-type-specifier before the typedef, so still can be</SPAN>
+    }
+    namespace E {
+      typedef A::S S;
+      using A::S;
+      struct S s; //<SPAN CLASS="cmnt"> ??? the identifier </SPAN>S<SPAN CLASS="cmnt"> could not have been used in an</SPAN>
+                  //<SPAN CLASS="cmnt"> elaborated-type-specifier prior to the typedef, so is this lookup</SPAN>
+                  //<SPAN CLASS="cmnt"> ill-formed because it finds a typedef-name?</SPAN>
+    }
+    namespace F {
+      typedef A::S S;
+    }
+    namespace G {
+      using namespace A;
+      using namespace F;
+      struct S s; //<SPAN CLASS="cmnt"> ??? </SPAN>F::S<SPAN CLASS="cmnt"> could not have been used as an</SPAN>
+                  //<SPAN CLASS="cmnt"> elaborated-type-specifier before the typedef. is this ill-formed because</SPAN>
+                  //<SPAN CLASS="cmnt"> the lookup finds a typedef-name?</SPAN>
+    }
+    namespace H {
+      using namespace F;
+      using namespace A;
+      struct S s; //<SPAN CLASS="cmnt"> some implementations give different answers for </SPAN>G<SPAN CLASS="cmnt"> and </SPAN>H
+    }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

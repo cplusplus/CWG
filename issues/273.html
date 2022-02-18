@@ -1,0 +1,211 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 273</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="273"></A><H4>273.
+  
+POD classes and <TT>operator&amp;()</TT>
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 Mar 2001<BR>
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+<P>I think that the definition of a POD class in the current version
+of the Standard is overly permissive in that it allows for POD classes
+for which a user-defined operator function <TT>operator&amp;</TT> may
+be defined. Given that the idea behind POD classes was to achieve
+compatibility with C structs and unions, this makes 'Plain old'
+structs and unions behave not quite as one would expect them to.</P>
+
+<P>In the C language, if <TT>x</TT> and <TT>y</TT> are variables of
+struct or union type <TT>S</TT> that has a member <TT>m</TT>, the
+following expression are allowed: <TT>&amp;x</TT>, <TT>x.m</TT>, <TT>x
+= y</TT>.  While the C++ standard guarantees that if <TT>x</TT> and
+<TT>y</TT> are objects of a POD class type <TT>S</TT>, the expressions
+<TT>x.m</TT>, <TT>x = y</TT> will have the same effect as they would
+in C, it is still possible for the expression <TT>&amp;x</TT> to be
+interpreted differently, subject to the programmer supplying an
+appropriate version of a user-defined operator function
+<TT>operator&amp;</TT> either as a member function or as a non-member
+function.</P>
+
+<P>This may result in surprising effects. Consider:</P>
+
+<PRE>
+    // POD_bomb is a POD-struct. It has no non-static non-public data members,
+    // no virtual functions, no base classes, no constructors, no user-defined
+    // destructor, no user-defined copy assignment operator, no non-static data
+    // members of type pointer to member, reference, non-POD-struct, or
+    // non-POD-union.
+    struct  POD_bomb  {
+       int   m_value1;
+       int   m_value2;
+       int  operator&amp;()
+       {   return  m_value1++;   }
+       int  operator&amp;() const
+       {   return  m_value1 + m_value2;   }
+    };
+</PRE>
+
+<P>6.8 [<A href="https://wg21.link/basic.types#2">basic.types</A>] paragraph 2 states:</P>
+
+<BLOCKQUOTE>
+
+For any complete POD object type <TT>T</TT>, whether or not the object
+holds a valid value of type <TT>T</TT>, the underlying bytes
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) making up the object can be copied into
+an array of <TT>char</TT> or <TT>unsigned char</TT> [<I>footnote</I>:
+By using, for example, the library functions (16.4.2.3 [<A href="https://wg21.link/headers">headers</A>]) <TT>memcpy</TT> or <TT>memmove</TT>]. If the
+content of the array of <TT>char</TT> or <TT>unsigned char</TT> is
+copied back into the object, the object shall subsequently hold its
+original value. [<I>Example</I>:
+
+<PRE>
+    #define N sizeof(T)
+    char buf[N];
+    T obj;   // obj initialized to its original value
+    memcpy(buf, &amp;obj, N);
+		// between these two calls to memcpy,
+		// obj might be modified
+    memcpy(&amp;obj, buf, N);
+		// at this point, each subobject of obj of scalar type
+		// holds its original value
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<P>Now, supposing that the complete POD object type <TT>T</TT> in the
+example above is <TT>POD_bomb</TT>, and we cannot any more count on
+the assertions made in the comments to the example. Given a standard
+conforming implementation, the code will not even compile. And I see
+no legal way of copying the contents of an object of a complete object
+type <TT>POD_bomb</TT> into an array of <TT>char</TT> or <TT>unsigned
+char</TT> with <TT>memcpy</TT> or <TT>memmove</TT> without making use
+of the unary <TT>&amp;</TT> operator. Except, of course, by means of
+an ugly construct like:</P>
+
+<PRE>
+    struct  POD_without_ampersand  {
+       POD_bomb   a_bomb;
+    }  obj;
+    #define N sizeof(POD_bomb)
+    char buf[N];
+    memcpy(buf, &amp;obj, N);
+    memcpy(&amp;obj, buf, N);
+</PRE>
+
+<P>The fact that the definition of a POD class allows for POD classes
+for which a user-defined <TT>operator&amp;</TT> is defined, may also
+present major obstacles to implementers of the offsetof macro from
+&lt;cstddef&gt;</P>
+
+<P>17.2 [<A href="https://wg21.link/support.types#5">support.types</A>] paragraph 5 says:</P>
+
+<BLOCKQUOTE>
+
+The macro <TT>offsetof</TT> accepts a restricted set of type arguments
+in this International Standard. <TT>type</TT> shall be a POD structure
+or a POD union (Clause 11 [<A href="https://wg21.link/class">class</A>]). The result of
+applying the <TT>offsetof</TT> macro to a field that is a static data
+member or a function is undefined."
+
+</BLOCKQUOTE>
+
+<P>Consider a well-formed C++ program below:</P>
+
+<PRE>
+    #include &lt;cstddef&gt;
+    #include &lt;iostream&gt;
+
+
+    struct  POD_bomb  {
+       int   m_value1;
+       int   m_value2;
+       int  operator&amp;()
+       {   return  m_value1++;   }
+       int  operator&amp;() const
+       {   return  m_value1 + m_value2;   }
+    };
+
+
+    // POD_struct is a yet another example of a POD-struct.
+    struct  POD_struct  {
+       POD_bomb   m_nonstatic_bomb1;
+       POD_bomb   m_nonstatic_bomb2;
+    };
+
+
+    int  main()
+    {
+
+       std::cout &lt;&lt; "offset of m_nonstatic_bomb2: " &lt;&lt; offsetof(POD_struct,
+           m_nonstatic_bomb2) &lt;&lt; '\n';
+       return  0;
+
+    }
+</PRE>
+
+<P>See Jens Maurer's paper 01-0038=N1324 for an analysis of this issue.</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>A consensus was forming around the idea of disallowing
+<TT>operator&amp;</TT> in POD classes when it was noticed that it is
+permitted to declare global-scope <TT>operator&amp;</TT> functions,
+which cause the same problems.  After more discussion, it was
+decided that such functions should not be prohibited in POD classes,
+and implementors should simply be required to "get the right answer"
+in constructs such as <TT>offsetof</TT> and <TT>va_start</TT> that
+are conventionally implemented using macros that use the "<TT>&amp;</TT>"
+operator.  It was noted that one can cast the original operand to
+<TT>char &amp;</TT> to de-type it, after which one can use the
+built-in "<TT>&amp;</TT>" safely.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<UL>
+<LI>Add a footnote in 17.2 [<A href="https://wg21.link/support.types#5">support.types</A>] paragraph 5:
+<BLOCKQUOTE>
+[<EM>Footnote:</EM> Note that <TT>offsetof</TT> is required to
+work as specified even if unary <TT>operator&amp;</TT> is
+overloaded for any of the types involved.]
+</BLOCKQUOTE>
+</LI>
+<LI>Add a footnote in 17.13 [<A href="https://wg21.link/support.runtime#3">support.runtime</A>] paragraph 3:
+<BLOCKQUOTE>
+[<EM>Footnote:</EM> Note that <TT>va_start</TT> is required to
+work as specified even if unary <TT>operator&amp;</TT> is
+overloaded for the type of <TT>parmN</TT>.]
+</BLOCKQUOTE>
+</LI>
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

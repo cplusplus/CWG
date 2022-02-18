@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 866</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="866"></A><H4>866.
+  
+Concept maps and the range-based <TT>for</TT>
+</H4>
+<B>Section: </B>8.6.5&#160; [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 April, 2009<BR>
+
+
+
+
+<P>The expansion of the range-based <TT>for</TT> statement is given
+in 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1 as:</P>
+
+<PRE>
+    {
+      auto &amp;&amp; __range = ( expression );
+      for ( auto __begin = std::Range&lt;_RangeT&gt;::begin(__range),
+                 __end = std::Range&lt;_RangeT&gt;::end(__range);
+            __begin != __end;
+            ++__begin ) {
+        for-range-declaration = *__begin;
+        statement
+      }
+    }
+</PRE>
+
+<P>In a non-templated context, the concept map to <TT>std::Range</TT>
+has been dropped, so the operators and initialization will be
+whatever they would normally be; if the concept map replaced those
+with some customized version (e.g., if the iterator's <TT>++</TT>
+were supposed to skip odd-numbered elements), that customized
+meaning would be lost.</P>
+
+<P>What we really want are the operators associated with the concept
+map to <TT>std::Iterator</TT> that was used to satisfy the associated
+requirement (<TT>std::Iterator&lt;iterator&gt;</TT>) within
+<TT>std::Range&lt;_RangeT&gt;</TT> (in whatever concept map was
+used to satisfy <TT>std::Range&lt;_RangeT&gt;</TT>). That is, if
+the grammar permitted it, we want something like</P>
+
+<PRE>
+    std::Range&lt;_RangeT&gt;::concept_map
+      ::std::Iterator&lt;std::Range&lt;_RangeT&gt;::iterator&gt;::operator++(_begin)
+</PRE>
+
+<P>Another alternative would be, if <A HREF="856.html">issue 856</A>
+is resolved by injecting the declaration of associated functions into
+concept definitions, something like</P>
+
+<PRE>
+    std::Range&lt;_RangeT&gt;::operator++(__begin)
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

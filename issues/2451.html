@@ -1,0 +1,316 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2451</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2451"></A><H4>2451.
+  
+<I>promise</I><TT>.unhandled_exception()</TT> and final suspend point
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lewis Baker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-02-14<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>According to 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#14">dcl.fct.def.coroutine</A>] paragraph 14,</P>
+
+<BLOCKQUOTE>
+
+If the evaluation of the expression
+<I>promise</I><TT>.unhandled_exception()</TT> exits via an
+exception, the coroutine is considered suspended at the
+final suspend point.
+
+</BLOCKQUOTE>
+
+<P>However, the &#8220;final suspend point&#8221; is defined as
+being &#8220;the <I>await-expression</I> containing the call to
+<TT>final_suspend</TT>&#8221; (bullet 5.2), and it is not desired
+to evaluate the <TT>final_suspend</TT> expression in this case.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI><P>Change 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#5">dcl.fct.def.coroutine</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...where</P>
+
+<UL>
+<LI><P>the <I>await-expression</I> containing the call
+to <TT>initial_suspend</TT> is the <I>initial <DEL>suspend
+point</DEL> <INS>await expression</INS></I>, and</P></LI>
+
+<LI><P>the <I>await-expression</I> containing the call to
+<TT>final_suspend</TT> is the <I>final <DEL>suspend point</DEL>
+<INS>await expression</INS></I>, and</P></LI>
+
+<LI><P>
+<I>initial-await-resume-called</I> is
+initially <TT>false</TT> and is set to <TT>true</TT>
+immediately before the evaluation of the <I>await-resume</I>
+expression (7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>]) of the initial
+<DEL>suspend point</DEL> <INS>await expression</INS>, and</P></LI>
+
+<LI><P>...</P></LI>
+
+<LI><P>
+<I>promise-constructor-arguments</I> is determined as
+follows: overload resolution is performed on a promise
+constructor call created by assembling an argument list with
+lvalues <TT>p</TT><SUB>1</SUB> ...
+<TT>p</TT><SUB><I>n</I></SUB>. If a viable constructor is
+found (12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]),
+then <I>promise-constructor-arguments</I> is
+<TT>(p</TT><SUB>1</SUB>, ..., <TT>p</TT><SUB><I>n</I></SUB><TT>)</TT>,
+otherwise <I>promise-constructor-arguments</I> is
+empty<DEL>.</DEL> <INS>, and</INS>
+</P></LI>
+
+<LI>
+<P><INS>A coroutine is suspended at a <I>final suspend
+point</I> if it is suspended</INS></P>
+
+<UL>
+<LI><P><INS>at a final await expression or</INS></P></LI>
+
+<LI><P><INS>due to an exception exiting from
+<TT>unhandled_exception()</TT></INS></P></LI>
+
+</UL>
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change bullet 3.2 of 7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>] as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Evaluation of an <I>await-expression</I> involves the
+following auxiliary types, expressions, and objects:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>
+<I>a</I> is the <I>cast-expression</I> if
+the <I>await-expression</I> was implicitly produced by
+a <I>yield-expression</I> (7.6.17 [<A href="https://wg21.link/expr.yield">expr.yield</A>]), an
+initial <DEL>suspend point</DEL> <INS>await expression</INS>,
+or a final <DEL>suspend point</DEL> <INS>await expression</INS>
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]). Otherwise</P>
+</LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>If needed, change 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#14">dcl.fct.def.coroutine</A>] paragraph 14 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the evaluation of the expression
+<I>promise</I><TT>.unhandled_exception()</TT> exits via an
+exception, the coroutine is considered suspended at the
+final suspend point <INS>and the exception propagates to the
+caller or resumer</INS>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the August, 2020 teleconference [SUPERSEDED]:</B></P>
+
+<P>CWG expressed some concern about the lack of a precise definition
+of &#8220;suspend point&#8221;. Gor Nishanov suggests the following
+change, in 7.6.2.4 [<A href="https://wg21.link/expr.await#5.1">expr.await</A>] bullet 5.1:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI><P>If the evaluation of <I>await-suspend</I> exits
+via an exception, the exception is caught, the coroutine is
+resumed, and the exception is immediately re-thrown
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]). Otherwise, control flow returns
+to the current coroutine caller or resumer
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]) without exiting any scopes
+(8.7 [<A href="https://wg21.link/stmt.jump">stmt.jump</A>]). <INS>The point in the coroutine
+immediately prior to control returning to its caller or
+resumer is a coroutine <I>suspend point</I>.</INS>
+</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-10):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.6.2.4 [<A href="https://wg21.link/expr.await#3.2">expr.await</A>] bullet 3.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Evaluation of an <I>await-expression</I> involves the
+following auxiliary types, expressions, and objects:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>
+<I>a</I> is the <I>cast-expression</I> if
+the <I>await-expression</I> was implicitly produced by
+a <I>yield-expression</I> (7.6.17 [<A href="https://wg21.link/expr.yield">expr.yield</A>]), an
+initial <DEL>suspend point</DEL> <INS>await expression</INS>,
+or a final <DEL>suspend point</DEL> <INS>await expression</INS>
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]). Otherwise</P>
+</LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 7.6.2.4 [<A href="https://wg21.link/expr.await#5.1">expr.await</A>] bullet 5.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+<P>If the evaluation of <I>await-suspend</I> exits
+via an exception, the exception is caught, the coroutine is
+resumed, and the exception is immediately re-thrown
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]). Otherwise, control flow returns
+to the current coroutine caller or resumer
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]) without exiting any scopes
+(8.7 [<A href="https://wg21.link/stmt.jump">stmt.jump</A>]). <INS>The point in the coroutine
+immediately prior to control returning to its caller or
+resumer is a coroutine <I>suspend point</I>.</INS>
+</P>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#5">dcl.fct.def.coroutine</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...where</P>
+
+<UL>
+<LI><P>the <I>await-expression</I> containing the call
+to <TT>initial_suspend</TT> is the <I>initial <DEL>suspend
+point</DEL> <INS>await expression</INS></I>, and</P></LI>
+
+<LI><P>the <I>await-expression</I> containing the call to
+<TT>final_suspend</TT> is the <I>final <DEL>suspend point</DEL>
+<INS>await expression</INS></I>, and</P></LI>
+
+<LI><P>
+<I>initial-await-resume-called</I> is
+initially <TT>false</TT> and is set to <TT>true</TT>
+immediately before the evaluation of the <I>await-resume</I>
+expression (7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>]) of the initial
+<DEL>suspend point</DEL> <INS>await expression</INS>, and</P></LI>
+
+<LI><P>...</P></LI>
+
+<LI><P>
+<I>promise-constructor-arguments</I> is determined as
+follows: overload resolution is performed on a promise
+constructor call created by assembling an argument list with
+lvalues <TT>p</TT><SUB>1</SUB> ...
+<TT>p</TT><SUB><I>n</I></SUB>. If a viable constructor is
+found (12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]),
+then <I>promise-constructor-arguments</I> is
+<TT>(p</TT><SUB>1</SUB>, ..., <TT>p</TT><SUB><I>n</I></SUB><TT>)</TT>,
+otherwise <I>promise-constructor-arguments</I> is
+empty<DEL>.</DEL> <INS>, and</INS>
+</P></LI>
+
+<LI><INS>a coroutine is suspended at the <I>initial suspend point</I> if it is suspended at the initial await expression, and</INS></LI>
+
+<LI>
+<P><INS>a coroutine is suspended at a <I>final suspend
+point</I> if it is suspended</INS></P>
+
+<UL>
+<LI><P><INS>at a final await expression or</INS></P></LI>
+
+<LI><P><INS>due to an exception exiting from
+<TT>unhandled_exception()</TT></INS></P></LI>
+
+</UL>
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#14">dcl.fct.def.coroutine</A>] paragraph 14 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+If the evaluation of the expression
+<I>promise</I><TT>.unhandled_exception()</TT> exits via an
+exception, the coroutine is considered suspended at the
+final suspend point <INS>and the exception propagates to the
+caller or resumer</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

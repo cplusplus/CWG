@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 639</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="639"></A><H4>639.
+  
+What makes side effects &#8220;different&#8221; from one another?
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 July 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>Is the behavior undefined in the following example?</P>
+
+<PRE>
+    void f() {
+         int n = 0;
+         n = --n;
+    }
+</PRE>
+
+<P>6.9.1 [<A href="https://wg21.link/intro.execution#16">intro.execution</A>] paragraph 16 says,</P>
+
+<BLOCKQUOTE>
+
+If a side effect on a scalar object is unsequenced relative to
+either a different side effect on the same scalar object or a
+value computation using the value of the same scalar object, the
+behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>It's not clear to me whether the two side-effects in <TT>n=--n</TT>
+are &#8220;different.&#8221;  As far as I can tell, it seems that both
+side-effects involve the assignment of -1 to n, which in a sense
+makes them non-&#8220;different.&#8221;  But I don't know if that's the
+intent.  Would it be better to say &#8220;another&#8221; instead of
+&#8220;a different?&#8221;</P>
+
+<P>On a related note, can we include this example to illustrate?</P>
+
+<PRE>
+    void f( int, int );
+    void g( int a ) { f( a = -1, a = -1 ); } // Undefined?
+</PRE>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>Change 6.9.1 [<A href="https://wg21.link/intro.execution#16">intro.execution</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...If a side effect on a scalar object is unsequenced
+relative to either <DEL>a different</DEL> <INS>another</INS> side effect
+on the same scalar object or a value computation using the value
+of the same scalar object, the behavior is
+undefined. [<I>Example:</I>
+</P>
+
+<PRE>
+    <INS>void f(int, int);
+    void g(int i, int* v) {</INS>
+        i = v[i++];         //<SPAN CLASS="cmnt"> the behavior is undefined</SPAN>
+        i = 7, i++, i++;    //<SPAN CLASS="cmnt"> </SPAN>i<SPAN CLASS="cmnt"> becomes </SPAN>9
+
+        i = ++i + 1;        //<SPAN CLASS="cmnt"> the behavior is undefined</SPAN>
+        i = i + 1;          //<SPAN CLASS="cmnt"> the value of </SPAN>i<SPAN CLASS="cmnt"> is incremented</SPAN>
+<INS>
+        f(i = -1, i = -1);  //<SPAN CLASS="cmnt"> the behavior is undefined</SPAN>
+    }</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>] When calling...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

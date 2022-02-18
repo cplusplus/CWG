@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 653</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="653"></A><H4>653.
+  
+Copy assignment of unions
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 October 2007<BR>
+
+
+<P>[Voted into WP at July, 2009 meeting.]</P>
+
+
+
+<P>How does copy assignment for unions work?  For example,</P>
+
+<PRE>
+  union U {
+    int a;
+    float b;
+  };
+
+  void f() {
+    union U u = { 5 };
+    union U v;
+    v = u;    // what happens here?
+  }
+</PRE>
+
+<P>11.5 [<A href="https://wg21.link/class.union">class.union</A>] is silent on the issue, therefore it
+seems that 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] applies.  There is no special
+case for unions, thus paragraph 13 (memberwise assignment of
+subobjects) seems to apply.  That would seem to imply these actions in
+the compiler-generated copy assignment operator:</P>
+
+<PRE>
+  v.a = u.a;
+  v.b = u.b;
+</PRE>
+
+<P>And this is just wrong.  For example, the lifetime of
+<TT>v.a</TT> ends once the second assignment reuses the memory
+of <TT>v.a</TT>.</P>
+
+<P>We should probably prescribe &#8220;memcpy&#8221; copying for
+unions (both for the copy constructor and the assignment operator)
+unless the user provided his own special member function.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<OL>
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy constructor for
+<INS>a non-union</INS> class <TT>X</TT> performs a memberwise copy of its
+subobjects...
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph after 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8:
+</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy constructor for a
+union <TT>X</TT> where all members have a trivial copy constructor
+copies the object representation (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of
+<TT>X</TT>. [<I>Note:</I> The behavior is undefined if <TT>X</TT> is
+not a trivial type. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#13">class.copy.ctor</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy assignment
+operator for <INS>a non-union</INS> class <TT>X</TT> performs memberwise
+assignment of its subobjects...
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph after 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#13">class.copy.ctor</A>] paragraph 13:
+</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy assignment
+operator for a union <TT>X</TT> where all members have a trivial copy
+assignment operator copies the object representation (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>. [<I>Note:</I> The behavior is undefined if
+<TT>X</TT> is not a trivial type. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The proposed wording needs to be updated to reflect the
+changes adopted in papers N2757 and N2762, resolving <A HREF="683.html">issue 683</A>, which require &#8220;no
+non-trivial&#8221; special member functions instead of &#8220;a
+trivial&#8221; function.  Also, the notes regarding undefined
+behavior are incorrect, because the member functions involved are
+defined as deleted when there are non-trivial members.</P>
+
+<P><B>Proposed resolution (October, 2008):</B></P>
+
+<OL>
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy constructor for
+<INS>a non-union</INS> class <TT>X</TT> performs a memberwise copy of its
+subobjects...
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph following 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8:
+</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy constructor for a
+union <TT>X</TT> copies the object representation (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#13">class.copy.ctor</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKUOTE>
+
+The implicitly-defined or explicitly-defaulted copy assignment
+operator for <INS>a non-union</INS> class <TT>X</TT> performs memberwise
+assignment of its subobjects...
+
+</BLOCKUOTE>
+
+<LI><P>Add a new paragraph following 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#13">class.copy.ctor</A>] paragraph 13:
+</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined or explicitly-defaulted copy assignment operator
+for a union <TT>X</TT> copies the object representation
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

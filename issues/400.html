@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 400</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="400"></A><H4>400.
+  
+Using-declarations and the "struct hack"
+</H4>
+<B>Section: </B>6.5.5.3&#160; [<A href="https://wg21.link/namespace.qual">namespace.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>22 Jan 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+<P>Consider this code:</P>
+<PRE>
+  struct A { int i; struct i {}; };
+  struct B { int i; struct i {}; };
+  struct D : public A, public B { using A::i; void f (); };
+  void D::f () { struct i x; }
+</PRE>
+<P>I can't find anything in the standard that says definitively what this
+means.  9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>] says that a using-declaration shall
+name "a member of a base class" -- but here we have two members, the
+data member A::i and the class A::i.</P>
+
+<P>Personally, I'd find it more attractive if this code did not work.  I'd
+like "using A::i" to mean "lookup A::i in the usual way and bind B::i to
+that", which would mean that while "i = 3" would be valid in D::f,
+"struct i x" would not be.  However, if there were no A::i data member,
+then "A::i" would find the struct and the code in D::f would be valid.</P>
+
+<P>
+<U>John Spicer</U>:
+I agree with you, but unfortunately the standard committee did not.</P>
+
+<P>I remembered that this was discussed by the committee and that a
+resolution was adopted that was different than what I hoped for, but I
+had a hard time finding definitive wording in the standard.</P>
+
+<P>I went back though my records and found the paper that proposed a
+resolution and the associated committee motion that adopted the
+proposed resolution The paper is N0905, and "option 1" from that paper
+was adopted at the Stockholm meeting in July of 1996.  The resolution
+is that "using A::i" brings in everything named i from A.</P>
+
+<P>6.5.5.3 [<A href="https://wg21.link/namespace.qual#2">namespace.qual</A>] paragraph 2 was modified to
+implement this resolution, but interestingly
+that only covers the namespace case and not the class case.  I think
+the class case was overlooked when the wording was drafted.  A core
+issue should be opened to make sure the class case is handled
+properly.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>This is related to <A HREF="11.html">issue 11</A>.
+9.9 [<A href="https://wg21.link/namespace.udecl#10">namespace.udecl</A>] paragraph 10 has an example
+for namespaces.</P>
+
+<P><B>Proposed resolution (October 2003):</B></P>
+
+<P>Add a bullet to the end of 6.5.5.2 [<A href="https://wg21.link/class.qual#1">class.qual</A>] paragraph 1:
+</P>
+<UL>
+<LI>the lookup for a name specified in a <I>using-declaration</I>
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])
+also finds class or enumeration names hidden within the same scope
+(_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>]).
+</LI>
+</UL>
+<P>Change the beginning of 9.9 [<A href="https://wg21.link/namespace.udecl#4">namespace.udecl</A>] paragraph 4 from</P>
+<BLOCKQUOTE>
+A
+<I>using-declaration</I>
+used as a
+<I>member-declaration</I>
+shall refer to a member of a base class of the class being defined,
+shall refer to a member of an anonymous union that is a member of a base class
+of the class being defined, or
+shall refer to an enumerator for an enumeration type that is a member of a base
+class of the class being defined.
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+In a <I>using-declaration</I> used as a
+<I>member-declaration</I>, the <I>nested-name-specifier</I>
+shall name a base class of the class being defined.  Such a
+<I>using-declaration</I> introduces the set of declarations found by member
+name lookup (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>],
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]).
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 185</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="185"></A><H4>185.
+  
+"Named" temporaries and copy elision
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Wade
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 Nov 1999<BR>
+
+
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#15">class.copy.ctor</A>] paragraph 15
+refers only
+to "temporary class objects."  It needs to be made clear that these
+provisions do <B>not</B> apply to temporaries that have been bound to
+references.  For instance,</P>
+
+<PRE>
+    struct A {
+        mutable int value;
+        explicit A(int i) : value(i) {}
+        void mutate(int i) const { value = i; }
+    };
+
+    int foo() {
+        A const&amp; t = A(1);
+        A n(t);          // can this copy be elided?
+        t.mutate(2);
+        return n.value;  // can this return 2?
+    }
+</PRE>
+
+The current wording seems to allow an implementation not to perform
+the copy in <TT>A N(t)</TT> because the source object is a temporary
+(created explicitly by <TT>A(1)</TT>).
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Change the wording proposed in the resolution of <A HREF="20.html">issue 20</A> from</P>
+
+<BLOCKQUOTE>
+<UL><LI>when a temporary class object (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>])
+would be copied to a class object...</LI></UL>
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+<UL><LI>when a temporary class object that has not been bound to a
+reference (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) would be copied to a class
+object...</LI></UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

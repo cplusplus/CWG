@@ -1,0 +1,283 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1051</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1051"></A><H4>1051.
+  
+Reference members and generated copy constructors
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-11<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US62">N3092 comment
+  US&#160;62<BR></A>
+
+<P>The new wording describing generated copy constructors
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#16">class.copy.ctor</A>] paragraph 16) does not describe the
+initialization of members with reference type.</P>
+
+<P>See also <A HREF="992.html">issue 992</A>.</P>
+
+<P><B>Proposed resolution (October, 2010):</B></P>
+
+<OL>
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#12">class.copy.ctor</A>] paragraph 12 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An implicitly-declared copy/move constructor is an <TT>inline
+public</TT> member of its class. A defaulted copy/move constructor for
+a class <TT>X</TT> is defined as deleted (9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>])
+if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>a variant member with a non-trivial corresponding
+constructor and <TT>X</TT> is a union-like class,</P></LI>
+
+<LI><P>a non-static data member of class type <TT>M</TT> (or array
+thereof) that cannot be copied/moved because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s corresponding
+constructor, results in an ambiguity or a function that is deleted or
+inaccessible from the defaulted constructor, or</P></LI>
+
+<LI><P>a direct or virtual base class <TT>B</TT> that cannot be
+copied/moved because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]),
+as applied to <TT>B</TT>'s corresponding constructor, results in an
+ambiguity or a function that is deleted or inaccessible from the
+defaulted constructor, or</P></LI>
+
+<LI><P><INS>for the copy constructor, a non-static data member of
+rvalue reference type, or</INS></P></LI>
+
+<LI><P>for the move constructor, a non-static data member or direct or
+virtual base class with a type that does not have a move constructor
+and is not trivially copyable.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#16">class.copy.ctor</A>] paragraph 16 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The implicitly-defined copy<INS>/move</INS> constructor for a
+non-union class <TT>X</TT> performs a memberwise copy<INS>/move</INS>
+of its <DEL>subobjects</DEL> <INS>bases and members</INS>.
+[<I>Note:</I> <I>brace-or-equal-initializer</I>s of non-static data
+members are ignored.  See also the example in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]. &#8212;<I>end note</I>] The order of
+<DEL>copying</DEL> <INS>initialization</INS> is the same as the order
+of initialization of bases and members in a user-defined constructor
+(see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]). <INS>Let <TT>x</TT> be either the
+parameter of the constructor or, for the move constructor, an xvalue
+referring to the parameter.</INS> Each <DEL>subobject</DEL> <INS>base
+or non-static data member</INS> is copied<INS>/moved</INS> in the
+manner appropriate to its type:</P>
+
+<UL>
+<LI><P><DEL>if the subobject is of class type, the copy
+constructor for the class is used;</DEL></P></LI>
+
+<LI><P>if the <DEL>subobject</DEL> <INS>member</INS> is an array, each
+element is <DEL>copied, in the manner appropriate to the element
+type</DEL> <INS>direct-initialized with the corresponding subobject of
+<TT>x</TT></INS>;</P></LI>
+
+<LI><P><INS>if a member <TT>m</TT> has rvalue reference type
+<TT>T&amp;&amp;</TT>, it is direct-initialized with
+<TT>static_cast&lt;T&amp;&amp;&gt;(x.m);</TT></INS></P></LI>
+
+<LI><P><INS>otherwise, the base or member is direct-initialized with
+the corresponding base or member of <TT>x</TT>.</INS></P></LI>
+
+<LI><P><DEL>if the subobject is of scalar type, the built-in
+assignment operator is used.</DEL></P></LI>
+
+</UL>
+
+<P>Virtual base class subobjects shall be <DEL>copied</DEL>
+<INS>initialized</INS> only once by the implicitly-defined
+copy<INS>/move</INS> constructor (see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#17">class.copy.ctor</A>] paragraph 17:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>The implicitly-defined move constructor for a non-union class
+<TT>X</TT> performs a memberwise move of its subobjects.
+[<I>Note:</I> <I>brace-or-equal-initializer</I>s of non-static data
+members are ignored.  See also the example in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]. &#8212;<I>end note</I>] The order of moving is the
+same as the order of initialization of bases and members in a
+user-defined constructor (see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]). Given a
+parameter named <TT>x</TT>, each base or non-static data member is
+moved in the manner appropriate to its type:</DEL></P>
+
+<UL>
+<LI><P><DEL>a named member <TT>m</TT> of reference or class
+type <TT>T</TT> is direct-initialized with the expression
+<TT>static_cast&lt;T&amp;&amp;&gt;(x.m)</TT>;</DEL></P></LI>
+
+<LI><P><DEL>a base class <TT>B</TT> is direct-initialized with
+the expression
+<TT>static_cast&lt;B&amp;&amp;&gt;(x)</TT>;</DEL></P></LI>
+
+<LI><P><DEL>an array is initialized by moving each element in the
+manner appropriate to the element type;</DEL></P></LI>
+
+<LI><P><DEL>a scalar type is initialized with the built-in
+assignment operator.</DEL></P></LI>
+
+</UL>
+
+<P><DEL>Virtual base class subobjects shall be moved only once by
+the implicitly-defined move constructor (see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</DEL></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#18">class.copy.ctor</A>] paragraph 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy<INS>/move</INS> constructor for
+a union <TT>X</TT> copies the object representation
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#28">class.copy.ctor</A>] paragraph 28 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A copy/move assignment operator that is defaulted and not defined as
+deleted is <I>implicitly defined</I> when <DEL>is assigned a value of
+its class type or a value of a class type derived from its class
+type</DEL> <INS>it is used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) (e.g., when it
+is selected by overload resolution to assign to</INS> an object of its
+class type<INS>)</INS> or when it is explicitly defaulted after its
+first declaration.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#30">class.copy.ctor</A>] paragraph 30 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The implicitly-defined copy<INS>/move</INS> assignment operator for
+a non-union class <TT>X</TT> performs memberwise copy<INS>/move</INS>
+assignment of its subobjects. The direct base classes of <TT>X</TT>
+are assigned first, in the order of their declaration in the
+<I>base-specifier-list</I>, and then the immediate non-static data
+members of <TT>X</TT> are assigned, in the order in which they were
+declared in the class definition. <INS>Let <TT>x</TT> be either the
+parameter of the function or, for the move assignment operator, an
+xvalue referring to the parameter.</INS> Each subobject is assigned in
+the manner appropriate to its type:</P>
+
+<UL>
+<LI><P>if the subobject is of class type, <DEL>the copy assignment
+operator for the class is used</DEL> <INS>as if by a call to
+<TT>operator=</TT> with the subobject as the object expression and the
+corresponding subobject of <TT>x</TT> as a single function
+argument</INS> (as if by explicit qualification; that is, ignoring any
+possible virtual overriding functions in more derived
+classes);</P></LI>
+
+<LI><P>if the subobject is an array, each element is assigned, in the
+manner appropriate to the element type;</P></LI>
+
+<LI><P>if the subobject is of scalar type, the built-in assignment
+operator is used.</P></LI>
+
+</UL>
+
+<P>It is unspecified whether subobjects representing virtual base
+classes are assigned more than once by the implicitly-defined copy
+assignment operator. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct V { };
+  struct A : virtual V { };
+  struct B : virtual V { };
+  struct C : B, A { };
+</PRE>
+
+<P>It is unspecified whether the virtual base class subobject
+<TT>V</TT> is assigned twice by the implicitly-defined copy assignment
+operator for <TT>C</TT>. &#8212;<I>end example</I>] <INS>[<I>Note:</I>
+This does not apply to move assignment, as a defaulted move assignment
+operator is deleted if the class has virtual bases. &#8212;<I>end
+note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#31">class.copy.ctor</A>] paragraph 31:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>The implicitly-defined move assignment operator for a
+non-union class <TT>X</TT> performs memberwise assignment of its
+subobjects.  The direct base classes of <TT>X</TT> are assigned first,
+in the order of their declaration in the <I>base-specifier-list</I>,
+and then the immediate non-static data members of <TT>X</TT> are
+assigned, in the order in which they were declared in the class
+definition.  Given a parameter named <TT>x</TT>, each subobject is
+assigned in the manner appropriate to its type:</DEL></P>
+
+<UL>
+<LI><P><DEL>if the subobject is a named member <TT>c</TT> of class type
+<TT>C</TT>, as if by the expression <TT>this-&gt;c =
+static_cast&lt;C&amp;&amp;&gt;(x.c)</TT>;</DEL></P></LI>
+
+<LI><P><DEL>if the subobject is a direct base class <TT>B</TT>, as if by
+the expression
+<TT>this-&gt;B::operator=(static_cast&lt;B&amp;&amp;&gt;(x))</TT>;</DEL></P></LI>
+
+<LI><P><DEL>if the subobject is an array, each element is moved, in the
+manner appropriate to the element type;</DEL></P></LI>
+
+<LI><P><DEL>if the subobject is of scalar type, the built-in assignment
+operator is used.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1020.html">1020</A>,
+<A HREF="1064.html">1064</A> and <A HREF="1066.html">1066</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

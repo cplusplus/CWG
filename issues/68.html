@@ -1,0 +1,169 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 68</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="68"></A><H4>68.
+  
+Grammar does not allow "friend class A&lt;int&gt;;"
+</H4>
+<B>Section: </B>9.2.9.5&#160; [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Ball
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 Oct 1998<BR>
+
+
+
+<P>I can't find the answer to the following in the standard. Does
+anybody have a reference?</P>
+
+<P>The syntax for elaborated type specifier is
+<UL>
+<I>elaborated-type-specifier</I>:
+<UL>
+<I>class-key</I> <TT>::</TT><SUB>opt</SUB> <I>nested-name-specifier<SUB>opt</SUB>
+identifier</I>
+<BR><TT>enum</TT> <TT>::</TT><I><SUB>opt</SUB> nested-name-specifier<SUB>opt</SUB>
+identifier</I>
+<BR><TT>typename</TT> <TT>::</TT><SUB>opt</SUB>&#160;
+<I>nested-name-specifier</I> <I>identifier</I>
+<BR><TT>typename</TT> <TT>::</TT><SUB>opt</SUB>&#160;
+<I>nested-name-specifier</I> <TT>template</TT><SUB>opt</SUB>&#160;<I>template-id</I>
+</UL>
+<BR>
+If an <I>elaborated-type-specifier</I> is the sole constituent of a declaration,
+the declaration is ill-formed unless it is an explicit specialization
+(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+),
+an explicit instantiation
+(13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+) or it has one of the following
+forms:
+<BR>
+<BR>
+<UL>
+<I>class-key</I> <I>identifier</I> <TT>;</TT><BR>
+<TT>friend</TT> <I>class-key</I> <I>identifier</I> <TT>;</TT>
+<BR><TT>friend</TT> <I>class-key</I> <TT>::</TT> <I>identifier</I> <TT>;</TT>
+<BR><TT>friend</TT> <I>class-key</I> <I>nested-name-specifier</I>&#160;<I>identifier</I>&#160;<TT>;</TT>
+</UL>
+</UL>
+Which does not allow the production</P>
+<PRE>
+    class foo&lt;int&gt; // foo is a template
+</PRE>
+On the other hand, a friend declaration seems to require this production,
+<BLOCKQUOTE>An <I>elaborated-type-specifier</I> shall be used in a
+friend declaration for a class.*
+
+<P>[<I>Footnote:</I> The <I>class-key</I> of the
+<I>elaborated-type-specifier</I> is required.
+&#8212;<I>end footnote</I>]</P>
+</BLOCKQUOTE>
+And in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ we find the example
+<BLOCKQUOTE>
+[<I>Example:</I>
+<PRE>
+    template&lt;class T&gt; class task;
+    template&lt;class T&gt; task&lt;T&gt;* preempt(task&lt;T&gt;*);
+
+    template&lt;class T&gt; class task {
+        // ...
+        friend void next_time();
+        friend void process(task&lt;T&gt;*);
+        friend task&lt;T&gt;* preempt&lt;T&gt;(task&lt;T&gt;*);
+        template&lt;class C&gt; friend int func(C);
+
+        friend class task&lt;int&gt;;
+        template&lt;class P&gt; friend class frd;
+        // ...
+    };
+</PRE>
+</BLOCKQUOTE>
+Is there some special dispensation somewhere to allow the syntax in this
+context?  Is there something I've missed about <I>elaborated-type-specifier</I>?
+Is it just another bug in the standard?
+
+<P>An additional problem was reported via <TT>comp.std.c++</TT>: the
+grammar does not allow the following example:</P>
+
+<PRE>
+    namespace A{
+      class B{};
+    };
+
+    namespace B{
+      class A{};
+      class C{
+	friend class ::A::B;
+      };
+    };
+</PRE>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Change the grammar in 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>] to read<BR>
+<UL>
+<I>elaborated-type-specifier:</I>
+<UL>
+<I>class-key</I> <TT>::<SUB>opt</SUB></TT>
+<I>nested-name-specifier<SUB>opt</SUB> identifier</I>
+</UL>
+<UL>
+<I>class-key</I> <TT>::<SUB>opt</SUB></TT>
+<I>nested-name-specifier<SUB>opt</SUB></I>
+<TT>template<SUB>opt</SUB></TT> <I>template-id</I>
+</UL>
+<UL>
+<TT>enum ::<SUB>opt</SUB></TT>
+<I>nested-name-specifier<SUB>opt</SUB> identifier</I>
+</UL>
+<UL>
+<TT>typename ::<SUB>opt</SUB></TT> <I>nested-name-specifier
+identifier</I>
+</UL>
+<UL>
+<TT>typename ::<SUB>opt</SUB></TT> <I>nested-name-specifier</I>
+<TT>template<SUB>opt</SUB></TT> <I>template-id</I>
+</UL>
+</UL>
+
+and change the forms allowed in paragraph 1 to
+<UL>
+<I>class-key identifier</I> <TT>;</TT><BR>
+<TT>friend</TT> <I>class-key</I> <TT>::<SUB>opt</SUB></TT> <I>identifier</I>
+<TT>;</TT><BR>
+<TT>friend</TT> <I>class-key</I> <TT>::<SUB>opt</SUB></TT> <I>template-id</I>
+<TT>;</TT><BR>
+<TT>friend</TT> <I>class-key</I> <TT>::<SUB>opt</SUB></TT>
+<I>nested-name-specifier identifier</I> <TT>;</TT><BR>
+<TT>friend</TT> <I>class-key</I> <TT>::<SUB>opt</SUB></TT>
+<I>nested-name-specifier</I> <TT>template<SUB>opt</SUB></TT>
+<I>template-id</I> <TT>;</TT>
+</UL>
+</P>
+<BR><BR>
+</BODY>
+</HTML>

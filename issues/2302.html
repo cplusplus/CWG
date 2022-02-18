@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2302</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2302"></A><H4>2302.
+  
+Address comparison between different member subobjects
+</H4>
+<B>Section: </B>7.6.10&#160; [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-04-29<BR>
+
+
+<P>According to 7.6.10 [<A href="https://wg21.link/expr.eq#2.1">expr.eq</A>] bullet 2.1,</P>
+
+<BLOCKQUOTE>
+
+<P>Comparing pointers is defined as follows:</P>
+
+<UL>
+<LI><P>If one pointer represents the address of a complete object, and
+another pointer represents the address one past the last element of a
+different complete object<SUP>87</SUP>, the result of the comparison is
+unspecified.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>The use of the term &#8220;complete object&#8221; is confusing. A
+complete object is one that is not a subobject of any other object
+(6.7.2 [<A href="https://wg21.link/intro.object#2">intro.object</A>] paragraph 2), so this restriction apparently
+does not apply to non-static data members. Is the following guaranteed
+to work?</P>
+
+<PRE>
+  struct S {
+    int i[2];
+    int j[2];
+  };
+
+  constexpr bool check1() {
+    S s = { { 1, 2 }, { 3, 4 } };
+    return &amp;s.i[2] == &amp;s.j[0];
+  }
+
+  static_assert(check1(), "Guaranteed?");
+</PRE>
+
+<P>In particular, is there a guarantee that there is no padding
+between nonstatic data members of the same type?</P>
+
+<P><B>Rationale (July, 2017):</B></P>
+
+<P>CWG determined that the existing wording is correct: the result of
+the comparison is implementation-defined, but not unspecified, so the
+program is well-formed but the assertion is not guaranteed to pass.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

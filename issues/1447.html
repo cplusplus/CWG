@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1447</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1447"></A><H4>1447.
+  
+<TT>static_cast</TT> of bit-field lvalue to rvalue reference
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-01-16<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>According to 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#3">expr.static.cast</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+A glvalue of type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; can be cast to
+type &#8220;rvalue reference to <I>cv2</I> <TT>T2,</TT>&#8221; if
+&#8220;<I>cv2</I> <TT>T2</TT>&#8221; is reference-compatible with
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]).
+The result refers to the object or the specified base class subobject
+thereof.
+
+</BLOCKQUOTE>
+
+<P>This specification fails to allow for a bit-field lvalue operand,
+since the reference cannot refer to a bit-field.  Presumably a
+temporary should be formed and the reference be bound to it.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>] paragraphs 3-4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A glvalue of type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; can be cast
+to type &#8220;rvalue reference to <I>cv2</I> <TT>T2</TT>&#8221; if
+&#8220;<I>cv2</I> <TT>T2</TT>&#8221; is reference-compatible with
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]).
+<DEL>The</DEL> <INS>If the glvalue is not a bit-field, the</INS>
+result refers to the object or the specified base class subobject
+thereof<INS>; otherwise, the lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is applied to the bit-field and the resulting prvalue is
+used as the <I>expression</I> of the <TT>static_cast</TT> for the
+remainder of this section</INS>.  If <TT>T2</TT> is an inaccessible
+(11.8 [<A href="https://wg21.link/class.access">class.access</A>]) or ambiguous (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) base class of <TT>T1</TT>, a program that necessitates
+such a cast is ill-formed.</P>
+
+<P>
+<DEL>Otherwise, an</DEL> <INS>An</INS> expression <TT>e</TT> can be
+explicitly converted...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

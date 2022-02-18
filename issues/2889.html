@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2889</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2889"></A><H4>2889.
+  
+Requiring an accessible destructor for destroying operator delete
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lauri Vasama
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/532">#532</A>.)</P>
+
+<P>Subclause 7.6.2.9 [<A href="https://wg21.link/expr.delete#6">expr.delete</A>] paragraph 6 specifies that the
+destructor must be accessible even if a destroying operator delete is
+used:</P>
+
+<BLOCKQUOTE>
+
+If the value of the operand of the <I>delete-expression</I> is not a
+null pointer value and the selected deallocation function (see below)
+is not a destroying operator delete, evaluating
+the <I>delete-expression</I> invokes the destructor (if any) for the
+object or the elements of the array being deleted. The destructor
+shall be accessible from the point where the <I>delete-expression</I>
+appears. In the case of an array, the elements are destroyed in order
+of decreasing address (that is, in reverse order of the completion of
+their constructor; see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).
+
+</BLOCKQUOTE>
+
+<P>This does not seem to be intended.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#6">expr.delete</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <DEL>value</DEL> <INS>type</INS> of the operand of
+the <I>delete-expression</I>
+<DEL>is not a null pointer value</DEL>
+<INS>is a pointer to a class type or (possibly multidimensional) array
+thereof,</INS> and the selected deallocation function (see below) is
+not a destroying operator delete<INS>:</INS>
+<DEL>, evaluating the <I>delete-expression</I> invokes the destructor
+(if any) for the object or the elements of the array being
+deleted. The destructor shall be accessible from the point where
+the <I>delete-expression</I> appears. In the case of an array, the
+elements are destroyed in order of decreasing address (that is, in
+reverse order of the completion of their constructor; see
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</DEL>
+
+<UL class="ins">
+<LI>The destructor is potentially invoked
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</LI>
+<LI>If the pointer value is not a null pointer value, evaluating a
+single-object delete expression destroys the object pointed to by the
+operand, and evaluating an array delete expression destroys each
+element of the array pointed to by the operand in order of decreasing
+index.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-05-31</B></P>
+
+<P>This area of the wording is affected by P3144 (Deprecate Delete of
+a Pointer to an Incomplete Type).  The wording above requires a class
+definition due to the "potentially invoked" phrasing. See also
+<A HREF="2880.html">issue 2880</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

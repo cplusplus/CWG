@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1162</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1162"></A><H4>1162.
+  
+Dependent <I>elaborated-type-specifier</I>s in non-deduced contexts
+</H4>
+<B>Section: </B>13.8&#160; [<A href="https://wg21.link/temp.res">temp.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CA
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-03<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#CA6">N3092 comment
+  CA&#160;6<BR></A>
+
+<P>The following appears to be well-formed, with templates
+<TT>foo()</TT> being distinct since any type <TT>T</TT> will
+produce an invalid type for the second parameter for at
+least one <TT>foo()</TT> when <TT>T</TT> is replaced within
+the non-deduced context:</P>
+
+<PRE>
+    template &lt;typename T&gt;
+      bool *foo(T *, enum T::u_type * = 0) { return 0; }
+    template &lt;typename T&gt;
+      char *foo(T *, struct T::u_type * = 0) { return 0; }
+    struct A { enum u_type { I }; };
+    int main(void) { foo((A*)0); }
+</PRE>
+
+<P>In particular, while determining the signature
+for the function templates <TT>foo()</TT>, an
+<I>elaborated-type-specifier</I> qualifies as part of the
+<I>decl-specifier-seq</I> under 9.3.4.6 [<A href="https://wg21.link/dcl.fct#5">dcl.fct</A>] paragraph 5
+in determining the type of a parameter in the
+parameter-type-list (absent additional wording).  Also, the
+return type is included in the signature of a function
+template.</P>
+
+<P>Implementations do not appear to support this case and
+the ability to do so brings little value since type traits
+such as <TT>is_enum</TT> and <TT>is_class</TT> cannot be
+defined using this and equivalent functionality can be
+achieved using the aforementioned type traits.</P>
+
+<P><B>Rationale (August, 2010):</B></P>
+
+<P>The specification is as intended; compilers should handle
+cases like these.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

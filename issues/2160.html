@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2160</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2160"></A><H4>2160.
+  
+Issues with partial ordering
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-07-16<BR>
+
+
+<P>(From <A HREF="https://github.com/cplusplus/draft/issues/523">this
+editorial issue</A>.)</P>
+
+<P><B>Consistency of deduced values</B></P>
+
+<PRE>
+  template &lt;typename T&gt; void foo(T, T); //<SPAN CLASS="cmnt"> (1)</SPAN>
+  template &lt;typename T, typename U&gt; void foo(T, U); //<SPAN CLASS="cmnt"> (2)</SPAN>
+</PRE>
+
+<P>13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#2">temp.deduct.type</A>] paragraph 2 makes it clear
+that there must be exactly one set of deduced values for the
+<TT>P</TT>s. But there is no such statement in the partial ordering
+rule. The algorithm described only does pairwise <TT>P</TT>/<TT>A</TT>
+matching, so a synthesized call from (2) to (1) via <TT>foo(U{},
+V{})</TT> could succeed in deduction. Both gcc and clang agree
+that (1) is more specialized.</P>
+
+<P><B>Type Synthesis Template Instantiation</B></P>
+
+<PRE>
+  template &lt;typename T&gt;
+  struct identity { using type = T; };
+
+  template&lt;typename T&gt; void bar(T, T ); //<SPAN CLASS="cmnt"> (1) </SPAN>
+  template&lt;typename T&gt; void bar(T, typename identity&lt;T&gt;::type ); //<SPAN CLASS="cmnt"> (2)</SPAN>
+</PRE>
+
+<P>Here, if synthesized for (2) <TT>Unique2</TT> and <TT>typename
+identity&lt;Unique2&gt;::type == Unique2</TT> , then type
+deduction would succeed in both directions and the call
+<TT>bar(0,0)</TT> would be ambiguous. However, it seems that
+both compilers instead simply treat <TT>typename
+identity&lt;Unique2&gt;::type</TT> as <TT>Unique2_b</TT>,
+thus making template deduction from (2) to (1) fail (based
+on the implied missing Consistency rule).</P>
+
+<P><B>Non-deduced Context Omission</B></P>
+
+<P>This is the same as the previous example, except now define</P>
+
+<PRE>
+  template &lt;typename T&gt; struct identity;
+  template &lt;&gt; struct identity&lt;int&gt; { using type = int; };
+</PRE>
+
+<P>With no template instantiation during synthesis and
+consistency, the (2) ==&gt; (1) deduction fails. But if we
+consider the (1) ==&gt; (2) call, we'd match <TT>T</TT> against
+<TT>Unique1</TT> and then have the non-deduced
+context <TT>typename identity&lt;Unique1&gt;::type</TT> to
+match against <TT>Unique1</TT>, but that would be a
+substitution failure. It seems that the approach taken by
+gcc and clang (both of which prefer (1) here) is to ignore
+the non-deduced context argument, as long as that parameter
+type is deduced from a different template parameter type
+that did get matched.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>None of these examples appears to reflect a defect in the
+current wording; in particular, the second and third
+examples involve a dependent type and there could be a later
+specialization of <TT>identity</TT>, so it's impossible to
+reason about those cases in the template definition
+context. The issue will be left open to allow for possible
+clarification of the intent of the wording.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

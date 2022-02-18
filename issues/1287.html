@@ -1,0 +1,226 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1287</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1287"></A><H4>1287.
+  
+Direct initialization vs &#8220;implicit&#8221; conversion in reference binding
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-04-06<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>In 9.4.5 [<A href="https://wg21.link/dcl.init.list#5">dcl.init.list</A>] paragraph 5, both the cases in which
+a reference can be bound to the result of a conversion function use the
+phrase &#8220;can be implicitly converted to...&#8221;  This is
+confusing, as it could be read as excluding <TT>explicit</TT>
+conversion functions.  However, that appears not to be the intent, as
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>], which is cited in these cases, allows
+<TT>explicit</TT> conversion functions for direct-initialization.</P>
+
+<P><B>Proposed resolution (August, 2011) [SUPERSEDED]:</B></P>
+
+<P>Change the two indicated (not contiguous) sub-bullets of
+9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P>
+
+<UL>
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>,&#8221;...</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an xvalue, class prvalue, or
+function lvalue of type &#8220;<I>cv3</I> <TT>T3</TT>&#8221;, where
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221; <INS>(see 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>])</INS>,</P></LI>
+
+</UL>
+
+<P><B>Additional note, January, 2012:</B></P>
+
+<P>Questions have been raised regarding the consistency of the
+treatment of class prvalues in this resolution with other types
+.  The
+issue is thus being returned to "review" status for additional
+discussion.</P>
+
+<P><B>Proposed resolution (February, 2012) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+initialized by an expression of type &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; as follows:</P>
+
+<UL>
+<LI><P>If the reference is an lvalue reference and the initializer
+expression</P></LI>
+
+<UL>
+<LI><P>is an lvalue (but is not a bit-field), and
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv2</I> <TT>T2</TT>,&#8221; or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>,&#8221; where &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv3</I>
+<TT>T3</TT>&#8221;<SUP>106</SUP> (this conversion is selected by
+enumerating the applicable conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and choosing the best one through overload
+resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>])),</P></LI>
+
+</UL>
+
+<P>then the reference is bound...</P>
+
+<LI><P>Otherwise, the reference shall be...</P></LI>
+
+<UL>
+<LI><P>If the initializer expression</P></LI>
+
+<UL>
+<LI><P>is an xvalue, class prvalue, array prvalue or function
+lvalue and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>&#8221;,
+or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an xvalue<DEL>, class
+prvalue,</DEL> or function lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>&#8221;, where &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv3</I> <TT>T3</TT>&#8221;
+<INS>(see 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>])</INS>,</P></LI>
+
+</UL>
+<P>then the reference is bound... [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A { };
+  struct B : A { } b;
+  extern B f();
+  const A&amp; rca2 = f();    //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the </SPAN>B<SPAN CLASS="cmnt"> rvalue.</SPAN>
+  A&amp;&amp; rra = f();          //<SPAN CLASS="cmnt"> same as above</SPAN>
+  struct X {
+    operator B();
+    operator int&amp;();
+  } x;
+<DEL>  const A&amp; r = x;         //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the result of the conversion</SPAN></DEL>
+  int i2 = 42;
+  int&amp;&amp; rri = static_cast&lt;int&amp;&amp;&gt;(i2); //<SPAN CLASS="cmnt"> bound directly to </SPAN>i2
+<DEL>  B&amp;&amp; rrb = x;            //<SPAN CLASS="cmnt"> bound directly to the result of </SPAN>operator B</DEL>
+  int&amp;&amp; rri2 = X();       //<SPAN CLASS="cmnt"> error: lvalue-to-rvalue conversion applied to the</SPAN>
+                          //<SPAN CLASS="cmnt"> result of </SPAN>operator int&amp;
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<LI><P>Otherwise, a temporary... [<I>Example:</I>
+</P></LI>
+
+<PRE>
+<INS>  const A&amp; r = x;         //<SPAN CLASS="cmnt"> </SPAN>r<SPAN CLASS="cmnt"> refers to a temporary</SPAN>
+  B&amp;&amp; rrb = x;            //<SPAN CLASS="cmnt"> </SPAN>rrb<SPAN CLASS="cmnt"> refers to a temporary</SPAN></INS>
+
+  const double&amp; rcd2 = 2; //<SPAN CLASS="cmnt"> </SPAN>rcd2<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  double&amp;&amp; rrd = 2;       //<SPAN CLASS="cmnt"> </SPAN>rrd<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  ...
+</PRE>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Under the conditions specified in 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>], a
+reference can be bound directly to a glvalue <DEL>or class
+prvalue</DEL> that is the result of applying a conversion
+function...</P>
+
+<UL><LI><P>The conversion functions of <TT>S</TT> and its base classes
+are considered, except that for copy-initialization, only the
+non-explicit conversion functions are considered. Those that are not
+hidden within <TT>S</TT> and yield type &#8220;lvalue reference to
+<I>cv2</I> <TT>T2</TT>&#8221; (when 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+requires an lvalue result) or <DEL>&#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; or</DEL> &#8220;rvalue reference to <I>cv2</I>
+<TT>T2</TT>&#8221; (when 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] requires an rvalue
+result), where &#8220;<I>cv1</I> <TT>T</TT>&#8221; is
+reference-compatible (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) with
+&#8220;<I>cv2</I> <TT>T2</TT>&#8221;, are candidate
+functions.</P></LI></UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Note from the April, 2013 meeting:</B></P>
+
+<P>Because of concerns about slicing and performance in the February, 2012
+proposed resolution, CWG decided to return to the August, 2011 proposed
+resolution and split off the discussion about class prvalues into
+<A HREF="1650.html">issue 1650</A>.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>Change the two indicated (not contiguous) sub-bullets of
+9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P>
+
+<UL>
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>,&#8221;...</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+<DEL>implicitly</DEL> converted to an xvalue, class prvalue, or
+function lvalue of type &#8220;<I>cv3</I> <TT>T3</TT>&#8221;, where
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221; <INS>(see 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>])</INS>,</P></LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2398</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2398"></A><H4>2398.
+  
+Template template parameter matching and deduction
+</H4>
+<B>Section: </B>13.4.4&#160; [<A href="https://wg21.link/temp.arg.template">temp.arg.template</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-12-03<BR>
+
+
+
+
+<P>Do the changes from
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0522r0.html">P0522R0</A>
+regarding template template parameter matching apply to
+deduction? For example:</P>
+
+<PRE>
+  template&lt;class T, class U = T&gt; class B { /* ... */ };
+  template&lt;template&lt;class&gt; class P, class T&gt; void f(P&lt;T&gt;);
+
+  int main()  {
+    f(B&lt;int&gt;());       //<SPAN CLASS="cmnt"> OK?</SPAN>
+    f(B&lt;int,float&gt;()); //<SPAN CLASS="cmnt"> ill-formed, T deduced to int and float</SPAN>
+  }
+</PRE>
+
+<P>In deduction we can determine that <TT>P</TT> is more
+specialized than <TT>B</TT>, then substitute <TT>B</TT>
+into <TT>P&lt;T&gt;</TT>, and then
+compare <TT>B&lt;T,T&gt;</TT> to <TT>B&lt;int,int&gt;</TT>.
+This will allow deduction to succeed, whereas
+comparing <TT>&lt;T&gt;</TT> to <TT>&lt;int,int&gt;</TT> without
+this substitution would fail.  I suppose this is similar to
+deducing a type parameter, substituting it into the type of
+a non-type parameter, then deducing the value of the
+non-type parameter</P>
+
+<P>Does this make sense? Do we need more wording?</P>
+
+<P>Consider also this example;</P>
+
+<PRE>
+  template&lt;typename&gt; struct match;
+
+  template&lt;template&lt;typename&gt; class t,typename T&gt;
+  struct match&lt;t&lt;T&gt; &gt; { typedef int type; };      //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template&lt;template&lt;typename,typename&gt; class t,typename T0,typename T1&gt;
+  struct match&lt;t&lt;T0,T1&gt; &gt; { typedef int type; };  //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  template&lt;typename,typename = void&gt; struct other { };
+  typedef match&lt;other&lt;void,void&gt; &gt;::type type;
+</PRE>
+
+<P>Before this change, partial specialization #1 was not a
+candidate; now it is, and neither partial specialization is
+at least as specialized as the other, so we get an
+ambiguity.  It seems that the consistent way to address this
+would be to use <TT>other</TT> during partial ordering, so
+we'd be comparing</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  void fn (match&lt;other&lt;T&gt;&gt;); //<SPAN CLASS="cmnt"> i.e. </SPAN>other&lt;T,void&gt;
+  template&lt;typename T0, typename T1&gt;
+  void fn (match&lt;other&lt;T0,T1&gt;&gt;);
+</PRE>
+
+<P>So #1 is more specialized, whereas before this change we
+chose #2.</P>
+
+<P><B>Additional notes (May, 2024)</B></P>
+
+<P>Paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3310r0.html">P3310R0</A>
+(Solving partial ordering issues introduced by P0522R0)
+by Matheus Izvekov
+strives to solve this issue, currently with focus on partial ordering (only).
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

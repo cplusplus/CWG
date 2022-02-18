@@ -1,0 +1,282 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 681</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="681"></A><H4>681.
+  
+Restrictions on declarators with late-specified return types
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 March, 2008<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting as part of
+paper N2757.]</P>
+
+<P>The wording added to 9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] for declarators with
+late-specified return types says,</P>
+
+<BLOCKQUOTE>
+
+<P>In a declaration <TT>T D</TT> where <TT>D</TT> has the form</P>
+
+<UL>
+<TT>D1 (</TT> <I>parameter-declaration-clause</I> <TT>)</TT> <I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I> <TT>-&gt;</TT> <I>type-id</I>
+</UL>
+
+<P>and the type of the contained <I>declarator-id</I> in the
+declaration <TT>T D1</TT> is
+&#8220;<I>derived-declarator-type-list</I> <TT>T</TT>,&#8221; <TT>T</TT>
+shall be the single <I>type-specifier</I> <TT>auto</TT> and the
+<I>derived-declarator-type-list</I> shall be empty.</P>
+
+</BLOCKQUOTE>
+
+<P>These restrictions were intended to ensure that the return type of
+the function is exactly the specified <I>type-id</I> following the
+<TT>-&gt;</TT>, not modified by declarator operators and
+cv-qualification.</P>
+
+<P>Unfortunately, the requirement for an empty
+<I>derived-declarator-type-list</I> does not achieve this goal but
+instead forbids declarations like</P>
+
+<PRE>
+    auto (*fp)() -&gt; int;    //<SPAN CLASS="cmnt"> pointer to function returning </SPAN>int
+</PRE>
+
+<P>while allowing declarations like</P>
+
+<PRE>
+    auto *f() -&gt; int;       //<SPAN CLASS="cmnt"> function returning pointer to </SPAN>int
+</PRE>
+
+<P>The reason for this is that, according to the grammar in
+9.3 [<A href="https://wg21.link/dcl.decl#4">dcl.decl</A>] paragraph 4, the declarator <TT>*f() -&gt; int</TT>
+is parsed as a <I>ptr-operator</I> applied to the <I>direct-declarator</I>
+<TT>f() -&gt; int</TT>; that is, the declarator <TT>D1</TT> seen in
+9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] is just <TT>f</TT>, and the
+<I>derived-declarator-type-list</I> is thus empty.</P>
+
+<P>By contrast, the declarator <TT>(*fp)() -&gt; int</TT> is parsed
+as the <I>direct-declarator</I> <TT>(*fp)</TT> followed by the
+<I>parameter-declaration-clause</I>, etc.  In this case, <TT>D1</TT> in
+9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] is <TT>(*fp)</TT> and the
+<I>derived-declarator-type-list</I> is &#8220;pointer to,&#8221; i.e.,
+not empty.</P>
+
+<P>My personal view is that there is no reason to forbid the
+<TT>(*fp)() -&gt; int</TT> form, and that doing so is problematic.
+For example, this restriction would require users desiring the
+late-specified return type syntax to write function parameters as
+function types and rely on parameter type transformations rather
+than writing them as pointer-to-function types, as they will actually
+turn out to be:</P>
+
+<PRE>
+    void f(auto (*fp)() -&gt; int);  //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    void f(auto fp() -&gt; int);     //<SPAN CLASS="cmnt"> OK (but icky)</SPAN>
+</PRE>
+
+<P>It may be helpful in deciding whether to allow this form to
+consider the example of a function returning a pointer to a function.
+With the current restriction, only one of the three plausible forms is
+allowed:</P>
+
+<PRE>
+    auto (*f())() -&gt; int;           //<SPAN CLASS="cmnt"> Disallowed</SPAN>
+    auto f() -&gt; int (*)();          //<SPAN CLASS="cmnt"> Allowed</SPAN>
+    auto f() -&gt; auto (*)() -&gt; int;  //<SPAN CLASS="cmnt"> Disallowed</SPAN>
+</PRE>
+
+<U>Suggested resolution:</U>
+
+<OL>
+<LI><P>Delete the words &#8220;and
+the <I>derived-declarator-type-list</I> shall be empty&#8221; from
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2.</P></LI>
+
+<LI><P>Add a new paragraph following 9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>] paragraph
+4:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>ptr-operator</I> shall not be applied, directly or indirectly,
+to a function declarator with a late-specified return type
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]).
+
+</BLOCKQUOTE>
+</OL>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<OL>
+<LI><P>Change the grammar in 9.3 [<A href="https://wg21.link/dcl.decl#4">dcl.decl</A>] paragraph 4
+as follows:</P></LI>
+
+<UL>
+<I>declarator:</I><BR>
+<UL>
+<DEL><I>direct-declarator</I><BR>
+<I>ptr-operator declarator</I></DEL><BR>
+<INS><I>ptr-declarator</I><BR>
+<I>noptr-declarator parameters-and-qualifiers</I> <TT>-&gt;</TT> <I>type-id</I></INS>
+</UL>
+<BR>
+<INS><I>ptr-declarator:</I><BR>
+<UL><INS><I>noptr-declarator</I><BR>
+<I>ptr-operator ptr-declarator</I><BR>
+</INS></UL>
+</INS><BR>
+<DEL><I>direct-declarator:</I></DEL><BR>
+<INS><I>noptr-declarator:</I></INS><BR>
+<UL>
+<I>declarator-id</I><BR>
+<DEL><I>direct-declarator</I> <TT>(</TT> <I>parameter-declaration-clause</I> <TT>)</TT><BR>
+<UL><DEL><I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I><BR></DEL></UL>
+<DEL><I>direct-declarator</I><TT>(</TT> <I>parameter-declaration-clause</I> <TT>)</TT><BR></DEL>
+<UL><DEL><I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I> <TT>-&gt;</TT> <I>type-id</I><BR></DEL></UL>
+<I>direct-declarator</I> <TT>[</TT> <I>constant-expression<SUB>opt</SUB></I> <TT>]</TT><BR></DEL>
+<INS><I>noptr-declarator parameters-and-qualifiers</I><BR>
+<I>noptr-declarator</I> <TT>[</TT> <I>constant-expression<SUB>opt</SUB></I> <TT>]</TT></INS><BR>
+<TT>(</TT> <I><INS>ptr-</INS>declarator</I> <TT>)</TT><BR>
+</UL>
+<BR>
+<INS><I>parameters-and-qualifiers:</I><BR>
+<UL><INS><TT>(</TT> <I>parameter-declaration-clause</I> <TT>)</TT> <I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I><BR></INS></UL>
+</INS>
+...
+</UL>
+
+<LI><P>Change the grammar in 9.3.2 [<A href="https://wg21.link/dcl.name#1">dcl.name</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>...<BR>
+<I>abstract-declarator:</I><BR>
+<UL>
+<DEL><I>ptr-operator abstract-declarator<SUB>opt</SUB></I><BR>
+<I>direct-abstract-declarator</I></DEL><BR>
+<INS><I>ptr-abstract-declarator</I><BR>
+<I>noptr-abstract-declarator<SUB>opt</SUB> parameters-and-qualifiers</I> <TT>-&gt;</TT> <I>type-id</I></INS><BR>
+<TT>...</TT><BR>
+</UL>
+<BR>
+<INS><I>ptr-abstract-declarator:</I><BR>
+<UL><INS><I>noptr-abstract-declarator</I><BR>
+<I>ptr-operator ptr-abstract-declarator<SUB>opt</SUB></I><BR>
+</INS></UL>
+</INS><BR>
+<DEL><I>direct-abstract-declarator:</I><BR></DEL>
+<UL>
+<DEL><I>direct-abstract-declarator<SUB>opt</SUB></I> <TT>(</TT> <I>parameter-declaration-clause</I> <TT>)</TT><BR>
+<UL><DEL><I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I><BR>
+</DEL></UL>
+<DEL><I>direct-abstract-declarator<SUB>opt</SUB></I> <TT>(</TT> <I>parameter-declaration-clause</I> <TT>)</TT><BR></DEL>
+<UL><DEL><I>cv-qualifier-seq<SUB>opt</SUB> ref-qualifier<SUB>opt</SUB> exception-specification<SUB>opt</SUB></I> <TT>-&gt;</TT> <I>type-id</I><BR></DEL></UL>
+<I>direct-abstract-declarator<SUB>opt</SUB></I> <TT>[</TT> <I>constant-expression<SUB>opt</SUB></I> <TT>]</TT></DEL><BR>
+</UL>
+<INS><I>noptr-abstract-declarator:</I></INS><BR>
+<UL>
+<INS><I>noptr-abstract-declarator<SUB>opt</SUB> parameters-and-qualifiers</I><BR>
+<I>noptr-abstract-declarator<SUB>opt</SUB></I> <TT>[</TT> <I>constant-expression<SUB>opt</SUB></I> <TT>]</TT></INS><BR>
+<TT>(</TT> <I><INS>ptr-</INS>abstract-declarator</I> <TT>)</TT><BR>
+</UL>
+</UL>
+
+<LI><P>Change 9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+... <TT>T</TT> shall be the single <I>type-specifier</I> <TT>auto</TT>
+<DEL>and the <I>derived-declarator-type-list</I> shall be
+empty</DEL>. Then the type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change all occurrences of <I>direct-new-declarator</I> in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>] to <I>noptr-new-declarator</I>. These
+changes appear in the grammar in paragraph 1 and in the text of
+paragraphs 6-8, as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><UL>...<BR>
+<I>new-declarator:</I><BR>
+<UL>
+<I>ptr-operator new-declarator<SUB>opt</SUB></I><BR>
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I><BR>
+</UL>
+<BR>
+
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator:</I><BR>
+<UL>
+<TT>[</TT> <I>expression</I> <TT>]</TT><BR>
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I> <TT>[</TT> <I>constant-expression</I> <TT>]</TT><BR>
+</UL>
+...
+</UL></P>
+
+<P>When the allocated object is an array (that is, the
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I> syntax is used or the
+<I>new-type-id</I> or <I>type-id</I> denotes an array type), the
+<I>new-expression</I> yields a pointer to the initial element (if any)
+of the array. [<I>Note:</I> both <TT>new int</TT> and <TT>new
+int[10]</TT> have type <TT>int*</TT> and the type of <TT>new
+int[i][10]</TT> is <TT>int (*)[10]</TT> &#8212;<I>end note</I>]</P>
+
+<P>Every <I>constant-expression</I> in a
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I> shall be an integral
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and evaluate to a
+strictly positive value. The <I>expression</I> in a
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I> shall be of integral
+type, enumeration type, or a class type for which a single
+non-explicit conversion function to integral or enumeration type
+exists (11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]). If the expression is of class
+type, the expression is converted by calling that conversion function,
+and the result of the conversion is used in place of the original
+expression.  If the value of the expression is negative, the behavior
+is undefined.  [<I>Example:</I> given the definition <TT>int n =
+42</TT>, <TT>new float[n][5]</TT> is well-formed (because <TT>n</TT>
+is the <I>expression</I> of a
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I>), but <TT>new
+float[5][n]</TT> is ill-formed (because <TT>n</TT> is not a constant
+expression). If <TT>n</TT> is negative, the effect of <TT>new float[n][5]</TT>
+is undefined. &#8212;<I>end example</I>]</P>
+
+<P>When the value of the <I>expression</I> in a
+<I><DEL>direct-</DEL><INS>noptr-</INS>new-declarator</I> is zero, the
+allocation function is called to allocate an array with no
+elements.</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

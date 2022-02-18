@@ -1,0 +1,164 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 147</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="147"></A><H4>147.
+  
+Naming the constructor
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Feb 1999<BR>
+
+
+
+<P>From paper J16/99-0010 = WG21 N1187.</P>
+
+<P>_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#7">expr.prim.general</A>] paragraph 7
+says that
+<I>class-name::class-name</I> names the constructor when both
+<I>class-name</I> refer to the same class.  (Note the different
+perspective, at least, in
+11.4.5 [<A href="https://wg21.link/class.ctor#1">class.ctor</A>] paragraph 1,
+ in which
+constructors have no names and are recognized by syntactic context
+rather than by name.)</P>
+
+<P>This formulation does not address the case of classes in which a
+function template is declared as a constructor, for example:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+        template &lt;class T2&gt; A(T2);
+    };
+    template&lt;&gt; template&lt;&gt; A&lt;int&gt;::A&lt;int&gt;(int);
+</PRE>
+
+<P>Here there is an ambiguity as to whether the second template argument
+list is for the injected class name or for the constructor.</P>
+
+<P>Suggested resolution: restate the rule as a component of name
+lookup.  Specifically, if when doing a qualified lookup in a given
+class you look up a name that is the same as the name of the class,
+the entity found is the constructor and not the injected class name.
+In all other cases, the name found is the injected class name.  For
+example:</P>
+
+<PRE>
+    class B { };
+    class A: public B {
+        A::B ab;       // B is the inherited injected B
+        A::A aa;       // Error: A::A is the constructor
+    };
+</PRE>
+
+<P>Without this rule some very nasty backtracking is needed.  For
+example, if the injected class name could be qualified by its own
+class name, the following code would be well-formed:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+        template &lt;class T2&gt; A(T2);
+        static A x;
+    };
+    template&lt;&gt; A&lt;int&gt;::A&lt;int&gt;(A&lt;int&gt;::x);
+</PRE>
+
+<P>Here the declarator for the definition of the static data member
+has redundant parentheses, and it's only after seeing the declarator
+that the parser can know that the second <TT>A&lt;int&gt;</TT> is the
+injected class name rather than the constructor.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>In
+Clause 11 [<A href="https://wg21.link/class#2">class</A>] paragraph 2,
+ change</P>
+
+<BLOCKQUOTE>
+The <I>class-name</I> is also inserted into the scope of the class
+itself.  For purposes of access checking the inserted class name...
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+The <I>class-name</I> is also inserted into the scope of the class
+itself; this is known as the <I>injected-class-name</I>.  For purposes
+of access checking, the injected-class-name...
+</BLOCKQUOTE>
+
+<P>Also, in 6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>], add the following
+before paragraph 2:</P>
+
+<BLOCKQUOTE>
+If the <I>nested-name-specifier</I> nominates a class <TT>C</TT>, and the
+name specified after the <I>nested-name-specifier</I>, when looked up in
+<TT>C</TT>, is the injected-class-name of <TT>C</TT> (
+Clause 11 [<A href="https://wg21.link/class">class</A>]), the name is instead considered
+to name the constructor of class <TT>C</TT>.  Such a constructor name
+shall only be used in the <I>declarator-id</I> of a constructor
+definition that appears outside of the class definition.
+[<I>Example:</I>
+
+<PRE>
+    struct A { A(); };
+    struct B: public A { B(); };
+
+    A::A() { }
+    B::B() { }
+
+    B::A ba;    // object of type A
+    A::A a;     // error, A::A is not a type name
+</PRE>
+
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<P>Also, change 6.5 [<A href="https://wg21.link/basic.lookup#3">basic.lookup</A>] paragraph 3 from</P>
+
+<BLOCKQUOTE>
+
+Because the name of a class is inserted in its class scope (
+Clause 11 [<A href="https://wg21.link/class">class</A>]), the name of a class is also considered a
+member of that class for the purposes of name hiding and lookup.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+The injected-class-name of a class (Clause 11 [<A href="https://wg21.link/class">class</A>]) is
+also considered to be a member of that class for the purposes of name
+hiding and lookup.
+
+</BLOCKQUOTE>
+
+<P>(See also <A HREF="194.html">issue 194</A>.)</P>
+<BR><BR>
+</BODY>
+</HTML>

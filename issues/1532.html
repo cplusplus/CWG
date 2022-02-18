@@ -1,0 +1,135 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1532</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1532"></A><H4>1532.
+  
+Explicit instantiation and member templates
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-08-04<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>According to 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8,</P>
+
+<BLOCKQUOTE>
+
+An explicit instantiation that names a class template specialization
+is also an explicit instantiation of the same kind (declaration or
+definition) of each of its members (not including members inherited
+from base classes) that has not been previously explicitly specialized
+in the translation unit containing the explicit instantiation, except
+as described below.
+
+</BLOCKQUOTE>
+
+<P>This could be read as an indication that member class templates
+and member function templates are instantiated (as templates) when
+their containing class template is instantiated.  For example,</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    template&lt;typename U&gt; void f() {
+      T t;
+      t.f();
+    }
+  };
+
+  template struct A&lt;int&gt;;
+</PRE>
+
+<P>In this view, the result would be a member function template definition
+in class <TT>A&lt;int&gt;</TT> equivalent to</P>
+
+<PRE>
+  template&lt;typename U&gt; void f() {
+    int t;
+    t.f();
+  }
+</PRE>
+
+<P>Such a template could never be validly instantiated and thus would
+presumably fall under the rule in 13.8 [<A href="https://wg21.link/temp.res">temp.res</A>] paragraph
+8,</P>
+
+<BLOCKQUOTE>
+
+If no valid specialization can be generated for a template, and that
+template is not instantiated, the template is ill-formed, no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<P>The wording of 13.9.3 [<A href="https://wg21.link/temp.explicit#1">temp.explicit</A>] paragraph 1 appears not
+to allow member templates to be instantiated as templates, however,
+mentioning only a &#8220;member template specialization&#8221; as
+a possibility:</P>
+
+<BLOCKQUOTE>
+
+A class, a function or member template specialization can be
+explicitly instantiated from its template.  A member function, member
+class or static data member of a class template can be explicitly
+instantiated from the member definition associated with its class
+template.
+
+</BLOCKQUOTE>
+
+<P>This appears to be a contradiction, and although a diagnostic for
+a member template such as the example above would be helpful, most or
+all current implementations do not do so.  Either the wording of
+paragraph 1 should be changed to allow explicit instantiation of a
+member template as a template, analogous to explicitly specializing
+a member template as a template, or paragraph 8 should be clarified
+to exclude member templates from the members explicitly instantiated
+when the containing class template is explicitly instantiated.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+An explicit instantiation that names a class template specialization
+is also an explicit instantiation of the same kind (declaration or
+definition) of each of its members (not including members inherited
+from base classes <INS>and members that are templates</INS>) that has
+not been previously explicitly specialized in the translation unit
+containing the explicit instantiation, except as described
+below. [<I>Note:</I> In addition, it will typically be an explicit
+instantiation of certain implementation-dependent data about the
+class.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

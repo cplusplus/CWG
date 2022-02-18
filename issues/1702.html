@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1702</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1702"></A><H4>1702.
+  
+Rephrasing the definition of &#8220;anonymous union&#8221;
+</H4>
+<B>Section: </B>11.5&#160; [<A href="https://wg21.link/class.union">class.union</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-06-17<BR>
+
+
+
+
+<P>11.5 [<A href="https://wg21.link/class.union#5">class.union</A>] paragraph 5 defines an anonymous union as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A union of the form</P>
+
+<UL>
+<TT>union {</TT> <I>member-specification</I> <TT>} ;</TT>
+</UL>
+
+<P>is called an anonymous union; it defines an unnamed object of unnamed type.</P>
+
+</BLOCKQUOTE>
+
+<P>It is obviously intended that a declaration like</P>
+
+<PRE>
+    static union { int i; float f; };
+</PRE>
+
+<P>is a declaration of that form (cf paragraph 6, which requires the
+<TT>static</TT> keyword for anonymous unions declared in namespace
+scope).  However, it would be clearer if the definition were recast
+in more descriptive terms, e.g.,</P>
+
+<BLOCKQUOTE>
+
+An <I>anonymous union</I> is an unnamed class that is defined with
+the <I>class-key</I> <TT>union</TT> in a <I>simple-declaration</I> in
+which the <I>init-declarator-list</I> is omitted.  Such a
+<I>simple-declaration</I> is treated as if it contained a single
+declarator declaring an unnamed variable of the union's type.
+
+</BLOCKQUOTE>
+
+<P>(Note that this definition would require some additional tweaking to
+apply to class member anonymous union declarations, since
+<I>simple-declaration</I>s are not included
+as <I>member-declaration</I>s.)</P>
+
+<P>As a related point, it is not clear how the following examples
+are to be treated, and there is implementation variance on some:</P>
+
+<PRE>
+   void f() { thread_local union { int a; }; }
+   void g() { extern union { int b; }; }
+   thread_local union { int c; }; //<SPAN CLASS="cmnt"> </SPAN>static<SPAN CLASS="cmnt"> is implied by </SPAN>thread_local
+   static thread_local union { int d; };
+   static const union { int e = 0; }; //<SPAN CLASS="cmnt"> is </SPAN>e<SPAN CLASS="cmnt"> const? Clang says yes, gcc says no</SPAN>
+   static constexpr union { int f = 0; };
+</PRE>
+
+<P><B>Additional notes (July, 2023)</B></P>
+
+<P>This issue is addressed by <A HREF="2767.html">issue 2767</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

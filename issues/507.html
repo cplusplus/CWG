@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 507</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="507"></A><H4>507.
+  
+Ambiguity assigning class object to built-in type
+</H4>
+<B>Section: </B>12.5&#160; [<A href="https://wg21.link/over.built">over.built</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Mar 2005<BR>
+
+
+<P>The following example is ambiguous according to the Standard:</P>
+
+<PRE>
+    struct Y {
+      operator int();
+      operator double();
+    };
+    void f(Y y) {
+      double d;
+      d = y;    //<SPAN CLASS="cmnt"> Ambiguous: </SPAN>Y::operator int()<SPAN CLASS="cmnt"> or </SPAN>Y::operator double()<SPAN CLASS="cmnt">?</SPAN>
+    }
+</PRE>
+
+<P>The reason for the ambiguity is that 12.5 [<A href="https://wg21.link/over.built#18">over.built</A>] paragraph 18
+says that there are candidate functions
+<TT>double&amp;&#160;operator=(double&amp;,&#160;int)</TT> and
+<TT>double&amp;&#160;operator=(double&amp;,&#160;double)</TT> (among
+others).  In each case, the second argument is converted by a
+user-defined conversion sequence (12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>])
+where the initial and final standard conversion sequences are the
+identity conversion &#8212; i.e., the conversion sequences for the
+second argument are indistinguishable for each of these candidate
+functions, and they are thus ambiguous.</P>
+
+<P>Intuitively one might expect that, because it converts directly
+to the target type in the assignment, <TT>Y::operator&#160;double()</TT>
+would be selected, and in fact, most compilers do select it, but there
+is currently no rule to distinguish between these user-defined
+conversions.  Should there be?</P>
+
+<P><B>Additional note (May, 2008):</B></P>
+
+<P>Here is another example that is somewhat similar:</P>
+
+<PRE>
+    enum En { ec };
+
+    struct S {
+       operator int();
+       operator En();
+    };
+
+    void foo () {
+       S() == 0;   // ambiguous?
+    }
+</PRE>
+
+<P>According to 12.5 [<A href="https://wg21.link/over.built#12">over.built</A>] paragraph 12, the candidate
+functions are</P>
+
+<UL><TT>bool operator==(<I>L</I>, <I>R</I>);</TT></UL>
+
+<P>where <TT><I>R</I></TT> is <TT>int</TT> and <TT><I>L</I></TT>
+is every promoted arithmetic type. Overload resolution proceeds in
+two steps: first, for each candidate function, determine which
+implicit conversion sequence is used to convert from the argument
+type to the parameter type; then compare the candidate functions on
+the basis of the relative costs of those conversion sequences.</P>
+
+<P>In the case of <TT>operator==(int, int)</TT> there is a clear
+winner: <TT>S::operator int()</TT> is chosen because the identity
+conversion <TT>int -&gt; int</TT> is better than the promotion <TT>En
+-&gt; int</TT>. For all the other candidates, the conversion for the
+first parameter is ambiguous: both <TT>S::operator int()</TT> and
+<TT>S::operator En()</TT> require either an integral conversion (for
+integral <TT><I>L</I></TT>) or a floating-integral conversion (for
+floating point <TT><I>L</I></TT>) and are thus indistinguishable.</P>
+
+<P>These additional candidates are not removed from the set of viable
+functions, however; because of 12.2.4.2 [<A href="https://wg21.link/over.best.ics#10">over.best.ics</A>] paragraph 10,
+ they are assigned the &#8220;ambiguous conversion
+sequence,&#8221; which &#8220;is treated as a user-defined sequence
+that is indistinguishable from any other user-defined conversion
+sequence.&#8221; As a result, all the viable functions are
+indistinguishable and the call is ambiguous. Like the earlier example,
+one might naively think that the exact match with <TT>S::operator int()</TT>
+and <TT>bool operator==(int, int)</TT> would be selected, but that is not
+the case.</P>
+
+<P><B>Rationale (August, 2010):</B></P>
+
+<P>Duplicate of <A HREF="260.html">issue 260</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

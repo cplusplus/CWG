@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1223</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1223"></A><H4>1223.
+  
+Syntactic disambiguation and <I>trailing-return-type</I>s
+</H4>
+<B>Section: </B>8.9&#160; [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-11-08<BR>
+
+
+<P>Because the restriction that a <I>trailing-return-type</I> can
+appear only in a declaration with &#8220;the single <I>type-specifier</I>
+<TT>auto</TT>&#8221; (9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2) is a
+semantic, not a syntactic, restriction, it does not influence
+disambiguation, which is &#8220;purely syntactic&#8221;
+(8.9 [<A href="https://wg21.link/stmt.ambig#3">stmt.ambig</A>] paragraph 3).  Consequently, some
+previously unambiguous expressions are now ambiguous.  For example:</P>
+
+<PRE>
+struct A {
+  A(int *);
+  A *operator()(void);
+  int B;
+};
+
+int *p;
+typedef struct BB { int C[2]; } *B, C;
+
+void foo() {
+// The following line becomes invalid under C++0x:
+  A (p)()-&gt;B;  // ill-formed function declaration
+
+// In the following,
+// - B()-&gt;C is either type-id or class member access expression
+// - B()-&gt;C[1] is either type-id or subscripting expression
+// N3126 subclause 8.2 [dcl.ambig.res] does not mention an ambiguity
+// with these forms of expression
+  A a(B ()-&gt;C);  // function declaration or object declaration
+  sizeof(B ()-&gt;C[1]);  // sizeof(type-id) or sizeof on an expression
+}
+</PRE>
+
+<P><B>Notes from the March, 2011 meeting:</B></P>
+
+<P>CWG agreed that the presence of <TT>auto</TT> should be considered
+in disambiguation, even though it is formally handled semantically
+rather than syntactically.</P>
+
+<P><B>CWG 2023-05-12</B></P>
+
+<P>Both 8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>] and 9.3.3 [<A href="https://wg21.link/dcl.ambig.res">dcl.ambig.res</A>] need
+to be adjusted.</P>
+
+<P><B>CWG 2023-06-13</B></P>
+
+<P>Addressed by paper P2915R0, approved in June, 2023.</P>
+		    
+<BR><BR>
+</BODY>
+</HTML>

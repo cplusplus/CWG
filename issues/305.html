@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 305</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="305"></A><H4>305.
+  
+Name lookup in destructor call
+</H4>
+<B>Section: </B>_N4868_.6.5.6&#160; [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 May 2001<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>I believe this program is invalid:
+<PRE>
+    struct A {
+    };
+
+    struct C {
+      struct A {};
+      void f ();
+    };
+
+    void C::f () {
+      ::A *a;
+      a-&gt;~A ();
+    }
+</PRE>
+The problem is that _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>] says that you have to look
+up <TT>A</TT> in both the context of the pointed-to-type (i.e.,
+<TT>::A</TT>), and
+in the context of the postfix-expression (i.e., the body of <TT>C::f</TT>), and
+that if the name is found in both places it must name the same type in
+both places.</P>
+
+<P>The EDG front end does not issue an error about this program, though.</P>
+
+<P>Am I reading the standardese incorrectly?</P>
+
+<P>
+<U>John Spicer</U>: I think you are reading it correctly.  I think
+I've been hoping that this would
+get changed.  Unlike other dual lookup contexts, this is one in which the
+compiler already knows the right answer (the type must match that of the left
+hand of the <TT>-&gt;</TT> operator).  So I think that if either of the types
+found matches
+the one required, it should be sufficient.  You can't say <TT>a-&gt;~::A()</TT>,
+which
+means you are forced to say <TT>a-&gt;::A::~A()</TT>, which disables the virtual
+mechanism.  So you would have to do something like create a local typedef
+for the desired type.</P>
+
+<P>See also issues <A HREF="244.html">244</A>,
+<A HREF="399.html">399</A>, and
+<A HREF="466.html">466</A>.</P>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<OL>
+
+<LI>
+<P>Remove the indicated text from _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#2">basic.lookup.classref</A>] paragraph 2:
+</P>
+
+<BLOCKQUOTE>
+
+If the <I>id-expression</I> in a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) is an <I>unqualified-id</I>, and the type of the
+object expression is of a class type <TT>C</TT> <DEL>(or of pointer to a
+class type <TT>C</TT>)</DEL>, the <I>unqualified-id</I> is looked up in
+the scope of class <TT>C</TT>...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#3">basic.lookup.classref</A>] paragraph 3 as indicated:</P>
+
+<BLOCKQUOTE>
+
+If the <I>unqualified-id</I> is <TT>~</TT><I>type-name</I>,
+<INS>the <I>type-name</I> is looked up in the context of the entire
+<I>postfix-expression</I>.</INS> <DEL>and</DEL> <INS>If</INS> the
+type <INS><TT>T</TT></INS> of the object expression is of a class
+type <TT>C</TT> <DEL>(or of pointer to a class type <TT>C</TT>)</DEL>,
+the <I>type-name</I> is <INS>also</INS> looked up <DEL>in the context of the
+entire <I>postfix-expression</I> and</DEL> in the scope of
+class <TT>C</TT>. <DEL>The <I>type-name</I> shall refer to
+a <I>class-name</I>. If <I>type-name</I> is found in both contexts,
+the name shall refer to the same class type. If the type of the object
+expression is of scalar type, the <I>type-name</I> is looked up in the
+scope of the complete <I>postfix-expression</I>.</DEL> <INS>At least one
+of the lookups shall find a name that refers to (possibly
+cv-qualified)
+<TT>T</TT>.  [<I>Example:</I>
+
+<PRE><INS>
+    struct A { };
+
+    struct B {
+      struct A { };
+      void f(::A* a);
+    };
+
+    void B::f(::A* a) {
+      a-&gt;~A();  //<SPAN CLASS="cmnt"> OK, lookup in </SPAN>*a<SPAN CLASS="cmnt"> finds the injected-class-name</SPAN>
+    }
+</INS></PRE>
+
+&#8212;<I>end example</I>]</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><I>[Note: this change also resolves <A HREF="414.html">issue 414</A>.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

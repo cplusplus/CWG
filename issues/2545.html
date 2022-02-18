@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2545</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2545"></A><H4>2545.
+  
+Transparently replacing objects in constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-05<BR>
+
+
+
+
+<P>7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6 specifies
+that <TT>std::construct_at</TT> can be used during constant
+evaluation:</P>
+
+<BLOCKQUOTE>
+
+Similarly, the evaluation of a call to <TT>std::construct_at</TT> or
+<TT>std::ranges::construct_at</TT> does not disqualify <TT>E</TT> from
+being a core constant expression unless the first argument, of
+type <TT>T*</TT>, does not point to storage allocated
+with <TT>std::allocator&lt;T&gt;</TT> or to an object whose lifetime
+began within the evaluation of <TT>E</TT>, or the evaluation of the
+underlying constructor call disqualifies <TT>E</TT> from being a core
+constant expression.
+
+</BLOCKQUOTE>
+
+<P>Apparently, implementations are required to track whether an object
+is transparently replaceable (6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8)
+during constant evaluation to satisfy 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8, which requires that undefined behavior be detected and
+rejected during constant evaluation:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+an operation that would have undefined behavior as specified in Clause
+4 through Clause 15;
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For example,</P>
+
+<PRE>
+  struct A {
+    int x, y;
+  };
+  struct B {
+    float a;
+    int b;
+  };
+  union C {
+    A a;
+    B b;
+  };
+  constexpr int f() {
+   C c = {};
+   std::construct_at(&amp;c.b.b, 5);
+   //<SPAN CLASS="cmnt"> Does this return 5 if </SPAN>c.a.y<SPAN CLASS="cmnt"> and </SPAN>c.b.b<SPAN CLASS="cmnt"> are laid out at the same address?</SPAN>
+   return c.a.y;
+  }
+  static_assert(f());  // not a constant-expression
+</PRE>
+
+<P>No known implementation diagnoses the violation of the rules for
+transparently replaceable in the following example, but there is
+implementation divergence for the results of <TT>f()</TT>:</P>
+
+<PRE>
+  #include &lt;memory&gt;
+
+  struct A {
+    virtual constexpr char f() { return 'A'; }
+  };
+  struct B : A {
+    constexpr char f() override { return 'B'; }
+  };
+
+  constexpr char f() {
+    B b;
+    A *p = &amp;b;
+    std::construct_at(p);
+    return p-&gt;f();     // <SPAN CLASS="cmnt">#1; alternative:</SPAN> return b.f()
+  }
+  static_assert(f() == 'A');   //<SPAN CLASS="cmnt"> error: #1 accesses out-of-lifetime object</SPAN>
+</PRE>
+
+<P>See also <A HREF="2866.html">issue 2866</A> for concerns about
+observing the effects of an attribute if the potentially-overlapping
+subobject was introduced via <TT>[[no_unique_address]]</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

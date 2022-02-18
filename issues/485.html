@@ -1,0 +1,194 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 485</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="485"></A><H4>485.
+  
+What is a &#8220;name&#8221;?
+</H4>
+<B>Section: </B>6.1&#160; [<A href="https://wg21.link/basic.pre">basic.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Nov 2004<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting.]</P>
+
+
+
+<P>6.1 [<A href="https://wg21.link/basic.pre#4">basic.pre</A>] paragraph 4 says:</P>
+
+<BLOCKQUOTE>
+
+A <I>name</I> is a use of an identifier (5.11 [<A href="https://wg21.link/lex.name">lex.name</A>])
+that denotes an entity or label (8.7.6 [<A href="https://wg21.link/stmt.goto">stmt.goto</A>],
+8.2 [<A href="https://wg21.link/stmt.label">stmt.label</A>]).
+
+</BLOCKQUOTE>
+
+<P>Just three paragraphs later, it says</P>
+
+<BLOCKQUOTE>
+
+<P>Two names are the <I>same</I> if</P>
+
+<P><UL>
+
+<LI>they are identifiers composed of the same character sequence;
+or</LI>
+
+<LI>they are the names of overloaded operator functions formed with
+the same operator; or</LI>
+
+<LI>they are the names of user-defined conversion functions formed
+with the same type.</LI>
+</UL></P>
+
+</BLOCKQUOTE>
+
+<P>The last two bullets contradict the definition of <I>name</I>
+in paragraph 4 because they are not identifiers.</P>
+
+<P>This definition affects other parts of the Standard, as well.
+For example, in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#1">basic.lookup.argdep</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+When an unqualified name is used as the <I>postfix-expression</I>
+in a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), other
+namespaces not considered during the usual unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) may be searched, and in those
+namespaces, namespace-scope friend function declarations
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) not otherwise visible may be found.
+
+</BLOCKQUOTE>
+
+<P>With the current definition of <I>name</I>, argument-dependent
+lookup apparently does not apply to function-notation calls to
+overloaded operators.</P>
+
+<P>Another related question is whether a <I>template-id</I> is a
+name or not and thus would trigger an argument-dependent lookup.
+Personally, I have always viewed a <I>template-id</I> as a name,
+just like <TT>operator+</TT>.</P>
+
+<P><B>Proposed Resolution (November, 2006):</B></P>
+
+<OL>
+<LI>
+<P>Change 6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>] paragraphs 3-8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<OL>
+<LI value="3"><P>An <I>entity</I> is a value, object, <DEL>subobject,
+base class subobject, array element,</DEL> variable, <INS>reference,</INS>
+function, <DEL>instance of a function,</DEL> enumerator, type, class
+member, template, <INS>template specialization,</INS> namespace, or
+parameter pack.</P></LI>
+
+<LI value="4"><P>A <I>name</I> is a use of
+an <DEL>identifier</DEL> <INS><I>identifier</I></INS> (5.11 [<A href="https://wg21.link/lex.name">lex.name</A>])<INS>, <I>operator-function-id</I> (12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]), <I>conversion-function-id</I> (11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>]), or <I>template-id</I> (13.3 [<A href="https://wg21.link/temp.names">temp.names</A>])</INS>
+that denotes an entity or <I>label</I> (8.7.6 [<A href="https://wg21.link/stmt.goto">stmt.goto</A>],
+8.2 [<A href="https://wg21.link/stmt.label">stmt.label</A>]). <DEL>A <I>variable</I> is introduced by the
+declaration of an object. The variable's name denotes the object.</DEL>
+</P></LI>
+
+<LI value="5"><P>Every name that denotes an entity is introduced by a
+<I>declaration</I>. Every name that denotes a label is introduced
+either by a <TT>goto</TT> statement (8.7.6 [<A href="https://wg21.link/stmt.goto">stmt.goto</A>]) or
+a <I>labeled-statement</I> (8.2 [<A href="https://wg21.link/stmt.label">stmt.label</A>]).</P></LI>
+
+<LI type="a" value="1"><P><INS>A <I>variable</I> is introduced by the
+declaration of an object.  The variable's name denotes the
+object.</INS></P></LI>
+
+<LI type="1" value="6"><P>Some names denote types<DEL>, classes,
+enumerations,</DEL> or templates. In general, it is necessary to
+determine whether or not a name denotes one of these entities before
+parsing the program that contains it. The process that determines this
+is called <I>name lookup</I> (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]).</P></LI>
+
+<LI value="7">
+<P>Two names are <I>the same</I> if</P>
+
+<UL>
+
+<LI><P>they are <DEL>identifiers</DEL> <INS><I>identifier</I>s</INS> composed
+of the same character sequence; or</P></LI>
+
+<LI><P>they are <DEL>the names of overloaded operator functions</DEL>
+<INS><I>operator-function-id</I>s</INS> formed with the same operator;
+or</P></LI>
+
+<LI><P>they are <DEL>the names of user-defined conversion functions</DEL>
+<INS><I>conversion-function-id</I>s</INS> formed with the same
+type<DEL>.</DEL><INS>, or</INS>
+</P></LI>
+
+<INS><LI><P>they are <I>template-id</I>s that refer to the same class
+or function (13.6 [<A href="https://wg21.link/temp.type">temp.type</A>]).</P></LI></INS>
+</UL>
+</LI>
+
+<LI value="8"><P>
+<DEL>An identifier</DEL> <INS>A name</INS> used in more than one
+translation unit can potentially refer to the same entity in these
+translation units depending on the linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>])
+of the <DEL>identifier</DEL> <INS>name</INS> specified in each translation
+unit.</P></LI>
+</OL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1 item 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+The potential scope of a declaration that extends to or past the end
+of a class definition also extends to the regions defined by its
+member definitions, even if the members are defined lexically outside
+the class (this includes static data member definitions, nested class
+definitions, member function definitions (including the member
+function body and any portion of the declarator part of such
+definitions which follows
+the <DEL>identifier</DEL> <INS><I>declarator-id</I></INS>, including a
+<I>parameter-declaration-clause</I> and any default arguments
+(9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]).
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: This last change is not really mandated by the
+issue, but it's another case of &#8220;identifier&#8221; confusion.]</I></P>
+</LI>
+</OL>
+
+<P>(This proposed resolution also resolves <A HREF="309.html">issue 309</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

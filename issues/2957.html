@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2957</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2957"></A><H4>2957.
+  
+Evaluating a reference member should constitute access
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-06<BR>
+
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/634">#634</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/637">#637</A>.)
+</P>
+
+<P>The standard permits that references do not occupy storage.  The
+term "access" (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) is not applicable to
+references.  Yet, references can participate in data races
+(6.9.1 [<A href="https://wg21.link/intro.execution#10">intro.execution</A>] paragraph 10, 6.9.2.2 [<A href="https://wg21.link/intro.races#2">intro.races</A>] paragraph 2).  For example:</P>
+
+<PRE>
+  int x, y;
+  struct S {
+    int &amp;r;
+  } s{x};
+
+  void thread_1() {
+    new (&amp;s) S{y};   //<SPAN CLASS="cmnt"> transparent replacement</SPAN>
+  }
+
+  void thread_2() {
+    auto&amp; r = s.r; //<SPAN CLASS="cmnt"> OK ?! Refers to x or y?</SPAN>
+  }
+</PRE>
+
+<P>Also consider the impact on constant evaluation:</P>
+
+<PRE>
+  int n{};
+  struct S { int&amp; r; };
+  constexpr S s{n};
+  constexpr volatile S s2{n};
+
+  static_assert(&amp;static_cast&lt;const volatile S&amp;&gt;(s).r == &amp;n); //<SPAN CLASS="cmnt"> GCC rejects</SPAN>
+  static_assert(&amp;s2.r == &amp;n); //<SPAN CLASS="cmnt"> GCC and Clang reject</SPAN>
+</PRE>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

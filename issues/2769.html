@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2769</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2769"></A><H4>2769.
+  
+Substitution into template parameters and default template arguments should be interleaved
+</H4>
+<B>Section: </B>13.10.3.1&#160; [<A href="https://wg21.link/temp.deduct.general">temp.deduct.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-14<BR>
+
+
+
+
+<P>Subclause 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#5">temp.deduct.general</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+If a template argument has not been deduced and its corresponding
+template parameter has a default argument, the template argument is
+determined by substituting the template arguments determined for
+preceding template parameters into the default argument. ... 
+When all template arguments have been deduced or obtained from default
+template arguments, all uses of template parameters in the template
+parameter list of the template are replaced with the corresponding
+deduced or default argument values.
+
+</BLOCKQUOTE>
+
+<P>This description is confused.  We need to have already substituted
+into the template parameter declaration in order to finish forming a
+template argument, and we need to finish forming a template argument
+before we can substitute it into a later default template argument.
+Consider:</P>
+
+<PRE>
+  struct X { constexpr operator int() { return 0; } };
+  template&lt;const int*&gt; struct Y {};
+  extern int arr[];
+  template&lt;typename T, T K = X(), const int *p = &amp;arr[K], Y&lt;p&gt; y = {}&gt; struct A {};
+  A&lt;int&gt; a;
+</PRE>
+
+<P>Here, we need to substitute <TT>T = int</TT> into the type
+of <TT>K</TT>, then convert the default template argument <TT>X()</TT>
+to <TT>int</TT>, then substitute the converted value of <TT>p</TT>
+into the type of <TT>y</TT>.  The substitution into template
+parameters and into default template arguments is necessarily
+interleaved.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#5">temp.deduct.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+The resulting substituted and adjusted function type is used as the
+type of the function template for template argument deduction.
+<INS>For each template parameter in turn:</INS>
+
+<UL>
+<LI class="ins">If a template argument has not been deduced and the
+template parameter is a parameter pack, the template argument is an
+empty pack.</LI>
+
+<LI>
+<INS>Otherwise,</INS> <DEL>If</DEL> <INS>if</INS> a template argument has
+not been deduced <DEL>and its corresponding template parameter has a
+default argument</DEL>, the template argument is determined by
+substituting the template arguments determined for preceding template
+parameters into the default argument. If <INS>the template parameter
+does not have a default template argument, or if</INS> the
+substitution results in an invalid type, as described above, type
+deduction fails. [ Example: ... ]
+</LI>
+
+<LI>
+<DEL>When all template arguments have been deduced or obtained from
+default template arguments, all uses of template parameters in the
+template parameter list of the template are replaced with the
+corresponding deduced or default argument values.</DEL> <INS>The
+substituted template parameter is determined by substituting the
+template arguments determined for preceding template parameters into
+the template parameter.</INS> If the substitution results in an
+invalid type, as described above, type deduction fails.</LI>
+
+<LI class="ins">
+The template argument is matched against the substituted template
+parameter (13.4.1 [<A href="https://wg21.link/temp.arg.general">temp.arg.general</A>]). If the template argument does not
+match the substituted template parameter, type deduction fails. [
+Note: Matching a template argument to a non-type template parameter
+may perform a conversion. The converted value is used for later
+substitutions. -- end note ]
+</LI>
+
+</UL>
+
+If the function template has associated constraints
+(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]), those constraints are checked for
+satisfaction (13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.constr</A>]).  ...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

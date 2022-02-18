@@ -1,0 +1,266 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 287</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="287"></A><H4>287.
+  
+Order dependencies in template instantiation
+</H4>
+<B>Section: </B>13.8.4.1&#160; [<A href="https://wg21.link/temp.point">temp.point</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 May 2001<BR>
+
+
+
+
+<P>Implementations differ in their treatment of the following
+code:</P>
+
+<PRE>
+    template &lt;class T&gt;
+    struct A {
+	typename T::X x;
+    };
+
+    template &lt;class T&gt;
+    struct B {
+	typedef T* X;
+	A&lt;B&gt; a;
+    };
+
+    int main ()
+    {
+	B&lt;int&gt; b;
+    }
+</PRE>
+
+<P>Some implementations accept it.  At least one rejects it
+because the instantiation of <TT>A&lt;B&lt;int&gt; &gt;</TT>
+requires that <TT>B&lt;int&gt;</TT> be complete, and it is
+not at the point at which <TT>A&lt;B&lt;int&gt; &gt;</TT>
+is being instantiated.</P>
+
+<P>
+<U>Erwin Unruh</U>:</P>
+
+<P>In my view the programm is ill-formed. My reasoning:</P>
+
+<UL>
+
+<LI>you need a complete type <TT>B&lt;int&gt;</TT> because you declare
+a variable in <TT>main</TT>
+</LI>
+
+<LI>
+<TT>B&lt;int&gt;</TT> contains a member of type
+<TT>A&lt;B&lt;int&gt; &gt;</TT>, so you need that complete.</LI>
+
+<LI>
+<TT>A&lt;B&lt;int&gt; &gt;</TT> tries to access
+<TT>B&lt;int&gt;::X</TT>, which in turn needs <TT>B&lt;int&gt;</TT>
+being complete.</LI>
+
+</UL>
+
+<P>So each class needs the other to be complete.</P>
+
+<P>The problem can be seen much easier if you replace the typedef with</P>
+<PRE>
+    typedef T (*X) [sizeof(B::a)];
+</PRE>
+
+<P>Now you have a true recursion. The compiler cannot easily distinguish
+between a true recursion and a potential recursion.</P>
+
+<P>
+<U>John Spicer</U>:</P>
+
+<P>Using a class to form a qualified name does not require the class to be
+complete, it only requires that the named member already have been declared.
+In other words, this kind of usage is permitted:</P>
+
+<PRE>
+    class A {
+        typedef int B;
+        A::B ab;
+    };
+</PRE>
+
+<P>In the same way, once <TT>B</TT> has been declared in <TT>A</TT>,
+it is also visible to any template that uses <TT>A</TT> through a
+template parameter.</P>
+
+<P>The standard could be more clear in this regard, but there are two
+notes that make this point.  Both 6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>] and
+_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#7">expr.prim.general</A>] paragraph 7 contain a note that says "a
+class member can be referred to using a qualified-id at any point in
+its potential scope (6.4.7 [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>])."  A member's
+potential scope begins at its point of declaration.</P>
+
+<P>In other words, a class has three states: incomplete, being
+completed, and complete.  The standard permits a qualified name to be
+used once a name has been declared.  The quotation of the notes about
+the potential scope was intended to support that.</P>
+
+<P>So, in the original example, class <TT>A</TT> does not require the
+type of <TT>T</TT> to be complete, only that it have already declared
+a member <TT>X</TT>.</P>
+
+<P>
+<U>Bill Gibbons</U>:</P>
+
+<P>The template and non-template cases are different.  In the non-template
+case the order in which the members become declared is clear.  In the
+template case the members of the instantiation are conceptually all
+created at the same time.  The standard does not say anything about
+trying to mimic the non-template case during the instantiation of a class
+template.</P>
+
+<P>
+<U>Mike Miller</U>:</P>
+
+<P>I think the relevant specification is 13.8.4.1 [<A href="https://wg21.link/temp.point#3">temp.point</A>] paragraph 3, dealing with the point of
+instantiation:</P>
+
+<BLOCKQUOTE>
+
+For a class template specialization... if the specialization is
+implicitly instantiated because it is referenced from within
+another template specialization, if the context from which the
+specialization is referenced depends on a template parameter, and
+if the specialization is not instantiated previous to the
+instantiation of the enclosing template, the point of
+instantiation is immediately before the point of instantiation
+of the enclosing template.  Otherwise, the point of instantiation
+for such a specialization immediately precedes the namespace scope
+declaration or definition that refers to the specialization.
+
+</BLOCKQUOTE>
+
+<P>That means that the point of instantiation of <TT>A&lt;B&lt;int&gt;
+&gt;</TT> is before that of <TT>B&lt;int&gt;</TT>, not in the middle
+of <TT>B&lt;int&gt;</TT> after the declaration of <TT>B::X</TT>, and
+consequently a reference to <TT>B&lt;int&gt;::X</TT> from
+<TT>A&lt;B&lt;int&gt; &gt;</TT> is ill-formed.</P>
+
+<P>To put it another way, I believe John's approach requires that there
+be an instantiation stack, with the results of partially-instantiated
+templates on the stack being available to instantiations above them.
+I don't think the Standard mandates that approach; as far as I can
+see, simply determining the implicit instantiations that need to be
+done, rewriting the definitions at their respective points of
+instantiation with parameters substituted (with appropriate "forward
+declarations" to allow for non-instantiating references), and
+compiling the result normally should be an acceptable implementation
+technique as well.  That is, the implicit instantiation of the
+example (using, e.g., <TT>B_int</TT> to represent the generated name of the
+<TT>B&lt;int&gt;</TT> specialization) could be something like</P>
+
+<PRE>
+        struct B_int;
+
+        struct A_B_int {
+            B_int::X x;    // error, incomplete type
+        };
+
+        struct B_int {
+            typedef int* X;
+            A_B_int a;
+        };
+</PRE>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>This was discussed at length.  The consensus was that the template case
+should be treated the same as the non-template class case it terms of
+the order in which members get declared/defined and classes get completed.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>
+In 13.8.4.1 [<A href="https://wg21.link/temp.point#3">temp.point</A>] paragraph 3 change:</P>
+<BLOCKQUOTE>
+the point of instantiation is immediately before the point of
+instantiation of the enclosing template. Otherwise, the point of
+instantiation for such a specialization immediately precedes the
+namespace scope declaration or definition that refers to the
+specialization.
+</BLOCKQUOTE>
+<P> To:</P>
+<BLOCKQUOTE>
+the point of instantiation is <INS>the same as</INS> the point of
+instantiation of the enclosing template. Otherwise, the point of
+instantiation for such a specialization immediately precedes the
+<INS>nearest enclosing declaration</INS>.
+<INS>[Note: The point of instantiation is still at namespace scope but
+any declarations preceding the point of instantiation, even if not
+at namespace scope, are considered to have been seen.]</INS>
+</BLOCKQUOTE>
+
+<P> Add following paragraph 3:</P>
+<BLOCKQUOTE>
+If an implicitly instantiated class template specialization, class
+member specialization, or specialization of a class template references
+a class, class template specialization, class member specialization, or
+specialization of a class template containing a specialization reference
+that directly or indirectly caused the instantiation, the requirements
+of completeness and ordering of the class reference are applied in the
+context of the specialization reference.
+</BLOCKQUOTE>
+
+<P>and the following example</P>
+
+<PRE>
+  template &lt;class T&gt; struct A {
+          typename T::X x;
+  };
+
+  struct B {
+          typedef int X;
+          A&lt;B&gt; a;
+  };
+
+  template &lt;class T&gt; struct C {
+          typedef T* X;
+          A&lt;C&gt; a;
+  };
+
+  int main ()
+  {
+          C&lt;int&gt; c;
+  }
+</PRE>
+
+<P><B>Notes from the October 2002 meeting:</B></P>
+
+<P>This needs work.  Moved back to drafting status.</P>
+
+<P>See also issues <A HREF="595.html">595</A> and
+<A HREF="1330.html">1330</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1813</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1813"></A><H4>1813.
+  
+Direct vs indirect bases in standard-layout classes
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-11-20<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>One of the criteria for a standard-layout class in
+Clause 11 [<A href="https://wg21.link/class#7">class</A>] paragraph 7 is:</P>
+
+<UL>
+<LI><P>either has no non-static data members in the most derived
+class and at most one base class with non-static data
+members, or has no base classes with non-static data
+members,</P></LI>
+
+</UL>
+
+<P>In an example like</P>
+
+<PRE>
+  struct B { int i; };
+  struct C : B { };
+  struct D : C { };
+</PRE>
+
+<P>this could be read as indicating that <TT>D</TT> is not a
+standard-layout class, since it has two base classes, one direct
+and one indirect, that each have a non-static data member.  The
+intent should be clarified.</P>
+
+<P>See also <A HREF="1881.html">issue 1881</A> for a related
+question about standard-layout classes.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<P>Change Clause 11 [<A href="https://wg21.link/class#7">class</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>standard-layout class</I> is a class that:</P>
+
+<UL>
+<LI><P>has no non-static data members of type
+non-standard-layout class (or array of such types) or
+reference,</P></LI>
+
+<LI><P>has no virtual functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and
+no virtual base classes (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]),</P></LI>
+
+<LI><P>has the same access control (
+11.8 [<A href="https://wg21.link/class.access">class.access</A>]) for all non-static data
+members,</P></LI>
+
+<LI><P>has no non-standard-layout base classes,</P></LI>
+
+<LI><P><INS>has at most one base class subobject of any given
+type,</INS></P></LI>
+
+<LI><P>
+<DEL>either has no non-static data members in the most derived class
+and at most one base class with non-static data members, or has
+no base classes with non-static data members</DEL> <INS>has all
+non-static data members and bit-fields in the class and its base
+classes first declared in the same class</INS>, and</P></LI>
+
+<LI><P>has no base classes of the same type as the first non-static data
+member.<SUP>109</SUP>
+</P></LI>
+
+</UL>
+
+<P><INS>[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>   struct B { int i; };         //<SPAN CLASS="cmnt"> standard-layout class</SPAN>
+   struct C : B { };            //<SPAN CLASS="cmnt"> standard-layout class</SPAN>
+   struct D : C { };            //<SPAN CLASS="cmnt"> standard-layout class</SPAN>
+   struct E : D { char : 4; };  //<SPAN CLASS="cmnt"> not a standard-layout class</SPAN>
+
+   struct Q {};
+   struct S : Q { };
+   struct T : Q { };
+   struct U : S, T { };         //<SPAN CLASS="cmnt"> not a standard-layout class</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="1881.html">issue 1881</A>.</P>
+
+<P><I>(See also the related changes in the resolution of
+<A HREF="1672.html">issue 1672</A>.)</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

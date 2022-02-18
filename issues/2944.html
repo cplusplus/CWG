@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2944</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2944"></A><H4>2944.
+  
+Unsequenced <I>throw-expression</I>s
+</H4>
+<B>Section: </B>7.6.18&#160; [<A href="https://wg21.link/expr.throw">expr.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-23<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/626">#626</A>.)
+</P>
+
+<P>The semantics of unsequenced <I>throw-expression</I>s is unclear.
+For example:</P>
+
+<PRE>
+  (throw /* ... */, 0) + (throw /* ... */, 0);
+</PRE>
+
+<P>This appears to cause two unsequenced transfers of control, which
+makes little sense.  In contrast, a <TT>co_await</TT> expression is
+indivisible (6.9.1 [<A href="https://wg21.link/intro.execution#11">intro.execution</A>] paragraph 11) per
+<A HREF="2466.html">issue 2466</A>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-08):</B></P>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#11">intro.execution</A>] paragraph 11 as follows, adding
+bullets:</P>
+
+<BLOCKQUOTE>
+
+When invoking a function (whether or not the function is inline),
+every argument expression and the postfix expression designating the
+called function are sequenced before every expression or statement in
+the body of the called function. For each
+<UL>
+<LI>function invocation<INS>,</INS>
+</LI>
+<LI>evaluation of an <I>await-expression</I><INS>
+(7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>]), or</INS>
+</LI>
+<LI class="ins">evaluation of a <I>throw-expression</I>
+(7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>])</LI>
+</UL>
+F, each evaluation that does
+not occur within F but is evaluated on the same thread and as part of
+the same signal handler (if any) is either sequenced before all
+evaluations that occur within F or sequenced after all evaluations
+that occur within F; [ Foonote: ... ] if F invokes or resumes a
+coroutine (7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>]), only evaluations subsequent
+to the previous suspension (if any) and prior to the next suspension
+(if any) are considered to occur within F.
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-11-08</B></P>
+
+<P>Check with implementers (in particular MSVC) that the proposed
+resolution is acceptable.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1468</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1468"></A><H4>1468.
+  
+<TT>typeid</TT>, overload resolution, and implicit lambda capture
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Doug Gregor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-08<BR>
+
+
+<P>[Resolved by the adoption of P0588R1 at the November, 2017 meeting.]</P>
+
+
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#11">expr.prim.lambda</A>] paragraph 11, a variable is
+implicitly captured if it is odr-used. In the following example,</P>
+
+<PRE>
+  struct P {
+   virtual ~P();
+  };
+
+  P &amp;f(int&amp;);
+  int f(const int&amp;);
+
+  void g(int x) {
+   [=] {
+    typeid(f(x));
+   };
+  }
+</PRE>
+
+<P>
+<TT>x</TT> is only odr-used if the operand of <TT>typeid</TT> is a
+polymorphic lvalue; otherwise, the operand is unevaluated
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>] paragraphs 2-3).  Whether the operand is a
+polymorphic lvalue depends on overload resolution in this case, which
+depends on whether <TT>x</TT> is captured or not: if <TT>x</TT> is
+captured, since the lambda is not <TT>mutable</TT>, the type of
+<TT>x</TT> in the body of the lambda is <TT>const int</TT>, while if
+it is not captured, it is just <TT>int</TT>.  However, the <TT>const
+int</TT> version of <TT>f</TT> returns <TT>int</TT> and the
+<TT>int</TT> version of <TT>f</TT> returns a polymorphic lvalue,
+leading to a conundrum: <TT>x</TT> is only captured if it is not
+captured, and vice versa.</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>The approach favored by CWG was to specify that the operand of
+<TT>typeid</TT> is considered to be odr-used for the purpose of
+determining capture.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

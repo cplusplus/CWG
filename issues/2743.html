@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2743</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2743"></A><H4>2743.
+  
+Copying non-trivial objects nested within a union
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-05<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include&lt;new&gt;
+
+  struct A {
+    ~A();
+  };
+
+  union U {
+    alignas(A) unsigned char buf[sizeof(A)];
+  };
+
+  void f() {
+    U u;
+    ::new (u.buf) A();  //<SPAN CLASS="cmnt"> object of type </SPAN>A<SPAN CLASS="cmnt"> is nested within </SPAN>u<SPAN CLASS="cmnt"> because </SPAN>u<SPAN CLASS="cmnt"> provides storage</SPAN>
+    U v = u;            // #1
+  }
+</PRE>
+
+<P>Subclause 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#15">class.copy.ctor</A>] paragraph 15 specifies:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move constructor for a union X copies the
+object representation (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. For each
+object nested within (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the object that is
+the source of the copy, a corresponding object o nested within the
+destination is identified (if the object is a subobject) or created
+(otherwise), and the lifetime of o begins before the copy is
+performed.
+
+</BLOCKQUOTE>
+
+<P>Thus, the rule seems to require that #1 creates an object of
+type <TT>A</TT> inside <TT>v.buf</TT> (without invoking a constructor
+of <TT>A</TT>), and then a copy of the object representation is
+performed.  Creating an object out of thin air can plausibly work only
+for implicit-lifetime types (11.2 [<A href="https://wg21.link/class.prop#9">class.prop</A>] paragraph 9), and
+meaningfully copying the object representation works only for
+trivially copyable types (6.8.1 [<A href="https://wg21.link/basic.types.general#3">basic.types.general</A>] paragraph 3).  The
+rule about nested objects should be suitably limited.</P>
+
+<P>Subclause 11.4.6 [<A href="https://wg21.link/class.copy.assign#13">class.copy.assign</A>] paragraph 13 has a similar rule
+for copy/move assignment:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move assignment operator for a union X
+copies the object representation (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. If
+the source and destination of the assignment are not the same object,
+then for each object nested within (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the
+object that is the source of the copy, a corresponding object o nested
+within the destination is created, and the lifetime of o begins before
+the copy is performed.
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#15">class.copy.ctor</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move constructor for a union X copies the
+object representation (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. For each
+object <INS>of implicit-lifetime type
+(6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>])</INS> nested within
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the object that is the source of the
+copy, a corresponding object o nested within the destination is
+identified (if the object is a subobject) or created (otherwise), and
+the lifetime of o begins before the copy is performed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#13">class.copy.assign</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move assignment operator for a union X
+copies the object representation (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. If
+the source and destination of the assignment are not the same object,
+then for each object <INS>of implicit-lifetime type
+(6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>])</INS> nested within
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the object that is the source of the
+copy, a corresponding object o nested within the destination is
+created, and the lifetime of o begins before the copy is performed.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

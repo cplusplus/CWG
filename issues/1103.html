@@ -1,0 +1,198 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1103</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1103"></A><H4>1103.
+  
+Reversion of phase 1 and 2 transformations in raw string literals
+</H4>
+<B>Section: </B>5.2&#160; [<A href="https://wg21.link/lex.phases">lex.phases</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US13">N3092 comment
+  US&#160;13<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US14">N3092 comment
+  US&#160;14<BR></A>
+
+<P>&#8220;Raw&#8221; strings are still only Pittsburgh-rare
+strings: the reversion in phase 3 only applies to an
+<I>r-char-sequence</I>.  It should apply to the entire raw
+string literal.</P>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<OL>
+<LI><P>Change 5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1 phase 1
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...(An implementation may use any internal encoding, so long
+as an actual extended character encountered in the source
+file, and the same extended character expressed in the
+source file as a universal-character-name (i.e., using the
+<TT>\uXXXX</TT> notation), are handled equivalently
+<INS>except where this replacement is reverted in a raw
+string literal.)</INS>.)
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1 phase 3
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...[<I>Example:</I> see the handling of <TT>&lt;</TT> within
+a <TT>#include</TT> preprocessing directive. &#8212;<I>end
+example</I>] <DEL>Within the r-char-sequence of a raw string
+literal, any transformations performed in phases 1 and 2
+(trigraphs, universal-character-names, and line splicing)
+are reverted.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1 phase 5
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Each source character set member <DEL>and
+universal-character-name</DEL> in a character literal or a
+string literal, as well as each escape sequence <INS>and
+universal-character-name</INS> in a character literal or a
+non-raw string literal, is converted to the corresponding
+member of the execution character set (5.13.3 [<A href="https://wg21.link/lex.ccon">lex.ccon</A>], 5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]); if there is no
+corresponding member, it is converted to an
+implementation-defined member other than the null (wide)
+character.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.3.1 [<A href="https://wg21.link/lex.charset#2">lex.charset</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Additionally, if the hexadecimal value for a
+universal-character-name outside the <I>c-char-sequence</I>,
+<I>s-char-sequence</I>, or <I>r-char-sequence</I> of a character or string
+literal corresponds to a control character (in either of the
+ranges 0x000x1F or 0x7F0x9F, both inclusive) or to a
+character in the basic source character set, the program is
+ill-formed. <INS>[<I>Footnote:</I> A sequence of characters
+resembling a universal-character-name in an <I>r-char-sequence</I>
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) does not form a
+universal-character-name. &#8212;<I>end footnote</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.5 [<A href="https://wg21.link/lex.pptoken#3">lex.pptoken</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the input stream has been parsed into preprocessing
+tokens up to a given character:
+
+<UL>
+<LI><P>
+<DEL>if</DEL> <INS>If</INS> the next character
+begins a sequence of characters that could be the prefix and
+initial double quote of a raw string literal, such as
+<TT>R"</TT>, the next preprocessing token shall be a raw
+string literal<DEL>;</DEL><INS>. Between the initial and
+final double quote characters of the raw string, any
+transformations performed in phases 1 and 2 (trigraphs,
+universal-character-names, and line splicing) are reverted;
+this reversion shall apply before any
+<I>d-char</I>, <I>r-char</I>, or delimiting parenthesis is
+identified. The raw string literal is defined as the
+shortest sequence of characters that matches the
+raw-string pattern</INS>
+</P></LI>
+
+<UL>
+<I>encoding-prefix<SUB>opt</SUB></I> <TT>R</TT> <I>raw-string</I>
+</UL>
+
+<LI><P>
+<DEL>otherwise</DEL> <INS>Otherwise</INS>, the next
+preprocessing token is the longest sequence of characters
+that could constitute a preprocessing token, even if that
+would cause further lexical analysis to fail.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete footnote 24 in 5.13.5 [<A href="https://wg21.link/lex.string#2">lex.string</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Use of characters with trigraph equivalents in a
+<I>d-char-sequence</I> may produce unintended results.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following examples after 5.13.5 [<A href="https://wg21.link/lex.string#4">lex.string</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>[<I>Example:</I> The raw string</INS></P>
+
+<PRE>
+<INS>  R"a(
+  )\
+  a"
+  )a"</INS>
+</PRE>
+
+<P><INS>is equivalent to <TT>"\n)\\\na\"\n"</TT>.  The raw string</INS></P>
+
+<PRE>
+<INS>  R"(??)"</INS>
+</PRE>
+
+<P><INS>is equivalent to <TT>"\?\?"</TT>.  The raw string</INS></P>
+
+<PRE>
+<INS>  R"#(
+  )??="
+  )#"</INS>
+</PRE>
+
+<P><INS>is equivalent to <TT>"\n)\?\?=\"\n"</TT>. &#8212;<I>end
+example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

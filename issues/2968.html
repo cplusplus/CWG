@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2968</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2968"></A><H4>2968.
+  
+Name lookup result for <I>typedef-name</I> vs. <I>class-name</I>
+</H4>
+<B>Section: </B>6.5.1&#160; [<A href="https://wg21.link/basic.lookup.general">basic.lookup.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-21<BR>
+
+
+<P><A HREF="https://godbolt.org/z/rveEe88xq">Consider:</A></P>
+
+<PRE>
+  class C {
+  public:
+    struct S { };
+  private:
+    typedef struct S S;
+  };
+  C::S s;
+</PRE>
+
+<P>According to 6.5.1 [<A href="https://wg21.link/basic.lookup.general#4">basic.lookup.general</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+In certain contexts, only certain kinds of declarations are
+included. After any such restriction, any declarations of classes or
+enumerations are discarded if any other declarations are found.
+[Note 4: A type (but not a <I>typedef-name</I> or template) is therefore
+hidden by any other entity in its scope. -- end note]
+However, if
+a lookup is type-only, only declarations of types and templates whose
+specializations are types are considered; furthermore, if declarations
+of a <I>typedef-name</I> and of the type to which it refers are found,
+the declaration of the <I>typedef-name</I> is discarded instead of the
+type declaration.
+
+</BLOCKQUOTE>
+
+<P>Thus, the declaration of <TT>s</TT> is ill-formed, because the
+public <I>class-name</I> <TT>S</TT> is discarded.  Clang and EDG
+concur; GCC and MSVC prefer the public <I>class-name</I>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.5.1 [<A href="https://wg21.link/basic.lookup.general#4">basic.lookup.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+...
+<P>However, if a lookup is type-only, only declarations of types and
+templates whose specializations are types are considered; furthermore,
+if declarations of a <I>typedef-name</I> and of the type to which it
+refers are found, the declaration of the <I>typedef-name</I> is
+discarded instead of the type declaration.</P>
+
+<P class="ins">[ Example:</P>
+
+<PRE class="ins">
+  class C {
+  public:
+    struct S { };          //<SPAN CLASS="cmnt"> #1</SPAN>
+  private:
+    typedef struct S S;    //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+  struct C::S s;           //<SPAN CLASS="cmnt"> OK, type-only lookup, </SPAN>C::S<SPAN CLASS="cmnt"> denotes #1, because #2 is discarded</SPAN>
+  C::S s;                  //<SPAN CLASS="cmnt"> error: </SPAN>C::S<SPAN CLASS="cmnt"> denotes #2, because #1 is discarded</SPAN>
+</PRE>
+<P class="ins">-- end example ]</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1567</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1567"></A><H4>1567.
+  
+Inheriting constructors and copy/move constructors
+</H4>
+<B>Section: </B>_N4527_.12.9&#160; [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-10<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>According to _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#3">class.inhctor</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+For each non-template constructor in the candidate set of inherited
+constructors other than a constructor having no parameters or a
+copy/move constructor having a single parameter, a constructor is
+implicitly declared with the same constructor characteristics unless
+there is a user-declared constructor with the same signature in the
+class where the <I>using-declaration</I> appears.
+
+</BLOCKQUOTE>
+
+<P>It seems that this should be suppressing constructors that would
+be copy/move constructors in the derived class rather than copy/move
+constructors in the base class.  For example:</P>
+
+<PRE>
+  struct B;
+  struct A {
+    A(const A&amp;);
+    A(const B&amp;);
+    A(int);
+  };
+
+  struct B: A {
+    using A::A;
+  };
+</PRE>
+
+<P>If <TT>B::B(const B&amp;)</TT> is an inheriting constructor, other
+subobjects of <TT>B</TT> will not be copied.  Also, if
+<TT>A::A(const A&amp;)</TT> is not inherited, <TT>B</TT> objects
+cannot be constructed from an <TT>A</TT> object.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>Change _N4527_.12.9 [<A href="https://wg21.link/class.inhctor#3">class.inhctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For each non-template constructor in the candidate set of inherited
+constructors other than a constructor having no parameters or a
+copy/move constructor having a single parameter, a constructor is
+implicitly declared with the same constructor characteristics unless
+there is a user-declared constructor with the same signature in the
+class where the <I>using-declaration</I> appears <INS>or the
+constructor would be a default, copy, or move constructor for that
+class</INS>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

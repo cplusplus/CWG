@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2664</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2664"></A><H4>2664.
+  
+Deduction failure in CTAD for alias templates
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-05<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Subclause 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#3">over.match.class.deduct</A>] paragraph 3 has an exception
+only for deduction failure for non-deduced contexts when deducing the
+return type from the <I>defining-type-id</I>, but not for other cases
+where deduction fails according to 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#2">temp.deduct.type</A>] paragraph 2. For example,</P>
+
+<PRE>
+  template &lt;class S1, class S2&gt; struct C {
+    C(...);
+  };
+
+  template&lt;class T1&gt; C(T1) -&gt; C&lt;T1, T1&gt;;
+  template&lt;class T1, class T2&gt; C(T1, T2) -&gt; C&lt;T1 *, T2&gt;;
+
+  template&lt;class V1, class V2&gt; using A = C&lt;V1, V2&gt;;
+
+  C c1{""};
+  A a1{""};
+
+  C c2{"", 1};
+  A a2{"", 1};
+</PRE>
+
+<P>resulting in <TT>A</TT> having neither of these deduction guides.
+There is implementation divergence in the handling of this
+example.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>We could say that cases where P involves a template parameter and A
+is not of the same form (under 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#8">temp.deduct.type</A>] paragraph 8) are non-deduced contexts for the purpose of these
+deductions. That should be enough to make it clear what happens for
+a2, where we'd deduce <TT>T2 = V2</TT>, and not deduce anything
+for <TT>T1</TT>, but wouldn't fix <TT>a1</TT> due to the inconsistent
+deductions for <TT>T1</TT>; maybe this is what MSVC is doing. We could
+further fix <TT>a1</TT> by allowing inconsistent deductions and
+treating them as if no value was deduced. Another option might be to
+do independent deductions for each template argument of the
+<I>simple-template-id</I>, and then try to merge the results for template
+arguments where deduction was successful; that'd be clearer that
+deduction can't fail, but would deduce less.</P>
+
+<P><B>CWG 2023-02-08</B></P>
+
+<P>In the example, <TT>A</TT> is the most trivial alias template
+imaginable; having this cause issues depending on the details
+of <TT>C</TT> is concerning.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-09):</B></P>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#3">over.match.class.deduct</A>] paragraph 3 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+... For each function or function template f in the guides of the
+template named by the <I>simple-template-id</I> of
+the <I>defining-type-id</I>, the template arguments of the return type
+of f are deduced from the <I>defining-type-id</I> of A according to
+the process in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] with the exception that
+deduction does not fail if not all template arguments are
+deduced. <INS>If deduction fails for another reason, proceed with an
+empty set of deduced template arguments</INS> Let g denote the result
+of substituting these deductions into f. ...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

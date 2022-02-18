@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 528</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="528"></A><H4>528.
+  
+Why are incomplete class types not allowed with <TT>typeid</TT>?
+</H4>
+<B>Section: </B>7.6.1.8&#160; [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dave Abrahams
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 May 2005<BR>
+
+
+
+
+<P>7.6.1.8 [<A href="https://wg21.link/expr.typeid#4">expr.typeid</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+When <TT>typeid</TT> is applied to a <I>type-id</I>, the result refers
+to a <TT>std::type_info</TT> object representing the type of
+the <I>type-id</I>.  If the type of the <I>type-id</I> is a reference
+type, the result of the <TT>typeid</TT> expression refers to
+a <TT>std::type_info</TT> object representing the referenced type. If
+the type of the <I>type-id</I> is a class type or a reference to a
+class type, the class shall be completely-defined.
+
+</BLOCKQUOTE>
+
+<P>I'm wondering whether this is not overly restrictive.  I can't
+think of a reason to require that <TT>T</TT> be completely-defined
+in <TT>typeid(T)</TT> when <TT>T</TT> is a class type.  In fact,
+several popular compilers enforce that restriction
+for <TT>typeid(T)</TT>, but not for <TT>typeid(T&amp;)</TT>.  Can
+anyone explain this?
+</P>
+
+<P>
+<U>Nathan Sidwell</U>: I think this restriction is so that whenever
+the compiler has to emit a typeid object of a class type, it knows
+what the base classes are, and can therefore emit an array of
+pointers-to-base-class typeids.  Such a tree is necessary to implement
+<TT>dynamic_cast</TT> and exception catching (in a commonly
+implemented and obvious manner).  If the class could be incomplete,
+the compiler might have to emit a typeid for incomplete <TT>Foo</TT>
+in one object file and a typeid for complete <TT>Foo</TT> in another
+object file.  The compilation system will then have to make sure that
+(a) those compare equal and (b) the complete <TT>Foo</TT> gets
+priority, if that is applicable.
+</P>
+
+<P>Unfortunately, there is a problem with exceptions that means there
+still can be a need to emit typeids for incomplete class.  Namely one
+can throw a pointer-to-pointer-to-incomplete.  To implement the
+matching of pointer-to-derived being caught by pointer-to-base, it is
+necessary for the typeid of a pointer type to contain a pointer to the
+typeid of the pointed-to type.  In order to do the qualification
+matching on a multi-level pointer type, one has a chain of pointer
+typeids that can terminate in the typeid of an incomplete type.  You
+cannot simply NULL-terminate the chain, because one must distinguish
+between different incomplete types.</P>
+
+<P>
+<U>Dave Abrahams</U>: So if implementations are still required to
+be able to do it, for all practical purposes, why aren't we letting
+the user have the benefits?</P>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>There was some concern expressed that this might be difficult under
+the IA64 ABI.  It was also observed that while it is necessary to
+handle exceptions involving incomplete types, there is no requirement
+that the RTTI data structures be used for exception handling.</P>
+
+<P><B>Rationale (2023-05-12)</B></P>
+
+<P>This is an extension that requires a paper targeted at EWG,
+investigating any ABI concerns.</P>
+			    
+<BR><BR>
+</BODY>
+</HTML>

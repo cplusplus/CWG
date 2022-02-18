@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1590</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1590"></A><H4>1590.
+  
+Bypassing non-copy/move constructor copying
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-11-26<BR>
+
+
+<P>[Adopted as paper P0135R1 at the June, 2016 meeting.]</P>
+
+
+
+<P>Copy initialization in some cases uses constructors that are not
+copy/move constructors (e.g., a specialization of a constructor
+template might be selected by overload resolution, or in
+copy-list-initialization, any constructor could be selected).  Some
+ABIs require that an object of certain class types be passed in a
+register (effectively using the trivial copy/move constructor), even
+if the class has a non-trivial constructor that would be selected to
+do the copy.  The Standard should be changed to permit this usage.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>Add the following as a new paragraph following 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#1">class.copy.ctor</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+
+<INS>When an object of class type <TT>X</TT> is passed to or returned from
+a function, if <TT>X</TT> has a trivial, accessible copy or move
+constructor that is not deleted, and <TT>X</TT> has no non-trivial copy
+constructors, move constructors, or destructors, implementations are
+permitted to perform an additional copy or move of the object using the
+trivial constructor (even if it would not be selected by overload
+resolution to perform a copy or move of the object).  [<I>Note:</I> This
+latitude is granted to allow objects of class type to be passed to or
+returned from functions in registers. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<P>See also <A HREF="1928.html">issue 1928</A>.</P>
+
+<P><B>Additional note, May, 2014:</B></P>
+
+<P>Questions have been raised  regarding this resolution.  In
+particular, the interaction of the &#8220;extra copy&#8221; with copy
+elision, lifetime, and access checking context are not specified.  In
+addition, some concern has also been expressed regarding the requirement
+that the trivial copy/move constructor be accessible.  The issue is being
+returned to "review" status for discussion of these points.</P>
+
+<P><B>Notes from the June, 2014 meeting:</B></P>
+
+<P>CWG felt that the requirements for accessibility should be
+removed, in line with the idea making all access <TT>public</TT>
+in a program should not change its semantics.  Similarly, the
+prohibition of non-trivial functions was not desirable.  The
+approach should be to recognize the extra copy as a temporary
+object and deal explicitly with its lifetime.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

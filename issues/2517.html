@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2517</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2517"></A><H4>2517.
+  
+Useless restriction on use of parameter in <I>constraint-expression</I>
+</H4>
+<B>Section: </B>7.5.8.5&#160; [<A href="https://wg21.link/expr.prim.req.nested">expr.prim.req.nested</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-06-10<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>According to 7.5.8.5 [<A href="https://wg21.link/expr.prim.req.nested#2">expr.prim.req.nested</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+<P>A local parameter shall only appear as an unevaluated
+operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]) within
+the <I>constraint-expression</I>.  [<I>Example 2</I>:</P>
+
+<PRE>
+  template&lt;typename T&gt; concept C = requires (T a) {
+    requires sizeof(a) == 4; //<SPAN CLASS="cmnt"> OK</SPAN>
+    requires a == 0; //<SPAN CLASS="cmnt"> error: evaluation of a constraint variable</SPAN>
+  };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>However, <TT>a</TT> can't be used in a constant
+expression in any event, so the restriction is
+meaningless, except for ruling out an expression like
+<TT>true ? true : a</TT>, but there seems no reason to
+have a special rule for such a case.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-06):</B></P>
+
+Remove 7.5.8.5 [<A href="https://wg21.link/expr.prim.req.nested#2">expr.prim.req.nested</A>] paragraph 2, including its example:
+
+<BLOCKQUOTE>
+
+<P><DEL>A local parameter shall only appear as an unevaluated
+operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]) within
+the <I>constraint-expression</I>.  [<I>Example 2</I>:</DEL></P>
+
+<PRE>
+  <DEL>template&lt;typename T&gt; concept C = requires (T a) {
+    requires sizeof(a) == 4; //<SPAN CLASS="cmnt"> OK</SPAN>
+    requires a == 0; //<SPAN CLASS="cmnt"> error: evaluation of a constraint variable</SPAN>
+  };</DEL>
+</PRE>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (February, 2023)</B></P>
+
+<P>After adopting paper P2280, it is no longer accurate that any use
+of requirement parameters makes an expression non-constant.  However,
+the resolution as adopted makes the treatment of examples like the
+following uniform in requirements and other constant expression
+contexts:</P>
+
+<PRE>
+  template&lt;typename ArrayType&gt; concept LargeArray =
+    requires (ArrayType my_array) { requires my_array.size() &gt; 5; }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2200</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2200"></A><H4>2200.
+  
+Conversions in template argument deduction
+</H4>
+<B>Section: </B>13.10.2&#160; [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-11-14<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S
+  {
+   operator int();
+  };
+
+  template&lt;int N&gt;
+  void f(const int (&amp;)[N]);
+
+  int main()
+  {
+   S s;
+   f&lt;2&gt;({s, s}); //<SPAN CLASS="cmnt"> #1</SPAN>
+   f({s, s});  //<SPAN CLASS="cmnt"> #2</SPAN>
+  }
+</PRE>
+
+<P>Since the array element type is not deduced, implicit conversions
+ought to be permitted in #2 but other implementations disagree.  Is
+there a compelling reason to disallow them?</P>
+
+<P>For comparison:</P>
+
+<PRE>
+  #include &lt;initializer_list&gt;
+
+  struct S
+  {
+   operator int();
+  };
+
+  template&lt;typename T&gt;
+  void f(std::initializer_list&lt;T&gt;);
+
+  int main()
+  {
+   S s;
+   f&lt;int&gt;({s, s});
+  }
+</PRE>
+
+<P>Because T is not deduced, implicit conversions are allowed, and the
+number of elements in the underlying temporary array is determined
+from the number of elements in the initializer list.  It seems that
+the intention of <A HREF="1591.html">issue 1591</A> was to allow
+the underlying temporary array to be deduced directly, so the fact
+that the array bounds are deduced in the case above shouldn't inhibit
+implicit conversions.</P>
+
+<P><B>Rationale (November, 2016):</B></P>
+
+<P>Although there is an argument to be made for the suggested
+direction, the current rule is simple and easy to explain, so there
+was no consensus for a change.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

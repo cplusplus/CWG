@@ -1,0 +1,135 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2764</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2764"></A><H4>2764.
+  
+Use of placeholders affecting name mangling
+</H4>
+<B>Section: </B>6.4.1&#160; [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-05<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Paper P2169R4 (A nice placeholder with no name), as approved by
+WG21 in Varna, added a placeholder facility.  The intent was that the
+use of placeholders is sufficiently limited such that they never need
+to be mangled.  Quote from 6.4.1 [<A href="https://wg21.link/basic.scope.scope#5">basic.scope.scope</A>] paragraph 5 as
+modified by the paper:</P>
+
+<BLOCKQUOTE>
+
+A declaration is name-independent if its name is _ and it declares a
+variable with automatic storage duration, a structured binding not
+inhabiting a namespace scope, the variable introduced by
+an <I>init-capture</I>, or a non-static data member.
+
+</BLOCKQUOTE>
+
+<P>The following example does not seem to follow that intent:</P>
+
+<PRE>
+  struct A { A(); };
+  inline void f() {
+    static union { A _{}; };
+    static union { A _{}; };
+  }
+  void g() { return f(); }
+</PRE>
+
+<P>The preceding example needs handling similar to the following
+example, which is unrelated to the placeholder feature:</P>
+
+<PRE>
+  struct A { A(); };
+  inline void f() {
+    { static union { A a{}; }; }
+    { static union { A a{}; }; }
+  }
+  void g() { return f(); }
+</PRE>
+
+<P>A similar problem may arise for <TT>static</TT>
+or <TT>thread_local</TT> structured bindings at block scope.</P>
+
+<P>Finally, another example involving placeholders in anonymous unions:</P>
+
+<PRE>
+  static union { int _ = 42; };
+  int &amp;ref = _;
+  int foo() { return 13; }
+  static union { int _ = foo(); };
+  int main() { return ref; }
+</PRE>
+
+<P><U>Possible resolution (reviewed by CWG 2023-08-25) [SUPERSEDED]:</U></P>
+
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#5">basic.scope.scope</A>] paragraph 5 and add bullets as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A class is <I>name-dependent</I> if it is an anonymous union
+declared at namespace scope or with a <I>storage-class-specifier</I>
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]).</INS> A declaration
+is <I>name-independent</I> if its name is _ and it declares
+<UL>
+<LI>a variable with automatic storage duration,</LI>
+<LI>a structured binding <INS>with no <I>storage-class-specifier</I>
+and</INS> not inhabiting a namespace scope,</LI>
+<LI>the variable introduced by an <I>init-capture</I>, or</LI>
+<LI>a non-static data member <INS>of other than a name-dependent
+class</INS>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-09-15):</B></P>
+
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#5">basic.scope.scope</A>] paragraph 5 and add bullets as
+follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration is <I>name-independent</I> if its name is _ and it
+declares
+<UL>
+<LI>a variable with automatic storage duration,</LI>
+<LI>a structured binding <INS>with no <I>storage-class-specifier</I>
+and</INS> not inhabiting a namespace scope,</LI>
+<LI>the variable introduced by an <I>init-capture</I>, or</LI>
+<LI>a non-static data member <INS>of other than an anonymous union</INS>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

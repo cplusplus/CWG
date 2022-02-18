@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 90</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="90"></A><H4>90.
+  
+Should the enclosing class be an "associated class" too?
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Feb 1999<BR>
+
+
+
+
+
+<P>Section
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+
+ includes the following:</P>
+<UL>
+<LI>
+If T is a class type, its associated classes are the class itself and its
+direct and indirect base classes. Its associated namespaces are the namespaces
+in which its associated classes are defined.</LI>
+
+<LI>
+If T is a union or enumeration type, its associated namespace is the namespace
+in which it is defined. If it is a class member, its associated class is
+the member's class; else it has no associated class.</LI>
+</UL>
+Note that for a union, the enclosing class is an "associated class", but
+for a class type the enclosing class is not an "associated class". This
+results in some surprising behavior, as shown in the example below.
+<PRE>
+    struct A {
+        union U {};
+        friend void f(U);
+    };
+
+    struct B {
+        struct S {};
+        friend void f(S);
+    };
+
+    int main() {
+        A::U    u;
+        f(u);        // okay: A is an associated class
+        B::S    s;
+        f(s);        // error: no matching f(), B is not an associated class
+    }
+
+</PRE>
+Certainly the enclosing class should also be an associated class for nested
+class types, shouldn't it?
+
+<P>
+<B>Proposed Resolution (10/99):</B>
+Change the two referenced bullets to read:</P>
+<UL>
+<LI>If <TT>T</TT> is a class type (including unions),
+its associated classes are:
+the class itself; the
+class of which it is a member, if any; and its direct and indirect base
+classes. Its associated namespaces are the namespaces in which its
+associated classes are defined.</LI>
+
+<LI>If <TT>T</TT> is an enumeration type,
+its associated namespace is the namespace in
+which it is defined. If it is class member, its associated class is the
+member's class; else it has no associated class.</LI>
+</UL>
+(This proposal also addresses
+<A HREF="91.html">Core issue 91</A>.)
+<BR><BR>
+</BODY>
+</HTML>

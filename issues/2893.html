@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2893</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2893"></A><H4>2893.
+  
+Instantiations in discarded <TT>if constexpr</TT> substatements
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-09<BR>
+
+
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/535">#535</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void g() {
+    auto f = [](auto s) {
+      s.x = 0;
+    };
+    if constexpr (false) {
+      f(0);   //<SPAN CLASS="cmnt"> well-formed?</SPAN>
+    }
+  }
+</PRE>
+
+<P>Note that the lambda has a deduced return type, yet per the current
+wording, <TT>f</TT> is not instantiated here.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Add a new paragraph before 13.9.2 [<A href="https://wg21.link/temp.inst#9">temp.inst</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">The existence of a definition of a function is
+considered to affect the semantics of the program if the function is
+named by an expression (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) and the function's
+declared return type is a placeholder type
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]).
+[ Example:
+</P>
+
+<PRE class="ins">
+  void g() {
+    auto f = [](auto s) {
+      s.x = 0;  // <SPAN CLASS="cmnt">#1</SPAN>
+    };
+    if constexpr (false) {
+      f(0);     //<SPAN CLASS="cmnt"> error at #1: type </SPAN>int<SPAN CLASS="cmnt"> has no member named </SPAN>x
+    }
+  }
+</PRE>
+<P class="ins"> -- end example ]</P>
+
+<P>If the function selected by overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]) can be determined without ...</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-06-14</B></P>
+
+<P>The original example involving a deduced return type of the lambda
+is ill-formed, because the semantics of the program are affected by
+its return type, and thus an instantion is required
+(13.9.2 [<A href="https://wg21.link/temp.inst#5">temp.inst</A>] paragraph 5): If the lambda returned a class
+type with a private destructor, the program would be ill-formed.</P>
+
+<P>The modified example with a <TT>void</TT> return type of the lambda
+is well-formed; clang's implementation divergence is believed to be a
+bug.</P>
+
+<P>As a side note, odr-use is not affected by discarded statements;
+just some of the effects of odr-use do not materialize
+(6.3 [<A href="https://wg21.link/basic.def.odr#12">basic.def.odr</A>] paragraph 12).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

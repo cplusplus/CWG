@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2584</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2584"></A><H4>2584.
+  
+Equivalent types in function template declarations
+</H4>
+<B>Section: </B>13.7.7.2&#160; [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-08<BR>
+
+
+<P>According to 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+Two declarations correspond if they (re)introduce the same name, both
+declare constructors, or both declare destructors, unless
+
+<UL>
+<LI>...</LI>
+
+<LI>
+each declares a function or function template,
+except when
+<UL>
+<LI>...</LI>
+
+<LI>
+both declare function templates with equivalent
+non-object-parameter-type-lists, return types (if
+any), <I>template-head</I>s, and trailing <I>requires-clause</I>s (if
+any), and, if both are non-static members, they have corresponding
+object parameters.
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Assuming that two non-object-parameter-type-lists are equivalent if
+they have the same length and corresponding types are equivalent, the
+question remains when two (possibly dependent) types are equivalent.
+Subclause 13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>] should provide an answer, but
+only covers expressions appearing in such types (paragraph 5):</P>
+
+<BLOCKQUOTE>
+
+Two expressions involving template parameters are considered
+<I>equivalent</I> if...
+
+</BLOCKQUOTE>
+
+<P>For example, the standard should specify whether these
+declarations correspond:</P>
+
+<PRE>
+  template&lt;class T&gt; T   f();
+  template&lt;class T&gt; T&amp;&amp; f();
+
+  template&lt;class T, class U&gt; void g(decltype(T::foo));
+  template&lt;class T, class U&gt; void g(decltype(U::foo));
+</PRE>
+
+<P>A related issue is the determination whether two names are the same;
+for example:</P>
+
+<PRE>
+  struct A {
+    template&lt;class T&gt;
+    operator T();
+
+    template&lt;class T&gt;
+    operator T&amp;&amp;();
+  };
+</PRE>
+
+<P>The latter issue could probably be fixed by amending
+11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>] to state that
+two <I>conversion-function-id</I>s are the same if
+their <I>conversion-type-id</I>s denote equivalent types, with a
+cross-reference to 13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>].</P>
+
+<BR><BR>
+</BODY>
+</HTML>

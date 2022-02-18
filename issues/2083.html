@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2083</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2083"></A><H4>2083.
+  
+Incorrect cases of odr-use
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-11<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="1741.html">issue 1741</A> was not
+intended to cause odr-use to occur in cases where it did not do so
+previously.  However, in an example like</P>
+
+<PRE>
+  extern int globx;
+  int main() {
+    const int &amp;x = globx;
+    struct A {
+     const int *foo() {
+       return &amp;x;
+     }
+    } a;
+    return *a.foo();
+  }
+</PRE>
+
+<P>
+<TT>x</TT> satisfies the requirements for appearing in a
+constant expression, but applying the lvalue-to-rvalue
+converstion to <TT>x</TT> does not yield a constant expression.
+Similarly,</P>
+
+<PRE>
+  struct A {
+    int q;
+    constexpr A(int q) : q(q) { }
+    constexpr A(const A &amp;a) : q(a.q * 2) { }
+  };
+
+  int main(void) {
+    constexpr A a(42);
+    constexpr int aq = a.q;
+    struct Q {
+     int foo() { return a.q; }
+    } q;
+    return q.foo();
+  }
+</PRE>
+
+<P>
+<TT>a</TT> satisfies the requirements for appearing in a constant
+expression, but applying the lvalue-to-rvalue conversion to <TT>a</TT>
+invokes a non-trivial function.</P>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<OL>
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#2.4">basic.def.odr</A>] bullet 2.4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An expression is <I>potentially evaluated</I> unless it
+is an unevaluated operand (7.2 [<A href="https://wg21.link/expr.prop">expr.prop</A>]) or a
+subexpression thereof.  The set of <I>potential results</I>
+of an expression <TT>e</TT> is defined as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>If <TT>e</TT> is a pointer-to-member expression
+(7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]) <DEL>whose second operand is a
+constant expression</DEL>, the set contains the potential results
+of the object expression.</P></LI>
+
+<LI><P>...</P></LI>
+
+<LI><P>Otherwise, the set is empty.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#4">basic.def.odr</A>] paragraph 4, converting the
+running text into bullets, as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A variable <TT>x</TT> whose name appears as a
+potentially-evaluated expression <TT>e<DEL>x</DEL></TT> is odr-used
+by <TT>e<DEL>x</DEL></TT> unless <DEL>applying the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to <TT>x</TT> yields
+a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that does
+not invoke a function other than a trivial special member
+function (11.4.4 [<A href="https://wg21.link/special">special</A>]) and, if <TT>x</TT> is
+an object,</DEL>
+</P>
+
+<UL>
+<LI><P><INS><TT>x</TT> is a reference that is usable in
+constant expressions (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), or</INS></P></LI>
+
+<LI><P>
+<INS><TT>x</TT> is a variable of non-reference type
+that is usable in constant expressions and has no mutable
+subobjects, and</INS> <TT>e<DEL>x</DEL></TT> is an element
+of the set of potential results of an
+expression <DEL><TT>e</TT>, where either</DEL> <INS>of
+non-volatile-qualified non-class type to which</INS> the
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is
+applied <DEL>to <TT>e</TT></DEL>, or <DEL><TT>e</TT> is</DEL>
+</P></LI>
+
+<LI><P>
+<INS><TT>x</TT> is a variable of non-reference type, and
+<TT>e</TT> is an element of the set of potential results of</INS>
+a discarded-value expression (7.2 [<A href="https://wg21.link/expr.prop">expr.prop</A>])
+<INS>to which the lvalue-to-rvalue conversion is not
+applied.</INS>
+</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves issues <A HREF="2103.html">2103</A>
+and <A HREF="2170.html">2170</A>.</P>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

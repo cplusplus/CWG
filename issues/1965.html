@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1965</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1965"></A><H4>1965.
+  
+Explicit casts to reference types
+</H4>
+<B>Section: </B>7.6.1.7&#160; [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-07-07<BR>
+
+
+
+
+<P>The specification of <TT>dynamic_cast</TT> in
+7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#2">expr.dynamic.cast</A>] paragraph 2 (and <TT>const_cast</TT>
+in 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>] is the same) says that the operand
+of a cast to an lvalue reference type must be an lvalue, so that</P>
+
+<PRE>
+  struct A { virtual ~A(); }; A &amp;&amp;make_a();
+
+  A &amp;&amp;a = dynamic_cast&lt;A&amp;&amp;&gt;(make_a());   //<SPAN CLASS="cmnt"> ok</SPAN>
+  const A &amp;b = dynamic_cast&lt;const A&amp;&gt;(make_a()); //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+</PRE>
+
+<P>The behavior of <TT>static_cast</TT> is an odd hybrid:</P>
+
+<PRE>
+  struct B : A { }; B &amp;&amp;make_b();
+  A &amp;&amp;c = static_cast&lt;A&amp;&amp;&gt;(make_b()); //<SPAN CLASS="cmnt"> ok</SPAN>
+  const A &amp;d = static_cast&lt;const A&amp;&gt;(make_b()); //<SPAN CLASS="cmnt"> ok</SPAN>
+  const B &amp;e = static_cast&lt;const B&amp;&gt;(make_a()); //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+</PRE>
+
+<P>(Binding a const lvalue reference to an rvalue is permitted by
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast#4">expr.static.cast</A>] paragraph 4 but not by paragraphs 2 and
+3.)</P>
+
+<P>There is implementation divergence on the treatment of these examples.</P>
+
+<P>Also, <TT>const_cast</TT> permits binding an rvalue reference to a
+class prvalue but not to any other kind of prvalue, which seems like an
+unnecessary restriction.</P>
+
+<P>Finally, 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#3">expr.static.cast</A>] paragraph 3 allows binding an
+rvalue reference to a class or array prvalue, but not to other kinds of
+prvalues; those are covered in paragraph 4.  This would be less confusing
+if paragraph 3 only dealt with binding rvalue references to glvalues and
+left all discussion of prvalues to paragraph 4, which adequately handles
+the class and array cases as well.</P>
+
+<P><B>Notes from the May, 2015 meeting:</B></P>
+
+<P>CWG reaffirmed the status quo for <TT>dynamic_cast</TT> but felt
+that <TT>const_cast</TT> should be changed to permit binding an
+rvalue reference to types that have associated memory (class and
+array types).</P>
+
+<P><B>CWG 2024-11-19</B></P>
+
+<P>The last of the concerns is resolved by the resolution of
+<A HREF="2879.html">issue 2879</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

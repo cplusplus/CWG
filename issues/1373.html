@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1373</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1373"></A><H4>1373.
+  
+Overload resolution changes matching reference-binding changes
+</H4>
+<B>Section: </B>12.2.2.7&#160; [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-15<BR>
+
+
+<P>It looks like the resolution to <A HREF="1138.html">issue 1138</A>
+neglected to update 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] (in N3225) or
+otherwise mention it from 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] for the rvalue
+cases.</P>
+
+<P>Since this is a context where overload resolution is required (to
+find the correct conversion function), 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+should probably be used (12.2 [<A href="https://wg21.link/over.match#2">over.match</A>] paragraph 2);
+however, there are some oddities.</P>
+
+<P><B>(Issue 1)</B></P>
+
+<P>Consider:</P>
+
+<PRE>
+    struct A {
+      typedef void functype();
+      operator functype&amp;&amp;();
+    };
+    void (&amp;&amp;x)() = A();
+</PRE>
+
+<P>We are looking for a function lvalue; 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] (if we take it to be applicable) says the viable
+functions are limited to conversion functions yielding
+&#8220;lvalue reference&#8221; when 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+requires an lvalue result. The above would then fail to have any
+candidate conversion functions and we are left with a non-viable
+indirect binding to a &#8220;function temporary.&#8221;</P>
+
+<P><B>(Issue 2)</B></P>
+
+<P>Also, since the candidate functions in the case where an rvalue
+(that is prvalue or xvalue) result is required do not include ones
+which return lvalue references, I do not see what the wording
+regarding the second standard conversion sequence having an
+lvalue-to-rvalue transformation added in <A HREF="1138.html">issue 1138</A> is meant to catch.</P>
+
+<P>If the example containing</P>
+
+<PRE>
+    int&amp;&amp; rri2 = X();
+</PRE>
+
+<P>with a comment about <TT>operator int&amp;()</TT> is a clue,
+then it seems that 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] is being
+ignored.</P>
+
+<P><B>(Conclusion)</B></P>
+
+<P>It would seem that 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] should apply (and
+be fixed to match the cases from <A HREF="1138.html">issue1138</A>), the verbiage about the second standard conversion is
+redundant, and the explanation in the example is wrong.</P>
+
+<P>In particular, the previous wording for 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+did have distinct bullets for converting to an &#8220;lvalue&#8221;
+and to an &#8220;rvalue;&#8221; we now have a bullet which is not
+exclusively one or the other.</P>
+
+<P><B>Possible fix</B></P>
+
+<P>Add reference to [12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]] in
+9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] for direct binding to rvalue
+reference/const non-volatile via UDC.</P>
+
+<P>Remove redundent sentence referring to second SCS.</P>
+
+<P>Modify example to indicate <TT>operator int&amp;()</TT> is not
+a candidate function.</P>
+
+<P>Clarify that the point from 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] below:</P>
+
+<BLOCKQUOTE>
+
+has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+implicitly converted to an xvalue, class prvalue, or function
+lvalue of type &#8220;<I>cv3</I> <TT>T3</TT>,&#8221; where
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221;...
+
+</BLOCKQUOTE>
+
+<P>is an rvalue case for 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] for
+non-function types and lvalue case for function types.</P>
+
+<P>Fix 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] to allow candidate functions
+return rvalue reference to function type for lvalue cases.</P>
+
+<P><B>Update 110510:</B></P>
+
+<P>The example appears to be actually well-formed because the wording
+about the second SCS is not triggered. Falling through to indirect
+binding then succeeds.</P>
+
+<P><B>Rationale (February, 2012):</B></P>
+
+<P>This issue is a duplicate of <A HREF="1328.html">issue 1328</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

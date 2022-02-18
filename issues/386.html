@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 386</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="386"></A><H4>386.
+  
+Friend declaration of name brought in by <I>using-declaration</I>
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Oct 2002<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+<P>The following came up recently on comp.lang.c++.moderated (edited for
+brevity):</P>
+<PRE>
+  namespace N1 {
+    template&lt;typename T&gt; void f( T* x ) {
+      // ... other stuff ...
+      delete x;
+    }
+  }
+
+  namespace N2 {
+    using N1::f;
+
+    template&lt;&gt; void f&lt;int&gt;( int* ); // A: ill-formed
+
+    class Test {
+      ~Test() { }
+      friend void f&lt;&gt;( Test* x );   // B: ill-formed?
+    };
+  }
+</PRE>
+<P>I strongly suspect, but don't have standardese to prove, that the friend
+declaration in line B is ill-formed. Can someone show me the text that
+allows or disallows line B?</P>
+
+<P>Here's my reasoning: Writing "using" to pull the name into namespace N2
+merely allows code in N2 to use the name in a call without qualification
+(per 9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]).
+But just as declaring a specialization must be done in the
+namespace where the template really lives (hence line A is ill-formed), I
+suspect that declaring a specialization as a friend must likewise be done
+using the original namespace name, not obliquely through a "using". I see
+nothing in 9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+that would permit this use. Is there?</P>
+
+<P>
+<U>Andrey Tarasevich</U>:
+13.7.5 [<A href="https://wg21.link/temp.friend#2">temp.friend</A>] paragraph 2 seems to get pretty close:
+"A friend declaration that is not a
+template declaration and in which the name of the friend is an unqualified
+'template-id' shall refer to a specialization of a function template
+declared in the nearest enclosing namespace scope". </P>
+
+<P>
+<U>Herb Sutter</U>:
+OK, thanks. Then the question in this is the word "declared" -- in
+particular, we already know we cannot declare a specialization of a template
+in any other namespace but the original one.</P>
+
+<P>
+<U>John Spicer</U>:
+This seems like a simple question, but it isn't.</P>
+
+<P>First of all, I don't think the standard comments on this usage one way
+or the other.</P>
+
+<P>A similar example using a namespace qualified name is ill-formed based
+on 9.3.4 [<A href="https://wg21.link/dcl.meaning#1">dcl.meaning</A>] paragraph 1:</P>
+<PRE>
+  namespace N1 {
+        void f();
+  }
+
+  namespace N2 {
+        using N1::f;
+        class A {
+                friend void N2::f();
+        };
+  }
+</PRE>
+
+<P>
+<A HREF="138.html">Core issue 138</A> deals with this example:</P>
+<PRE>
+  void foo();
+  namespace A{
+    using ::foo;
+    class X{
+      friend void foo();
+    };
+  }
+</PRE>
+<P>The proposed resolution (not yet approved) for
+<A HREF="138.html">issue 138</A> is that the
+friend declares a new
+foo that conflicts with the using-declaration and results in an error.</P>
+
+<P>Your example is different than this though because the presence of the
+explicit argument list
+means that this is not declaring a new f but is instead using a
+previously declared f.</P>
+
+<P>One reservation I have about allowing the example is the desire to have
+consistent rules for all of the "declaration like" uses of template
+functions.   <A HREF="275.html">Issue 275</A> (in DR status) addresses the
+issue of unqualified names in explicit instantiation and explicit
+specialization declarations.
+It requires that such declarations refer to templates from the namespace
+containing the
+explicit instantiation or explicit specialization.  I believe this rule
+is necessary for those directives but is not really required for friend
+declarations -- but there is the consistency issue.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>This is related to <A HREF="138.html">issue 138</A>.  John Spicer
+is supposed to update his paper on this topic.  This is a new case
+not covered in that paper.  We agreed that the B line should be
+allowed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

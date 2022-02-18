@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2801</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2801"></A><H4>2801.
+  
+Reference binding with reference-related types
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-18<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  int* p;
+  const int*&amp;&amp; r = static_cast&lt;int*&amp;&amp;&gt;(p);
+</PRE>
+
+<P>The intent of core issues <A HREF="2018.html">2018</A> and
+<A HREF="2352.html">2352</A> was to make this example ill-formed,
+because it surprisingly introduces a temporary.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-10-20):</B></P>
+
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4">dcl.init.ref</A>] bullet 5.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise<DEL>:</DEL><INS>, <TT>T1</TT> shall not be
+reference-related to <TT>T2</TT>.</INS>
+<UL>
+<LI>If T1 or T2 is a class type <DEL>and T1 is not reference-related
+to T2</DEL>, user-defined conversions are considered using the rules
+for copy-initialization of an object of type &#8220;cv1 T1&#8221; by
+user-defined conversion (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]); the
+program is ill-formed if the corresponding non-reference
+copy-initialization would be ill-formed. The result of the call to the
+conversion function, as described for the non-reference
+copy-initialization, is then used to direct-initialize the reference.
+For this direct-initialization, user-defined conversions are not
+considered.</LI>
+<LI>Otherwise, the initializer expression is
+implicitly converted to a prvalue of type &#8220;T1&#8221;. The
+temporary materialization conversion is applied, considering the type
+of the prvalue to be &#8220;cv1 T1&#8221;, and the reference is bound
+to the result.
+</LI>
+</UL>
+<DEL>If T1 is reference-related to T2:</DEL>
+<UL>
+<LI><DEL>cv1 shall be the same cv-qualification as, or greater
+cv-qualification than, cv2; and</DEL></LI>
+<LI>
+<DEL>if the reference is an rvalue reference, the initializer
+expression shall not be an lvalue.  [<I>Note 3:</I> This can be
+affected by whether the initializer expression is move-eligible
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]). &#8212;<I>end note</I>]</DEL>
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

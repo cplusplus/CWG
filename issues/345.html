@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 345</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="345"></A><H4>345.
+  
+Misleading comment on example in templates chapter
+</H4>
+<B>Section: </B>13.8&#160; [<A href="https://wg21.link/temp.res">temp.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Shirk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 March 2002<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+
+
+<P>The following example from 13.8 [<A href="https://wg21.link/temp.res#4">temp.res</A>] paragraph 4:</P>
+<PRE>
+struct A {
+	struct X { };
+	int X;
+};
+template&lt;class T&gt; void f(T t) {
+	typename T::X x;        //  ill-formed: finds the data member  X
+					//  not the member type  X
+}
+</PRE>
+
+<P>
+is not ill-formed.  The intent of the example is obvious, but some
+mention should be made that it is only ill-formed when T=A.  For other
+T's, it could be well formed.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>
+In 13.8 [<A href="https://wg21.link/temp.res#4">temp.res</A>] paragraph 4, replace the example with:</P>
+<BLOCKQUOTE>
+<PRE>
+struct A {
+  struct X { };
+  int X;
+} ;
+struct B {
+  struct X { };
+} ;
+template&lt;class T&gt; void f(T t) {
+  typename T::X x;
+}
+void foo() {
+  A a;
+  B b;
+  f(b);  // OK -- T::X refers to B::X.
+  f(a);  // error: T::X refers to the data member A::X not
+         // the struct A::X.
+}
+</PRE>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

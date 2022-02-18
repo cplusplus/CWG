@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2336</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2336"></A><H4>2336.
+  
+Destructor characteristics vs potentially-constructed subobjects
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-02-28<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>According to 14.5 [<A href="https://wg21.link/except.spec#8">except.spec</A>] paragraph 8,</P>
+
+<BLOCKQUOTE>
+
+The exception specification for an implicitly-declared
+destructor, or a destructor without a <I>noexcept-specifier</I>,
+is potentially-throwing if and only if any of the destructors for
+any of its potentially constructed subojects is potentially
+throwing.
+
+</BLOCKQUOTE>
+
+<P>11.4.4 [<A href="https://wg21.link/special#5">special</A>] paragraph 5 defines &#8220;potentially
+constructed subobjects&#8221; as follows:</P>
+
+<BLOCKQUOTE>
+
+For a class, its non-static data members, its non-virtual direct
+base classes, and, if the class is not abstract
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), its virtual base classes are called
+its potentially constructed subobjects.
+
+</BLOCKQUOTE>
+
+<P>This leads to the following problem:</P>
+
+<PRE>
+  class V {
+  public:
+    virtual ~V() noexcept(false);
+  };
+
+  class B : virtual V {
+    virtual void foo () = 0;
+    //<SPAN CLASS="cmnt"> implicitly defined </SPAN>virtual ~B () noexcept(true);
+  };
+
+  class D : B {
+    virtual void foo ();
+    //<SPAN CLASS="cmnt"> implicitly defined </SPAN>virtual ~D () noexcept(false);
+  };
+</PRE>
+
+<P>Here, <TT>D::~D()</TT> is throwing but overrides the non-throwing
+<TT>B::~B()</TT>.</P>
+
+<P>There are similar problems with the deletedness of
+destructors per 11.4.7 [<A href="https://wg21.link/class.dtor#5">class.dtor</A>] paragraph 5, which
+also only considers potentially constructed subobjects.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<P>Change 14.5 [<A href="https://wg21.link/except.spec#8">except.spec</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+The exception specification for an implicitly-declared
+destructor, or a destructor without
+a <I>noexcept-specifier</I>, is potentially-throwing if and
+only if any of the destructors for any of its potentially
+constructed subobjects is <DEL>potentially throwing</DEL>
+<INS>potentially-throwing or the destructor is virtual and
+the destructor of any virtual base class is
+potentially-throwing</INS>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

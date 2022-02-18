@@ -1,0 +1,409 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 39</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="39"></A><H4>39.
+  
+Conflicting ambiguity rules
+</H4>
+<B>Section: </B>6.5.2&#160; [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Neal M Gafter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Aug 1998<BR>
+
+
+
+<P>[Voted into WP at April 2005 meeting.]</P>
+
+
+
+<P>The ambiguity text in 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]
+
+may not say what we intended. It makes the
+following example ill-formed:</P>
+<PRE>
+    struct A {
+        int x(int);
+    };
+    struct B: A {
+        using A::x;
+        float x(float);
+    };
+
+    int f(B* b) {
+        b-&gt;x(3);  // ambiguous
+    }
+</PRE>
+This is a name lookup ambiguity because of 6.5.2 [<A href="https://wg21.link/class.member.lookup#2">class.member.lookup</A>] paragraph 2:
+
+<BLOCKQUOTE>... Each of these declarations that was introduced by a using-declaration
+is considered to be from each sub-object of C that is of the type containing
+the declaration designated by the using-declaration. If the resulting set
+of declarations are not all from sub-objects of the same type, or the set
+has a nonstatic member and includes members from distinct sub-objects,
+there is an ambiguity and the program is ill-formed.</BLOCKQUOTE>
+This contradicts the text and example in paragraph 12 of 9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+.
+
+<P><B>Proposed Resolution (10/00):</B></P>
+
+<OL>
+
+<LI>
+<P>Replace the two cited sentences from 6.5.2 [<A href="https://wg21.link/class.member.lookup#2">class.member.lookup</A>] paragraph 2
+with the following:</P>
+
+<BLOCKQUOTE>
+
+The resulting set of declarations shall all be from sub-objects
+of the same type, or there shall be a set of declarations from
+sub-objects of a single type that contains <I>using-declaration</I>s
+for the declarations found in all other sub-object types.
+Furthermore, for nonstatic members, the resulting set of
+declarations shall all be from a single sub-object, or there shall
+be a set of declarations from a single sub-object that contains
+<I>using-declarations</I> for the declarations found in all other
+sub-objects.  Otherwise, there is an ambiguity and the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Replace the examples in 6.5.2 [<A href="https://wg21.link/class.member.lookup#3">class.member.lookup</A>] paragraph 3
+with the following:</P>
+
+<PRE>
+    struct A {
+        int x(int);
+        static int y(int);
+    };
+    struct V {
+        int z(int);
+    };
+    struct B: A, virtual V {
+        using A::x;
+        float x(float);
+        using A::y;
+        static float y(float);
+        using V::z;
+        float z(float);
+    };
+    struct C: B, A, virtual V {
+    };
+
+    void f(C* c) {
+        c-&gt;x(3);    // ambiguous -- more than one sub-object A
+        c-&gt;y(3);    // not ambiguous
+        c-&gt;z(3);    // not ambiguous
+    }
+</PRE>
+
+</LI>
+
+</OL>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>The following example should be accepted but is rejected by
+the wording above:</P>
+
+<PRE>
+    struct A { static void f(); };
+
+    struct B1: virtual A {
+        using A::f;
+    };
+
+    struct B2: virtual A {
+        using A::f;
+    };
+
+    struct C: B1, B2 { };
+
+    void g() {
+        C::f();        // OK, calls A::f()
+    }
+</PRE>
+
+<P><B>Notes from 10/01 meeting (Jason Merrill):</B></P>
+
+<P>The example in the issues list:
+
+<PRE>
+    struct A {
+        int x(int);
+    };
+    struct B: A {
+        using A::x;
+        float x(float);
+    };
+
+    int f(B* b) {
+        b-&gt;x(3);  // ambiguous
+    }
+</PRE>
+
+Is broken under the existing wording:
+
+<BLOCKQUOTE>
+... Each of these declarations that was introduced by a using-declaration
+is considered to be from each sub-object of C that is of the type containing
+the declaration designated by the using-declaration. If the resulting set
+of declarations are not all from sub-objects of the same type, or the set
+has a nonstatic member and includes members from distinct sub-objects,
+there is an ambiguity and the program is ill-formed.</BLOCKQUOTE>
+
+Since the two x's are considered to be "from" different objects, looking up
+x produces a set including declarations "from" different objects, and the
+program is ill-formed.  Clearly this is wrong.  The problem with the
+existing wording is that it fails to consider lookup context.</P>
+
+<P>The first proposed solution:
+
+<BLOCKQUOTE>
+
+The resulting set of declarations shall all be from sub-objects
+of the same type, or there shall be a set of declarations from
+sub-objects of a single type that contains <I>using-declaration</I>s
+for the declarations found in all other sub-object types.
+Furthermore, for nonstatic members, the resulting set of
+declarations shall all be from a single sub-object, or there shall
+be a set of declarations from a single sub-object that contains
+<I>using-declarations</I> for the declarations found in all other
+sub-objects.  Otherwise, there is an ambiguity and the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+breaks this testcase:
+
+<PRE>
+    struct A { static void f(); };
+
+    struct B1: virtual A {
+        using A::f;
+    };
+
+    struct B2: virtual A {
+        using A::f;
+    };
+
+    struct C: B1, B2 { };
+
+    void g() {
+        C::f();        // OK, calls A::f()
+    }
+</PRE>
+
+because it considers the lookup context, but not the definition context;
+under this definition of "from", the two declarations found are the
+using-declarations, which are "from" B1 and B2.</P>
+
+<P>The solution is to separate the notions of lookup and definition context.
+I have taken an algorithmic approach to describing the strategy.</P>
+
+<P>Incidentally, the earlier proposal allows one base to have a superset of
+the declarations in another base; that was an extension, and my proposal
+does not do that.  One algorithmic benefit of this limitation is to
+simplify the case of a virtual base being hidden along one arm and not
+another ("domination"); if we allowed supersets, we would need to remember
+which subobjects had which declarations, while under the following
+resolution we need only keep two lists, of subobjects and declarations.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>Replace 6.5.2 [<A href="https://wg21.link/class.member.lookup#2">class.member.lookup</A>] paragraph 2 with: </P>
+<BLOCKQUOTE>
+<P>The following steps define the result of name lookup for a member
+name f in a class scope C. </P>
+
+<P>The <I>lookup set</I> for f in C, called S(f,C), consists of two
+component sets: the <I>declaration set</I>, a set of members named f; and
+the <I>subobject set</I>, a set of subobjects where declarations of these
+members (possibly including using-declarations) were found.  In the
+declaration set, using-declarations are replaced by the members they
+designate, and type declarations (including injected-class-names) are
+replaced by the types they designate.  S(f,C) is calculated as
+follows. </P>
+
+<P>If C contains a declaration of the name f, the declaration set contains
+every declaration of f in C (excluding bases), the subobject set contains C
+itself, and calculation is complete. </P>
+
+<P>Otherwise, S(f,C) is initially empty. If C has base classes, calculate
+the lookup set for f in each direct base class subjobject B<SUB>i</SUB>,
+and merge each such lookup set S(f,B<SUB>i</SUB>) in turn into S(f,C). </P>
+
+<P>The following steps define the result of merging lookup set
+S(f,B<SUB>i</SUB>) into the intermediate S(f,C): </P>
+
+<UL>
+<LI>If each of the subobject members of S(f,B<SUB>i</SUB>) is a base
+class subobject of at least one of the subobject members of S(f,C), S(f,C)
+is unchanged and the merge is complete.  Conversely, if each of the
+subobject members of S(f,C) is a base class subobject of at least one of
+the subobject members of S(f,B<SUB>i</SUB>), the new S(f,C) is a copy of
+S(f,B<SUB>i</SUB>).</LI>
+
+<LI>Otherwise, if the declaration sets of S(f,B<SUB>i</SUB>) and S(f,C)
+differ, the merge is ambiguous: the new S(f,C) is a lookup set with an
+invalid declaration set and the union of the subobject sets. In subsequent
+merges, an invalid declaration set is considered different from any
+other.</LI>
+
+<LI>Otherwise, consider each declaration d in the set, where d is a
+member of class A.  If d is a nonstatic member, compare the A base class
+subobjects of the subobject members of S(f,B<SUB>i</SUB>) and
+S(f,C).  If they do not match, the merge is ambiguous, as in the
+previous step.  [<I>Note:</I> It is not necessary to remember which A subobject
+each member comes from, since using-declarations don't disambiguate. ]
+</LI>
+
+<LI> Otherwise, the new S(f,C) is a lookup set with the shared
+set of declarations and the union of the subobject sets.</LI>
+</UL>
+
+<P>The result of name lookup for f in C is the declaration set of
+S(f,C).  If it is an invalid set, the program is ill-formed. </P>
+
+<P>[<I>Example:</I>
+<PRE>
+    struct A { int x; };                    // S(x,A) = {{ A::x }, { A }}
+    struct B { float x; };                  // S(x,B) = {{ B::x }, { B }}
+    struct C: public A, public B { };       // S(x,C) = { invalid, { A in C, B in C }}
+    struct D: public virtual C { };         // S(x,D) = S(x,C)
+    struct E: public virtual C { char x; }; // S(x,E) = {{ E::x }, { E }}
+    struct F: public D, public E { };       // S(x,F) = S(x,E)
+
+    int main() {
+      F f;
+      f.x = 0;   // OK, lookup finds { E::x }
+    }
+</PRE>
+
+S(x,F) is unambiguous because the A and B base subobjects of D are also
+base subobjects of E, so S(x,D) is discarded in the first merge step. --<I>end
+example</I>]
+</P>
+</BLOCKQUOTE>
+
+<P> Turn 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>] paragraphs 5 and 6 into notes.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>Mike Miller raised some new issues in N1543, and we adjusted the
+proposed resolution as indicated in that paper.</P>
+
+<P><B>Further information from Mike Miller (January 2004):</B></P>
+
+<P>Unfortunately, I've become aware of a minor glitch in
+the proposed resolution for issue 39 in N1543, so I'd like to
+suggest a change that we can discuss in Sydney.</P>
+
+<P>A brief review and background of the problem: the major change we
+agreed on in Kona was to remove detection of multiple-subobject
+ambiguity from class lookup (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) and instead
+handle it as part
+of the class member access expression.  It was pointed out in
+Kona that 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]/5 has this effect:</P>
+<BLOCKQUOTE>
+    If a class member access operator, including an implicit
+    "this-&gt;," is used to access a nonstatic data member or
+    nonstatic member function, the reference is ill-formed if the
+    left operand (considered as a pointer in the "." operator
+    case) cannot be implicitly converted to a pointer to the
+    naming class of the right operand.
+</BLOCKQUOTE>
+<P>After the meeting, however, I realized that this requirement is
+not sufficient to handle all the cases.  Consider, for instance,</P>
+<PRE>
+    struct B {
+        int i;
+    };
+
+    struct I1: B { };
+    struct I2: B { };
+
+    struct D: I1, I2 {
+        void f() {
+            i = 0;    // not ill-formed per 11.2p5
+        }
+    };
+</PRE>
+<P>Here, both the object expression ("this") and the naming class
+are "D", so the reference to "i" satisfies the requirement in
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]/5, even though it involves a
+multiple-subobject ambiguity.</P>
+
+<P>In order to address this problem, I proposed in N1543 to add a
+paragraph following 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]/4:</P>
+<BLOCKQUOTE>
+    If E2 is a non-static data member or a non-static member
+    function, the program is ill-formed if the class of E1 cannot
+    be unambiguously converted (10.2) to the class of which E2 is
+    directly a member.
+</BLOCKQUOTE>
+<P>That's not quite right.  It does diagnose the case above as
+written; however, it breaks the case where qualification is used
+to circumvent the ambiguity:</P>
+<PRE>
+    struct D2: I1, I2 {
+        void f() {
+            I2::i = 0;    // ill-formed per proposal
+        }
+    };
+</PRE>
+<P>In my proposed wording, the class of "this" can't be converted to
+"B" (the qualifier is ignored), so the access is ill-formed.
+Oops.</P>
+
+<P>I think the following is a correct formulation, so the proposed
+resolution we discuss in Sydney should contain the following
+paragraph instead of the one in N1543:</P>
+<BLOCKQUOTE>
+    If E2 is a nonstatic data member or a non-static member
+    function, the program is ill-formed if <INS>the naming class
+    (11.2) of E2</INS> cannot be unambiguously converted (10.2) to
+    the class of which E2 is directly a member.
+</BLOCKQUOTE>
+<P>This reformulation also has the advantage of pointing readers to
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], where the the convertibility requirement
+from the class of
+E1 to the naming class is located and which might otherwise be
+overlooked.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>We discussed this further and agreed with these latest
+recommendations.  Mike Miller has produced a paper N1626 that gives
+just the final collected set of changes.</P>
+
+<P>(This resolution also resolves <A HREF="306.html">isssue 306</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,232 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2602</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2602"></A><H4>2602.
+  
+consteval defaulted functions
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aaron Ballman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-16<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>It is not clear whether a defaulted consteval function is still an
+immediate function even if it is not a valid constexpr function. For
+example:</P>
+
+<PRE>
+  template &lt;typename Ty&gt;
+  struct A {
+    Ty n;
+    consteval A() {}
+  };
+
+  template &lt;typename Ty&gt;
+  struct B {
+    Ty n;
+    consteval B() = default;
+  };
+
+  A&lt;int&gt; a;
+  B&lt;int&gt; b;
+</PRE>
+
+<P>The declarations of <TT>a</TT> and <TT>b</TT> should both fail due
+to an uninitialized member <TT>n</TT> in each of <TT>A</TT>
+and <TT>B</TT>. The <TT>= default</TT>; should not make a
+difference. However, there is implementation divergence. We should be
+able to lean on 7.7 [<A href="https://wg21.link/expr.const#5.5">expr.const</A>] bullet 5.5 to handle this
+when the immediate invocation is required.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.2.6 [<A href="https://wg21.link/dcl.constexpr#7">dcl.constexpr</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a
+constexpr <INS>templated</INS> function <DEL>template or member
+function of a class template</DEL> would fail to satisfy the
+requirements for a constexpr function, that specialization is still a
+constexpr function, even though a call to such a function cannot
+appear in a constant expression.
+<INS>Similarly, if the instantiated template specialization of a
+consteval <INS>templated</INS> function would fail to satisfy the
+requirements for a consteval function, that specialization is still an
+immediate function, even though an immediate invocation would be
+ill-formed.</INS> If no specialization of the template would satisfy
+the requirements for a constexpr <INS>or consteval</INS> function when
+considered as a non-template function, the template is ill-formed, no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (August, 2022) [SUPERSEDED]:</B></P>
+
+<P>Change in 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a
+constexpr <INS>templated</INS> function <DEL>template or member
+function of a class template</DEL> would fail to satisfy the
+requirements for a constexpr function, that specialization is still a
+constexpr function, even though a call to such a function cannot
+appear in a constant expression.
+<INS>Similarly, if the instantiated template specialization of a
+consteval <INS>templated</INS> function would fail to satisfy the
+requirements for a consteval function, that specialization is still an
+immediate function, even though an immediate invocation would be
+ill-formed.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (November, 2022)</B></P>
+
+<P>The proposed wording is possibly not addressing the point of the
+issue; the issue has been retracted from the WG21 plenary straw polls
+for further consideration in CWG.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-27):</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 9.2.6 [<A href="https://wg21.link/dcl.constexpr#3">dcl.constexpr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The definition of a constexpr function shall satisfy the following
+requirements:</DEL>
+
+<INS>A function is <I>constexpr-suitable</I> if:</INS>
+
+<UL>
+<LI>it <DEL>shall</DEL> <INS>is</INS> not <DEL>be</DEL> a coroutine
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>])<DEL>;</DEL> <INS>, and</INS>
+</LI>
+
+<LI>if the function is a constructor or destructor, its
+class <DEL>shall</DEL> <INS>does</INS> not have any virtual base
+classes.</LI>
+</UL>
+
+<INS>Except for instantiated constexpr functions, non-templated
+constexpr functions shall be constexpr-suitable.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Delete 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<DEL>If the instantiated template specialization of a constexpr
+function template or member function of a class template would fail to
+satisfy the requirements for a constexpr function, that specialization
+is still a constexpr function, even though a call to such a function
+cannot appear in a constant expression.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#5">expr.prim.lambda.closure</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The function call operator or any given operator template
+specialization is a constexpr function if either the
+corresponding <I>lambda-expression</I>'s <I>parameter-declaration-clause</I>
+is followed by constexpr or consteval, or it <DEL>satisfies the
+requirements for a constexpr function</DEL> <INS>is
+constexpr-suitable</INS> (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]). ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.5">expr.const</A>] bullet 5.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>an invocation of an instantiated constexpr function
+that <DEL>fails to satisfy the requirements for a constexpr
+function</DEL> <INS>is not constexpr-suitable</INS>;</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 9.5.2 [<A href="https://wg21.link/dcl.fct.def.default#3">dcl.fct.def.default</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A function explicitly defaulted on its first declaration is implicitly
+inline (9.2.8 [<A href="https://wg21.link/dcl.inline">dcl.inline</A>]), and is implicitly constexpr
+(9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]) if it <DEL>satisfies the requirements for a
+constexpr function</DEL> <INS>is constexpr-suitable</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#9">class.dtor</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted destructor is a constexpr destructor if it <DEL>satisfies
+the requirements for a constexpr function</DEL> <INS>is
+constexpr-suitable</INS> (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

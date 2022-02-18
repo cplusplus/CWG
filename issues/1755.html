@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1755</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1755"></A><H4>1755.
+  
+Out-of-class partial specializations of member templates
+</H4>
+<B>Section: </B>13.7.6.4&#160; [<A href="https://wg21.link/temp.spec.partial.member">temp.spec.partial.member</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-19<BR>
+
+
+
+
+<P>According to 13.7.6.4 [<A href="https://wg21.link/temp.spec.partial.member#2">temp.spec.partial.member</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+If a member template of a class template is partially specialized, the
+member template partial specializations are member templates of the
+enclosing class template; if the enclosing class template is instantiated
+(13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>], 13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]), a declaration
+for every member template partial specialization is also instantiated as
+part of creating the members of the class template specialization.
+
+</BLOCKQUOTE>
+
+<P>Does this imply that only partial specializations of member templates
+that are declared before the enclosing class is instantiated are
+considered?  For example, in</P>
+
+<PRE>
+  template&lt;typename A&gt; struct X { template&lt;typename B&gt; struct Y; };
+  template struct X&lt;int&gt;;
+  template&lt;typename A&gt; template&lt;typename B&gt; struct X&lt;A&gt;::Y&lt;B*&gt; { int n; };
+  int k = X&lt;int&gt;::Y&lt;int*&gt;().n;
+</PRE>
+
+<P>is the last line valid?  There is implementation variance on this
+point.  Similarly, for an example like</P>
+
+<PRE>
+  template&lt;typename A&gt; struct Outer {
+   template&lt;typename B, typename C&gt; struct Inner;
+  };
+  Outer&lt;int&gt; outer;
+  template&lt;typename A&gt; template&lt;typename B&gt;
+    struct Outer&lt;A&gt;::Inner&lt;typename A::error, B&gt; {};
+</PRE>
+
+<P>at what point, if at all, is the declaration of the partial
+specialization instantiated?  Again, there is implementation variance in
+the treatment of this example.</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>CWG decided that partial specialization declarations should be
+instantiated only when needed to determine whether the partial
+specialization matches or not.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>See also paper N4090.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

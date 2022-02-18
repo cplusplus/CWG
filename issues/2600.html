@@ -1,0 +1,287 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2600</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2600"></A><H4>2600.
+  
+Type dependency of placeholder types
+</H4>
+<B>Section: </B>13.8.3.3&#160; [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-18<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Subclause 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#7">temp.dep.type</A>] paragraph 7 has a list of
+types considered to be dependent. This list covers placeholder types
+only insofar as it has an entry
+about <TT>decltype(expression)</TT>. Subclause
+13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3 has a list of expression forms
+not considered dependent unless specific types named by the
+expressions are dependent. This list includes forms where placeholder
+types are allowed. For example, the wording does not say that
+the <I>new-expression</I> at #1 (below) is dependent, but it ought to
+be:</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A { A(bool, T); };
+
+  void g(...);
+
+  template &lt;typename T&gt;
+  auto f(T t) { return g(new A(t, 0)); }  // <SPAN CLASS="cmnt">#1</SPAN>
+
+  int g(A&lt;int&gt; *);
+  int h() { return f&lt;void *&gt;(nullptr); }
+</PRE>
+
+<P>Some implementation even treats an obviously non-dependent case as
+dependent:</P>
+
+<PRE>
+  template &lt;typename T, typename U&gt; struct A { A(T, U); };
+
+  void g(...); //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template &lt;typename T&gt;
+  auto f() { return g(new A(0, 0)); } //<SPAN CLASS="cmnt"> #1 or #2?</SPAN>
+
+  int g(A&lt;int, int&gt; *); //<SPAN CLASS="cmnt"> #2</SPAN>
+  void h() { return f&lt;void *&gt;(); }
+</PRE>
+
+<P>A similar example that is non-dependent:</P>
+
+<PRE>
+  template &lt;typename T, typename U = T&gt; struct A { A(T, U); };
+
+  void g(...);
+
+  template &lt;typename T&gt;
+  auto f() { return g(new A(0, 0)); }
+
+  int g(A&lt;int&gt; *);
+  void h() { return f&lt;void *&gt;(); }
+</PRE>
+
+<P>And another non-dependent one:</P>
+
+<PRE>
+  template &lt;typename T, typename U = T&gt; struct A { A(T); };
+
+  void g(...);
+
+  template &lt;typename T&gt;
+  auto f() { return g(new A(0)); }
+
+  int g(A&lt;int&gt; *);
+  void h() { return f&lt;void *&gt;(); }
+</PRE>
+
+<P>And here is an example that is dependent:</P>
+
+<PRE>
+  template&lt;class T&gt;
+  struct S {
+   template&lt;class U = T&gt; struct A { A(int); };
+
+   auto f() { return new A(0); } //<SPAN CLASS="cmnt"> dependent return type</SPAN>
+  };
+</PRE>
+
+<P><B>Proposed resolution (November, 2022) [SUPERSEDED]:</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#2">expr.new</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a placeholder type (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>])
+<INS>or a placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>])</INS> appears in
+the <I>type-specifier-seq</I> of a <I>new-type-id</I>
+or <I>type-id</I> of a <I>new-expression</I>, the allocated type is
+deduced as follows: Let init be the <I>new-initializer</I> , if any,
+and T be the <I>new-type-id</I> or <I>type-id</I> of
+the <I>new-expression</I>, then the allocated type is the type deduced
+for the variable x in the invented declaration
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]):
+<PRE>
+T x <I>init</I> ;
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Insert new paragraphs before
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#7">temp.dep.type</A>] paragraph 7 and change the latter as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<INS>An initializer is dependent if any constituent expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of the initializer is type-dependent.  A
+placeholder type (9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general">dcl.spec.auto.general</A>]) is dependent if it
+designates a type deduced from a dependent initializer.</INS>
+</P>
+
+<P>
+<INS>A placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]) is dependent if</INS>
+
+<UL>
+<LI><INS>it has a dependent initializer or</INS></LI>
+
+<LI><INS>any default <I>template-argument</I> of the primary class
+template named by the placeholder is dependent when considered in the
+scope enclosing the primary class template.</INS></LI>
+</UL>
+</P>
+
+<P>A type is dependent if it is</P>
+
+<UL>
+<LI>...</LI>
+
+<LI>a function type whose exception specification is value-dependent,</LI>
+
+<LI><INS>denoted by a dependent placeholder type,</INS></LI>
+
+<LI><INS>denoted by a dependent placeholder for a deduced class
+type,</INS></LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-12):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#2">expr.new</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a placeholder type (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>])
+<INS>or a placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>])</INS> appears in
+the <I>type-specifier-seq</I> of a <I>new-type-id</I>
+or <I>type-id</I> of a <I>new-expression</I>, the allocated type is
+deduced as follows: Let init be the <I>new-initializer</I> , if any,
+and T be the <I>new-type-id</I> or <I>type-id</I> of
+the <I>new-expression</I>, then the allocated type is the type deduced
+for the variable x in the invented declaration
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]):
+<PRE>
+T x <I>init</I> ;
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Insert new paragraphs before
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#7">temp.dep.type</A>] paragraph 7 and change the latter as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<INS>An initializer is dependent if any constituent expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of the initializer is type-dependent.  A
+placeholder type (9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general">dcl.spec.auto.general</A>]) is dependent if it
+designates a type deduced from a dependent initializer.</INS>
+</P>
+
+<P><INS>A placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]) is dependent if</INS></P>
+
+<UL>
+<LI><INS>it has a dependent initializer, or</INS></LI>
+
+<LI>
+<INS>it refers to an alias template that is a member of the
+current instantiation and whose <I>defining-type-id</I> is dependent after
+class template argument deduction (12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]) and
+substitution (13.7.8 [<A href="https://wg21.link/temp.alias">temp.alias</A>]).</INS>
+</LI>
+</UL>
+
+<P class="ins">[ Example:</P>
+
+<PRE class="ins">
+  template&lt;class T, class V&gt;
+  struct S { S(T); };
+
+  template&lt;class U&gt;
+  struct A {
+    template&lt;class T&gt; using X = S&lt;T, U&gt;;
+    template&lt;class T&gt; using Y = S&lt;T, int&gt;;
+    void f() {
+      new X(1);    // dependent
+      new Y(1);    // not dependent
+    }
+  };
+</PRE>
+<P class="ins">-- end example ]</P>
+
+<P>A type is dependent if it is</P>
+
+<UL>
+<LI>...</LI>
+
+<LI>a function type whose exception specification is value-dependent,</LI>
+
+<LI><INS>denoted by a dependent placeholder type,</INS></LI>
+
+<LI><INS>denoted by a dependent placeholder for a deduced class
+type,</INS></LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

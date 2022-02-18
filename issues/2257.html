@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2257</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2257"></A><H4>2257.
+  
+Lifetime extension of references vs exceptions
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-04-07<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>There is implementation divergence on the following example:</P>
+
+<PRE>
+  #include &lt;stdio.h&gt;
+  struct A {
+    bool live;
+    A() : live(true) {
+      static int cnt;
+      if (cnt++ == 1) throw 0;
+    }
+    ~A() {
+      fprintf(stderr, "live: %d\n", live);
+      live = false;
+    }
+  };
+  struct AA { A &amp;&amp;a0, &amp;&amp;a1; };
+  void doit() {
+    static AA aa = { A(), A() };
+  }
+  int main(void) {
+    try {
+      doit();
+    }
+    catch (...) {
+      fprintf(stderr, "in catch\n");
+      doit();
+    }
+  }
+</PRE>
+
+<P>Some implementations produce</P>
+
+<PRE>
+  in catch
+  live: 1
+  live: 1
+  live: 0
+</PRE>
+
+<P>While others produce</P>
+
+<PRE>
+  live: 1
+  in catch
+  live: 1
+  live: 1
+</PRE>
+
+<P>With regard to the reference to which the
+first-constructed object of type <TT>A</TT> is bound, at
+what point should its lifetime end? Perhaps it should be
+specified that the lifetime of the temporary is only
+extended if said initialization does not exit via an
+exception (which means that calling <TT>::std::exit(0)</TT>
+as opposed to throwing would not result in a call to
+<TT>~A()</TT>). </P>
+
+<P>See also <A HREF="1634.html">issue 1634</A>.</P>
+
+<P><B>Notes from the December, 2016 teleconference:</B></P>
+
+<P>The consensus was that the temporaries should be destroyed immediately
+if an exception occurs. 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 should
+be extended to apply to static initialization, so that even if a temporary
+is lifetime-extended (because it has static storage duration), it will be
+destroyed in case of an exception.</P>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<P>Change 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the initialization or destruction of an object other than
+by delegating constructor is terminated by an exception, the
+destructor is invoked for each of the object's direct
+subobjects and, for a complete object, virtual base class
+subobjects, whose initialization has completed
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) and whose destructor has not yet
+begun execution, except that in the case of destruction, the
+variant members of a union-like class are not destroyed.
+<INS>[<I>Note:</I> If such an object has a reference member
+that extends the lifetime of a temporary object, this ends
+the lifetime of the reference member, so the lifetime of the
+temporary object is effectively not extended.&#8212;<I>end
+note</I>]</INS> The subobjects are destroyed in the reverse
+order of the completion of their construction. Such
+destruction is sequenced before entering a handler of
+the <I>function-try-block</I> of the constructor or
+destructor, if any.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

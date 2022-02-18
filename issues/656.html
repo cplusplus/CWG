@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 656</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="656"></A><H4>656.
+  
+Direct binding to the result of a conversion operator
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 October 2007<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    struct A { };
+    struct B : public A { };
+    struct X {
+       operator B();
+    };
+    X x;
+
+    int main() {
+       const A&amp; r = x;
+       return 0;
+    }
+</PRE>
+
+<P>It seems like the resolution of <A HREF="391.html">issue 391</A> doesn't actually cover this; <TT>X</TT> is not
+reference-compatible with <TT>A</TT>, so we go past the modified
+bullet (9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5, bullet 2,
+sub-bullet 1), which reads:</P>
+
+<BLOCKQUOTE>
+
+If the initializer expression is an rvalue, with <TT>T2</TT> a class
+type, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible
+with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; the reference is bound to
+the object represented by the rvalue (see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>])
+or to a sub-object within that object.
+
+</BLOCKQUOTE>
+
+<P>and hit</P>
+
+<BLOCKQUOTE>
+
+Otherwise, a temporary of type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+created and initialized from the initializer expression using the
+rules for a non-reference copy initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). The reference is then bound to the temporary.
+
+</BLOCKQUOTE>
+
+<P>which seems to require that we create an <TT>A</TT> temporary
+copied from the return value of <TT>X::operator B()</TT> rather than
+bind directly to the <TT>A</TT> subobject.  I think that the
+resolution of <A HREF="391.html">issue 391</A> should cover this
+situation as well, and the EDG compiler seems to agree with me.</P>
+
+<P>(See also <A HREF="896.html">issue 896</A>.)</P>
+
+<P><B>Proposed resolution (September, 2009):</B></P>
+
+<OL>
+<LI><P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as
+follows:</P></LI>
+
+<UL>
+<LI><P>If the reference is an lvalue reference...</P></LI>
+
+<LI><P>Otherwise, the reference shall be an lvalue reference to a
+non-volatile const type...</P></LI>
+
+<UL>
+<LI><P>
+<DEL>If the initializer expression is an rvalue, with
+<TT>T2</TT> a class type, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; the
+reference is bound to the object represented by the rvalue (see
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or to a sub-object within that
+object.</DEL> <INS>If <TT>T1</TT> and <TT>T2</TT> are class types
+and</INS>
+</P></LI>
+
+<UL>
+<LI><P><INS>the initializer expression is an rvalue, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; or</INS></P></LI>
+
+<LI><P><INS><TT>T1</TT> is not reference-related to <TT>T2</TT>, and
+the initializer expression can be implicitly converted to an rvalue of
+type &#8220;<I>cv3</I> <TT>T3</TT>,&#8221; where &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is reference-compatible with &#8220;<I>cv3</I>
+<TT>T3</TT>&#8221; (this conversion is selected by enumerating the
+applicable conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and
+choosing the best one through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) ),</INS></P></LI>
+
+</UL>
+
+<P>
+<INS>then the reference is bound to the initializer expression
+rvalue in the first case, and to the object that is the result of the
+conversion in the second case (or, in either case, to the appropriate
+base class subobject of the object).</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A { };
+  struct B : A { } b;
+  extern B f();
+  const A&amp; rca = f();    //<SPAN CLASS="cmnt"> Bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the </SPAN>B<SPAN CLASS="cmnt"> rvalue.</SPAN>
+  A&amp;&amp; rcb = f();         //<SPAN CLASS="cmnt"> Same as above</SPAN>
+<INS>  struct X {
+    operator B();
+  } x;
+  const A&amp; r = x;        //<SPAN CLASS="cmnt"> Bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the result of the conversion</SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</UL>
+
+<P><I>Editorial note: <A HREF="589.html">issue 589</A> makes edits
+to the top-level bullet preceding this one.  The wording resulting
+from those edits should be changed for consistency with this wording
+so that the text there reads, &#8220;...in the first case and to the
+lvalue result of the conversion in the second case <INS>(or, in either
+case, to the appropriate base class subobject of the
+object)</INS>.&#8221;</I></P>
+
+<LI><P>Change 12.2 [<A href="https://wg21.link/over.match#2">over.match</A>] paragraph 2, last bullet as
+follows:</P></LI>
+
+<UL><LI>invocation of a conversion function for conversion to an
+lvalue <INS>or class rvalue</INS> to which a reference (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) will be directly bound (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]).</LI></UL>
+
+<LI><P>Change 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Under the conditions specified in 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>], a
+reference can be bound directly to an lvalue <INS>or class
+rvalue</INS> that is the result of applying a conversion function to
+an initializer expression.  Overload resolution is used to select the
+conversion function to be invoked.  Assuming that &#8220;<I>cv1</I>
+<TT>T</TT>&#8221; is the underlying type of the reference being
+initialized, and &#8220;<I>cv</I> <TT>S</TT>&#8221; is the type of the
+initializer expression, with <TT>S</TT> a class type, the candidate
+functions are selected as follows:
+
+<UL><LI><P>The conversion functions of <TT>S</TT> and its base classes
+are considered, except that for copy-initialization, only the
+non-explicit conversion functions are considered.  Those that are not
+hidden within <TT>S</TT> and yield type &#8220;lvalue reference to
+<I>cv2</I> <TT>T2</TT>&#8221; <INS>(when 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+requires an lvalue result), or &#8220;<I>cv2</I> <TT>T2</TT>&#8221; or
+&#8220;rvalue reference to <I>cv2</I> <TT>T2</TT> (when 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] requires an rvalue result)</INS>, where
+&#8220;<I>cv1</I> <TT>T</TT>&#8221; is reference-compatible
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) with &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221;, are candidate functions.</P></LI></UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(Note: this resolution also resolves <A HREF="896.html">issue 896</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

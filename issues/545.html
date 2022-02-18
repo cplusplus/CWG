@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 545</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="545"></A><H4>545.
+  
+User-defined conversions and built-in operator overload resolution
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 October 2005<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    class B1 {};
+    typedef void (B1::*PB1) (); //<SPAN CLASS="cmnt"> memptr to </SPAN>B1
+
+    class B2 {};
+    typedef void (B2::*PB2) (); //<SPAN CLASS="cmnt"> memptr to </SPAN>B2
+
+    class D1 : public B1, public B2 {};
+    typedef void (D1::*PD) (); //<SPAN CLASS="cmnt"> memptr to </SPAN>D1
+
+    struct S {
+         operator PB1(); //<SPAN CLASS="cmnt"> can be converted to </SPAN>PD
+    } s;
+    struct T {
+         operator PB2(); //<SPAN CLASS="cmnt"> can be converted to </SPAN>PD
+    } t;
+
+    void foo() {
+         s == t; //<SPAN CLASS="cmnt"> Is this an error?</SPAN>
+    }
+</PRE>
+
+<P>According to 12.5 [<A href="https://wg21.link/over.built#16">over.built</A>] paragraph 16, there is an
+<TT>operator==</TT> for <TT>PD</TT> (&#8220;For every pointer to
+member type...&#8221;), so why wouldn't it be used for this
+comparison?</P>
+
+<P>
+<U>Mike Miller</U>: The problem, as I understand it, is that
+12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3, bullet 3, sub-bullet 3
+is broader than it was intended to be.  It says that candidate
+built-in operators must &#8220;accept operand types to which the given
+operand or operands can be converted according to 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>].&#8221; 12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]
+describes user-defined conversions as having a second standard
+conversion sequence, and there is nothing to restrict that second
+standard conversion sequence.</P>
+
+<P>My initial thought on addressing this would be to say that
+user-defined conversion sequences whose second standard conversion
+sequence contains a pointer conversion or a pointer-to-member
+conversion are not considered when selecting built-in candidate
+operator functions.  They would still be applicable after the hand-off
+to Clause 5 (e.g., in bringing the operands to their common type,
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>], or composite pointer type, 7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), just not in constructing the list of built-in
+candidate operator functions.</P>
+
+<P>I started to suggest restricting the second standard conversion
+sequence to conversions having Promotion or Exact Match rank, but that
+would exclude the Boolean conversions, which are needed
+for <TT>!</TT>, <TT>&amp;&amp;</TT>, and <TT>||</TT>.  (It would have
+also restricted the floating-integral conversions, though, which might
+be a good idea.  They can't be used implicitly, I think, because there
+would be an ambiguity among all the promoted integral types; however,
+none of the compilers I tested even tried those conversions because
+the errors I got were not ambiguities but things like &#8220;floating
+point operands not allowed for <TT>%</TT>&#8221;.)</P>
+
+<P>
+<U>Bill Gibbons</U>: I recall seeing this problem before, though
+possibly not in committee discussions.  As written this rule makes the
+set of candidate functions dependent on what classes have been
+defined, including classes not otherwise required to have been defined
+in order for "==" to be meaningful.  For templates this implies that
+the set is dependent on what templates have been instantiated,
+e.g.</P>
+
+<PRE>
+  template&lt;class T&gt; class U : public T { };
+  U&lt;B1&gt; u;  //<SPAN CLASS="cmnt"> changes the set of candidate functions to include</SPAN>
+            //<SPAN CLASS="cmnt"> </SPAN>operator==(U&lt;B1&gt;,U&lt;B1&gt;)<SPAN CLASS="cmnt">?</SPAN>
+</PRE>
+
+<P>There may be other places where the existence of a class
+definition, or worse, a template instantiation, changes the semantics
+of an otherwise valid program (e.g. pointer conversions?) but it seems
+like something to be avoided.</P>
+
+<P>(See also <A HREF="954.html">issue 954</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

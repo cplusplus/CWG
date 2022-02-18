@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2380</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2380"></A><H4>2380.
+  
+<I>capture-default</I> makes too many references odr-usable
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-06-14<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>The current rule for determining when a local entity is odr-usable
+because of a <I>capture-default</I> is too broad. For example:</P>
+
+<PRE>
+  void f() {
+    int n;
+    void g(int k = n);                  //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    [](int k = n) {};                   //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    [=](int k = n) {};                  //<SPAN CLASS="cmnt"> valid!</SPAN>
+    [=](int k = [=]{ return n; }()) {}; //<SPAN CLASS="cmnt"> valid!</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#9.2.2">basic.def.odr</A>] bullet 9.2.2 and add to the
+example as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A local entity (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])
+is <I>odr-usable</I> in a declarative region
+(_N4868_.6.4.1 [<A href="https://wg21.link/basic.scope.declarative">basic.scope.declarative</A>]) if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>the intervening declarative region is the function parameter
+scope of a <I>lambda-expression</I> that has
+a <I>simple-capture</I> naming the entity or has
+a <I>capture-default</I><INS>, and the block scope of the
+<I>lambda-expression</I> is also an intervening declarative
+region</INS>.</P></LI>
+
+</UL>
+
+</UL>
+
+<P>If a local entity is odr-used in a declarative region in
+which it is not odr-usable, the program is ill-formed.
+[<I>Example:</I>
+</P>
+
+<PRE>
+  void f(int n) {
+    [] { n = 1; };        //<SPAN CLASS="cmnt"> error, </SPAN>n<SPAN CLASS="cmnt"> is not odr-usable due to intervening lambda-expression</SPAN>
+    struct A {
+      void f() { n = 2; } //<SPAN CLASS="cmnt"> error, </SPAN>n<SPAN CLASS="cmnt"> is not odr-usable due to intervening function definition scope</SPAN>
+    };
+    void g(int = n);      //<SPAN CLASS="cmnt"> error, </SPAN>n<SPAN CLASS="cmnt"> is not odr-usable due to intervening function parameter scope</SPAN>
+<INS>    [=](int k = n) {};    //<SPAN CLASS="cmnt"> error, </SPAN>n<SPAN CLASS="cmnt"> is not odr-usable due to being outside the block scope of the lambda-expression</SPAN></INS>
+    [&amp;] { [n]{ return n; }; }; //<SPAN CLASS="cmnt"> OK</SPAN>
+  }
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2562</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2562"></A><H4>2562.
+  
+Exceptions thrown during coroutine startup
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-06<BR>
+
+
+
+
+<P>Subclause 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>] seems to miss specification
+about the behavior of coroutines when an exception is thrown during
+the early phases of a coroutine evaluation.  It is unclear at what
+point the ownership of the coroutine frame is passed from the compiler
+to the user, who then needs to call
+<TT>std::coroutine_handle::destroy</TT> to destroy and free the
+coroutine frame, including the parameter copies.  The following
+situations arise:</P>
+
+<UL>
+
+<LI>Allocation fails, and
+<TT>get_return_object_on_allocation_failure()</TT> is
+returned.</LI>
+
+<LI>Allocation succeeds, but an exception is thrown before the return
+object is initialized (e.g. when initializing the promise or
+evaluating <TT>get_return_object</TT>). The coroutine state ought to
+be deallocated automatically and the exception propagated.</LI>
+
+<LI>The return object is successfully initialized, but an exception
+would leave the coroutine before it would first suspend, either
+because <I>initial-suspend</I>'s <TT>await_ready</TT>
+or <TT>await_suspend</TT> exits via an exception, or
+because <TT>unhandled_exception</TT> rethrows. The coroutine ought to
+be suspended at its final suspend point, the return object
+destroyed, and the exception propagated; the return object's
+destructor is responsible for ensuring the coroutine is
+destroyed.</LI>
+
+<LI>The coroutine ever suspends, or the coroutine terminates normally
+without ever suspending. The return object is returned to the caller,
+carrying with it ownership of the coroutine state.</LI>
+
+</UL>
+
+<P>See also <A HREF="2451.html">issue 2451</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 312</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="312"></A><H4>312.
+  
+&#8220;use&#8221; of invalid pointer value not defined
+</H4>
+<B>Section: </B>6.7.6.5.3&#160; [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin von Loewis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Sep 2001<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+<P>6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#4">basic.stc.dynamic.deallocation</A>] paragraph 4 mentions that the effect
+of using an invalid pointer value is undefined. However, the standard
+never says what it means to 'use' a value.</P>
+
+<P>There are a number of possible interpretations, but it appears that
+each of them leads to undesired conclusions:</P>
+<OL>
+<LI>
+A value is 'used' in a program if a variable holding this value
+appears in an expression that is evaluated.
+This interpretation would render the sequence
+<PRE>
+   int *x = new int(0);
+   delete x;
+   x = 0;
+</PRE>
+into undefined behaviour. As this is a common idiom, this is
+clearly undesirable.
+</LI>
+<LI>
+A value is 'used' if an expression evaluates to that value.
+This would render the sequence
+<PRE>
+   int *x = new int(0);
+   delete x;
+   x-&gt;~int();
+</PRE>
+into undefined behaviour; according to _N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>],
+the variable x is
+'evaluated' as part of evaluating the pseudo destructor call. This,
+in turn, would mean that all containers (Clause 23 [<A href="https://wg21.link/containers">containers</A>])
+of pointers show
+undefined behaviour, e.g. 23.3.9.4 [<A href="https://wg21.link/list.modifiers">list.modifiers</A>]
+requires to invoke the
+destructor as part of the <TT>clear()</TT> method of the container.
+</LI>
+</OL>
+
+<P>If any other meaning was intended for 'using an expression', that
+meaning should be stated explicitly.</P>
+
+<P>(See also <A HREF="623.html">issue 623</A>.)</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="616.html">issue 616</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

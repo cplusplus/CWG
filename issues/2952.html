@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2952</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2952"></A><H4>2952.
+  
+Vacuous initialization for subobjects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-31<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    int x, y;
+    constexpr A() : x((y = 1, y)) {}
+  };
+  constexpr int k = A().y;
+</PRE>
+
+<P>"Vacuous initialization" is defined in 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 only for variables, not for subobjects, so it is unclear
+whether the example is well-formed or not.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>lifetime</I> of an object or reference is a runtime property of
+the object or reference. <DEL>A variable is said to have <I>vacuous
+initialization</I> if it is default-initialized, no other
+initialization is performed, and, if it is of class type or a
+(possibly multidimensional) array thereof, a trivial constructor of
+that class type is selected for the default-initialization.</DEL> The
+lifetime of an object of type T begins when:
+<UL>
+<LI>storage with the proper alignment and size for type T is obtained,
+and</LI>
+<LI>its initialization <DEL>(if any)</DEL> is complete <DEL>(including vacuous
+initialization) (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])</DEL>,</LI>
+</UL>
+except that if the object is a union member or subobject thereof, its
+lifetime only begins if that union member is the initialized member in
+the union (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>], 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]),
+or as described in 11.5 [<A href="https://wg21.link/class.union">class.union</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], and 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>], and
+except as described in 20.2.10.2 [<A href="https://wg21.link/allocator.members">allocator.members</A>]. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.5 [<A href="https://wg21.link/basic.indet#1">basic.indet</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If <DEL>no initialization is performed for</DEL> an object (including
+<DEL>subobjects</DEL> <INS>a subobject</INS>) <INS>is not accessed
+during its initialization</INS>, such a byte retains its initial value
+until that value is replaced (9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>],
+7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]). If any bit in the value representation
+has an indeterminate value, the object has an indeterminate value;
+otherwise, if any bit in the value representation has an erroneous
+value, the object has an erroneous value (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.8 [<A href="https://wg21.link/stmt.dcl#2">stmt.dcl</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+<INS>A variable is said to have <I>vacuous initialization</I> if it is
+default-initialized (9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]), no other
+initialization is performed, and, if it is of class type or a
+(possibly multidimensional) array thereof, a trivial constructor of
+that class type (11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]) is selected for the
+default-initialization.</INS> A block variable with automatic storage
+duration (6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) is <I>active</I> everywhere in
+the scope to which it belongs after its <I>init-declarator</I> . Upon
+each transfer of control (including sequential execution of
+statements) within a function from point P to point Q, all block
+variables with automatic storage duration that are active at P and not
+at Q are destroyed in the reverse order of their construction. Then,
+all block variables with automatic storage duration that are active at
+Q but not at P are initialized in declaration order; unless all such
+variables have vacuous initialization
+<DEL>(6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>])</DEL>, the transfer of control shall
+not be a jump. [ Footnote: ... ] When a <I>declaration-statement</I>
+is executed, P and Q are the points immediately before and after it;
+when a function returns, Q is after its body.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#7.3">dcl.init.general</A>] bullet 7.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+To <I>default-initialize</I> an object of type T means:
+<UL>
+<LI>If T is a (possibly cv-qualified) class type (Clause
+Clause 11 [<A href="https://wg21.link/class">class</A>]), constructors are considered. The applicable
+constructors are enumerated (12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]), and the
+best one for the initializer () is chosen through overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]). The constructor thus selected is called,
+with an empty argument list, to initialize the object.</LI>
+<LI>If T is
+an array type, the semantic constraints of default-initializing a
+hypothetical element shall be met and each element is
+default-initialized.</LI>
+<LI>Otherwise, <DEL>no</DEL> <INS>default</INS> initialization <DEL>is
+performed</DEL>
+<INS>completes without accessing the object</INS>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

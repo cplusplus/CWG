@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 780</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="780"></A><H4>780.
+  
+Questions regarding the point of definition of a concept map
+</H4>
+<B>Section: </B>_N2914_.14.10.2&#160; [<A href="https://wg21.link/concept.map">concept.map</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 February, 2009<BR>
+
+
+
+
+<OL>
+<LI>
+<P>According to _N2914_.14.11.1.1 [<A href="https://wg21.link/temp.req.sat#2">temp.req.sat</A>] paragraph 2,
+a concept requirement is satisfied if a concept map with the same
+name and template argument list is found by concept map lookup. The
+point at which the name of a concept map is inserted into its scope
+is, according to _N2914_.14.10.2 [<A href="https://wg21.link/concept.map#2">concept.map</A>] paragraph 2, immediately
+following its <I>concept-id</I>.  This enables a requirement on a
+member of a concept map to be satisfied by the concept map in which it
+appears, for example:</P>
+
+<PRE>
+    concept C2&lt;typename T&gt;{}
+
+    concept D2&lt;typename T&gt; {
+            typename type;
+            requires C2&lt;type&gt;;
+    }
+
+    template&lt;D2 T&gt;
+    concept_map C2&lt;T&gt;{}
+
+    concept_map D2&lt;int&gt; {
+            typedef int type; // Okay
+    }
+</PRE>
+
+<P>However, these rules might lead to problems with the concept maps
+that the compiler tries but fails to generate for auto concepts.
+Presumably a compiler might insert the name of the generated concept
+map into the containing scope, so that it can satisfy its own
+requirements, but then if some other requirement cannot be satisfied
+and thus the concept map is not defined after all (_N2914_.14.10.2 [<A href="https://wg21.link/concept.map#11">concept.map</A>] paragraph 11), the name must then be removed again.  It
+might be clearer to make the point of definition for a concept map
+after the closing brace and just have a special case for how the
+concept map is handled within its own definition.
+</P>
+
+</LI>
+
+<LI>
+<P>On a related note, the current specification seems unclear
+about whether a failure to generate a concept map for an auto
+concept means that no further attempts will be made to generate it.
+Consider the following example:
+</P>
+
+<PRE>
+    auto concept A&lt;typename X&gt; { /* */ }
+    auto concept B&lt;typename X&gt; : A&lt;X&gt; { void enabler(X); }
+
+    template &lt;A T&gt; void f(T x); // #1
+    template &lt;B T&gt; void f(T x); // #2
+
+    class C
+    {
+       // a class that satisfies A&lt;C&gt; but not B&lt;C&gt;
+       // because no enabler(X) in scope
+    };
+
+    int foo()
+    {
+       C x;
+       f(x); // #3
+    }
+
+    void enabler(C);
+
+    int bar()
+    {
+       C x;
+       f(x); // #4
+    }
+</PRE>
+
+<P>At #3, the concept map for <TT>B</TT> cannot be generated, so the
+call invokes #1. There doesn't appear to be anything currently that
+indicates that the reference at #4 should not once again attempt to
+generate the concept map for <TT>B</TT>, which will succeed this time
+and make the call invoke #2.  It seems preferable that both calls
+should invoke #1, but that does not seem to be the effect of the
+current wording.</P>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

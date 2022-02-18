@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2254</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2254"></A><H4>2254.
+  
+Standard-layout classes and bit-fields
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-03-23<BR>
+
+
+<P>[Accepted as a DR at the June, 2018 (Rapperswil) meeting.]</P>
+
+
+
+<P>According to 11.4 [<A href="https://wg21.link/class.mem#25">class.mem</A>] paragraph 25,</P>
+
+<BLOCKQUOTE>
+
+If a standard-layout class object has any non-static data members, its
+address is the same as the address of its first non-static data
+member. Otherwise, its address is the same as the address of its first base
+class subobject (if any). [<I>Note:</I> There might therefore be unnamed
+padding within a standard-layout struct object, but not at its beginning,
+as necessary to achieve appropriate alignment. &#8212;<I>end note</I>]
+[<I>Note:</I> The object and its first subobject are
+pointer-interconvertible (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>This wording does not consider the case when the first non-static
+data member is a bit-field, which cannot have its address taken.</P>
+
+<P><B>Proposed resolution, February, 2018: [SUPERSEDED]</B></P>
+
+<P>Change 11.4 [<A href="https://wg21.link/class.mem#25">class.mem</A>] paragraph 25 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a standard-layout class object has any non-static data members, its
+address is the same as the address of its first non-static data
+member <INS>if that member is not a bit-field</INS>. <DEL>Otherwise, its</DEL>
+<INS>Its</INS> address is <INS>also</INS> the same as the address
+of <INS>each of</INS> its <DEL>first</DEL> base class subobject<INS>s</INS>
+<DEL>(if any)</DEL>. [<I>Note:</I> There might therefore be unnamed padding
+within a standard-layout struct object <INS>inserted by an
+implementation</INS>, but not at its beginning, as necessary to achieve
+appropriate alignment. &#8212;<I>end note</I>] [<I>Note:</I> The object and
+its first subobject are pointer-interconvertible
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>], 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the March, 2018 meeting:</B></P>
+
+<P>It was pointed out that the definition of pointer interconvertibility
+in 6.7.6.3 [<A href="https://wg21.link/basic.stc.thread#4">basic.stc.thread</A>] paragraph 4 refers to &#8220;the first base
+class subobject&#8221; of the object and must also be updated to reflect
+the above proposed resolution.</P>
+
+<P><B>Proposed resolution (March, 2018):</B></P>
+
+<OL>
+<LI><P>Change 6.8.4 [<A href="https://wg21.link/basic.compound#4.3">basic.compound</A>] bullet 4.3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Two objects a and b are <I>pointer-interconvertible</I> if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>one is a standard-layout class object and the other is the first
+non-static data member of that object, or, if the object has no non-static
+data members, <DEL>the first</DEL> <INS>any</INS> base class subobject of
+that object (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4 [<A href="https://wg21.link/class.mem#25">class.mem</A>] paragraph 25 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a standard-layout class object has any non-static data members, its
+address is the same as the address of its first non-static data
+member <INS>if that member is not a bit-field</INS>. <DEL>Otherwise,
+its</DEL> <INS>Its</INS> address is <INS>also</INS> the same as the address
+of <INS>each of</INS> its <DEL>first</DEL> base class subobject<INS>s</INS>
+<DEL>(if any)</DEL>. [<I>Note:</I> There might therefore be unnamed padding
+within a standard-layout struct object <INS>inserted by an
+implementation</INS>, but not at its beginning, as necessary to achieve
+appropriate alignment. &#8212;<I>end note</I>] [<I>Note:</I> The object and
+its first subobject are pointer-interconvertible
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>], 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

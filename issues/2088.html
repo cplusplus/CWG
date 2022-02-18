@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2088</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2088"></A><H4>2088.
+  
+Late tiebreakers in partial ordering
+</H4>
+<B>Section: </B>13.10.3.5&#160; [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-19<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>The late tiebreakers for lvalue-vs-rvalue references and
+cv-qualification in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#9">temp.deduct.partial</A>] paragraph 9 are
+applied</P>
+
+<BLOCKQUOTE>
+
+If, for a given type, deduction succeeds in both directions
+(i.e., the types are identical after the transformations
+above) and both <TT>P</TT> and <TT>A</TT> were reference
+types (before being replaced with the type referred to
+above):
+
+</BLOCKQUOTE>
+
+<P>However, this is based on a false assumption.  For
+example,</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A {
+    struct typeA { };
+    struct typeB { };
+    using convTyA = T (*const &amp;&amp;)(typename A&lt;T&gt;::typeA);
+    using convTyB = T (*const &amp;)(typename A&lt;T&gt;::typeB);
+    operator convTyA();
+    operator convTyB();
+  };
+
+  template &lt;typename T&gt; void foo(T (*const &amp;&amp;)(typename A&lt;T&gt;::typeA));
+  template &lt;typename T&gt; int foo(T (*const &amp;)(typename A&lt;T&gt;::typeB));
+
+  int main() {
+    return foo&lt;int&gt;(A&lt;int&gt;());
+  }
+</PRE>
+
+<P>(see also issues <A HREF="1847.html">1847</A> and
+<A HREF="1157.html">1157</A>.).  We need to
+decide whether the rule is &#8220;deduction succeeds in both
+directions&#8221; or &#8220;the types are identical.&#8221;  The
+latter seems more reasonable.</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<P>Change 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#9">temp.deduct.partial</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If, for a given type, <DEL>deduction succeeds in both directions
+(i.e.,</DEL> the types are identical after the transformations
+above<DEL>)</DEL> and both <TT>P</TT> and <TT>A</TT> were reference types
+(before being replaced with the type referred to above):</P>
+
+<UL>
+<LI><P>if the type from the argument template was an lvalue reference
+and the type from the parameter template was not, the parameter type is not
+considered to be at least as specialized as the argument type;
+otherwise,</P></LI>
+
+<LI><P>if the type from the argument template is more cv-qualified than the
+type from the parameter template (as described above), the parameter type
+is not considered to be at least as specialized as the argument
+type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

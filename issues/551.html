@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 551</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="551"></A><H4>551.
+  
+When is <TT>inline</TT> permitted in an explicit instantiation?
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>07 December 2005<BR>
+
+
+<P>[Voted into the WP at the April, 2007 meeting as part of paper
+J16/07-0095 = WG21 N2235.]</P>
+
+<P>The Standard does not definitively say when the <TT>inline</TT>
+specifier may be used in an explicit instantiation.  For example,
+the following would seem to be innocuous, as the function being
+instantiated is already inline:</P>
+
+<PRE>
+    template &lt;typename T&gt; struct S {
+        void f() { }
+    };
+    template inline void S&lt;int&gt;::f();
+</PRE>
+
+<P>However, presumably one would want to prohibit something like:</P>
+
+<PRE>
+    template &lt;typename T&gt; void f(T) { }
+    template inline void f(int);
+</PRE>
+
+<P>9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4 (after application of the
+resolution of <A HREF="317.html">issue 317</A>) comes close to
+covering the obvious problematic cases:</P>
+
+<BLOCKQUOTE>
+
+If the definition of a function appears in a translation unit before
+its first declaration as inline, the program is ill-formed.  If a
+function with external linkage is declared inline in one translation
+unit, it shall be declared inline in all translation units in which it
+appears; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+<P>This would seem to prohibit the latter case, but apparently would
+not handle an exported template that was instantiated as inline
+(because the definition might not appear in the same translation unit
+as the inline instantiation).  It would be better to make a clear
+statement regarding the use of <TT>inline</TT> in explicit
+instantiations.</P>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>The CWG favored completely disallowing the <TT>inline</TT> keyword in
+explicit instantiation directives.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,202 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2549</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2549"></A><H4>2549.
+  
+Implicitly moving the operand of a <I>throw-expression</I> in unevaluated contexts
+</H4>
+<B>Section: </B>7.5.5.3&#160; [<A href="https://wg21.link/expr.prim.id.qual">expr.prim.id.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-11<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  void f() {
+    X x;
+    //<SPAN CLASS="cmnt"> Is </SPAN>x<SPAN CLASS="cmnt"> an lvalue or an xvalue here?</SPAN>
+    void g(int n = (decltype((throw x, 0))()));  //<SPAN CLASS="cmnt"> status quo: </SPAN>x<SPAN CLASS="cmnt"> is move-eligible here</SPAN>
+  }
+
+  void f() {
+    X x;
+    struct A {
+      void g() {
+        try {
+          struct Y {
+            //<SPAN CLASS="cmnt"> Is </SPAN>x<SPAN CLASS="cmnt"> an lvalue or an xvalue here?</SPAN>
+            void h(int n = (decltype((throw x, 0))()));
+          };
+        } catch (...) { }
+      }
+    };
+  }
+</PRE>
+
+<P>11.9.6 [<A href="https://wg21.link/class.copy.elision#3">class.copy.elision</A>] paragraph 3 specifies:</P>
+
+<BLOCKQUOTE>
+
+An <I>implicitly movable entity</I> is a variable of automatic storage
+duration that is either a non-volatile object or an rvalue reference
+to a non-volatile object type. In the following copy-initialization
+contexts, a move operation is first considered before attempting a
+copy operation:
+
+<UL>
+<LI>...</LI>
+
+<LI>if the operand of a <I>throw-expression</I>
+(7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>]) is a (possibly parenthesized)
+<I>id-expression</I> that names an implicitly movable entity that
+belongs to a scope that does not contain the <I>compound-statement</I>
+of the innermost <I>try-block</I> or <I>function-try-block</I> (if
+any) whose <I>compound-statement</I> or <I>ctor-initializer</I>
+contains the <I>throw-expression</I>,
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Thus, in the first example above, <TT>x</TT> is treated as an
+xvalue, but it is treated as an lvalue in the second example.  This
+outcome is surprising.</P>
+
+<P>(<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2266r2.html">P2266R2</A>
+(Simpler implicit move) moved this wording, introduced by
+<A HREF="http://open-std.org/JTC1/SC22/WG21/docs/papers/2019/p1825r0.html">P1825R0</A>
+(Merged wording for P0527R1 and P1155R3),
+from 11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>] to 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>].)</P>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#4">expr.prim.id.unqual</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+An <I>implicitly movable entity</I> is a variable
+<DEL>of</DEL> <INS>with</INS> automatic storage duration that is
+either a non-volatile object or an rvalue reference to a non-volatile
+object type. <DEL>In the following contexts,
+an</DEL> <INS>An</INS> <I>id-expression</I>
+is <I>move-eligible</I><DEL>:</DEL>
+<INS>if</INS>
+
+<UL>
+<LI>
+<INS>it names an implicitly movable entity declared in the body
+or <I>parameter-declaration-clause</I> of the innermost enclosing
+function or <I>lambda-expression</I> and</INS>
+</LI>
+
+<LI>
+<DEL>If</DEL> the <DEL><I>id-expression</I></DEL> (possibly parenthesized)
+<INS><I>id-expression</I></INS> is the operand of
+
+<UL>
+<LI>a <TT>return</TT> or <TT>co_return</TT> statement<DEL>, and
+names an implicitly movable entity declared in the body
+or <I>parameter-declaration-clause</I> of the innermost enclosing
+function or <I>lambda-expression</I></DEL> or
+</LI>
+
+<LI>
+<DEL>if the <I>id-expression</I> (possibly parenthesized) is the
+operand of</DEL> a <INS>potentially-evaluated</INS> <I>throw-expression</I>,
+<DEL>and names an implicitly movable entity that belongs to a scope
+that does not contain the <I>compound-statement</I> of the
+innermost <I>lambda-expression</I>, <I>try-block</I>,
+or <I>function-try-block</I> (if any) whose <I>compound-statement</I>
+or <I>ctor-initializer</I> encloses the <I>throw-expression</I></DEL>
+<INS>where
+no <I>try-block</I> or <I>function-try-block</I> intervenes between
+the declaration of the entity and the innermost enclosing scope of
+the <I>throw-expression</I></INS>.
+</LI>
+</UL>
+
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (December, 2024)</B></P>
+
+<P>Treating potentially-evaluated expressions differently (as opposed
+to unevaluated ones) is surprising.</P>
+
+
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#4">expr.prim.id.unqual</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+An <I>implicitly movable entity</I> is a variable
+<DEL>of</DEL> <INS>with</INS> automatic storage duration that is
+either a non-volatile object or an rvalue reference to a non-volatile
+object type. <DEL>In the following contexts,
+an</DEL> <INS>An</INS> <I>id-expression</I>
+is <I>move-eligible</I><DEL>:</DEL>
+<INS>if</INS>
+
+<UL>
+<LI class="ins">
+it names an implicitly movable entity,
+</LI>
+
+<LI>
+<DEL>If</DEL><INS>it is</INS> the <DEL><I>id-expression</I></DEL> (possibly parenthesized) <DEL>is the</DEL> operand of
+a <TT>return</TT> or <TT>co_return</TT> statement<DEL>, and
+names an implicitly movable entity declared in the body
+or <I>parameter-declaration-clause</I> of the innermost enclosing
+function or <I>lambda-expression</I></DEL> or
+
+<DEL>if the <I>id-expression</I> (possibly parenthesized) is the
+operand</DEL> of a <I>throw-expression</I>, and
+<DEL>names an implicitly movable entity that belongs to a scope
+that does not contain the <I>compound-statement</I> of the
+innermost <I>lambda-expression</I>, <I>try-block</I>,
+or <I>function-try-block</I> (if any) whose <I>compound-statement</I>
+or <I>ctor-initializer</I> encloses the <I>throw-expression</I></DEL>
+</LI>
+
+<LI class="ins">
+each intervening scope between the declaration of the entity and the
+innermost enclosing scope of the <I>id-expression</I> is a block scope
+and, for a <I>throw-expression</I>, is not the block scope of
+a <I>try-block</I> or <I>function-try-block</I>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1473</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1473"></A><H4>1473.
+  
+Syntax of <I>literal-operator-id</I>
+</H4>
+<B>Section: </B>12.6&#160; [<A href="https://wg21.link/over.literal">over.literal</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-05<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>The current grammar requires that there be no whitespace between the
+literal and the <I>ud-suffix</I>, e.g., <TT>""_abc</TT>, but that there
+be whitespace between the <TT>""</TT> and the <I>identifier</I> in a
+<I>literal-operator-id</I>, e.g., <TT>operator&#160;""&#160;_abc</TT>.
+This seems unfortunate.  Would it be possible to provide an alternate
+production,</P>
+
+<UL>
+<TT>operator</TT> <I>user-defined-string-literal</I>
+</UL>
+
+<P>with the requirement that the <I>string-literal</I> be empty?</P>
+
+<P>The current wording is also unclear regarding interactions with phases
+of translation. We have the following production:
+</P>
+
+<UL>
+<I>literal-operator-id:</I>
+<UL>
+<TT>operator ""</TT> <I>identifier</I>
+</UL>
+</UL>
+
+<P>As this is after translation phase 6, would something like</P>
+
+<PRE>
+  operator "" "" _foo
+</PRE>
+
+<P>be accepted?</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<OL>
+<LI><P>Change 12.6 [<A href="https://wg21.link/over.literal">over.literal</A>] as follows:</P></LI>
+
+<UL>
+<I>literal-operator-id:</I>
+<UL>
+<TT>operator <DEL>""</DEL></TT> <I><INS>string-literal</INS> identifier</I><BR>
+<INS><TT>operator</TT> <I>user-defined-string-literal</I></INS>
+</UL>
+</UL>
+
+<LI><P>Change 12.6 [<A href="https://wg21.link/over.literal#1">over.literal</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>The <I>string-literal</I> or <I>user-defined-string-literal</I> in a
+<I>literal-operator-id</I> shall have no <I>encoding-prefix</I> and
+shall contain no characters other than the implicit terminating
+<TT>'\0'</TT>.</INS> The <INS><I>ud-suffix</I> of the
+<I>user-defined-string-literal</I> or the</INS> <I>identifier</I> in a
+<I>literal-operator-id</I> is called a <I>literal suffix
+identifier</I>. [<I>Note:</I> some literal suffix identifiers are
+reserved for future standardization; see 16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>].  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change the example in 12.6 [<A href="https://wg21.link/over.literal#8">over.literal</A>] paragraph 8
+as follows:</P></LI>
+
+<PRE>
+  void operator "" _km(long double);                  //<SPAN CLASS="cmnt"> OK</SPAN>
+  string operator "" _i18n(const char*, std::size_t); //<SPAN CLASS="cmnt"> OK</SPAN>
+  template &lt;char...&gt; int operator "" \u03C0();        //<SPAN CLASS="cmnt"> OK: UCN for lowercase pi</SPAN>
+  float operator ""E(const char*);                    //<DEL><SPAN CLASS="cmnt"> error: ""E (with no intervening space)</SPAN>
+                                                      //<SPAN CLASS="cmnt"> is a single token</SPAN></DEL><INS><SPAN CLASS="cmnt"> OK</SPAN></INS>
+  float operator " " B(const char*);                  //<SPAN CLASS="cmnt"> error: non-<DEL>adjacent quotes</DEL><INS>empty string-literal</INS></SPAN>
+  string operator "" 5X(const char*, std::size_t);    //<SPAN CLASS="cmnt"> error: invalid literal suffix identifier</SPAN>
+  double operator "" _miles(double);                  //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+  template &lt;char...&gt; int operator "" <INS>_</INS>j(const char*); //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+</PRE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

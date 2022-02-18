@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1672</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1672"></A><H4>1672.
+  
+Layout compatibility with multiple empty bases
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-27<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>The layout compatibility rules of 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>] paragraph
+16 are phrased only in terms of non-static data members, ignoring the
+existence of base classes:</P>
+
+<BLOCKQUOTE>
+
+Two standard-layout struct (Clause 11 [<A href="https://wg21.link/class">class</A>]) types are
+layout-compatible if they have the same number of non-static data members
+and corresponding non-static data members (in declaration order) have
+layout-compatible types (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).
+
+</BLOCKQUOTE>
+
+<P>However, this means that in an example like</P>
+
+<PRE>
+  struct empty {};
+  struct A { char a; };
+  struct also_empty : empty {};
+  struct C : empty, also_empty { char c; };
+  union U {
+    struct X { A a1, a2; } x;
+    struct Y { C c1, c2; } y;
+  } u;
+</PRE>
+
+<P>
+<TT>u.x.a2.a</TT> and <TT>u.y.c2.c</TT> must have the same address,
+even though <TT>sizeof(A)</TT> would typically be 1 and
+<TT>sizeof(B)</TT> would need to be at least 2 to give the
+<TT>empty</TT> subobjects different addresses.</P>
+
+<P><B>Proposed resolution (October, 2014):</B></P>
+
+<P>Change Clause 11 [<A href="https://wg21.link/class#7">class</A>] paragraph 7 as indicated and add the
+following as a new paragraph:</P>
+
+<BLOCKQUOTE>
+
+<P>A <INS>class <TT>S</TT> is a</INS> <I>standard-layout
+class</I> <DEL>is a class that</DEL> <INS>if it</INS>:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>has no <DEL>base classes of the same type as the
+first non-static data member</DEL> <INS>element of the
+set <I>M(</I><TT>S</TT><I>)</I> of types (defined below) as
+a base class</INS>.<sup>109</sup>
+</P></LI>
+
+</UL>
+
+<P><INS><I>M(X)</I> is defined as follows:</INS></P>
+
+<UL>
+<LI><P><INS>If <I>X</I> is a non-union class type, the set
+<I>M(X)</I> is empty if <I>X</I> has no (possibly inherited
+(11.7 [<A href="https://wg21.link/class.derived">class.derived</A>])) non-static data members;
+otherwise, it consists of the type of the first non-static
+data member of <I>X</I> (where said member may be an anonymous
+union), <I>X0</I>, and the elements of <I>M(X0)</I>.</INS></P></LI>
+
+<LI><P><INS>If <I>X</I> is a union type, the set <I>M(X)</I>,
+where each <I>U<SUB>i</SUB></I> is the type of the <I>i</I>th
+non-static data member of <I>X</I>, is the union of all
+<I>M(U<SUB>i</SUB>)</I> and the set containing all
+<I>U<SUB>i</SUB></I>.</INS></P></LI>
+
+<LI><P><INS>If <I>X</I> is a non-class type, the set
+<I>M(X)</I> is empty.</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> <I>M(X)</I> is the set of the types of all
+non-base-class subobjects that are guaranteed in a
+standard-layout class to be at a zero offset in <I>X</I>.
+&#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><I>(See also the related changes in the resolution for
+<A HREF="1813.html">issue 1813</A>.)</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

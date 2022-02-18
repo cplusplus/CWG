@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1700</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1700"></A><H4>1700.
+  
+Does the special rvalue-reference deduction apply to alias templates?
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-06-14<BR>
+
+
+<P>An rvalue reference type involving a template parameter receives
+special treatment in template argument deduction in
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#3">temp.deduct.call</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+If <TT>P</TT> is an rvalue reference to a cv-unqualified template parameter
+and the argument is an lvalue, the type &#8220;lvalue reference
+to <TT>A</TT>&#8221; is used in place of <TT>A</TT> for type deduction.
+
+</BLOCKQUOTE>
+
+<P>Does this rule apply when the parameter type involves an alias
+template instead of using a template parameter directly?  For
+example:</P>
+
+<PRE>
+    template&lt;class T&gt; using RR = T&amp;&amp;;
+
+    template&lt;class T&gt; struct X {};
+    template&lt;class T&gt; struct X&lt;T&amp;&amp;&gt;; //<SPAN CLASS="cmnt"> Leave incomplete to possibly trigger an error</SPAN>
+
+    template&lt;class T&gt; void g(RR&lt;T&gt; p) {
+      X&lt;decltype(p)&gt; x;
+    }
+
+    int main() {
+      int x = 2;
+      g(x);
+    }
+</PRE>
+
+<P>There is implementation variance on the treatment of this example.</P>
+
+<P><B>Additional note (October, 2013):</B></P>
+
+<P>It was observed  that
+the type of the parameter would be the same whether written as
+<TT>T&amp;&amp;</TT> or as <TT>RR&lt;T&gt;</TT>, which would require
+that deduction be performed the same, regardless of how the type was
+written.</P>
+
+<P><B>Rationale (September, 2013):</B></P>
+
+<P>Because the types of the function parameters are the same, regardless
+of whether written directly or via an alias template, deduction must be
+handled the same way in both cases.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

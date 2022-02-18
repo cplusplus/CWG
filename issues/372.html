@@ -1,0 +1,484 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 372</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="372"></A><H4>372.
+  
+Is access granted by base class specifiers available in following base class specifiers?
+</H4>
+<B>Section: </B>13.4&#160; [<A href="https://wg21.link/temp.arg">temp.arg</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Clark Nelson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 August 2002<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>I'm not really sure what the standard
+says about this. Personally, I'd like for it to be ill-formed, but I can't
+find any words that I can interpret to say so.</P>
+<PRE>
+  template&lt;class T&gt;
+  class X
+  {
+  protected:
+    typedef T Type;
+  };
+  template&lt;class T&gt;
+  class Y
+  {
+  };
+  template&lt;class T,
+           template&lt;class&gt; class T1,
+           template&lt;class&gt; class T2&gt;
+  class Z:
+    public T2&lt;typename T1&lt;T&gt;::Type&gt;,
+    public T1&lt;T&gt;
+  {
+  };
+  Z&lt;int, X, Y&gt; z;
+</PRE>
+<P>
+<U>John Spicer</U>:
+I don't think the standard really addresses this case.  There
+is wording about access checking of things used as template arguments,
+but that doesn't address accessing members of the template argument
+type (or template) from within the template.</P>
+
+<P>This example is similar, but does not use template template arguments.</P>
+<PRE>
+  class X {
+  private:
+    struct Type {};
+  };
+  template &lt;class T&gt; struct A {
+    typename T::Type t;
+  };
+  A&lt;X&gt; ax;
+</PRE>
+
+<P>This gets an error from most compilers, though the standard is probably
+mute on this as well.  An error makes sense -- if there is no error,
+there is a hole in the access checking.  (The special rule about
+no access checks on template parameters is not a hole, because the access
+is checked on the type passed in as an argument.  But when you look
+up something in the scope of a template parameter type, you need to
+check the access to the member found.)</P>
+
+<P>The logic in the template template parameter case should be similar:
+anytime you look up something in a template-dependent class, the
+member's access must be checked, because it could be different for
+different template instances.</P>
+
+<P><B>Proposed Resolution (October 2002):</B></P>
+
+<P>Change the last sentence of 13.4 [<A href="https://wg21.link/temp.arg#3">temp.arg</A>] paragraph 3
+from:
+<BLOCKQUOTE>
+For a <I>template-argument</I> of class type, the template definition has no
+special access rights to the inaccessible members of the template
+argument type.
+</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>
+For a <I>template-argument</I> that is a class type or a class template, the
+template definition has no special access rights to the members
+of the <I>template-argument</I>.  [<I>Example</I>:
+<PRE>
+  template &lt;template &lt;class TT&gt; class T&gt; class A {
+    typename T&lt;int&gt;::S s;
+  };
+
+  template &lt;class U&gt; class B {
+    private:
+    struct S { /* ... */ };
+  };
+
+  A&lt;B&gt; b;   // ill-formed, A has no access to B::S
+</PRE>
+-- <I>end example</I>]
+</BLOCKQUOTE>
+</P>
+
+<P>
+<B>Daniel Frey posts on comp.std.c++ in July 2003:</B>
+I just read DR 372 and I think that the problem presented is not really
+discussed/solved properly. Consider this example:</P>
+<PRE>
+  class A {
+  protected:
+     typedef int N;
+  };
+
+  template&lt; typename T &gt;
+  class B
+  {};
+
+  template&lt; typename U &gt;
+  class C : public U, public B&lt; typename U::N &gt;
+  {};
+
+  C&lt; A &gt; x;
+</PRE>
+<P>The question is: If C is derived from A as above, is it allowed to
+access A::N before the classes opening '{'?</P>
+
+<P>The main problem is that you need to access U's protected parts in C's
+base-clause. This pattern is common when using policies, Andrei's Loki
+library was bitten by it as he tried to make some parts of the policies
+'protected' but some compilers rejected the code. They were right to
+reject it, I think it's
+11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]/2 that applies here and prevents the code
+above to be legal, although it addresses a different and reasonable
+example. To me, it seems wrong to reject the code as it is perfectly
+reasonable to write such stuff. The questions are:</P>
+
+<UL>
+<LI>Do you agree it's reasonable?</LI>
+<LI>Is it a DR or is it a request for an extension?</LI>
+<LI>Is DR 372 the right place to address it or shall it be a new DR?</LI>
+</UL>
+
+<P>
+<U>Steve Adamczyk:</U>
+In other words, the point of the issue is over what range access derived
+from base class specifiers is granted, and whether any part of that range
+is the base specifier list itself, either the parts afterwards or the whole
+base specifier list.  (Clark Nelson confirms this is what he was
+asking with the original question.)
+Personally, I find it somewhat disturbing that access might
+arrive incrementally; I'd prefer that the access happen all
+at once, at the opening brace of the class.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We decided it makes sense to delay the access checking for the
+base class specifiers until the opening brace of the class is
+seen.  In other words, the base specifiers will be checked using
+the full access available for the class, and the order of the
+base classes is not significant in that determination. The
+implementors present all said they already had code to handle
+accumulation of delayed access checks, because it is already
+needed in other contexts.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>Change the last sentence of 13.4 [<A href="https://wg21.link/temp.arg#3">temp.arg</A>] paragraph 3
+as indicated:</P>
+
+<BLOCKQUOTE>
+
+For a <I>template-argument</I> <DEL>of</DEL> <INS>that is a</INS> class
+type <INS>or a class template</INS>, the template definition
+has no special access rights to the <DEL>inaccessible</DEL> members of the
+<DEL>template argument type</DEL> <INS><I>template-argument</I>.
+[<I>Example:</I>
+
+<PRE>
+    template &lt;template &lt;class TT&gt; class T&gt; class A {
+       typename T&lt;int&gt;::S s;
+    };
+
+    template &lt;class U&gt; class B {
+       private:
+       struct S { /* ... */ };
+    };
+
+    A&lt;B&gt; b;   // ill-formed, A has no access to B::S
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Insert the following as a new paragraph after the final
+paragraph of 11.8 [<A href="https://wg21.link/class.access">class.access</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>The access of names in a class <I>base-specifier-list</I> are
+checked at the end of the list after all base classes are known.
+[<I>Example:</I>
+</P>
+
+<PRE>
+    class A {
+      protected:
+         typedef int N;
+    };
+
+    template&lt;typename T&gt; class B {};
+
+    template&lt;typename U&gt; class C : public B&lt;typename U::N&gt;, public U {};
+
+    C&lt;A&gt; x;  // OK: A is a base class so A::N in B&lt;A::N&gt; is accessible
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</LI>
+
+</OL>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The 10/2004 resolution is not sufficient to implement the CWG's
+intent to allow these examples: 11.8 [<A href="https://wg21.link/class.access#1">class.access</A>] paragraph 1
+grants protected access only to &#8220;members and
+friends&#8221; of derived classes, not to their
+<I>base-specifier</I>s.  The resolution needs to be extended to say
+either that access in <I>base-specifiers</I> is determined as if they
+were members of the class being defined or that access is granted to
+the class as an entity, including its <I>base-specifier</I>s.  See
+also <A HREF="500.html">issue 500</A>, which touches on the same
+issue and should be resolved in the same way.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+
+<LI>
+<P>Change the second bullet of 11.8 [<A href="https://wg21.link/class.access">class.access</A>] paragraph
+1 as indicated:</P>
+
+<UL><LI><P>
+<TT>protected</TT>; that is, its name can be used only by
+members and friends of the class in which it is declared, <DEL>and by
+members and friends of classes derived from this class</DEL> <INS>by
+classes derived from that class, and by their friends</INS> (see
+11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>]).</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Change 11.8 [<A href="https://wg21.link/class.access#2">class.access</A>] paragraph 2 as indicated:</P>
+
+<BLOCKQUOTE>
+
+A member of a class can also access all the names <DEL>declared in the
+class of which it is a member</DEL> <INS>to which the class has access</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 11.8 [<A href="https://wg21.link/class.access#6">class.access</A>] paragraph 6 as indicated:</P>
+
+<BLOCKQUOTE>
+
+All access controls in 11.8 [<A href="https://wg21.link/class.access">class.access</A>] affect the
+ability to access a class member name from a particular scope. <DEL>The
+access control for names used in the definition of a class member that
+appears outside of the member's class definition is done as if the
+entire member definition appeared in the scope of the member's
+class.</DEL> <INS>For purposes of access control, the <I>base-specifier</I>s
+of a class and the definitions of class members that appear outside of
+the class definition are considered to be within the scope of that
+class.</INS> In particular...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the example and commentary in 11.8 [<A href="https://wg21.link/class.access">class.access</A>]
+paragraphs 6-7 as indicated:</P>
+
+<BLOCKQUOTE>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+    class A {
+      typedef int I; //<SPAN CLASS="cmnt"> private member</SPAN>
+      I f();
+      friend I g(I);
+      static I x;
+    <INS>protected:
+      struct B { };</INS>
+    };
+
+    A::I A::f () { return 0; }
+    A::I g(A::I p = A::x);
+    A::I g(A::I p) { return 0; }
+    A::I A::x = 0;
+
+    <INS>struct D: A::B, A { };</INS>
+</PRE>
+
+Here, all the uses of <TT>A::I</TT> are well-formed
+because <TT>A::f</TT> and <TT>A::x</TT> are members of
+class <TT>A</TT> and <TT>g</TT> is a friend of class <TT>A</TT>.  This
+implies, for example, that access checking on the first use
+of <TT>A::I</TT> must be deferred until it is determined that this use
+of <TT>A::I</TT> is as the return type of a member of
+class <TT>A</TT>. <INS>Similarly, the use of <TT>A::B</TT> as a
+<I>base-specifier</I> is well-formed because <TT>D</TT> is derived
+from <TT>A</TT>, so access checking of <I>base-specifier</I>s must be
+deferred until the entire <I>base-specifier-list</I> has been seen.</INS>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 11.8.4 [<A href="https://wg21.link/class.friend#2">class.friend</A>] paragraph 2, replace the following
+text:</P>
+
+<BLOCKQUOTE>
+
+<P>Declaring a class to be a friend implies that the names of private
+and protected members from the class granting friendship can be
+accessed in declarations of members of the befriended
+class. [<I>Note:</I> this means that access to private and protected
+names is also granted to member functions of the friend class (as if
+the functions were each friends) and to the static data member
+definitions of the friend class. This also means that private and
+protected type names from the class granting friendship can be used in
+the <I>base-clause</I> of a nested class of the friend class. However,
+the declarations of members of classes nested within the friend class
+cannot access the names of private and protected members from the
+class granting friendship. Also, because the <I>base-clause</I> of the
+friend class is not part of its member declarations,
+the <I>base-clause</I> of the friend class cannot access the names of
+the private and protected members from the class granting
+friendship. For example,</P>
+
+<PRE>
+    class A {
+      class B { };
+      friend class X;
+    };
+    class X: A::B {     //<SPAN CLASS="cmnt"> ill-formed: </SPAN>A::B<SPAN CLASS="cmnt"> cannot be accessed</SPAN>
+                        //<SPAN CLASS="cmnt"> in the base-clause for </SPAN>X
+      A::B mx;          //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> used to declare member of </SPAN>X
+      class Y: A::B {   //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> used to declare member of </SPAN>X
+        A::B my;        //<SPAN CLASS="cmnt"> ill-formed: </SPAN>A::B<SPAN CLASS="cmnt"> cannot be accessed</SPAN>
+                        //<SPAN CLASS="cmnt"> to declare members of nested class of </SPAN>X
+      };
+    };
+</PRE>
+
+<P>&#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>with:</P>
+
+<BLOCKQUOTE>
+
+<P>Declaring a class to be a friend implies that the names of private and
+protected members from the class granting friendship can be accessed
+in the <I>base-specifier</I>s and member declarations of the befriended
+class. [<I>Example:</I>
+</P>
+
+<PRE>
+    class A {
+      class B { };
+      friend class X;
+    };
+
+    struct X: A::B {   //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> accessible to friend</SPAN>
+      A::B mx;         //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> accessible to member of friend</SPAN>
+      class Y {
+        A::B my;       //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> accessible to nested member of friend</SPAN>
+      };
+    };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the last sentence of 13.4 [<A href="https://wg21.link/temp.arg#3">temp.arg</A>] paragraph 3
+as indicated:</P>
+
+<BLOCKQUOTE>
+
+<P>For a <I>template-argument</I> <DEL>of</DEL> <INS>that is a</INS> class type
+<INS>or a class template</INS>, the template definition has no special
+access rights to the <DEL>inaccessible</DEL> members of the <DEL>template
+argument type.</DEL> <INS><I>template-argument</I>.  [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>    template &lt;template &lt;class TT&gt; class T&gt; class A {
+      typename T&lt;int&gt;::S s;
+    };
+
+    template &lt;class U&gt; class B {
+    private:
+      struct S { /* ... */ };
+    };
+
+    A&lt;B&gt; b;    //<SPAN CLASS="cmnt"> ill-formed, </SPAN>A<SPAN CLASS="cmnt"> has no access to </SPAN>B::S
+</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 11.4.12 [<A href="https://wg21.link/class.nest#4">class.nest</A>] paragraph 4 as indicated:</P>
+
+<BLOCKQUOTE>
+
+Like a member function, a friend function (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>])
+defined within a nested class is in the lexical scope of that class;
+it obeys the same rules for name binding as a static member function
+of that class (11.4.9 [<A href="https://wg21.link/class.static">class.static</A>])<INS>, but it</INS> <DEL>and</DEL>
+has no special access rights to members of an enclosing class.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><I>(Note: this resolution also resolves issues <A HREF="494.html">494</A> and <A HREF="500.html">500</A>.)</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 771</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="771"></A><H4>771.
+  
+Move-construction of reference members of closure objects
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Caves
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 February, 2009<BR>
+
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#11">expr.prim.lambda</A>] paragraph 11, the closure
+class &#8220;has a public move constructor that performs a
+member-wise move.&#8221; Although the terms &#8220;move
+constructor&#8221; and &#8220;member-wise move&#8221; are not currently
+defined (see <A HREF="680.html">issue 680</A>), this presumably
+means that a lambda like <TT>[&amp;i]{}</TT> results in a closure class
+similar to:</P>
+
+<PRE>
+    class F {
+        int&amp; i;
+    public:
+        F(&amp;&amp; other):
+            i(std::move(other.i)) { }
+        // etc.
+    };
+</PRE>
+
+<P>This constructor is ill-formed because it attempts to initialize
+an lvalue reference to non-const int with the rvalue returned by
+<TT>std::move</TT>.</P>
+
+<P>It is not clear whether this should be handled by:</P>
+
+<OL>
+
+<LI><P>Not generating the move constructor.</P></LI>
+
+<LI><P>Generating the declaration of the move constructor but only
+defining it (and giving the corresponding error) if the move
+constructor would be used, similar to the handling of other
+implicitly-defined special member functions.</P></LI>
+
+<P><LI>Generating the move constructor but copy-constructing any
+reference members.</LI></P>
+
+</OL>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

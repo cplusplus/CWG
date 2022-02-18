@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1418</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1418"></A><H4>1418.
+  
+Type of <TT>initializer_list</TT> backing array </H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-11-19<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>According to 9.4.5 [<A href="https://wg21.link/dcl.init.list#5">dcl.init.list</A>] paragraph 5, the
+elements of the backing array for an object of type
+<TT>std::initializer_list&lt;E&gt;</TT> are of type
+<TT>E</TT>.  This is contradicted by the wording of
+17.10 [<A href="https://wg21.link/support.initlist#2">support.initlist</A>] paragraph 2.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#5">dcl.init.list</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An object of type <TT>std::initializer_list&lt;E&gt;</TT> is
+constructed from an initializer list as if the implementation
+allocated an array of <I>N</I> elements of type <TT><INS>const</INS>
+E</TT>, where <I>N</I> is the number of elements in the initializer
+list.  Each element of that array is copy-initialized with the
+corresponding element of the initializer list, and the
+<TT>std::initializer_list&lt;E&gt;</TT> object is constructed to refer
+to that array.  If a narrowing conversion is required to initialize
+any of the elements, the program is ill-formed. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct X {
+    X(std::initializer_list&lt;double&gt; v);
+  };
+  X x{ 1,2,3 };
+</PRE>
+
+<P>The initialization will be implemented in a way roughly equivalent
+to this:</P>
+
+<PRE>
+  <INS>const</INS> double __a[3] = {double{1}, double{2}, double{3}};
+  X x(std::initializer_list&lt;double&gt;(__a, __a+3));
+</PRE>
+
+<P>assuming that the implementation can construct an initializer_list
+object with a pair of pointers. &#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

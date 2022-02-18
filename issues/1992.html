@@ -1,0 +1,271 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1992</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1992"></A><H4>1992.
+  
+<TT>new (std::nothrow) int[N]</TT> can throw
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-08-27<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>According to 7.6.2.8 [<A href="https://wg21.link/expr.new#7">expr.new</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+If the expression, after converting to <TT>std::size_t</TT>, is a
+core constant expression and the expression is erroneous,
+the program is ill-formed. Otherwise,
+a <I>new-expression</I> with an erroneous expression does
+not call an allocation function and terminates by throwing
+an exception of a type that would match a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type
+<TT>std::bad_array_new_length</TT> (17.6.4.2 [<A href="https://wg21.link/new.badlength">new.badlength</A>]).
+
+<P>This wording makes no provision for an expression like</P>
+
+<PRE>
+  new (std::nothrow) int[N]
+</PRE>
+
+<P>which most programmers would intuitively expect not to throw
+an exception under any condition.</P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (May, 2015) [SUPERSEDED]:</B></P>
+
+<P>Change the last part of
+7.6.2.8 [<A href="https://wg21.link/expr.new#7">expr.new</A>] paragraph 7 as follows,
+converting the running text into bullets, and making the
+last sentence into a paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+<P>...If the expression<DEL>,</DEL> <INS>is erroneous</INS>
+after converting to <TT>std::size_t</TT><DEL>,</DEL><INS>:</INS>
+</P>
+
+<UL>
+<LI><P>
+<INS>if the <I>expression</I></INS> is a core constant
+expression<DEL> and the expression is erroneous</DEL>, the program is
+ill-formed<DEL>.</DEL><INS>;</INS>
+</P></LI>
+
+<LI><P>
+<DEL>Otherwise</DEL> <INS>otherwise</INS>,
+<DEL>a <I>new-expression</I> with an erroneous expression does
+not call</DEL> an allocation function <INS>is not called;
+instead</INS>
+</P></LI>
+
+<UL>
+<LI><P><INS>if the allocation function that would have been
+called is non-throwing (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), the value
+of the <I>new-expression</I> is the null pointer value of the
+required result type;</INS></P></LI>
+
+
+<LI><P>
+<DEL>and</DEL> <INS>otherwise, the
+<I>new-expression</I></INS> terminates by throwing an
+exception of a type that would match a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type
+<TT>std::bad_array_new_length</TT>
+(17.6.4.2 [<A href="https://wg21.link/new.badlength">new.badlength</A>]).</P></LI>
+
+</UL>
+
+</UL>
+
+<P>When the value of the <I>expression</I> is zero, the
+allocation function is called to allocate an array with no
+elements.</P>
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>The text in 15.4 paragraph 15 should also be changed.</P>
+
+<P><B>Proposed resolution (January, 2016):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#7">expr.new</A>] paragraph 7 as
+follows, dividing the running text into bullets and making
+the last sentence into a new paragraph:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The expression in a <I>noptr-new-declarator</I> is erroneous
+if:</P>
+
+<UL><LI><P>...</P></LI></UL>
+
+<P>If the <I>expression</I><DEL>,</DEL> <INS>is
+erroneous</INS> after converting
+to <TT>std::size_t</TT><DEL>,</DEL><INS>:</INS>
+</P>
+
+<UL>
+<LI><P>
+<INS>if the <I>expression</I></INS> is a core
+constant expression <DEL>and the expression is
+erroneous</DEL>, the program is
+ill-formed<DEL>.</DEL><INS>;</INS>
+</P></LI>
+
+<LI><P>
+<DEL>Otherwise</DEL> <INS>otherwise</INS>,
+<DEL>a <I>new-expression</I> with an erroneous expression does
+not call</DEL> an allocation function <DEL>and</DEL>
+<INS>is not called; instead</INS>
+</P></LI>
+
+<UL>
+<LI><P><INS>if the allocation function that would have been
+called has a non-throwing exception specification
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), the value of the
+<I>new-expression</I> is the null pointer value of the required
+result type;</INS></P></LI>
+
+<LI><P>
+<INS>otherwise, the <I>new-expression</I></INS>
+terminates by throwing an exception of a type that would
+match a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type
+<TT>std::bad_array_new_length</TT>
+(17.6.4.2 [<A href="https://wg21.link/new.badlength">new.badlength</A>]).</P></LI>
+
+</UL>
+
+</UL>
+
+<P>When the value of the expression is zero, the allocation
+function is called to allocate an array with no
+elements.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <I>set of potential exceptions of an
+expression</I> <TT>e</TT> is empty if e is a core constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). Otherwise, it is the
+union of the sets of potential exceptions of the immediate
+subexpressions of <TT>e</TT>, including default argument expressions
+used in a function call, combined with a set <I>S</I> defined by
+the form of e, as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>If <TT>e</TT> implicitly invokes <DEL>a</DEL> <INS>one or
+more</INS> function<INS>s</INS> (such as an overloaded
+operator, an allocation function in a <I>new-expression</I>,
+or a destructor if <TT>e</TT> is a full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>])), <I>S</I> is the <DEL>set of
+potential exceptions of the function.</DEL> <INS>union
+of:</INS>
+</P>
+</LI>
+
+<UL>
+<LI><P><INS>the sets of potential exceptions of all such
+functions, and</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a <I>new-expression</I> with a
+non-constant <I>expression</I> in the
+<I>noptr-new-declarator</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) and
+the allocation function selected for <TT>e</TT> has a
+non-empty set of potential exceptions, the set containing
+<TT>std::bad_array_new_length</TT>.</INS></P></LI>
+
+</UL>
+
+<LI><P>...</P></LI>
+
+<LI>
+
+<P><DEL>If <TT>e</TT> is a <I>new-expression</I> with a non-constant
+<I>expression</I> in the <I>noptr-new-declarator</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), <I>S</I> consists of the type
+<TT>std::bad_array_new_length</TT>.</DEL></P>
+</LI>
+
+</UL>
+
+<P>[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the example in 14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]
+bullet 17.2 as follows:</P></LI>
+
+<PRE>
+  struct A {
+    A(int = (A(5), 0)) noexcept;
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) = default; //<SPAN CLASS="cmnt"> exception specification contains no types</SPAN>
+    B(B&amp;&amp;, int = (throw Y(), 0)) noexcept;
+    ~B() throw(Y);
+  };
+  int n = 7;
+  struct D : public A, public B {
+    int * p = new (std::nothrow) int[n];
+  //<SPAN CLASS="cmnt"> exception specification of </SPAN>D::D()<SPAN CLASS="cmnt"> contains </SPAN>X<SPAN CLASS="cmnt"> <DEL>and </DEL></SPAN><DEL>std::bad_array_new_length</DEL>
+    //<SPAN CLASS="cmnt"> exception specification of </SPAN>D::D(const D&amp;)<SPAN CLASS="cmnt"> contains no types</SPAN>
+    //<SPAN CLASS="cmnt"> exception specification of </SPAN>D::D(D&amp;&amp;)<SPAN CLASS="cmnt"> contains </SPAN>Y
+    //<SPAN CLASS="cmnt"> exception specification of </SPAN>D::~D()<SPAN CLASS="cmnt"> contains </SPAN>X<SPAN CLASS="cmnt"> and </SPAN>Y
+  };
+<INS>  struct exp : std::bad_alloc {};
+  void *operator new[](size_t) throws(exp);
+  struct E : public A {
+    int * p = new int[n];
+    //<SPAN CLASS="cmnt"> exception specification of </SPAN>E::E()<SPAN CLASS="cmnt"> contains </SPAN>X<SPAN CLASS="cmnt">, </SPAN>exp<SPAN CLASS="cmnt">, and </SPAN>std::bad_array_new_length
+};</INS>
+</PRE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

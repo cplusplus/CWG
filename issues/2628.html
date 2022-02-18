@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2628</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2628"></A><H4>2628.
+  
+Implicit deduction guides should propagate constraints
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Roy Jacobson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-09-11<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+template&lt;class T&gt; concept True = true;
+
+template&lt;class T&gt; struct X {
+  template&lt;class U&gt; requires True&lt;T&gt; X(T, U(&amp;)[3]);
+};
+template&lt;typename T, typename U&gt; X(T, U(&amp;)[3]) -&gt; X&lt;T&gt;;
+int arr3[3];
+X z(3, arr3);     //<SPAN CLASS="cmnt"> #1</SPAN>
+</PRE>
+
+<P>According to 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.1">over.match.class.deduct</A>] bullet 1.1,
+the <I>requires-clause</I> of the constructor is not propagated to the
+function template synthesized for the implicit deduction guide.  Thus,
+instead of favoring the more-constrained implicit deduction guide per
+12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6, the
+user-declared <I>deduction-guide</I> is preferred per
+12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.11">over.match.best.general</A>] bullet 2.11.
+</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-10-20):</B></P>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.1">over.match.class.deduct</A>] bullet 1.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+If <TT>C</TT> is defined, for each constructor of <TT>C</TT>, a
+function template with the following properties:
+<UL>
+
+<LI>The template parameters are the template parameters of <TT>C</TT>
+followed by the template parameters (including default template
+arguments) of the constructor, if any.
+</LI>
+
+<LI><INS>The associated constraints (13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are
+the conjunction of the associated constraints of <TT>C</TT> and the
+associated constraints of the constructor.</INS></LI>
+
+<LI>The types of the function parameters are those of the
+constructor.</LI>
+
+<LI>The return type is the class template specialization designated by
+<TT>C</TT> and template arguments corresponding to the template parameters of
+<TT>C</TT>.</LI>
+
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

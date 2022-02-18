@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2901</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2901"></A><H4>2901.
+  
+Unclear semantics for near-match aliased access
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-14<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/548">#548</A>.)</P>
+
+<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 specifies:</P>
+
+<BLOCKQUOTE>
+
+... If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
+value of an object through a glvalue through which it is not
+type-accessible, the behavior is undefined. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, access (read or write) to an <TT>int</TT> object using an
+lvalue of type <TT>unsigned int</TT> is valid.  However,
+7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 does not specify the resulting
+value when, for example, the object contains the value -1:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
+the prvalue result. ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Similarly, 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 is silent for the
+assignment case:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), the object referred to by the left operand
+is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
+result of the right operand.
+
+</BLOCKQUOTE>
+
+<P>Any concerns about accesses to the object representation are handled in the context of
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1839r5.pdf">P1839</A>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-13):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])<DEL>, and the value contained in the object
+is the prvalue result</DEL>.<INS> Let <I>V</I> be the value contained
+in the object.  If <TT>T</TT> is an integer type, the prvalue result
+is the value of type <TT>T</TT> congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+to <I>V</I>, and <I>V</I> otherwise.</INS> ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value <DEL>of</DEL>
+<INS>obtained by applying the lvalue-to-rvalue conversion
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to</INS> its operand.  [<I>Note 1:</I>
+The value obtained is a copy of the original value. &#8212;<I>end
+note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), <INS>let <I>V</I> be the result of the right
+operand;</INS> the object referred to by the left operand is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with <DEL>the result
+of the right operand</DEL> <INS>V or, if the object is of integer
+type, with the value congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to
+V</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

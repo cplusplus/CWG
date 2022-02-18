@@ -1,0 +1,288 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 502</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="502"></A><H4>502.
+  
+Dependency of nested enumerations and enumerators
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>05 Feb 2005<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+<P>The Standard is currently silent on the dependency status of
+enumerations and enumerators that are members of class templates.
+There are three questions that must be answered in this regard:</P>
+
+<OL>
+
+<LI>
+<P><B>Are enumeration members of class templates dependent
+types?</B></P>
+
+<P>It seems clear that nested enumerations must be dependent.  For
+example:</P>
+
+<PRE>
+    void f(int);
+
+    template&lt;typename T&gt; struct S {
+        enum E { e0 };
+        void g() {
+            f(e0);
+        }
+    };
+
+    void f(S&lt;int&gt;::E);
+
+    void x() {
+        S&lt;int&gt; si;
+        si-&gt;g();       // Should call f(S&lt;int&gt;::E)
+    }
+</PRE>
+
+</LI>
+
+<LI>
+<P><B>Is <TT>sizeof</TT> applied to a nested enumeration a
+value-dependent expression (13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>])?</B></P>
+
+<P>There are three distinct cases that might have different answers
+to this question:</P>
+
+<UL>
+
+<LI>
+<PRE>
+    template&lt;typename T&gt; struct S {
+        enum E { e0 };
+    };
+</PRE>
+
+<P>Here, the size of <TT>E</TT> is, in principle, known at the time
+the template is defined.</P>
+
+</LI>
+
+<LI>
+<PRE>
+    template&lt;short I&gt; struct S {
+        enum E { e0 = I };
+    };
+</PRE>
+
+<P>In this case, the minimum size required for <TT>E</TT> cannot be
+determined until instantiation, but it is clear that the underlying
+type need be no larger than <TT>short</TT>.</P>
+
+</LI>
+
+<LI>
+<PRE>
+    template&lt;typename T&gt; struct S {
+        enum E { e0 = T::e0; };
+    }
+</PRE>
+
+<P>Here, nothing can be known about the size of <TT>E</TT> at the time
+the template is defined.</P>
+
+</LI>
+
+</UL>
+
+<P>13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 says that a
+<TT>sizeof</TT> expression is value-dependent if the type of the
+operand is type-dependent.  Unless enumerations are given special
+treatment, all three of these examples will have value-dependent
+sizes.  This could be surprising for the first case, at least, if not
+the second as well.</P>
+
+</LI>
+
+<LI>
+<P><B>Are nested enumerators value-dependent expressions?</B></P>
+
+<P>Again the question of dependent initializers comes into play.  As an
+example, consider:</P>
+
+<PRE>
+    template&lt;short I&gt; struct S {
+        enum E { e0, e1 = I, e2 };
+    };
+</PRE>
+
+<P>There seem to be three possible approaches as to whether the
+enumerators of <TT>E</TT> are value-dependent:</P>
+
+<OL type="A">
+
+<LI><P>The enumerators of a nested enumeration are all
+value-dependent, regardless of whether they have a value-dependent
+initializer or not.  This is the current position of 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2, which says that an identifier is
+value-dependent if it is a name declared with a dependent
+type.</P></LI>
+
+<LI><P>The enumerators of a nested enumeration are all value-dependent
+if any of the enumeration's enumerators has a value-dependent
+initializer.  In this approach, <TT>e0</TT> would be value-dependent,
+even though it is clear that it has the value 0.</P></LI>
+
+<LI><P>An enumerator of a nested enumeration is value-dependent only
+if it has a value-dependent initializer (explict or implicit).  This
+approach would make <TT>e1</TT> and <TT>e2</TT> value-dependent, but
+not <TT>e0</TT>.</P></LI>
+
+</OL>
+
+<P>An example that bears on the third approach is the following:</P>
+
+<PRE>
+    template&lt;typename T&gt; struct S {
+        enum E { N = UINT_MAX, O = T::O };
+        int a[N + 2];
+    };
+</PRE>
+
+<P>With the normal treatment of enumerations, the type of <TT>a</TT>
+might be either <TT>int[UINT_MAX+2]</TT> or <TT>int[1]</TT>, depending
+on whether the value of <TT>T::O</TT> was such that the underlying
+type of <TT>E</TT> is <TT>unsigned int</TT> or <TT>long</TT>.
+</P>
+
+<P>One possibility for addressing this problem under the third
+approach would be to treat a given enumerator as having the type of
+its initializer in such cases, rather than the enumeration type.  This
+would be similar to the way enumerators are treated within the
+enumerator list, before the enumeration declaration is complete
+(9.7.1 [<A href="https://wg21.link/dcl.enum#5">dcl.enum</A>] paragraph 5).  The argument against this
+is that it makes arithmetic using enumerators behave differently when
+the enumeration is a member of a class template and when it is not.</P>
+
+</LI>
+
+</OL>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The CWG agreed on the following positions:</P>
+
+<OL>
+<LI><P>Nested enumerations are dependent types.</P></LI>
+
+<LI>
+<P>The result of the <TT>sizeof</TT> operator applied to a
+nested enumeration is value-dependent unless there are no
+dependent initializers in its definition; the first case above
+is not dependent, while the second and third are dependent.</P>
+</LI>
+
+<LI><P>The approach described in 3.C above is correct.  This is
+similar to the treatment of static const integral data members,
+which are dependent only if their initializer is dependent.</P></LI>
+
+</OL>
+
+<P><B>Notes from the October, 2005 meeting:</B></P>
+
+<P>There was no consensus among the CWG regarding question #3
+(which enumerators should be considered value-dependent).  The
+argument in favor of 3.C is principally that the values of enumerators
+with non-dependent initializers are known at definition time, so there
+is no need to treat them as dependent.</P>
+
+<P>One objection to 3.C is that, according to the consensus of the
+CWG, the enumeration type is dependent and thus even the known values
+of the enumeration would have a dependent type, which could affect the
+results when such enumerations are used in expressions.  A possible
+response to this concern would be to treat non-dependent initializers
+as having the type of the initializer rather than the enumeration
+type, similar to the treatment of enumerators within
+the <I>enumerator-list</I> (9.7.1 [<A href="https://wg21.link/dcl.enum#5">dcl.enum</A>] paragraph 5).
+However, this approach would be inconsistent with the treatment of
+other enumeration types.  It would also interfere with overload
+resolution (e.g., the call in the example under question #1 above
+would resolve to <TT>f(int)</TT> with this approach rather
+than <TT>f(S&lt;int&gt;::E)</TT>).</P>
+
+<P>Those in favor of option 3.A also suggested that it would be simpler
+and require less drafting: if all the enumerators have the (dependent)
+type of the enumeration, 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2
+already says that a name with a dependent type is value-dependent, so
+nothing further would need to be said.  Option 3.C would require
+additional caveats to exempt some enumerators.</P>
+
+<P>The proponents of 3.A also pointed out that there are many other
+cases where a known value with a dependent type is treated as dependent:</P>
+
+<PRE>
+    static const T t = 0;
+    ... A&lt;t&gt; ...
+</PRE>
+
+<P>or</P>
+
+<PRE>
+    template &lt;int I&gt; void f() {
+        g(I-I);
+    }
+</PRE>
+
+<P>With regard to current practice, g++ and MSVC++ implement 3.A, while
+EDG implements 3.C.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>The consensus of the CWG was that all the types and values are
+dependent.</P>
+
+<P><B>Proposed resolution (June, 2010):</B></P>
+
+<P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#6">temp.dep.type</A>] paragraph 6 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A type is dependent if it is</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a nested class <INS>or enumeration</INS> that is a member
+of the current instantiation,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

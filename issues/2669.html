@@ -1,0 +1,194 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2669</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2669"></A><H4>2669.
+  
+Lifetime extension for aggregate initialization
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ed Catmur
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-18
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>
+<A HREF="1815.html">Issue 1815</A> presented a subset of the
+following examples:</P>
+
+<PRE>
+  struct A {};
+  struct B { A&amp;&amp; a = A{}; };
+  B b1;          //<SPAN CLASS="cmnt"> #1, default-initialization</SPAN>
+  B b2{A{}};     //<SPAN CLASS="cmnt"> #2, aggregate initialization</SPAN>
+  B b3{};        //<SPAN CLASS="cmnt"> #3, aggregate initialization</SPAN>
+  B b4 = B();    //<SPAN CLASS="cmnt"> #4, value-initialization</SPAN>
+  B b5(A{});     //<SPAN CLASS="cmnt"> #5, aggregate initialized via parentheses (9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6.2.2">dcl.init.general</A>] bullet 16.6.2.2)</SPAN>
+  struct C { int i; A&amp;&amp; a = A{}; };
+  C c6(1);       //<SPAN CLASS="cmnt"> #6, aggregate initialized via parentheses</SPAN>
+  A a7 = C(1).a; //<SPAN CLASS="cmnt"> #7, aggregate initialized via parentheses</SPAN>
+</PRE>
+
+<P>
+<A HREF="1696.html">Issue 1696</A> was adopted, ostensibly
+resolving <A HREF="1815.html">issue 1815</A>, but the wording
+changes in 11.9.3 [<A href="https://wg21.link/class.base.init#11">class.base.init</A>] paragraph 11 affected only the
+behavior of constructors, not of aggregate initialization:</P>
+
+<BLOCKQUOTE>
+
+A temporary expression bound to a reference member from a default
+member initializer is ill-formed. [ Example:
+
+<PRE>
+  struct A {
+    A() = default;          //<SPAN CLASS="cmnt"> OK</SPAN>
+    A(int v) : v(v) { }     //<SPAN CLASS="cmnt"> OK</SPAN>
+    const int&amp; v = 42;      //<SPAN CLASS="cmnt"> OK</SPAN>
+  };
+  A a1;     //<SPAN CLASS="cmnt"> error: ill-formed binding of temporary to reference</SPAN>
+  A a2(1);  //<SPAN CLASS="cmnt"> OK, unfortunately</SPAN>
+</PRE>
+
+-- end example]
+
+</BLOCKQUOTE>
+
+<P>There is considerable implementation variance: #1 is rejected by
+clang, but accepted by gcc and EDG (with early destruction of the
+temporary); #2 is uniformly accepted and the lifetime of the temporary
+is extended; #3 is uniformly accepted, but only gcc, clang, and MSVC
+extend the lifetime of the temporary, whereas EDG does not.</P>
+
+<P>Note that 9.4.1 [<A href="https://wg21.link/dcl.init.general#7">dcl.init.general</A>] paragraph 7 specifies
+that default-initialization of aggregates is as-if the
+initializer <TT>()</TT> is used:</P>
+
+<BLOCKQUOTE>
+
+To <I>default-initialize</I> an object of type T means:
+
+<UL>
+
+<LI> If T is a (possibly cv-qualified) class type
+(Clause 11 [<A href="https://wg21.link/class">class</A>]), constructors are considered. The applicable
+constructors are enumerated (12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]), and the
+best one for the initializer () is chosen through overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]). The constructor thus selected is called,
+with an empty argument list, to initialize the object.
+</LI>
+
+<LI>If T is an array type, each element is default-initialized.
+</LI>
+
+<LI>Otherwise, no initialization is performed.
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Such treatment causes early destruction of temporaries per 6.7.7 [<A href="https://wg21.link/class.temporary#6.10">class.temporary</A>] bullet 6.10:</P>
+
+<BLOCKQUOTE>
+
+The exceptions to this lifetime rule are:
+
+<UL>
+<LI>...</LI>
+
+<LI>A temporary object bound to a reference element of an aggregate of
+class type initialized from a parenthesized <I>expression-list</I>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) persists until the completion of the
+full-expression containing the <I>expression-list</I>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-05-12</B></P>
+
+<P>CWG is soliciting the design guidance of EWG to resolve this issue,
+in particular for examples #3 and #6.  For each of the presented
+examples, the standard should say whether the use is well-formed or not
+and whether the lifetime of the temporary is extended.  It is also
+conceivable to implicitly delete the constructor being invoked (if
+any).
+
+<UL>
+<LI>#1 is default-initialization, invoking the default constructor
+of <TT>B</TT>.  This is ill-formed per 11.9.3 [<A href="https://wg21.link/class.base.init#11">class.base.init</A>] paragraph 11.  The rationale is that the temporary would not be
+lifetime-extended, causing a dangling reference as soon as the
+constructor returns.  The presence of a hypothetically
+lifetime-extended temporary cannot be persisted from the constructor
+invocation to the eventual destruction of the object.
+</LI>
+
+<LI>#2 is aggregate initialization; the temporary in
+the <I>braced-init-list</I> is lifetime-extended per
+6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6.  Since the temporary is created
+in the initializer and not inside a constructor invocation, tracking
+the lifetime of the temporary is equivalent to tracking the lifetime
+of the variable <TT>b2</TT>, so extending the lifetime of the
+temporary is feasible and avoids a dangling reference.</LI>
+
+<LI>#3 might be perceived as value-initialization, but is in fact also
+aggregate initialization; the status quo wording lifetime-extend the
+temporary per 6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6. However, that is
+inconsistent with #4.</LI>
+
+<LI>#4 is value-initialization; the default constructor is invoked per
+9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6.2.1">dcl.init.general</A>] bullet 16.6.2.1, which is ill-formed
+similar to #1.</LI>
+
+<LI>#5 is aggregate-by-parentheses initialization. Consistent with
+other parenthesized initialization, the lifetime of temporaries is not
+extended (6.7.7 [<A href="https://wg21.link/class.temporary#6.10">class.temporary</A>] bullet 6.10).</LI>
+
+<LI>#6 is also aggregate-by-parentheses initialization; a constructor
+is not invoked and the lifetime of the temporary is not extended per
+6.7.7 [<A href="https://wg21.link/class.temporary#6.10">class.temporary</A>] bullet 6.10, causing a dangling reference.
+However, despite the hidden temporary, this use is not ill-formed,
+because 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] does not apply to aggregate
+initialization.</LI>
+
+<LI>Finally, #7 shows a situation where, unlike #6, the short lifetime
+of the hidden temporary is not an issue.</LI>
+
+</UL>
+
+CWG recommends to leave #3 as-is and to make #6 (and thus #7)
+ill-formed.  The trigger is the use of a default member initializer
+for a reference member that causes binding a temporary to that
+reference.
+</P>
+
+<P>Forwarded to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1511">cplusplus/papers#1511</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

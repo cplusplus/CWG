@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1290</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1290"></A><H4>1290.
+  
+Lifetime of the underlying array of an <TT>initializer_list</TT> member
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Dennett
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-04-08<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>A question has arisen over expected behavior when an
+<TT>initializer_list</TT> is a non-static data member of a class.
+Initialization of an <TT>initializer_list</TT> is defined in terms of
+construction from an implicitly allocated array whose lifetime "is the
+same as that of the <TT>initializer_list</TT> object".  That would
+mean that the array needs to live as long as the
+<TT>initializer_list</TT> does, which would on the face of it appear
+to require the array to be stored in something like a
+<TT>std::unique_ptr&lt;T[]&gt;</TT> within the same class (if the
+member is initialized in this manner).
+</P>
+
+<P>It would be surprising if that was the intent, but it would make
+<TT>initializer_list</TT> usable in this context.
+</P>
+
+<P>It would also be reasonable if this behaved similarly to binding
+temporaries to reference members (i.e., "temporary bound to a
+reference member in a constructor's <I>ctor-initializer</I>
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) persists until the constructor exits."),
+though this approach would probably prevent use of an
+<TT>initializer_list</TT> member in that context.
+</P>
+
+
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>] paragraphs 5-6 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An object of type <TT>std::initializer_list&lt;E&gt;</TT> is
+constructed from an initializer list as if the implementation
+allocated <DEL>an</DEL> <INS>a temporary</INS> array of <I>N</I>
+elements of type <TT>E</TT>, where...</P>
+
+<P>
+<DEL>The lifetime of the array is the same as that of the
+<TT>initializer_list</TT> object.</DEL> <INS>The array has the same
+lifetime as any other temporary object (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]),
+except that initializing an <TT>initializer_list</TT> object from the
+array extends the lifetime of the array exactly like binding a
+reference to a temporary.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  typedef std::complex&lt;double&gt; cmplx;
+  std::vector&lt;cmplx&gt; v1 = { 1, 2, 3 };
+
+  void f() {
+    std::vector&lt;cmplx&gt; v2{ 1, 2, 3 };
+    std::initializer_list&lt;int&gt; i3 = { 1, 2, 3 };
+  }
+
+<INS>  struct A {
+    std::initializer_list&lt;int&gt; i4;
+    A(): i4{1,2,3} { }  //<SPAN CLASS="cmnt"> creates an </SPAN>A<SPAN CLASS="cmnt"> with a dangling reference</SPAN>
+  };</INS>
+</PRE>
+
+<P>For <TT>v1</TT> and <TT>v2</TT>, the <TT>initializer_list</TT> object
+<INS>is a parameter in a function call, so the</INS> <DEL>and</DEL>
+array created for <TT>{ 1, 2, 3 }</TT> <DEL>have</DEL> <INS>has</INS>
+full-expression lifetime. For <TT>i3</TT>, the
+<TT>initializer_list</TT> object <INS>is a variable, so the</INS>
+<DEL>and</DEL> array <DEL>have automatic</DEL> <INS>persists for
+the</INS> lifetime <INS>of the variable.  For <TT>i4</TT>, the
+<TT>initializer_list</TT> object is initialized in a constructor's
+<I>ctor-initializer</I>, so the array persists only until the
+constructor exits, and so any use of the elements of <TT>i4</TT> after
+the constructor exits produces undefined behavior</INS>. &#8212;<I>end
+example</I>] [<I>Note:</I> The implementation is free to allocate the
+array in read-only memory if an explicit array with the same
+initializer could be so allocated. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The second context is when a reference is bound to a temporary.
+<INS>[<I>Footnote:</I> The same rules apply to initialization of an
+<TT>initializer_list</TT> object (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) with its
+underlying temporary array. &#8212;<I>end footnote</I>]</INS> The
+temporary to which...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

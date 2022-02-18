@@ -1,0 +1,169 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 688</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="688"></A><H4>688.
+  
+Constexpr constructors and static initialization
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Peter Dimov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 March, 2008<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting (resolution
+in paper N2757).]</P>
+
+
+
+<P>Given this literal type,</P>
+
+<PRE>
+    struct X {
+        constexpr X() { }
+    };
+</PRE>
+
+<P>and this definition,</P>
+
+<PRE>
+    static X x;
+</PRE>
+
+<P>the current specification does not require that <TT>x</TT> be
+statically initialized because it is not &#8220;initialized with
+a constant expression&#8221; (6.9.3.1 [<A href="https://wg21.link/basic.start.main#1">basic.start.main</A>] paragraph 1)
+.</P>
+
+<P>
+<U>Lawrence Crowl</U>:</P>
+
+<P>This guarantee is essential for atomics.</P>
+
+<P>
+<U>Jens Maurer</U>:</P>
+
+<P>Suggestion:</P>
+
+<BLOCKQUOTE>
+
+A reference with static storage duration or an object of literal
+type with static storage duration can be initialized with a
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) or with a
+constexpr constructor; this is called constant initialization.
+
+</BLOCKQUOTE>
+
+<P>(Not spelling out &#8220;default constructor&#8221; makes it
+easier to handle multiple-parameter constexpr constructors, where
+there isn't &#8220;a&#8221; constant expression but several.)</P>
+
+<P>
+<U>Peter Dimov</U>:</P>
+
+<P>In addition, there is a need to enforce static initialization
+for non-literal types: <TT>std::shared_ptr</TT>,
+<TT>std::once_flag</TT>, and <TT>std::atomic_*</TT> all have
+nontrivial copy constructors, making them non-literal types.
+However, we need a way to ensure that a constexpr constructor
+called with constant expressions will guarantee static
+initialization, regardless of the nontriviality of the copy
+constructor.</P>
+
+<P><B>Proposed resolution (April, 2008):</B></P>
+
+<OL>
+<LI><P>Change 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 as follows:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>A reference with static storage duration and an object of
+trivial or literal type with static storage duration can be
+initialized with a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]); this</DEL> <INS>If a reference with static storage
+duration is initialized with a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) or if the initialization of an object with static
+storage duration satisfies the requirements for the object being
+declared with <TT>constexpr</TT> (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]),
+that initialization</INS> is called <I>constant
+initialization</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 8.8 [<A href="https://wg21.link/stmt.dcl#4">stmt.dcl</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>A local object of trivial or literal type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) with static storage duration initialized with
+<I>constant-expression</I>s is initialized</DEL> <INS>Constant
+initialization (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]) of a local entity
+with static storage duration is performed</INS> before its block is
+first entered...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#7">dcl.constexpr</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <TT>constexpr</TT> specifier used in an object declaration
+declares the object as <TT>const</TT>. Such an object shall be
+initialized, and every expression that appears in its initializer
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) shall be a constant expression. Every
+implicit conversion used in converting the initializer
+expressions <INS>and every constructor call used for the
+initialization</INS> shall be one of those allowed in a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])...
+
+</BLOCKQUOTE>
+
+<LI><P>Replace 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#14">dcl.init.aggr</A>] paragraph 14 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>When an aggregate with static storage duration is initialized
+with a brace-enclosed <I>initializer-list</I>, if all the member
+initializer expressions are constant expressions, and the
+aggregate is a trivial type, the initialization shall be done
+during the static phase of initialization (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]); otherwise, it is unspecified whether the
+initialization of members with constant expressions takes place
+during the static phase or during the dynamic phase of
+initialization.</DEL> <INS>[<I>Note:</I> The order of initialization
+for aggregates with static storage duration is specified in
+6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] and 8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>].
+&#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(Note: the change to 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1
+needs to be reconciled with the conflicting change in
+<A HREF="684.html">issue 684</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

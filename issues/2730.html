@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2730</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2730"></A><H4>2730.
+  
+Comparison templates on enumeration types
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tobias Loew
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-11<BR>
+
+
+<P>Equality and relational comparisons are supported for all
+enumeration types, even for scoped enumerations, as specified in
+12.5 [<A href="https://wg21.link/over.built#15">over.built</A>] paragraph 15 and 7.6.9 [<A href="https://wg21.link/expr.rel#6">expr.rel</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+If both operands (after conversions) are of arithmetic or enumeration
+type, each of the operators shall yield true if the specified
+relationship is true and false if it is false.
+
+</BLOCKQUOTE>
+
+<P>The comparisons can be overloaded using a non-template function,
+for example:</P>
+
+<PRE>
+  enum class F {
+    a, b
+  };
+  
+  bool operator&lt;(F,F) = delete;
+  bool b = F::a &lt; F::b;   // error, as intended
+</PRE>
+
+<P>However, using a function template does not work:</P>
+
+<PRE>
+  template&lt;typename E&gt;
+  inline constexpr bool X = false;  //<SPAN CLASS="cmnt"> specialize to disable comparisons on </SPAN>E
+
+  template &lt;typename E&gt; requires X&lt;E&gt;
+  void operator&lt;(E, E) = delete;
+
+  template &lt;&gt;
+  inline constexpr bool X&lt;F&gt; = true;
+
+  bool b = F::a &lt; F::b;             //<SPAN CLASS="cmnt"> ok, selects built-in comparison per 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.4">over.match.best.general</A>] bullet 2.4</SPAN>
+</PRE>
+
+<P>The reason is that the built-in operator candidates are not
+suppressed if they compete with a template specialization.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.3.4">over.match.oper</A>] bullet 3.3.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+do not have the same <I>parameter-type-list</I> as any non-member
+candidate or rewritten non-member candidate <DEL>that is not a function
+template specialization</DEL>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

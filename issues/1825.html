@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1825</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1825"></A><H4>1825.
+  
+Partial ordering between variadic and non-variadic function templates
+</H4>
+<B>Section: </B>13.10.3.5&#160; [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-12-30<BR>
+
+
+<P>[Moved to DR at the November, 2016 meeting.]</P>
+
+
+
+<P>Given the following example,</P>
+
+<PRE>
+  template &lt;class ...T&gt; int f(T*...)  { return 1; }
+  template &lt;class T&gt;  int f(const T&amp;) { return 2; }
+  void g() {
+    f((int*)0);
+  }
+</PRE>
+
+<P>the current specification makes the call ambiguous
+because deduction fails in both directions: with A
+being <TT>T</TT> and P being <TT>T*</TT> in one direction
+and A being <TT>T*</TT> and P being <TT>T</TT>, because
+13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#8">temp.deduct.partial</A>] paragraph 8 says,</P>
+
+<BLOCKQUOTE>
+
+If A was transformed from a function parameter pack and P is
+not a parameter pack, type deduction fails.
+
+</BLOCKQUOTE>
+
+<P>It is not clear whether this is the best outcome, however; it
+might be better to consider the first template more specialized,
+with the variadic/non-variadic test being a tie-breaker if there
+is no other reason to prefer one over the other based on the
+parameter types.</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>CWG felt that the best approach would be, when comparing <TT>P</TT>
+and <TT>A</TT>, if <TT>A</TT> is a pack and <TT>P</TT> is not, <TT>A</TT>
+should be repeated for each remaining instance of <TT>P</TT> and then use
+the variadic/nonvariadic criterion as a late tiebreaker if the result is
+still ambiguous.  This would apply in the general case (including
+13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]), not just in function calls.</P>
+
+<P><B>Proposed resolution (June, 2016):</B></P>
+
+<P>This issue is resolved by the resolution of <A HREF="1395.html">issue 1395</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

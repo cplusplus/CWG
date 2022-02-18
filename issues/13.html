@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 13</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="13"></A><H4>13.
+  
+extern "C" for Parameters of Function Templates
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Picked up by evolution group at October 2002 meeting.]</P>
+
+
+
+<P>How can we write a function template, or member function of a class
+template that takes a C linkage function as a parameter when the function
+type depends on one of the template parameter types?</P>
+<PRE>
+    extern "C" void f(int);
+    void g(char);
+
+    template &lt;class T&gt; struct A {
+        A(void (*fp)(T));
+    };
+
+    A&lt;char&gt; a1(g);  // okay
+    A&lt;int&gt; a2(f);   // error
+</PRE>
+Another variant of the same problem is:
+<PRE>
+    extern "C" void f(int);
+    void g(char);
+
+    template &lt;class T&gt; void h( void (*fp)(T) );
+
+    int main() {
+        h(g);  // okay
+        h(f);  // error
+    }
+</PRE>
+
+<BR><B>Suggested resolution:</B> (John Spicer)
+
+<P>Somehow permit a language linkage to be specified as part of a function
+parameter declaration. i.e.</P>
+<PRE>
+    template &lt;class T&gt; struct A {
+        A( extern "C" void (*fp)(T) );
+    };
+
+    template &lt;class T&gt; void h( extern "C" void (*fp)(T) );
+</PRE>
+<B>Suggested resolution:</B> (Bill Gibbons)
+
+<P>The whole area of linkage needs revisiting.  Declaring calling
+convention as a storage class was incorrect to begin
+with; it should be a function qualifier, as in:</P>
+<PRE>
+    void f( void (*pf)(int) c_linkage );
+</PRE>
+instead of the suggested:
+<PRE>
+    void f( extern "C" void (*pf)(int) );
+</PRE>
+I would like to keep calling convention on the "next round" issues list,
+including the alternative of using function qualifiers.
+
+<P>And to that end, I suggest that the use of linkage specifiers to specify
+calling convention be deprecated - which would make any use of linkage
+specifiers in a parameter declaration deprecated.</P>
+
+<P>
+<U>Martin Sebor</U>:
+
+9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>], paragraph 4 says that "A
+linkage-specification shall occur only in namespace scope..." I'm
+wondering why this restriction is necessary since it prevents, among
+other things, the use of the functions defined <TT>&lt;cmath&gt;</TT>
+in generic code that involves function objects. For example, the
+program below is ill-formed since
+<TT>std::pointer_to_binary_function&lt;&gt;</TT> takes a pointer to a
+function with extern "C++" linkage which is incompatible with the type
+of the <TT>double</TT> overload of <TT>std::pow</TT>.</P>
+
+<P>Relaxing the restriction to allow linkage specification in
+declarations of typedefs in class scope would allow
+<TT>std::pointer_to_binary_function&lt;&gt;</TT> ctor to be overloaded
+on both types (i.e., extern "C" and extern "C++"). An alternative
+would be to allow for the linkage specification to be deduced along
+with the type.</P>
+
+<PRE>
+    #include &lt;cmath&gt;
+    #include &lt;functional&gt;
+    #include &lt;numeric&gt;
+
+    int main () {
+      double a[] = { 1, 2, 3 };
+      return std::accumulate (a, a + 3, 2.0,
+        std::pointer_to_binary_function&lt;double, double, double&gt;(std::pow));
+    }
+</PRE>
+
+<P><B>Rationale (February, 2014):</B></P>
+
+<P>EWG determined that no action should be taken on this issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

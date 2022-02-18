@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1056</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1056"></A><H4>1056.
+  
+Template aliases, member definitions, and the current instantiation
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-17<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+<P>According to 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#1">temp.dep.type</A>] paragraph 1, in a primary
+class template a name refers to the current instantiation if it is the
+injected-class-name or the name of the class template followed by the
+template argument list of the template.  Although a <I>template-id</I>
+referring to a specialization of a template alias is described as
+&#8220;equivalent to&#8221; the associated type, a specialization of
+a template alias is neither of the things that qualifies as naming the
+current instantiation, so presumably the <TT>typename</TT> keyword in
+the following example is required:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A;
+    template &lt;class T&gt; using B = A&lt;T&gt;;
+
+    template &lt;class T&gt; struct A {
+        struct C {};
+        typename B&lt;T&gt;::C bc;  // typename needed
+    };
+</PRE>
+
+<P>(However, the list in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>] may not be
+exactly what we want; it doesn't allow use of a typedef denoting
+the type of the current instantiation, either, but that presumably
+should be accepted.)</P>
+
+<P>For analogous reasons, it should not be permitted to use a
+template alias as a <I>nested-name-specifier</I> when defining the
+members of a class template:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+        void g();
+    };
+    template &lt;class T&gt; using B = A&lt;T&gt;;
+    template &lt;class T&gt; void B&lt;T&gt;::g() {} // error
+</PRE>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+<P>The CWG disagreed with the suggested direction, feeling that aliases
+should work like typedefs and that the examples should be accepted.</P>
+
+<P><B>Proposed resolution (November, 2010) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#1">temp.dep.type</A>] paragraph 1 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>In the definition of a class template, a nested class of a class
+template, a member of a class template, or a member of a nested class
+of a class template, a name refers to the <I>current instantiation</I>
+if it is</P>
+
+<UL>
+<LI><P>the injected-class-name (Clause 11 [<A href="https://wg21.link/class">class</A>]) of
+the class template or nested class,</P></LI>
+
+<LI><P>in the definition of a primary class template, the name of the
+class template followed by the template argument list of the primary
+template (as described below) enclosed in <TT>&lt;&gt;</TT> <INS>(or
+a template alias specialization equivalent to same)</INS>,</P></LI>
+
+<LI><P>in the definition of a nested class of a class template, the
+name of the nested class referenced as a member of the current
+instantiation, or</P></LI>
+
+<LI><P>in the definition of a partial specialization, the name of the
+class template followed by the template argument list of the partial
+specialization enclosed in <TT>&lt;&gt;</TT> <INS>(or a template
+alias specialization equivalent to same)</INS>. If the <I>n</I>th
+template parameter is a parameter pack, the <I>n</I>th template
+argument is a pack expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) whose
+pattern is the name of the parameter pack.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#3">temp.dep.type</A>] paragraph 3 as follows:</P>
+
+A template argument that is equivalent to a template parameter (i.e.,
+has the same constant value or the same type as the template
+parameter) can be used in place of that template parameter in a
+reference to the current instantiation<INS>, except that a
+<I>decltype-specifier</I> that denotes a dependent type is always
+considered non-equivalent</INS>. In the case of a non-type
+template argument, the argument must have been given the value of the
+template parameter and not an expression in which the template
+parameter appears as a subexpression. [<I>Example:</I>...
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1057.html">issue 1057</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

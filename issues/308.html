@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 308</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="308"></A><H4>308.
+  
+Catching exceptions with ambiguous base classes
+</H4>
+<B>Section: </B>14.4&#160; [<A href="https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Sergey P. Derevyago
+ &#160;&#160;&#160;
+
+ <B>Date: </B>04 Sep 2001<BR>
+
+
+<P>14.4 [<A href="https://wg21.link/except.handle#3">except.handle</A>] paragraph 3 contains the following text:</P>
+<BLOCKQUOTE>
+A handler is a match for a throw-expression with an object of type E if
+<UL>
+<LI>
+The handler is of type cv T or cv T&amp; and E and T are the same type
+(ignoring the top-level cv- qualifiers), or
+</LI>
+<LI>
+the handler is of type cv T or cv T&amp; and T is an unambiguous public base
+class of E, or
+</LI>
+<LI>
+the handler is of type cv1 T* cv2 and E is a pointer type that can be
+converted to the type of the handler by either or both of
+<UL>
+<LI>
+a standard pointer conversion (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) not involving
+conversions to pointers to private or protected or ambiguous classes
+</LI>
+<LI>
+a qualification conversion
+</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<P>I propose to alter this text to allow to catch exceptions with ambiguous
+public base classes by some of the public subobjects. I'm really sure that
+if someone writes:
+<PRE>
+    try {
+        // ...
+    }
+    catch (Matherr&amp; m) {
+        // ...
+    }
+</PRE>
+he really wants to catch <I>all</I> <TT>Matherrs</TT> rather than to allow
+some of the <TT>Matherrs</TT> to escape:
+<PRE>
+    class SomeMatherr : public Matherr { /* */ };
+    struct TrickyBase1 : public SomeMatherr { /* */ };
+    struct TrickyBase2 : public SomeMatherr { /* */ };
+    struct TrickyMatherr : public TrickyBase1, TrickyBase2 { /* */ };
+</PRE>
+</P>
+
+<P>According to the standard <TT>TrickyMatherr</TT>
+will leak through the catch
+<TT>(Matherr&amp; m)</TT> clause. For example:</P>
+<PRE>
+    #include &lt;stdio.h&gt;
+
+    struct B {};
+    struct B1 : B {};
+    struct B2 : B {};
+    struct D : B1, B2 {};  // D() has two B() subobjects
+
+    void f() { throw D(); }
+
+    int main()
+    {
+     try { f(); }
+     catch (B&amp; b) { puts("B&amp;"); }  // passed
+     catch (D&amp; d) { puts("D&amp;"); }  // really works _after_ B&amp;!!!
+    }
+</PRE>
+<P>Also I see one more possible solution: to forbid objects with ambiguous
+base classes to be "exceptional objects" (for example Borland C++ goes this
+way) but it seems to be unnecessary restrictive.</P>
+
+<P><B>Notes from the 10/01 meeting:</B></P>
+
+<P>The Core Working Group did not feel this was a significant problem.
+Catching either of the ambiguous base classes would be surprising, and
+giving an error on throwing an object that has an ambiguous base class
+would break existing code.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 447</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="447"></A><H4>447.
+  
+Is offsetof type-dependent?
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Jan 2004<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>As far as I can tell, the standard doesn't say whether "offsetof(...)"
+is type-dependent.  In the abstract, it shouldn't be -- an "offsetof"
+expression is always of type "size_t". But the standard doesn't say to
+what the definition of the macro is, so I don't think one can deduce
+that it will always be considered non-dependent by a conforming
+compiler.</P>
+
+<P>
+<U>John Spicer:</U>
+(1) I agree that you can't know if offsetof is dependent because you
+don't know what it expands to.
+(2) In principle, offsetof should be like sizeof -- it is value-dependent
+if its argument is type-dependent.</P>
+
+<P>
+<U>Mark Mitchell:</U>
+I think we should say that:
+(a) offsetof is not type-dependent, and
+(b) offsetof is value dependent iff the first argument is type-dependent</P>
+
+<P>Everyone is using slightly different builtins to implement this
+functionality, and I don't think that there's any guarantee that they're all
+behaving the same here.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>Note that any such requirement would be in the library section,
+not core.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>At the end of 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>] paragraph
+4, add after the list that ends with <TT>throw</TT>
+<I>assignment-expression</I>:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> For the standard library macro <TT>offsetof</TT>,
+see 17.2 [<A href="https://wg21.link/support.types">support.types</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>At the end of 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>] paragraph
+2, add after the list that ends with
+<TT>sizeof(</TT><I>type-id</I><TT>)</TT>:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> For the standard library macro <TT>offsetof</TT>,
+see 17.2 [<A href="https://wg21.link/support.types">support.types</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 17.2 [<A href="https://wg21.link/support.types#4">support.types</A>] paragraph 4, replace</P>
+
+<BLOCKQUOTE>
+
+The macro <TT>offsetof</TT> accepts a restricted set of
+<I>type</I> arguments in this International Standard. If
+<I>type</I> is not a POD structure or a POD union the results are
+undefined. The result of applying the <TT>offsetof</TT> macro to
+a field that is a static data member or a function member is
+undefined.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+The macro <TT>offsetof(</TT><I>type</I><TT>,</TT>
+<I>member-designator</I><TT>)</TT> accepts a restricted set of
+<I>type</I> arguments in this International Standard. If
+<I>type</I> is not a POD structure or a POD union (
+Clause 11 [<A href="https://wg21.link/class">class</A>]), the results are undefined. The
+expression <TT>offsetof(</TT><I>type</I><TT>,</TT>
+<I>member-designator</I><TT>)</TT> is never type-dependent
+(13.8.3.3 [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>]) and it is value-dependent
+(13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]) if and only if <I>type</I> is
+dependent. The result of applying the <TT>offsetof</TT> macro to
+a field that is a static data member or a function member is
+undefined.
+
+</BLOCKQUOTE>
+
+<P><I>[Note: the original wording shown here reflects the
+resolutions of library issues 306 and 449.]</I></P>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

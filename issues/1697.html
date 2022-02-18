@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1697</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1697"></A><H4>1697.
+  
+Lifetime extension and copy elision
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-06-01<BR>
+
+
+<P>[Adopted as paper P0135R1 at the June, 2016 meeting.]</P>
+
+
+
+<P>In an example like,</P>
+
+<PRE>
+  struct S { ~S(); };
+  struct X { X(); X(const X&amp;); };
+  struct T { S &amp;&amp;s; X x; };
+  void f();
+  void g() { T t = T{ {}, {} }; f(); }
+</PRE>
+
+<P>it appears that the current wording allows two ways of handling
+this:</P>
+
+<OL>
+<LI><P>The copy to <TT>t</TT> in <TT>g</TT> is not elided. <TT>X(const
+X&amp;)</TT> is called, then <TT>~S()</TT> is called, then <TT>f()</TT> is
+called.</P></LI>
+
+<LI>The copy to <TT>t</TT> in <TT>g</TT> is elided, so the temporary
+and <TT>t</TT> are the same object. Thus, the <TT>S</TT> object's lifetime
+is extended to the lifetime of the reference <TT>t.s</TT>, so
+first <TT>f()</TT> is called, then <TT>~S()</TT> is called (and <TT>X(const
+X&amp;)</TT> is not called).</LI>
+
+</OL>
+
+<P>However, EDG and g++ produce a third behavior: they do not call
+<TT>X(const X&amp;)</TT>, but they destroy the <TT>S()</TT> temporary at
+the end of its full-expression. The current wording does not appear to
+permit this behavior, but it seems preferable that lifetime extension does
+not depend on whether copy elision is done.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

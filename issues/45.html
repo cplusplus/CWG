@@ -1,0 +1,186 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 45</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="45"></A><H4>45.
+  
+Access to nested classes
+</H4>
+<B>Section: </B>11.8.8&#160; [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Sep 1998<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>Example:</P>
+<PRE>
+    #include &lt;iostream.h&gt;
+
+    class C {  // entire body is private
+        struct Parent {
+            Parent() { cout &lt;&lt; "C::Parent::Parent()\n"; }
+        };
+
+        struct Derived : Parent {
+            Derived() { cout &lt;&lt; "C::Derived::Derived()\n"; }
+        };
+
+        Derived d;
+    };
+
+
+    int main() {
+        C c;      //  Prints message from both nested classes
+        return 0;
+    }
+</PRE>
+How legal/illegal is this? Paragraphs that seem to apply here are:
+<P>11.8 [<A href="https://wg21.link/class.access#1">class.access</A>] paragraph 1:
+</P>
+<BLOCKQUOTE>
+A member of a class can be
+<UL><LI>
+<TT>private</TT>; that is, its name can be used only by members and
+friends of the class in which it is declared. [...]</LI></UL>
+</BLOCKQUOTE>
+and
+11.8.8 [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]
+
+paragraph 1:
+<BLOCKQUOTE>
+The members of a nested class
+have no special access to members of an enclosing class, nor to classes
+or functions that have granted friendship to an enclosing class; the usual
+access rules (11.8 [<A href="https://wg21.link/class.access">class.access</A>]
+)
+shall be obeyed. [...]</BLOCKQUOTE>
+This makes me think that the '<TT>: Parent</TT>' part is OK by itself,
+but that the implicit call of '<TT>Parent::Parent()</TT>' by '<TT>Derived::Derived()</TT>'
+is not.
+
+<P><U>From Mike Miller:</U></P>
+
+<P>I think it is completely legal, by the reasoning given in the (non-normative)
+11.8.8 [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]
+
+paragraph 2. The use of a private nested class as a base of another nested class
+is explicitly declared to be acceptable there. I think the rationale in
+the comments in the example ("// OK because of injection of name A in A")
+presupposes that public members of the base class will be public members
+in a (publicly-derived) derived class, regardless of the access of the
+base class, so the constructor invocation should be okay as well.</P>
+
+<P>I can't find anything normative that explicitly says that,
+though.</P>
+
+<P>(See also papers J16/99-0009 = WG21 N1186,
+J16/00-0031 = WG21 N1254, and J16/00-0045 = WG21 N1268.)</P>
+
+<P><B>Proposed Resolution (04/01):</B></P>
+
+<OL>
+
+<LI>
+<P>Insert the following as a new paragraph following
+11.8 [<A href="https://wg21.link/class.access#1">class.access</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+A member of a class can also access all names as the class of which
+it is a member.  A local class of a member function may access the
+same names that the member function itself may access.  [<I>Footnote:</I>
+Access permissions are thus transitive and cumulative to nested and
+local classes.]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Delete 11.8 [<A href="https://wg21.link/class.access#6">class.access</A>] paragraph 6.</P>
+</LI>
+
+<LI>
+<P>In 11.8.8 [<A href="https://wg21.link/class.access.nest#1">class.access.nest</A>] paragraph 1, change</P>
+
+<BLOCKQUOTE>
+
+The members of a nested class have no special access to members of an
+enclosing class, nor to classes or functions that have granted
+friendship to an enclosing class; the usual access rules
+(11.8 [<A href="https://wg21.link/class.access">class.access</A>]) shall be obeyed.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+A nested class is a member and as such has the same access rights
+as any other member.
+
+</BLOCKQUOTE>
+
+<P>Change</P>
+
+<PRE>
+    B b;       // error: E::B is private
+</PRE>
+
+<P>to</P>
+
+<PRE>
+    B b;       // Okay, E::I can access E::B
+</PRE>
+
+<P>Change</P>
+
+<PRE>
+    p-&gt;x = i;      // error: E::x is private
+</PRE>
+
+<P>to</P>
+
+<PRE>
+    p-&gt;x = i;      // Okay, E::I can access E::x
+</PRE>
+
+</LI>
+
+<LI><P>Delete 11.8.8 [<A href="https://wg21.link/class.access.nest#2">class.access.nest</A>] paragraph 2.</P></LI>
+
+</OL>
+
+<P>(This resolution also resolves issues
+<A HREF="8.html">8</A> and
+<A HREF="10.html">10</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,253 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1603</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1603"></A><H4>1603.
+  
+Errors resulting from giving unnamed namespaces internal linkage
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-09<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>In C++03, all namespace-scope names had external linkage unless
+explicitly declared otherwise (via <TT>static</TT>, <TT>const</TT>,
+or as a member of an anonymous union).  C++11 now specifies that members
+of an unnamed namespace have internal linkage (see
+<A HREF="1113.html">issue 1113</A>).  This change invalidated a
+number of assumptions scattered throughout the Standard that need to
+be adjusted:</P>
+
+<OL>
+<LI><P>6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 says,</P></LI>
+
+<BLOCKQUOTE>
+
+a member function, static data member, a named class or enumeration of
+class scope, or an unnamed class or enumeration defined in a
+class-scope typedef declaration such that the class or enumeration has
+the typedef name for linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]),
+has external linkage if the name of the class has external linkage.
+
+</BLOCKQUOTE>
+
+<P>There is no specification for the linkage of such members of a class
+with internal linkage.  Formally, at least, that leads to the statement
+in paragraph 8 that such members have no linkage.  This omission also
+contradicts the note in 11.4.2 [<A href="https://wg21.link/class.mfct#3">class.mfct</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Member functions of a class in namespace scope have
+external linkage.  Member functions of a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>]) have no linkage. See 6.6 [<A href="https://wg21.link/basic.link">basic.link</A>].
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>as well as the statement in 11.4.9.3 [<A href="https://wg21.link/class.static.data">class.static.data</A>] paragraph
+5,</P>
+
+<BLOCKQUOTE>
+
+<TT>Static</TT> data members of a class in namespace scope have external
+linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>The footnote in 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 says,</P></LI>
+
+<BLOCKQUOTE>
+
+A class template always has external linkage, and the requirements of
+13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>] and 13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>] ensure
+that the template arguments will also have appropriate linkage.
+
+</BLOCKQUOTE>
+
+<P>This is incorrect, since templates in unnamed namespaces now have
+internal linkage and template arguments are no longer required to have
+external linkage.</P>
+
+<LI><P>The statement in 9.2.2 [<A href="https://wg21.link/dcl.stc#7">dcl.stc</A>] paragraph 7 is now
+false:</P></LI>
+
+<BLOCKQUOTE>
+
+A name declared in a namespace scope without a
+<I>storage-class-specifier</I> has external linkage unless it has
+internal linkage because of a previous declaration and provided it is
+not declared <TT>const</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>The entire treatment of <I>unique</I> in 9.8.2.2 [<A href="https://wg21.link/namespace.unnamed">namespace.unnamed</A>]
+is no longer necessary, and the footnote is incorrect:</P></LI>
+
+<BLOCKQUOTE>
+
+Although entities in an unnamed namespace might have external linkage,
+they are effectively qualified by a name unique to their translation
+unit and therefore can never be seen from any other translation unit.
+
+</BLOCKQUOTE>
+
+<P>Names in unnamed namespaces never have external linkage.</P>
+
+<LI><P>According to 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4,</P></LI>
+
+<BLOCKQUOTE>
+
+A function first declared in a friend declaration has external linkage
+(6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+
+</BLOCKQUOTE>
+
+<P>This presumably is incorrect for a class that is a member of an
+unnamed namespace.</P>
+
+<LI><P>According to Clause 13 [<A href="https://wg21.link/temp#4">temp</A>] paragraph 4,</P></LI>
+
+<BLOCKQUOTE>
+
+A non-member function template can have internal linkage; any other
+template name shall have external linkage.
+
+</BLOCKQUOTE>
+
+<P>Taken literally, this would mean that a template could not be a
+member of an unnamed namespace.</P>
+
+</OL>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<OL>
+<LI><P>Change 6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In addition, a member function, static data member, a named class or
+enumeration of class scope, or an unnamed class or enumeration defined in a
+class-scope typedef declaration such that the class or enumeration has the
+typedef name for linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]),
+has <DEL>external linkage if the name of the class has external
+linkage</DEL> <INS>the same linkage, if any, as the name of the class of
+which it is a member</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+33) A class template <DEL>always has external linkage, and the requirements
+of 13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>] and 13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>] ensure that
+the template arguments will also have appropriate linkage</DEL> <INS>has
+the linkage of the innermost enclosing class or namespace in which it is
+declared</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.8.2.2 [<A href="https://wg21.link/namespace.unnamed#1">namespace.unnamed</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>unnamed-namespace-definition</I> behaves as if it were replaced
+by</P>
+
+<PRE>
+  inline<SUB><SPAN CLASS="cmnt">opt</SPAN></SUB> namespace <SPAN CLASS="cmnt">unique</SPAN> { /* empty body */ }
+  using namespace <SPAN CLASS="cmnt">unique</SPAN> ;
+  namespace <SPAN CLASS="cmnt">unique</SPAN> { <SPAN CLASS="cmnt">namespace-body</SPAN> }
+</PRE>
+
+<P>where <TT>inline</TT> appears if and only if it appears in
+the <I>unnamed-namespace-definition</I><DEL>,</DEL> <INS>and</INS> all
+occurrences of <I>unique</I> in a translation unit are replaced by the same
+identifier, and this identifier differs from all other
+identifiers in the <DEL>entire program. [<I>Footnote:</I> Although entities in
+an unnamed namespace might have external linkage, they are effectively
+qualified by a name unique to their translation unit and therefore can
+never be seen from any other translation unit. &#8212;<I>end
+footnote</I>]</DEL> <INS>translation unit.</INS> [<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the note in 11.4.2 [<A href="https://wg21.link/class.mfct#3">class.mfct</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Member functions of a class in namespace scope
+have <DEL>external linkage</DEL> <INS>the linkage of that class</INS>.
+Member functions of a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>]) have no linkage. See
+6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.9.3 [<A href="https://wg21.link/class.static.data#5">class.static.data</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<TT>Static</TT> data members of a class in namespace scope
+have <DEL>external linkage</DEL> <INS>the linkage of that class</INS>
+(6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A function first declared in a friend declaration has <DEL>external
+linkage</DEL> <INS>the linkage of the namespace of which it is a
+member</INS> (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]). Otherwise, the function retains
+its previous linkage (9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change Clause 13 [<A href="https://wg21.link/temp#4">temp</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A template name has linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]). <DEL>A non-member
+function template can have internal linkage; any other template name shall
+have external linkage.</DEL> Specializations (explicit or implicit) of a
+template that has internal linkage are distinct from all specializations in
+other translation units...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

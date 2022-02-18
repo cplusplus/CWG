@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2508</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2508"></A><H4>2508.
+  
+Restrictions on uses of template parameter names
+</H4>
+<B>Section: </B>13.8.2&#160; [<A href="https://wg21.link/temp.local">temp.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-11-01<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>The status of an example like the following is unclear:</P>
+
+<PRE>
+  template&lt;typename T&gt; T T(T) {}
+</PRE>
+
+<P>According to 13.8.2 [<A href="https://wg21.link/temp.local#6">temp.local</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+<P>The name of a <I>template-parameter</I> shall not be bound
+to any following declaration contained by the scope to which
+the <I>template-parameter</I> belongs.  [<I>Example 5</I>:</P>
+
+<PRE>
+  ...
+  template&lt;class X&gt; class X; //<SPAN CLASS="cmnt"> error: hidden by template-parameter</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>The intent would appear to be that the function template
+could not have the same name as the template parameter.
+However, according to 6.4.9 [<A href="https://wg21.link/basic.scope.temp#2">basic.scope.temp</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Each <I>template-declaration</I> <TT>D</TT> introduces a
+template parameter scope that extends from the beginning of
+its <I>template-parameter-list</I> to the end of
+the <I>template-declaration</I>. Any declaration outside
+the <I>template-parameter-list</I> that would inhabit that
+scope instead inhabits the same scope as <TT>D</TT>.
+
+</BLOCKQUOTE>
+
+<P>This would indicate that the function template inhabits
+the namespace scope, not the template parameter scope, so
+the prohibition against use of the template parameter name
+would not apply.</P>
+
+<P>To reject both the function and class template examples,
+13.8.2 [<A href="https://wg21.link/temp.local#6">temp.local</A>] paragraph 6 could be changed to
+read:</P>
+
+<BLOCKQUOTE>
+
+The name of a <I>template-parameter</I> shall not be bound
+to any following declaration <INS>whose locus is</INS>
+contained by the scope to which
+the <I>template-parameter</I> belongs.
+
+</BLOCKQUOTE>
+
+<P>To accept both examples, the change could be:</P>
+
+<BLOCKQUOTE>
+
+The name of a <I>template-parameter</I> shall not be bound
+to any following declaration <INS>that inhabits a scope</INS>
+contained by the scope to which
+the <I>template-parameter</I> belongs.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the December, 2021 teleconference:</B></P>
+
+<P>The consensus of CWG was to reject both examples, i.e.,
+the first option.</P>
+
+<P><B>Additional note (December, 2021):</B></P>
+
+<P>It was observed that this issue is, strictly speaking,
+not a defect: the word &#8220;contains&#8221; is used in
+6.4.1 [<A href="https://wg21.link/basic.scope.scope#1">basic.scope.scope</A>] paragraph 1 in its usual English
+sense to refer to the lexical nesting of scopes, so the
+template parameter scope of <TT>T</TT>
+&#8220;contains&#8221; the declaration of the
+function <TT>T</TT>. However, the use of the term
+&#8220;locus&#8221; would make the intent clearer.</P>
+
+<P><B>Proposed resolution (December, 2021):</B></P>
+
+<P>Change 13.8.2 [<A href="https://wg21.link/temp.local#6">temp.local</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+The name of a <I>template-parameter</I> shall not be bound
+to any following declaration <INS>whose locus is</INS>
+contained by the scope to which
+the <I>template-parameter</I> belongs.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

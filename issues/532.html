@@ -1,0 +1,175 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 532</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="532"></A><H4>532.
+  
+Member/nonmember operator template partial ordering
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 September 2005<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>The Standard does not specify how member and nonmember function
+templates are to be ordered.  This question arises with an example
+like the following:</P>
+
+<PRE>
+    struct A {
+        template&lt;class T&gt; void operator&lt;&lt;(T&amp;);
+    };
+
+    template&lt;class T&gt; struct B { };
+    template&lt;class T&gt; void operator&lt;&lt;(A&amp;, B&lt;T&gt;&amp;);
+
+    int main() {
+        A a;
+        B&lt;A&gt; b;
+        a &lt;&lt; b;
+    }
+</PRE>
+
+<P>The two candidates for &#8220;<TT>a &lt;&lt; b</TT>&#8221; are:</P>
+
+<OL>
+
+<LI><TT>A::operator&lt;&lt; &lt;B&lt;A&gt; &gt;(B&lt;A&gt;&amp;)</TT></LI>
+
+<LI><TT>::operator&lt;&lt; &lt;A&gt;(A&amp;, B&lt;A&gt;&amp;)</TT></LI>
+
+</OL>
+
+<P>How should we treat the implicit <TT>this</TT> parameter of #1 and the
+explicit first parameter of #2?</P>
+
+<UL>
+
+<P>Option 0: Make them unordered.</P>
+
+<P>Option 1: If either function is a non-static member function, ignore
+any <TT>this</TT> parameter and ignore the first parameter of any
+non-member function.  This option will select #2, as
+&#8220;<TT>B&lt;T&gt;&amp;</TT>&#8221; is more specialized than
+&#8220;<TT>T&amp;</TT>&#8221;.</P>
+
+<P>Option 2: Treat the <TT>this</TT> parameter as if it were of
+reference to object type, and then perform comparison to the first
+parameter of the other function.  The other function's first parameter
+will either be another <TT>this</TT> parameter, or it will be a
+by-value or by-reference object parameter.  In the example above,
+this option will also select #2.</P>
+
+</UL>
+
+<P>The difference between option 1 and option 2 can be seen in the
+following example:</P>
+
+<PRE>
+    struct A { };
+
+    template&lt;class T&gt; struct B {
+        template&lt;typename R&gt; int operator*(R&amp;);   //<SPAN CLASS="cmnt"> #1</SPAN>
+    };
+
+    template &lt;typename T&gt; int operator*(T&amp;, A&amp;);  //<SPAN CLASS="cmnt"> #2</SPAN>
+
+    int main() {
+        A a;
+        B&lt;A&gt; b;
+        b * a;
+    }
+</PRE>
+
+<P>Should this select #1, select #2, or be ambiguous?  Option 1 will
+select #2, because &#8220;<TT>A&amp;</TT>&#8221; is more specialized
+than &#8220;<TT>T&amp;</TT>&#8221;.  Option 2 will make this example
+ambiguous, because &#8220;<TT>B&lt;A&gt;&amp;</TT>&#8221; is more
+specialized than &#8220;<TT>T&amp;</TT>&#8221;.</P>
+
+<P>If one were considering two non-member templates,</P>
+
+<PRE>
+    template &lt;typename T&gt; int operator*(T&amp;, A&amp;);                 //<SPAN CLASS="cmnt"> #2</SPAN>
+    template &lt;typename T, typename R&gt; int operator*(B&lt;A&gt;&amp;, R&amp;);  //<SPAN CLASS="cmnt"> #3</SPAN>
+</PRE>
+
+<P>the current rules would make these unordered.  Option 2 thus seems
+more consistent with this existing behavior.</P>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>The group favored option 2.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change 13.7.7.3 [<A href="https://wg21.link/temp.func.order#3">temp.func.order</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...and substitute it for each occurrence of that parameter in
+the function type of the template. <INS>If only one of the
+function templates is a non-static member, that function template
+is considered to have a new first parameter inserted in its
+function parameter list. The new parameter is of type
+&#8220;reference to <I>cv</I> <TT>A</TT>,&#8221; where <I>cv</I> are
+the cv-qualifiers of the function template (if any) and
+<TT>A</TT> is the class of which the function template is a
+member. [<I>Note:</I> This allows a non-static member to be
+ordered with respect to a nonmember function and for the results
+to be equivalent to the ordering of two equivalent
+nonmembers. &#8212;<I>end note</I>] [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct A { };
+  template&lt;class T&gt; struct B {
+    template&lt;typename R&gt; int operator*(R&amp;); //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  template&lt;typename T, typename R&gt; int operator*(T&amp;, R&amp;); //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  //<SPAN CLASS="cmnt"> The declaration of </SPAN>B::operator*<SPAN CLASS="cmnt"> is transformed into the equivalent of</SPAN>
+  //<SPAN CLASS="cmnt"> </SPAN>template&lt;typename R&gt; int operator*(B&lt;A&gt;&amp;, R&amp;);  //<SPAN CLASS="cmnt"> #1a</SPAN>
+
+  int main() {
+    A a;
+    B&lt;A&gt; b;
+    b * a;   //<SPAN CLASS="cmnt"> calls #1a</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,326 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 212</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="212"></A><H4>212.
+  
+Implicit instantiation is not described clearly enough
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christophe de Dinechin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Mar 2000<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>Three points have been raised where the wording in
+13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>] may not be sufficiently clear.</P>
+
+<OL>
+
+<LI>
+
+In paragraph 4, the statement is made that
+
+<BLOCKQUOTE>
+
+A class template specialization is implicitly instantiated...  if the
+completeness of the class type affects the semantics of the program...
+
+</BLOCKQUOTE>
+
+<P>It is not clear what it means for the "completeness... [to affect]
+the semantics."  Consider the following example:</P>
+
+<PRE>
+        template&lt;class T&gt; struct A;
+        extern A&lt;int&gt; a;
+
+        void *foo() { return &amp;a; }
+
+        template&lt;class T&gt; struct A
+        {
+        #ifdef OPTION
+                void *operator &amp;() { return 0; }
+        #endif
+        };
+</PRE>
+
+<P>The question here is whether it is necessary for template class
+<TT>A</TT> to declare an <TT>operator &amp;</TT> for the semantics of the
+program to be affected.  If it does not do so, the meaning of
+<TT>&amp;a</TT> will be the same whether the class is complete or
+not and thus arguably the semantics of the program are not
+affected.</P>
+
+<P>Presumably what was intended is whether the presence or absence of
+certain member declarations in the template class might be relevant in
+determining the meaning of the program.  A clearer statement may be
+desirable.</P>
+
+</LI>
+
+<LI>
+
+Paragraph 5 says,
+
+<BLOCKQUOTE>
+
+If the overload resolution process can determine the correct function
+to call without instantiating a class template definition, it is
+unspecified whether that instantiation actually takes place.
+
+</BLOCKQUOTE>
+
+<P>The intent of this wording, as illustrated in the example in that
+paragraph, is to allow a "smart" implementation not to instantiate
+class templates if it can determine that such an instantiation will
+not affect the result of overload resolution, even though the
+algorithm described in Clause 12 [<A href="https://wg21.link/over">over</A>] requires that
+all the viable functions be enumerated, including functions that might
+be found as members of specializations.</P>
+
+<P>Unfortunately, the looseness of the wording allowing this latitude
+for implementations makes it unclear what "the overload resolution
+process" is &#8212; is it the algorithm in Clause 12 [<A href="https://wg21.link/over">over</A>] or
+something else? &#8212; and what "the correct function" is.</P>
+
+</LI>
+
+<LI>
+
+According to paragraph 6,
+
+<BLOCKQUOTE>
+
+If an implicit instantiation of a class template specialization is
+required and the template is declared but not defined, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<P>Here, it is not clear what conditions "require" an implicit
+instantiation.  From the context, it would appear that the intent is
+to refer to the conditions in paragraph 4 that cause a specialization
+to be instantiated.</P>
+
+<P>This interpretation, however, leads to different treatment of
+template and non-template incomplete classes.  For example, by this
+interpretation,</P>
+
+<PRE>
+    class A;
+    template &lt;class T&gt; struct TA;
+    extern A a;
+    extern TA&lt;int&gt; ta;
+
+    void f(A*);
+    void f(TA&lt;int&gt;*);
+
+    int main()
+    {
+        f(&amp;a);    // well-formed; undefined if A
+                  // has operator &amp;() member
+        f(&amp;ta);   // ill-formed: cannot instantiate
+    }
+</PRE>
+
+<P>A different approach would be to understand "required" in paragraph
+6 to mean that a complete type is required in the expression.  In this
+interpretation, if an incomplete type is acceptable in the context and
+the class template definition is not visible, the instantiation is not
+attempted and the program is well-formed.</P>
+
+<P>The meaning of "required" in paragraph 6 must be clarified.</P>
+
+</LI>
+
+</OL>
+
+<P>(See also issues <A HREF="204.html">204</A> and
+<A HREF="63.html">63</A>.)</P>
+
+<P><B>Notes on 10/01 meeting:</B></P>
+
+<P>It was felt that item 1 is solved by addition of the word "might"
+in the resolution for <A HREF="63.html">issue 63</A>; item 2
+is not much of a problem; and item 3 could be solved by changing
+"required" to "required to be complete".</P>
+
+<P><B>Proposed resolution (January, 2016):</B></P>
+
+<OL>
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1 as
+follows, moving the note and example from paragraph 6 and
+breaking it into two paragraphs:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Unless a class template specialization has been explicitly
+instantiated (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicitly
+specialized (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), the class
+template specialization is implicitly instantiated when the
+specialization is referenced in a context that requires a
+completely-defined object type or when the completeness of
+the class type affects the semantics of the
+program. <INS>[<I>Note:</I> In particular, if the semantics
+of an expression depend on the member or base class lists of
+a class template specialization, the class template
+specialization is implicitly generated.  For instance,
+deleting a pointer to class type depends on whether or not
+the class declares a destructor, and a conversion between
+pointers to class type depends on the inheritance
+relationship between the two classes involved.
+&#8212;<I>end note</I>] [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template&lt;class T&gt; class B { /* ... */ };
+  template&lt;class T&gt; class D : public B&lt;T&gt; { /* ... */ };
+
+  void f(void*);
+  void f(B&lt;int&gt;*);
+
+  void g(D&lt;int&gt;* p, D&lt;char&gt;* pp, D&lt;double&gt;* ppp) {
+    f(p);            //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;int&gt;<SPAN CLASS="cmnt"> required: call </SPAN>f(B&lt;int&gt;*)
+    B&lt;char&gt;* q = pp; //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;char&gt;<SPAN CLASS="cmnt"> required:</SPAN>
+                     //<SPAN CLASS="cmnt"> convert </SPAN>D&lt;char&gt;*<SPAN CLASS="cmnt"> to </SPAN>B&lt;char&gt;*
+    delete ppp;      //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;double&gt;<SPAN CLASS="cmnt"> required</SPAN>
+}</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>] If a class template has been
+declared, but not defined, at the point of instantiation
+(13.8.4.1 [<A href="https://wg21.link/temp.point">temp.point</A>]), the instantiation yields
+an incomplete class type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;class T&gt; class X;
+
+  X&lt;char&gt; ch;      //<SPAN CLASS="cmnt"> error: incomplete type </SPAN>X&lt;char&gt;</INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS> [<I>Note:</I>
+Within a template declaration, a local
+class <INS>(11.6 [<A href="https://wg21.link/class.local">class.local</A>])</INS> or enumeration
+and the members of a local class are never considered to be
+entities that can be separately instantiated (this includes
+their default arguments, <I>exception-specification</I>s,
+and non-static data member initializers, if any). As a
+result, the dependent names are looked up, the semantic
+constraints are checked, and any templates used are
+instantiated as part of the instantiation of the entity
+within which the local class or enumeration is
+declared. &#8212;<I>end note</I>]</P>
+
+<P>The implicit instantiation of a class template
+specialization causes the implicit instantiation of the
+declarations, but not...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 13.9.2 [<A href="https://wg21.link/temp.inst#6">temp.inst</A>] paragraph 6, moving the
+note and example to paragraph 1 as shown above:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>A class template specialization is implicitly instantiated
+if the class type is used in a context that requires a
+completely-defined object type or if the completeness of the
+class type might affect the semantics of the
+program. [<I>Note:</I> In particular, if the semantics of an
+expression depend on the member or base class lists of a
+class template specialization, the class template
+specialization is implicitly generated. For instance,
+deleting a pointer to class type depends on whether or not
+the class declares a destructor, and conversion between
+pointer to class types depends on the inheritance
+relationship between the two classes involved.
+&#8212;<I>end note</I>] [<I>Example:</I></DEL></P>
+
+<PRE>
+<DEL>  template&lt;class T&gt; class B { /* ... */ };
+  template&lt;class T&gt; class D : public B&lt;T&gt; { /* ... */ };
+
+  void f(void*);
+  void f(B&lt;int&gt;*);
+
+  void g(D&lt;int&gt;* p, D&lt;char&gt;* pp, D&lt;double&gt;* ppp) {
+    f(p);            //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;int&gt;<SPAN CLASS="cmnt"> required: call </SPAN>f(B&lt;int&gt;*)
+    B&lt;char&gt;* q = pp; //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;char&gt;<SPAN CLASS="cmnt"> required:</SPAN>
+                     //<SPAN CLASS="cmnt"> convert </SPAN>D&lt;char&gt;*<SPAN CLASS="cmnt"> to </SPAN>B&lt;char&gt;*
+    delete ppp;      //<SPAN CLASS="cmnt"> instantiation of </SPAN>D&lt;double&gt;<SPAN CLASS="cmnt"> required</SPAN>
+}</DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#7">temp.inst</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the <INS>function selected by</INS> overload
+resolution <DEL>process</DEL> <INS>(12.2 [<A href="https://wg21.link/over.match">over.match</A>])</INS>
+can <DEL>determine the correct function to
+call</DEL> <INS>be determined</INS> without instantiating a
+class template definition, it is unspecified whether that
+instantiation actually takes place. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>] paragraphs 8-9:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>If an implicit instantiation of a class template
+specialization is required and the template is declared but
+not defined, the program is ill-formed. [<I>Example:</I></DEL></P>
+
+<PRE>
+<DEL>  template&lt;class T&gt; class X;
+
+  X&lt;char&gt; ch; //<SPAN CLASS="cmnt"> error: definition of </SPAN>X<SPAN CLASS="cmnt"> required</SPAN></DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+<P><DEL>The implicit instantiation of a class template does not
+cause any static data members of that class to be implicitly
+instantiated.</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

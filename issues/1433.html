@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1433</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1433"></A><H4>1433.
+  
+<I>trailing-return-type</I> and point of declaration
+</H4>
+<B>Section: </B>6.4.2&#160; [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-12-20<BR>
+
+
+
+
+<P>This seems like it should be well-formed:</P>
+
+<PRE>
+    template &lt;class T&gt; T list(T x);
+
+    template &lt;class H, class ...T&gt;
+    auto list(H h, T ...args) -&gt; decltype(list(args...));
+
+    auto list3 = list(1, 2, 3);
+</PRE>
+
+<P>but it isn't, because the second list isn't in scope in its
+own <I>trailing-return-type</I>; the point of declaration is after the
+declarator, which includes the <I>trailing-return-type</I>.  And since
+<TT>int</TT> has no associated namespaces, the call in the return type
+only sees the first list.  G++, EDG and Clang all reject the
+testcase on this basis.</P>
+
+<P>But this seems like a natural pattern for writing variadic
+function templates, and we could support it by moving the point
+of declaration to the <TT>-&gt;</TT>.  This would mean having to
+deal with a function that only has a placeholder for a return
+type, but I think we can handle that.</P>
+
+<P><B>Rationale (February, 2012):</B></P>
+
+<P>This is a request for an extension to the language and is thus more
+appropriately addressed by EWG.</P>
+
+<P><B>EWG 2022-11-11</B></P>
+
+<P>This is a breaking change whose benefits and trade-offs need to be
+carefully analyzed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

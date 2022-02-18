@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2519</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2519"></A><H4>2519.
+  
+Object representation of a bit-field
+</H4>
+<B>Section: </B>6.8.1&#160; [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-01-20<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>] clearly implies that bit-fields
+are objects; paragraphs 8-9 contain phrases like
+&#8220;unless an object is a bit-field...&#8221; and
+&#8220;a non-bit-field subobject&#8221;. However, the
+definition of &#8220;object representation&#8221; in
+6.8.1 [<A href="https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 is,</P>
+
+<BLOCKQUOTE>
+
+The <I>object representation</I> of an object of
+type <TT>T</TT> is the sequence of <I>N</I> <TT>unsigned
+char</TT> objects taken up by the object of type <TT>T</TT>,
+where <I>N</I> equals <TT>sizeof(T)</TT>.
+
+</BLOCKQUOTE>
+
+<P>and thus fails to address bit-fields, which are not
+necessarily composed of a sequence of complete bytes.</P>
+
+<P>The C Standard (6.2.6.1 paragraph 4) says,</P>
+
+<BLOCKQUOTE>
+
+Values stored in bit-fields consist of <I>m</I> bits, where
+<I>m</I> is the size specified for the bit-field.  The
+object representation is the set of <I>m</I> bits the
+bit-field comprises in the addressable storage unit holding
+it.
+
+</BLOCKQUOTE>
+
+<P>Presumably similar wording could be adopted for C++.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-06) [SUPERSEDED]:</B></P>
+
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>object representation</I> of <DEL>an object
+of</DEL> <INS>a</INS> type <TT>T</TT> is the sequence of
+<I>N</I> <TT>unsigned char</TT> objects taken up by
+<DEL>the</DEL> <INS>a non-bit-field complete</INS> object of type
+<TT>T</TT>, where <I>N</I> equals <TT>sizeof(T)</TT>.  The <I>value
+representation</I> of <DEL>an object of</DEL> <INS>a</INS>
+type <TT>T</TT> is the set of bits <INS>in the object representation
+of T</INS> that participate in representing a value of type <TT>T</TT>.
+<INS>The object and value representation of a non-bit-field complete
+object of type <TT>T</TT> are the bytes and bits, respectively, of the
+object corresponding to the object and value representation of its
+type. The object representation of a bit-field object is the sequence
+of <I>N</I> bits taken up by the object, where <I>N</I> is the width
+of the bit-field (11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]).  The value
+representation of a bit-field object is the set of bits in the object
+representation that participate in representing its value. </INS> Bits
+in the object representation <INS>of a type or object</INS> that are
+not part of the value representation are padding bits. For trivially
+copyable types, the value representation is a set of bits in the
+object representation that determines a value, which is one discrete
+element of an implementation-defined set of values. [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-02-06</B></P>
+
+<P>Additional drafting is needed to constrain the definition to
+complete object types.</P>
+
+<P><B>Proposed resolution (approved for C++26 by CWG 2023-02-06):</B></P>
+
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>object representation</I> of <DEL>an object
+of</DEL> <INS>a complete object</INS> type <TT>T</TT> is the sequence of
+<I>N</I> <TT>unsigned char</TT> objects taken up by
+<DEL>the</DEL> <INS>a non-bit-field complete</INS> object of type
+<TT>T</TT>, where <I>N</I> equals <TT>sizeof(T)</TT>.  The <I>value
+representation</I> of <DEL>an object of</DEL> <INS>a</INS>
+type <TT>T</TT> is the set of bits <INS>in the object representation
+of T</INS> that participate in representing a value of type <TT>T</TT>.
+<INS>The object and value representation of a non-bit-field complete
+object of type <TT>T</TT> are the bytes and bits, respectively, of the
+object corresponding to the object and value representation of its
+type. The object representation of a bit-field object is the sequence
+of <I>N</I> bits taken up by the object, where <I>N</I> is the width
+of the bit-field (11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]).  The value
+representation of a bit-field object is the set of bits in the object
+representation that participate in representing its value. </INS> Bits
+in the object representation <INS>of a type or object</INS> that are
+not part of the value representation are padding bits. For trivially
+copyable types, the value representation is a set of bits in the
+object representation that determines a value, which is one discrete
+element of an implementation-defined set of values. [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

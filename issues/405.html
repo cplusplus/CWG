@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 405</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="405"></A><H4>405.
+  
+Unqualified function name lookup
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>William M. Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Apr 2003<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+<P>There seems to be some confusion in the Standard regarding the
+relationship between 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>] (Unqualified name
+lookup) and 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+(Argument-dependent lookup).  For example,
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#3">basic.lookup.unqual</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+The lookup for an unqualified name used as the
+<I>postfix-expression</I> of a function call is described in
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].
+</BLOCKQUOTE>
+
+<P>In other words, nothing in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+applies to function names; the entire lookup is described in
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].</P>
+
+<P>6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] does not appear to share this
+view of its responsibility.
+The closest it comes is in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2a:</P>
+
+<BLOCKQUOTE>
+...the set of declarations found by the lookup of the function
+name is the union of the set of declarations found using ordinary
+unqualified lookup and the set of declarations found in the namespaces
+and classes associated with the argument types.
+</BLOCKQUOTE>
+
+<P>Presumably, "ordinary unqualified lookup" is a reference
+to the processing described in
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>], but, as noted above,
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+explicitly precludes applying that processing to function names.  The
+details of "ordinary unqualified lookup" of function names
+are not described anywhere.</P>
+
+<P>The other clauses that reference
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>], clauses
+Clause 12 [<A href="https://wg21.link/over">over</A>] and Clause 13 [<A href="https://wg21.link/temp">temp</A>], are
+split over the question of the relationship between
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>] and 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].
+12.2.2.2.2 [<A href="https://wg21.link/over.call.func#3">over.call.func</A>] paragraph 3, for instance, says</P>
+
+<BLOCKQUOTE>
+The name is looked up in the context of the function call
+following the normal rules for name lookup in function calls
+(6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]).
+</BLOCKQUOTE>
+
+<P>I.e., this reference assumes that
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] is self-contained.  The
+same is true of 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3,
+second bullet:</P>
+
+<BLOCKQUOTE>
+The set of non-member candidates is the result of the
+unqualified lookup of operator@ in the context of the expression
+according to the usual rules for name lookup in unqualified function
+calls (6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]), except that all member
+functions are ignored.
+</BLOCKQUOTE>
+
+<P>On the other hand, however, 13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate#1">temp.dep.candidate</A>] paragraph 1
+explicitly assumes that
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>] and 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] are
+both involved in function name lookup and do different things:</P>
+
+<BLOCKQUOTE>
+For a function call that depends on a template parameter, if
+the function name is an <I>unqualified-id</I> but not a
+<I>template-id</I>, the candidate functions are found using the usual
+lookup rules (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>],
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]) except that:
+<UL>
+<LI>For the part of the lookup using unqualified name lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]),
+only function declarations with external linkage from the template
+definition context are found.</LI>
+
+<LI>For the part of the lookup using associated
+namespaces (6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]),
+only function declarations with external linkage found in either the
+template definition context or the template instantiation context are
+found.</LI>
+</UL>
+</BLOCKQUOTE>
+
+<B><P>Suggested resolution:</P></B>
+
+<P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#1">basic.lookup.unqual</A>] paragraph 1 from</P>
+
+<BLOCKQUOTE>
+...name lookup ends as soon as a declaration is found for the
+name.
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+...name lookup ends with the first scope containing one or more
+declarations of the name.
+</BLOCKQUOTE>
+
+<P>Change the first sentence of 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#3">basic.lookup.unqual</A>] paragraph 3
+from</P>
+
+<BLOCKQUOTE>
+The lookup for an unqualified name used as the
+<I>postfix-expression</I> of a function call is described in
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+An unqualified name used as the <I>postfix-expression</I> of a
+function call is looked up as described below.  In addition,
+argument-dependent lookup (6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]) is
+performed on this name to
+complete the resulting set of declarations.
+</BLOCKQUOTE>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

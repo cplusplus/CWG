@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2744</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2744"></A><H4>2744.
+  
+Multiple objects of the same type at the same address
+</H4>
+<B>Section: </B>6.7.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Chris Hallock
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-08<BR>
+
+
+<P>(From thread beginning
+<A HREF="https://groups.google.com/a/isocpp.org/g/std-discussion/c/GHwA_pOc4CA/m/RF4qoKgZAAAJ">here</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;new&gt;
+
+  struct A { unsigned char buf[1]; };
+  static_assert(sizeof(A) == 1); // A<SPAN CLASS="cmnt"> can fit within </SPAN>A::buf
+
+  int main()
+  {
+    A x{};
+    new (x.buf) A{};
+  }
+</PRE>
+
+<P>
+<TT>A::buf</TT> provides storage for another <TT>A</TT> object.
+Thus, there are now two objects of type <TT>A</TT> within lifetime,
+which is inconsistent with the goal expressed by
+6.7.2 [<A href="https://wg21.link/intro.object#9">intro.object</A>] paragraph 9.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.2 [<A href="https://wg21.link/intro.object#3">intro.object</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a complete object <INS>of type T</INS> is created
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) in storage associated with another
+object e of type &#8220;array of N unsigned char&#8221; or of type
+&#8220;array of N std::byte&#8221; (17.2.1 [<A href="https://wg21.link/cstddef.syn">cstddef.syn</A>]), that
+array provides storage for the created object if:
+<UL>
+<LI>the lifetime of e has begun and not ended, and</LI>
+<LI>the storage for the new object fits entirely within e, and</LI>
+<LI class="ins">
+<I>e</I> is not and is not nested within an object of
+type similar (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to <TT>T</TT> that is within
+its lifetime, and</LI>
+<LI>there is no array object that satisfies these constraints
+nested within e.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

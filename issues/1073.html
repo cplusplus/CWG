@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1073</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1073"></A><H4>1073.
+  
+Merging <I>dynamic-exception-specification</I>s and <I>noexcept-specification</I>s
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-06-02<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+
+
+<P>It is not clear how to handle compatible
+<I>dynamic-exception-specification</I>s and
+<I>noexcept-specification</I>s.  For example, given</P>
+
+<PRE>
+    void f() throw();
+    void f() noexcept {
+       throw 1;
+    }
+</PRE>
+
+<P>should we call <TT>terminate()</TT> or <TT>unexpected()</TT>?  And
+for</P>
+
+<PRE>
+    void g() throw (int);
+    void g() noexcept (false) {
+       throw 1.0;
+    }
+</PRE>
+
+<P>should this call <TT>unexpected</TT> or propagate the exception?
+Does the order of the declarations (and which is the definition)
+matter?</P>
+
+<P>
+<U>Alisdair Meredith</U>:</P>
+
+<P>And what about something like</P>
+
+<PRE>
+    struct A { ~A() throw() { } };
+    struct B { ~B() noexcept { } };
+    struct C: A, B { };
+</PRE>
+
+<P>What is the exception specification for <TT>C</TT>'s destructor?</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<OL>
+<LI><P>Change 14.5 [<A href="https://wg21.link/except.spec#3">except.spec</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Two <I>exception-specification</I>s are <I>compatible</I> if:</P>
+
+<UL>
+<LI><P>both are non-throwing (see below), regardless of their
+form,</P></LI>
+
+<LI><P>both have the form
+<TT>noexcept(</TT><I>constant-expression</I><TT>)</TT> and the
+<I>constant-expression</I>s are equivalent, <INS>or</INS>
+</P></LI>
+
+<LI><P><DEL>one <I>exception-specification</I> is a
+<I>noexcept-specification</I> allowing all exceptions and the other is
+of the form <TT>throw(</TT><I>type-id-list</I><TT>)</TT>,
+or</DEL></P></LI>
+
+<LI><P>both are <I>dynamic-exception-specification</I>s that have the
+same set of adjusted types.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following note to the end of 14.5 [<A href="https://wg21.link/except.spec#9">except.spec</A>] paragraph 9:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Whenever an exception is thrown and the search...</P>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P><INS>[<I>Note:</I> A function can have multiple declarations with
+different non-throwing <I>exception-specification</I>s; for this
+purpose, the one on the function definition is used. &#8212;<I>end
+note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

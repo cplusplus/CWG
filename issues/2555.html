@@ -1,0 +1,160 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2555</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2555"></A><H4>2555.
+  
+Ineffective redeclaration prevention for <I>using-declarator</I>s
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-23<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;int I&gt;
+  struct C { };
+
+  struct B
+  {
+    C&lt;1&gt; foo();
+    C&lt;1&gt; bar();
+  };
+
+  struct D : B
+  {
+    using B::foo;
+    C&lt;2&gt; foo(this B &amp;);
+
+    using B::bar;
+    C&lt;2&gt; bar(this D &amp;);
+  };
+
+  struct DD : D
+  {
+    using D::foo;
+    using D::bar;
+  };
+
+  void bar(D d, DD dd)
+  {
+    d.foo();
+    dd.foo();
+
+    d.bar();
+    dd.bar();
+  }
+</PRE>
+
+<P>Which functions are called?</P>
+
+<P>Subclause 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 specifies:</P>
+
+<BLOCKQUOTE>
+
+The set of declarations named by a <I>using-declarator</I> that
+inhabits a class <TT>C</TT> does not include member functions and
+member function templates of a base class that correspond to (and thus
+would conflict with) a declaration of a function or function template
+in <TT>C</TT>.
+
+</BLOCKQUOTE>
+
+<P>The definition of "corresponds" considers the type of the implicit
+object parameter, which is a deviation from the status quo ante for a
+simple example like this one:</P>
+
+<PRE>
+  struct B {
+    void f();    // #1
+  };
+  struct D : B {
+    void f();
+    using B::f;  //<SPAN CLASS="cmnt"> should not name #1</SPAN>
+  };
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+The set of declarations named by a <I>using-declarator</I> that
+inhabits a class <TT>C</TT> does not include member functions and
+member function templates of a base class that<INS>, when considered
+as members of <TT>C</TT>,</INS> correspond to (and thus would conflict
+with) a declaration of a function or function template in <TT>C</TT>.
+
+<P>[ <I>Example</I>:</P>
+<PRE>
+  struct B {
+    virtual void f(int);
+    virtual void f(char);
+    void g(int);
+    void h(int);
+<INS>    void i();
+    void j();</INS>
+  };
+
+  struct D : B {
+    using B::f;
+    void f(int);   //<SPAN CLASS="cmnt"> OK, </SPAN>D::f(int)<SPAN CLASS="cmnt"> overrides </SPAN>B::f(int)
+  
+    using B::g;
+    void g(char);  //<SPAN CLASS="cmnt"> OK</SPAN>
+  
+    using B::h;
+    void h(int);   //<SPAN CLASS="cmnt"> OK, </SPAN>D::h(int)<SPAN CLASS="cmnt"> hides </SPAN>B::h(int)
+
+<INS>    using B::i;
+    void i(this B &amp;);  //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    using B::j;
+    void j(this D &amp;);  //<SPAN CLASS="cmnt"> OK, </SPAN>D::j()<SPAN CLASS="cmnt"> hides </SPAN>B::j()</INS>
+  };
+
+  void k(D* p)
+  {
+    p-&gt;f(1);        //<SPAN CLASS="cmnt"> calls </SPAN>D::f(int)
+    p-&gt;f('a');      //<SPAN CLASS="cmnt"> calls </SPAN>B::f(char)
+    p-&gt;g(1);        //<SPAN CLASS="cmnt"> calls </SPAN>B::g(int)
+    p-&gt;g('a');      //<SPAN CLASS="cmnt"> calls </SPAN>D::g(char)
+<INS>    p-&gt;i();         //<SPAN CLASS="cmnt"> calls </SPAN>B::i<SPAN CLASS="cmnt">, because </SPAN>B::i<SPAN CLASS="cmnt"> as a member of </SPAN>D<SPAN CLASS="cmnt"> is a better match than </SPAN>D::i
+    p-&gt;j();         //<SPAN CLASS="cmnt"> calls </SPAN>D::j</INS>
+  }
+  ...
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

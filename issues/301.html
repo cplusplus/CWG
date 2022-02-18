@@ -1,0 +1,192 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 301</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="301"></A><H4>301.
+  
+Syntax for <I>template-name</I>
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Jul 2001<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+
+
+<P>The grammar for a <I>template-name</I> is:</P>
+<UL>
+<I>template-name</I>:
+<UL>
+<I>identifier</I>
+</UL>
+</UL>
+
+<P>That's not right; consider:</P>
+<PRE>
+    template &lt;class T&gt; T operator+(const T&amp;, const T&amp;);
+    template &lt;&gt; S operator+&lt;S&gt;(const S&amp;, const S&amp;);
+</PRE>
+
+<P>This is ill-formed according to the standard, since <TT>operator+</TT> is
+not a template-name.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>I think the right rule is</P>
+<UL>
+<I>template-name:</I>
+<UL>
+<I>identifier</I>
+<BR><I>operator-function-id</I>
+<BR><I>conversion-function-id</I>
+</UL>
+</UL>
+
+<P>John Spicer adds that there's some question about whether
+conversion functions should be included, as they cannot have template
+argument lists.</P>
+
+<P><B>Notes from 4/02 meeting:</B></P>
+
+<P>If the change is made as a syntax change, we'll need a semantic
+restriction to avoid <TT>operator+&lt;int&gt;</TT> as a class.
+Clark Nelson will work on a compromise proposal -- not the minimal
+change to the syntax proposed, not the maximal change either.</P>
+
+<P><B>Clark Nelson (April 2003):</B></P>
+
+<P> The proposed solution (adding <I>operator-function-id</I> as an
+alternative for <I>template-name</I>) would have a large impact on
+the language described by the grammar.  Specifically, for example,
+<TT>operator+&lt;int&gt;</TT> would become a syntactically valid
+<I>class-name</I>.  </P>
+
+<P> On the other hand, a change with (I believe) exactly the desired
+effect on the language accepted, would be to modify
+<I>operator-function-id</I> itself: </P>
+
+<UL>
+<I>operator-function-id</I>:
+<UL>
+<TT>operator</TT> <I>operator</I>
+<BR>
+<B><TT>operator</TT> <I>operator</I> <TT>&lt;</TT>
+<I>template-argument-list<SUB>opt</SUB></I> <TT>&gt;</TT></B>
+</UL>
+</UL>
+
+<P><I>(Steve Adamczyk: this change was already made by
+<A HREF="38.html">issue 38</A> and is in TC1.)</I></P>
+
+<P> Then there is the first sentence of 13.3 [<A href="https://wg21.link/temp.names#3">temp.names</A>] paragraph 3:
+ </P>
+
+<BLOCKQUOTE> After name lookup (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>])
+finds that a name is a
+<I>template-name</I>, if this name is followed by a
+<TT>&lt;</TT>, the <TT>&lt;</TT> is always taken as the
+beginning of a <I>template-argument-list</I> and never as a name
+followed by the less-than operator.  </BLOCKQUOTE>
+
+<P> This description seems to be adequate for names of class templates.
+As far as I can tell, the only ambiguity it resolves is from something
+that starts with <TT>new X &lt;</TT>, in the
+scope of a class template <TT>X</TT>.  But as far as I can tell is
+already inadequate for names of function templates, and is even worse
+for operator function templates.  </P>
+
+<P>Probably <TT>&lt;</TT> should always be interpreted as
+introducing a <I>template-argument-list</I> if any member of the
+overload set is a function template.  After all, function pointers are
+very rarely compared for ordering, and it's not clear what other rule
+might be workable.  </P>
+
+<P> I'm inclined to propose the simplest rule possible for
+<I>operator-function-ids</I>: if one is followed by
+<TT>&lt;</TT>, then what follows is interpreted as a
+<I>template-argument-list</I>, unconditionally.  Of course, if no
+template for that operator has been declared, then there's an error.
+</P>
+
+<P> Also, note that if the operator in question is <TT>&lt;</TT> or <TT>&lt;&lt;</TT>, it is possible to run into a problem similar to the famous <TT>&gt;&gt;</TT> nested template argument list closing delimiter problem.
+However, since in this case (at least) one of the <TT>&lt;</TT> characters has a radically different interpretation than the other, and for other reasons as well, this is unlikely to be nearly as much of a practical problem as the <TT>&gt;&gt;</TT> problem.
+</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>We felt that the operator functions should not be special-cased.
+They should be treated like any other name.</P>
+
+<P><B>September 2003:</B></P>
+
+<P>Clark Nelson has provided the changes in N1490=03-0073.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We reviewed Clark Nelson's N1490.  Clark will revise it and
+introduce a new syntax term for an identifier or
+the name of an operator function.</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The CWG suggested a new approach to resolving this issue: the
+existing term <I>template-id</I> will be renamed
+to <I>class-template-id</I>, the term <I>template-id</I> will be
+defined to include operator functions with template arguments, and any
+current uses of <I>template-id</I> (such as in the definition
+of <I>elaborated-type-specifier</I>) where an operator function is not
+appropriate will be changed to refer to <I>class-template-id</I>.</P>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<P>As specified in document J16/05-0156 = WG21 N1896, except that:</P>
+
+<OL>
+
+<LI><P>In change 9 (_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]), omit the change from
+&#8220;entire <I>postfix-expression</I>&#8221; to
+&#8220;<I>nested-name-specifier</I>.&#8221;</P></LI>
+
+<LI><P>In change a (6.5.5.2 [<A href="https://wg21.link/class.qual#1">class.qual</A>] paragraph 1,
+third bullet), omit the change from &#8220;entire
+<I>postfix-expression</I>&#8221; to &#8220;<I>qualified-id</I>.&#8221;</P></LI>
+
+<LI><P>In change b (6.5.5.3 [<A href="https://wg21.link/namespace.qual#1">namespace.qual</A>] paragraph 1),
+omit the change from &#8220;entire <I>postfix-expression</I>&#8221; to
+&#8220;<I>qualified-id</I>.&#8221;</P></LI>
+
+</OL>
+
+<P>(Some of these omitted changes are addressed by
+<A HREF="562.html">issue 562</A>.)</P>
+
+<P>(This resolution also resolves <A HREF="534.html">issue 534</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 727</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="727"></A><H4>727.
+  
+In-class explicit specializations
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Faisal Vali
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 October, 2008<BR>
+
+
+<P>[Adopted as a DR at the February/March, 2017 meeting.]</P>
+
+<P>13.9.4 [<A href="https://wg21.link/temp.expl.spec#2">temp.expl.spec</A>] paragraph 2 requires that explicit
+specializations of member templates be declared in namespace scope, not
+in the class definition.  This restriction does not apply to partial
+specializations of member templates; that is,</P>
+
+<PRE>
+    struct A {
+      template&lt;class T&gt; struct B;
+      template &lt;class T&gt; struct B&lt;T*&gt; { }; //<SPAN CLASS="cmnt"> well-formed</SPAN>
+      template &lt;&gt; struct B&lt;int*&gt; { }; //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    };
+</PRE>
+
+<P>There does not seem to be a good reason for this inconsistency.</P>
+
+<P><B>Additional note (October, 2013):</B></P>
+
+<P>EWG has requested CWG to consider resolving this issue.  See EWG
+issue 41.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>See also paper N4090.</P>
+
+<P><B>Proposed resolution (March, 2017):</B></P>
+
+<OL>
+<LI><P>Change 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#6">temp.spec.partial.general</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A class template partial specialization may be declared <DEL>or
+redeclared</DEL> in any <DEL>namespace</DEL> scope in which the
+corresponding primary template may be defined (_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+<DEL>and</DEL> <INS></INS>, 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>],
+13.7.3 [<A href="https://wg21.link/temp.mem">temp.mem</A>]). [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class T&gt; struct A {
+    struct C {
+      template&lt;class T2&gt; struct B { };
+<INS>      template&lt;class T2&gt; struct B&lt;T2**&gt; { };  //<SPAN CLASS="cmnt"> partial specialization #1</SPAN></INS>
+    };
+  };
+
+  //<SPAN CLASS="cmnt"> partial specialization of </SPAN>A&lt;T&gt;::C::B&lt;T2&gt;
+  template&lt;class T&gt; template&lt;class T2&gt;
+    struct A&lt;T&gt;::C::B&lt;T2*&gt; { };    <INS>//<SPAN CLASS="cmnt"> #2</SPAN>
+</INS>
+
+  A&lt;short&gt;::C::B&lt;int*&gt; absip; //<SPAN CLASS="cmnt"> uses partial specialization <INS>#2</INS>
+</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec#2">temp.expl.spec</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An explicit specialization <DEL>shall be declared in a namespace enclosing the
+specialized template. An explicit specialization whose <I>declarator-id</I>
+or <I>class-head-name</I> is not qualified shall be declared in the nearest
+enclosing namespace of the template, or, if the namespace is inline
+(9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]), any namespace from its enclosing namespace
+set. Such a declaration may also be a definition</DEL>
+<INS>may be declared in any scope in which the corresponding primary
+template may be defined (_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>],
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], 13.7.3 [<A href="https://wg21.link/temp.mem">temp.mem</A>])</INS>. <DEL>If the
+declaration is not a definition, the specialization may be defined later
+(_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]).</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

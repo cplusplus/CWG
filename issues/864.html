@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 864</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="864"></A><H4>864.
+  
+<I>braced-init-list</I> in the range-based <TT>for</TT> statement
+</H4>
+<B>Section: </B>8.6.5&#160; [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 April, 2009<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>The intent is that the range-based <TT>for</TT> statement should
+be able to be used with a <I>braced-init-list</I> as the range over
+which to iterate.  However, this does not work grammatically: a
+<I>braced-init-list</I> is not an <I>expression</I>, as required by
+the syntax in 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1:</P>
+
+<UL>
+<TT>for (</TT> <I>for-range-declaration</I><TT> : </TT> <I>expression</I><TT> ) </TT><I>statement</I>
+</UL>
+
+<P>Even if this were resolved, the &#8220;equivalent to&#8221; code
+is not correct.  It contains the declaration,</P>
+
+<UL>
+<TT>auto &amp;&amp; __range = ( </TT><I>expression</I><TT> );</TT>
+</UL>
+
+<P>This has a similar problem, in that 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#3">dcl.spec.auto</A>] paragraph 3
+requires that the <I>initializer</I> have one of the forms</P>
+
+<UL>
+<TT>= </TT><I>assignment-expression</I><BR>
+<TT>( </TT><I>assignment-expression</I><TT> )</TT>
+</UL>
+
+<P>which does not allow for a <I>braced-initializer-list</I>.  In
+addition, although not allowed by the grammar, 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#6">dcl.spec.auto</A>] paragraph 6
+treats the <I>braced-init-list</I> specially, in order for
+the type deduction to work correctly:</P>
+
+<BLOCKQUOTE>
+
+Obtain <TT>P</TT> from <TT>T</TT> by replacing the occurrences of
+<TT>auto </TT>with either a new invented type template parameter
+<TT>U</TT> or, if the initializer is a <I>braced-init-list</I>
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), with
+<TT>std::initializer_list&lt;U&gt;</TT>.
+
+</BLOCKQUOTE>
+
+<P>The problem here is that a parenthesized initializer, as in the
+code expansion of the range-based <TT>for</TT> statement, is not
+a <I>braced-init-list</I>.</P>
+
+<P><B>Proposed resolution (June, 2010):</B></P>
+
+<OL>
+<LI><P>Change 8.6 [<A href="https://wg21.link/stmt.iter#1">stmt.iter</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Iteration statements specify looping.</P>
+
+<UL>
+<I>iteration-statement:</I>
+<UL>
+<TT>while (</TT> <I>condition</I> <TT>)</TT> <I>statement</I>
+</UL>
+<UL>
+<TT>do</TT> <I>statement</I> <TT>while (</TT> <I>expression</I> <TT>) ;</TT>
+</UL>
+<UL>
+<TT>for (</TT> <I>for-init-statement condition<SUB>opt</SUB></I> <TT>;</TT> <I>expression<SUB>opt</SUB></I> <TT>)</TT> <I>statement</I>
+</UL>
+<UL>
+<TT>for (</TT> <I>for-range-declaration</I> <TT>:</TT> <I><DEL>expression</DEL> <INS>for-range-initializer</INS></I> <TT>)</TT> <I>statement</I>
+</UL>
+</UL>
+<BR>
+
+<UL>
+<I>for-init-statement:</I>
+<UL><I>expression-statement</I></UL>
+<UL><I>simple-declaration</I></UL>
+</UL>
+<BR>
+
+<UL>
+<I>for-range-declaration:</I>
+<UL><I>type-specifier-seq attribute-specifier<SUB>opt</SUB> declarator</I></UL>
+</UL>
+<BR>
+
+<UL>
+<INS><I>for-range-initializer:</I></INS>
+<UL><INS><I>expression</I></INS></UL>
+<UL><INS><I>braced-init-list</I></INS></UL>
+</UL>
+
+<P>[<I>Note:</I> a <I>for-init-statement</I> ends with a semicolon.
+&#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The</DEL> <INS>For a</INS> range-based <TT>for</TT> statement
+<INS>of the form</INS>
+</P>
+
+<UL>
+<TT>for (</TT> <I>for-range-declaration</I> <TT>:</TT> <I>expression</I> <TT>)</TT> <I>statement</I>
+</UL>
+
+<P><INS>let <I>range-init</I> be equivalent to the <I>expression</I>
+surrounded by parentheses:</INS></P>
+
+<UL><INS><TT>(</TT> <I>expression</I> <TT>)</TT></INS></UL>
+
+<P><INS>[<I>Footnote:</I> this ensures that a top-level comma
+operator cannot be reinterpreted as a delimiter between
+<I>init-declarator</I>s in the declaration of
+<TT>__range</TT>. &#8212;<I>end footnote</I>] and for a
+range-based <TT>for</TT> statement of the form</INS></P>
+
+<UL><INS><TT>for (</TT> <I>for-range-declaration</I> <TT>:</TT> <I>braced-init-list</I> <TT>)</TT> <I>statement</I></INS></UL>
+
+<P>
+<INS>let <I>range-init</I> be equivalent to the
+<I>braced-init-list</I>.  In each case, a range-based
+<TT>for</TT> statement</INS> is equivalent to</P>
+
+<PRE>
+  {
+    auto &amp;&amp; __range = <DEL>( <SPAN CLASS="cmnt">expression</SPAN> )</DEL> <INS><SPAN CLASS="cmnt">range-init</SPAN></INS>;
+    for ( auto __begin = <SPAN CLASS="cmnt">begin-expr</SPAN>,
+    ...
+</PRE>
+
+</BLOCKQUOTE>
+
+<P><B>Note to editor:</B></P>
+
+<P>The formatting in the preceding change for
+<I>range-init</I> follows that of the existing text for
+<I>begin-expr</I> and <I>end-expr</I>.  However, CWG is concerned
+that this style makes all of these elements look too much like
+grammar nonterminals and asks that the editor consider some other
+formatting convention.</P>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

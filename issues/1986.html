@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1986</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1986"></A><H4>1986.
+  
+odr-use and delayed initialization
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-08-21<BR>
+
+
+
+
+<P>The current wording of 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] allows deferral
+of static and thread_local initialization until a variable or function
+in the containing translation unit is odr-used.  This requires
+implementations to avoid optimizing away the relevant odr-uses.  We
+should consider relaxing the rule to allow for such optimizations.</P>
+
+<P><B>Proposed resolution (November, 2014):</B></P>
+
+<BLOCKQUOTE>
+
+For a variable <TT>V</TT> with thread or static storage duration,
+let <TT>X</TT> be the set of all variables with the same storage duration
+as <TT>V</TT> that are defined in the same translation unit
+as <TT>V</TT>. If the observable behavior of the abstract machine
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) depends on the value of <TT>V</TT> through an
+evaluation <I>E</I>, and <I>E</I> is not sequenced before the end of the
+initialization of any variable in <TT>X</TT>, then the end of the
+initialization of all variables in <TT>X</TT> is sequenced before <I>E</I>.
+
+</BLOCKQUOTE>
+
+<P>There is also a problem (submitted by David Majnemer) if the odr-use
+occurs in a constexpr context that does not require the variable to be
+constructed.  For example,</P>
+
+<PRE>
+  struct A { A(); };
+  thread_local A a;
+
+  constexpr bool f() { return &amp;a != nullptr; }
+</PRE>
+
+<P>It doesn't seem possible to construct <TT>a</TT> before its
+odr-use in <TT>f</TT>.</P>
+
+<P>There is implementation divergence in the handling of this example.</P>
+
+<P><B>Notes from the November, 2014 meeting:</B></P>
+
+<P>CWG determined that the second part of the issue (involving
+<TT>constexpr</TT>) is not a defect because the address of an
+object with thread storage duration is not a constant
+expression.</P>
+
+<P><B>Additional note, May, 2015:</B></P>
+
+<P>CWG failed to indicate where and how to apply the wording
+in the proposed resolution.  In addition, further review has
+raised concern that &#8220;sequenced before&#8221; may be the
+wrong relation to use for the static storage duration case
+because it implies &#8220;in the same thread.&#8221;</P>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>The suggested wording is intended to replace some existing
+wording in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2.  CWG
+affirmed that the correct relationship is &#8220;happens
+before&#8221; and not &#8220;sequenced before.&#8221;</P>
+
+<BR><BR>
+</BODY>
+</HTML>

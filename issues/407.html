@@ -1,0 +1,309 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 407</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="407"></A><H4>407.
+  
+Named class with associated typedef: two names or one?
+</H4>
+<B>Section: </B>9.2.4&#160; [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Clark Nelson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 March 2003<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+<P>Here's an example:</P>
+<PRE>
+  typedef struct S { ... } S;
+  void fs(S *x) { ... }
+</PRE>
+<P>The big question is, to what declaration does the reference to identifier S
+actually refer? Is it the S that's declared as a typedef name, or the S
+that's declared as a class name (or in C terms, as a struct tag)? (In either
+case, there's clearly only one type to which it could refer, since a typedef
+declaration does not introduce a new type. But the debugger apparently cares
+about more than just the identity of the type.)</P>
+
+<P>Here's a classical, closely related example:</P>
+<PRE>
+  struct stat { ... };
+  int stat();
+  ... stat( ... ) ...
+</PRE>
+<P>Does the identifier stat refer to the class or the function? Obviously, in
+C, you can't refer to the struct tag without using the struct keyword,
+because it is in a different name space, so the reference must be to the
+function. In C++, the reference is also to the function, but for a
+completely different reason.</P>
+
+<P>Now in C, typedef names and function names are in the same name space, so
+the natural extrapolation would be that, in the first example, S refers to
+the typedef declaration, as it would in C. But C++ is not C. For the
+purposes of this discussion, there are two important differences between C
+and C++</P>
+
+<P>The first difference is that, in C++, typedef names and class names are not
+in separate name spaces. On the other hand, according to section
+_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>] (Name hiding), paragraph 2:</P>
+<BLOCKQUOTE>
+A class name (9.1) or enumeration name (7.2) can be hidden by <INS>the name of
+an object, function, or enumerator</INS> declared in the same scope. If a class
+or enumeration name and an object, function, or enumerator are declared in
+the same scope (in any order) with the same name, the class or enumeration
+name is hidden wherever the object, function, or enumerator name is
+visible.
+</BLOCKQUOTE>
+
+<P>Please consider carefully the phrase I have highlighted, and the fact that a
+typedef name is not the name of an object, function or enumerator. As a
+result, this example:</P>
+<PRE>
+  struct stat { ... };
+  typedef int stat;
+</PRE>
+<P>Which would be perfectly legal in C, is disallowed in C++, both implicitly
+(see the above quote) and explicitly (see section
+9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>] (The typedef
+specifier), paragraph 3):</P>
+<BLOCKQUOTE>
+In a given scope, a typedef specifier shall not be used to redefine the
+name of any type declared in that scope to refer to a different type.
+Similarly, in a given scope, a class or enumeration shall not be declared
+with the same name as a typedef-name that is declared in that scope and
+refers to a type other than the class or enumeration itself.
+</BLOCKQUOTE>
+
+<P>From which we can conclude that in C++ typedef names do not hide class names
+declared in the same scope. If they did, the above example would be legal.</P>
+
+<P>The second difference is that, in C++, a typedef name that refers to a class
+is a class-name; see 9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4:</P>
+<BLOCKQUOTE>
+A typedef-name that names a class is a class-name(9.1). If a typedef-name
+is used following the class-key in an elaborated-type-specifier (7.1.5.3) or
+in the class-head of a class declaration (9), or is used as the identifier
+in the declarator for a constructor or destructor declaration (12.1, 12.4),
+the program is ill-formed.
+</BLOCKQUOTE>
+
+<P>This implies, for instance, that a typedef-name referring to a class can be
+used in a nested-name-specifier (i.e. before :: in a qualified name) or
+following ~ to refer to a destructor. Note that using a typedef-name as a
+class-name in an elaborated-type-specifier is not allowed. For example:</P>
+<PRE>
+  struct X { };
+  typedef struct X X2;
+  X x; // legal
+  X2 x2; // legal
+  struct X sx; // legal
+  struct X2 sx2; // illegal
+</PRE>
+
+<P>The final relevant piece of the standard is
+9.2.4 [<A href="https://wg21.link/dcl.typedef#2">dcl.typedef</A>] paragraph 2:</P>
+<BLOCKQUOTE>
+In a given scope, a typedef specifier can be used to redefine the name of
+any type declared in that scope to refer to the type to which it already
+refers.
+</BLOCKQUOTE>
+
+<P>This of course is what allows the original example, to which let us now
+return:</P>
+<PRE>
+  typedef struct S { ... } S;
+  void fs(S *x) { ... }
+</PRE>
+<P>The question, again is, to which declaration of S does the reference
+actually refer? In C, it would clearly be to the second, since the first
+would be accessible only by using the struct keyword. In C++, if typedef
+names hid class names declared in the same scope, the answer would be the
+same. But we've already seen that typedef names do not hide class names
+declared in the same scope.</P>
+
+<P>So to which declaration does the reference to S refer? The answer is that it
+doesn't matter. The second declaration of S, which appears to be a
+declaration of a typedef name, is actually a declaration of a class name
+(9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4), and as such is simply a
+redeclaration. Consider the following example:</P>
+<PRE>
+  typedef int I, I;
+  extern int x, x;
+  void f(), f();
+</PRE>
+<P>To which declaration would a reference to I, x or f refer? It doesn't
+matter, because the second declaration of each is really just a
+redeclaration of the thing declared in the first declaration. So to save
+time, effort and complexity, the second declaration of each doesn't add any
+entry to the compiler's symbol table.</P>
+
+<P><B>Note (March, 2005):</B></P>
+
+
+
+<P>
+<U>Matt Austern</U>: Is this legal?</P>
+
+<PRE>
+    struct A { };
+    typedef struct A A;
+    struct A* p;
+</PRE>
+
+<P>Am I right in reading the standard [to say that this is
+ill-formed]?  On the one hand it's a nice uniform rule.  On the other
+hand, it seems likely to confuse users.  Most people are probably used
+to thinking that 'typedef struct A A' is a null operation, and, if
+this code really is illegal, it would seem to be a gratuitous C/C++
+incompatibility.</P>
+
+<P>
+<U>Mike Miller</U>: I think you're right.  9.2.4 [<A href="https://wg21.link/dcl.typedef#1">dcl.typedef</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+A name declared with the <TT>typedef</TT> specifier becomes a
+<I>typedef-name</I>.
+
+</BLOCKQUOTE>
+
+<P>9.2.4 [<A href="https://wg21.link/dcl.typedef#2">dcl.typedef</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+In a given non-class scope, a <TT>typedef</TT> specifier can be used
+to redefine the name of any type declared in that scope
+to refer to the type to which it already refers.
+
+</BLOCKQUOTE>
+
+<P>After the <TT>typedef</TT> declaration in the example, the name
+<TT>X</TT> has been &#8220;redefined&#8221; &#8212; it is no longer
+just a <I>class-name</I>, it has been &#8220;redefined&#8221; to be a
+<I>typedef-name</I> (that, by virtue of the fact that it refers to a
+class type, is also a <I>class-name</I>).</P>
+
+<P>
+<U>John Spicer</U>: In C, and originally in C++, an
+<I>elaborated-type-specifier</I> did not consider typedef names, so
+&#8220;<TT>struct X* x</TT>&#8221; would find the class and not the
+typedef.</P>
+
+<P>When C++ was changed to make typedefs visible to
+<I>elaborated-type-specifier</I> lookups, I believe this issue was
+overlooked and inadvertantly made ill-formed.
+</P>
+
+<P>I suspect we need add text saying that if a given scope contains
+both a class/enum and a typedef, that an elaborated type specifier
+lookup finds the class/enum.
+</P>
+
+<P>
+<U>Mike Miller</U>: I'm a little uncomfortable with this approach.
+The model we have for declaring a typedef in the same scope as a
+class/enum is redefinition, not hiding (like the &#8220;<TT>struct
+stat</TT>&#8221; hack).  This approach seems to assume that the
+typedef hides the class/enum, which can then be found by an
+<I>elaborated-type-specifier</I>, just as if it were hidden by a
+variable, function, or enumerator.
+</P>
+
+<P>Also, this approach reduces but doesn't eliminate the
+incompatibility with C.  For example:
+</P>
+
+<PRE>
+    struct S { };
+    {
+        typedef struct S S;
+        struct S* p;        // still ill-formed
+    }
+</PRE>
+
+<P>My preference would be for something following the basic principle
+that declaring a <I>typedef-name</I> <TT>T</TT> in a scope where
+<TT>T</TT> already names the type designated by the typedef should
+have no effect on whether an <I>elaborated-type-specifier</I> in that
+or a nested scope is well-formed or not.  Another way of saying that
+is that a <I>typedef-name</I> that designates a same-named class or
+enumeration in the same or a containing scope is transparent with
+respect to <I>elaborated-type-specifier</I>s.</P>
+
+<P>
+<U>John Spicer</U>: This strikes me as being a rather complicated
+solution. When we made the change to make typedefs visible to
+<I>elaborated-type-specifier</I>s we did so knowing it would make some
+C cases ill-formed, so this does not bother me.  We've lived with the
+C incompatibility for many years now, so I don't personally feel a
+need to undo it.  I also don't like the fact that you have to
+essentially do the old-style <I>elaborated-type-specifier</I> lookup
+to check the result of the lookup that found the typedef.
+</P>
+
+<P>I continue to prefer the direction I described earlier where if a
+given scope contains both a class/enum and a typedef, that an
+<I>elaborated-type-specifier</I> lookup finds the class/enum.
+</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The CWG agreed with John Spicer's approach, i.e., permitting
+a <I>typedef-name</I> to be used in an
+<I>elaborated-type-specifier</I> only if it is declared in the same
+scope as the class or enumeration it names.</P>
+
+<P><B>Proposed resolution (January, 2011):</B></P>
+
+<P>Add the following new paragraph after 9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4:
+</P>
+
+<BLOCKQUOTE>
+
+<P>If a <TT>typedef</TT> specifier is used to redefine in a given
+scope an entity that can be referenced using an
+<I>elaborated-type-specifier</I>, the entity can continue to be
+referenced by an <I>elaborated-type-specifier</I> or as an enumeration or
+class name in an enumeration or class definition respectively.
+[<I>Example:</I>
+</P>
+
+<PRE>
+  struct S;
+  typedef struct S S;
+  int main() {
+    struct S* p; //<SPAN CLASS="cmnt"> OK</SPAN>
+  }
+  struct S {};   //<SPAN CLASS="cmnt"> OK</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

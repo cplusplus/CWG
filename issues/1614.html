@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1614</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1614"></A><H4>1614.
+  
+Address of pure virtual function vs odr-use
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-31<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>According to 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+A function whose name appears as a potentially-evaluated expression is
+odr-used if it is the unique lookup result or the selected member of a set
+of overloaded functions (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>],
+12.2 [<A href="https://wg21.link/over.match">over.match</A>], 12.3 [<A href="https://wg21.link/over.over">over.over</A>]), unless it is a pure
+virtual function and its name is not explicitly qualified.
+
+</BLOCKQUOTE>
+
+<P>In the following example, consequently, <TT>S::f</TT> is odr-used but
+not defined, and (because it is an undefined odr-used inline function) a
+diagnostic is required:</P>
+
+<PRE>
+  namespace {
+    struct S {
+      inline virtual void f() = 0;
+    };
+   void (S::*p) = &amp;S::f;
+  }
+</PRE>
+
+<P>However, <TT>S::f</TT> cannot be called through such a
+pointer-to-member, so forming a pointer-to-member should not
+cause a pure virtual function to be odr-used.  There is
+implementation divergence on this point.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+...A virtual member function is odr-used if it is not pure. A function
+whose name appears as a potentially-evaluated expression is odr-used if it
+is the unique lookup result or the selected member of a set of overloaded
+functions (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>], 12.2 [<A href="https://wg21.link/over.match">over.match</A>],
+12.3 [<A href="https://wg21.link/over.over">over.over</A>]), unless it is a pure virtual function and
+<INS>either</INS> its name is not explicitly qualified <INS>or the
+expression forms a pointer to member (5.3.1)</INS>. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

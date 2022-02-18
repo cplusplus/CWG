@@ -1,0 +1,456 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2797</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2797"></A><H4>2797.
+  
+Meaning of "corresponds" for rewritten operator candidates
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-17
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Subclause 12.2.2.3 [<A href="https://wg21.link/over.match.oper#4">over.match.oper</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+A non-template function or function template F named operator== is a
+rewrite target with first operand o unless a search for the name
+operator!= in the scope S from the instantiation context of the
+operator expression finds a function or function template that would
+correspond (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) to F if its name were
+operator==, where S is the scope of the class type of o if F is a
+class member, and the namespace scope of which F is a member
+otherwise. A function template specialization named operator== is a
+rewrite target if its function template is a rewrite target.
+
+</BLOCKQUOTE>
+
+<P>The meaning of "corresponds" has changed with paper P0847 such that
+this example from the Working Paper is now ill-formed:</P>
+
+<PRE>
+  struct B {
+    bool operator==(const B&amp;);
+  };
+  struct C : B {
+    C();
+    C(B);
+    bool operator!=(const B&amp;);
+  };
+  bool c1 = B() == C();    // was OK, now ill-formed
+</PRE>
+
+<P>The reason is that the definition of "corresponds" now also
+considers the object parameters, which are different in the example
+above.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change and split in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+<P>...</P>
+
+<P>
+<INS>Two functions have <I>corresponding non-object signatures</I> if
+they have the same non-object-parameter-type-list. </INS> Two function
+templates have <I>corresponding <INS>non-object</INS> signatures</I>
+if their <I>template-parameter-list</I>s have the same length, their
+corresponding <I>template-parameter</I> s are
+equivalent, <INS>and</INS> they have equivalent
+non-object-parameter-type-lists and return types (if any)<DEL>, and,
+if both are non-static members, they have corresponding object
+parameters</DEL>.
+<INS>Two functions or function templates have <I>corresponding
+signatures</I> if they have corresponding non-object signatures and,
+if both are non-static members, they have corresponding object
+parameters.</INS>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+Two declarations <I>correspond</I> if they (re)introduce the
+same name, both declare constructors, or both declare destructors,
+unless
+<UL>
+<LI>either is a <I>using-declarator</I> , or</LI>
+<LI>one declares a type (not a typedef-name) and the other declares a
+variable, non-static data member other than of an anonymous union
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]), enumerator, function, or function
+template, or</LI>
+<LI>each declares a function or function template and they do not
+declare corresponding overloads.</LI>
+</UL>
+
+Two function or function template declarations
+declare <I>corresponding overloads</I> if:
+<UL>
+<LI>
+both declare functions with <DEL>the same
+non-object-parameter-type-list, equivalent
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]) trailing <I>requires-clause</I>s (if
+any, except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]), and, if both
+are non-static members, they have corresponding object
+parameters,</DEL> <INS>corresponding signatures</INS> or
+both declare function templates with corresponding signatures and
+<DEL>equivalent <I>template-head</I>s and trailing <I>requires-clause</I>s
+(if any).</DEL>
+</LI>
+<LI class="ins">
+both have equivalent (13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>])
+<I>template-head</I>s and trailing <I>requires-clause</I>s (if any,
+except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]).
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#4">over.match.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-template function or function template F named operator== is a
+rewrite target with first operand o unless a search for the name
+operator!= in the scope S from the instantiation context of the
+operator expression finds a function or function
+template <INS><TT>F2</TT> such</INS> that <DEL>would
+correspond</DEL> <INS><TT>F</TT> and <TT>F2</TT> have corresponding
+non-object signatures</INS> (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) <DEL>to F if
+its name were operator==</DEL>, where S is the scope of the class type
+of o if F is a class member, and the namespace scope of which F is a
+member otherwise. A function template specialization named operator==
+is a rewrite target if its function template is a rewrite target.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2023-10-06</B></P>
+
+<P>CWG raised the question to EWG whether the special rule that allows
+the example in this issue for backward compatibility should be
+extended to member functions with explicit object parameters.
+This is tracked via
+<A HREF="https://github.com/cplusplus/papers/issues/1645">paper issue 1645</A>.</P>
+
+<P><B>EWG 2024-03-18</B></P>
+
+<P>EWG has no consensus to extend the rules to explicit object parameters.</P>
+
+<P><U>Possible resolutionv [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change and split in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+<P>...</P>
+
+<P>
+<INS>Two functions have <I>corresponding non-object signatures</I> if
+they have the same non-object-parameter-type-list. </INS> Two function
+templates have <I>corresponding <INS>non-object</INS> signatures</I>
+if their <I>template-parameter-list</I>s have the same length, their
+corresponding <I>template-parameter</I> s are
+equivalent, <INS>and</INS> they have equivalent
+non-object-parameter-type-lists and return types (if any)<DEL>, and,
+if both are non-static members, they have corresponding object
+parameters</DEL>.
+<INS>Two functions or function templates have <I>corresponding
+signatures</I> if they have corresponding non-object signatures and,
+if both are non-static members, they have corresponding object
+parameters.</INS>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+Two declarations <I>correspond</I> if they (re)introduce the
+same name, both declare constructors, or both declare destructors,
+unless
+<UL>
+<LI>either is a <I>using-declarator</I> , or</LI>
+<LI>one declares a type (not a typedef-name) and the other declares a
+variable, non-static data member other than of an anonymous union
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]), enumerator, function, or function
+template, or</LI>
+<LI>each declares a function or function template and they do not
+declare corresponding overloads.</LI>
+</UL>
+
+Two function or function template declarations
+declare <I>corresponding overloads</I> if:
+<UL>
+<LI>
+both declare functions with <DEL>the same
+non-object-parameter-type-list, equivalent
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]) trailing <I>requires-clause</I>s (if
+any, except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]), and, if both
+are non-static members, they have corresponding object
+parameters,</DEL> <INS>corresponding signatures</INS> or
+both declare function templates with corresponding signatures and
+<DEL>equivalent <I>template-head</I>s and trailing <I>requires-clause</I>s
+(if any).</DEL>
+</LI>
+<LI class="ins">
+both have equivalent (13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>])
+<I>template-head</I>s and trailing <I>requires-clause</I>s (if any,
+except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]).
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#4">over.match.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-template function or function template F named operator== is a
+rewrite target with first operand o unless a search for the name
+operator!= in the scope S from the instantiation context of the
+operator expression finds a function or function
+template <INS><TT>F2</TT> such</INS> that <DEL>would
+correspond</DEL> <INS><TT>F2</TT> is an implicit object member
+function and <TT>F</TT> and <TT>F2</TT> have corresponding non-object
+signatures</INS> (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) <DEL>to F if its name
+were operator==</DEL>, where S is the scope of the class type of o if
+F is a class member, and the namespace scope of which F is a member
+otherwise. A function template specialization named operator== is a
+rewrite target if its function template is a rewrite target.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2024-11-18</B></P>
+
+<P>Subclause 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 needs to change. Limit
+to both F and F2 being implicit object member functions.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change and split in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+<P>...</P>
+
+<P>
+<INS>Two functions have <I>corresponding non-object signatures</I> if
+they have the same non-object-parameter-type-list. </INS> Two function
+templates have <I>corresponding <INS>non-object</INS> signatures</I>
+if their <I>template-parameter-list</I>s have the same length, their
+corresponding <I>template-parameter</I> s are
+equivalent, <INS>and</INS> they have equivalent
+non-object-parameter-type-lists and return types (if any)<DEL>, and,
+if both are non-static members, they have corresponding object
+parameters</DEL>.
+<INS>Two functions or function templates have <I>corresponding
+signatures</I> if they have corresponding non-object signatures and,
+if both are non-static members, they have corresponding object
+parameters.</INS>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+Two declarations <I>correspond</I> if they (re)introduce the
+same name, both declare constructors, or both declare destructors,
+unless
+<UL>
+<LI>either is a <I>using-declarator</I> , or</LI>
+<LI>one declares a type (not a typedef-name) and the other declares a
+variable, non-static data member other than of an anonymous union
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]), enumerator, function, or function
+template, or</LI>
+<LI>each declares a function or function template and they do not
+declare corresponding overloads.</LI>
+</UL>
+
+Two function or function template declarations
+declare <I>corresponding overloads</I> if:
+<UL>
+<LI>
+both declare functions with <DEL>the same
+non-object-parameter-type-list, equivalent
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]) trailing <I>requires-clause</I>s (if
+any, except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]), and, if both
+are non-static members, they have corresponding object
+parameters,</DEL> <INS>corresponding signatures</INS> or
+both declare function templates with corresponding signatures and
+<DEL>equivalent <I>template-head</I>s and trailing <I>requires-clause</I>s
+(if any).</DEL>
+</LI>
+<LI class="ins">
+both have equivalent (13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>])
+<I>template-head</I>s and trailing <I>requires-clause</I>s (if any,
+except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]).
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+The set of declarations named by a <I>using-declarator</I> that
+inhabits a class C does not include member functions and member
+function templates of a base class that<INS>, when declared
+in <TT>C</TT>, would</INS> correspond to (and thus would conflict
+with) a declaration of a function or function template in C.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#4">over.match.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-template function or function template F named operator== is a
+rewrite target with first operand o unless <INS><TT>F</TT> is not an
+implicit object function and</INS> search for the name operator!= in
+the scope S from the instantiation context of the operator expression
+finds a function or function template <INS><TT>F2</TT> such</INS>
+that <DEL>would correspond</DEL> <INS><TT>F2</TT> is an implicit
+object member function and <TT>F</TT> and <TT>F2</TT> have
+corresponding non-object signatures</INS>
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) <DEL>to F if its name were
+operator==</DEL>, where S is the scope of the class type of o if F is
+a class member, and the namespace scope of which F is a member
+otherwise. A function template specialization named operator== is a
+rewrite target if its function template is a rewrite target.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>Additional notes (November, 2024)</B></P>
+
+<P>Both 9.9 [<A href="https://wg21.link/namespace.udecl#11">namespace.udecl</A>] paragraph 11 (see <A HREF="2555.html">issue 2555</A>) and 11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>] (see
+<A HREF="2554.html">issue 2554</A>) as well as the present issue
+would benefit from defining "corresponds" such that the type of the
+implicit object parameter (beyond ref-/cv-qualification) is not
+considered.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Two non-static member functions have <I>corresponding object
+parameters</I> if<INS>, considering them to be declared in the same
+class,</INS>
+<UL>
+<LI>exactly one is an implicit object member function with
+no <I>ref-qualifier</I> and the types of their object parameters
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), after removing references, are the
+same, or</LI>
+<LI>their object parameters have the same type.</LI>
+</UL>
+Two non-static member function templates <I>have corresponding object
+parameters</I> if<INS>, considering them to be declared in the same
+class,</INS>
+<UL>
+<LI>exactly one is an implicit object member function with
+no <I>ref-qualifier</I> and the types of their object parameters,
+after removing any references, are equivalent, or</LI>
+<LI>the types of their object parameters are equivalent.</LI>
+</UL>
+Two function templates have <I>corresponding signatures</I> if
+their <I>template-parameter-list</I>s have the same length, their
+corresponding <I>template-parameter</I> s are equivalent, they have
+equivalent non-object-parameter-type-lists and return types (if any),
+and, if both are non-static members, they have corresponding object
+parameters.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#4">over.match.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-template function or function template F named operator== is a
+rewrite target with first operand o unless <INS><TT>F</TT> is not an
+explicit object member function and</INS> search for the name
+operator!= in the scope S from the instantiation context of the
+operator expression finds a function or function
+template <INS><TT>F2</TT> such</INS> that <DEL>would
+correspond</DEL> <INS><TT>F2</TT> is not an explicit object member
+function and <TT>F</TT> and <TT>F2</TT> are corresponding
+overloads</INS> (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) <DEL>to F if its name
+were operator==</DEL>, where S is the scope of the class type of o if
+F is a class member, and the namespace scope of which F is a member
+otherwise. A function template specialization named operator== is a
+rewrite target if its function template is a rewrite target.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P>This resolution also resolves <A HREF="2555.html">issue 2555</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

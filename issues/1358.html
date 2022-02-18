@@ -1,0 +1,170 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1358</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1358"></A><H4>1358.
+  
+Unintentionally ill-formed <TT>constexpr</TT> function template instances
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-16<BR>
+
+
+<P>[Moved to DR status at the April, 2013 meeting.]</P>
+
+
+
+<P>The permission granted implementations in 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5
+to diagnose definitions of <TT>constexpr</TT> functions
+that can never be used in a constant expression should not apply to
+an instantiated <TT>constexpr</TT> function template.</P>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<T>The CWG also decided to treat the following example
+ under this issue, although it does not
+involve a function template:</T>
+
+<PRE>
+    int f();   //<SPAN CLASS="cmnt"> not </SPAN>constexpr
+    struct A {
+      int m;
+      constexpr A(int i = f()) : m(i) { }
+    };
+    struct B {
+      A a;
+    } b;
+</PRE>
+
+<P>This is ill-formed, no diagnostic required, because the defaulted
+default constructor of <TT>B</TT> will be declared <TT>constexpr</TT>
+but can never be invoked in a constant expression.  See <A HREF="1360.html">issue 1360</A>.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>... &#8212;<I>end example</I>]</P>
+
+<P>For a <INS>non-template, non-defaulted</INS> <TT>constexpr</TT>
+function, if no function argument values exist such that the function
+invocation substitution would produce a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), the program is ill-formed; no diagnostic
+required. For a <INS>non-template, non-defaulted, non-inheriting</INS>
+<TT>constexpr</TT> constructor, if no argument values exist such that
+after function invocation substitution, every constructor call and
+full-expression in the <I>mem-initializer</I>s would be a constant
+expression (including conversions), the program is ill-formed; no
+diagnostic required. <INS>For a <TT>constexpr</TT> function template
+or member function of a class template, if no instantiation would be
+well-formed when considered as a non-template <TT>constexpr</TT> function,
+the program is ill-formed; no diagnostic required.</INS>
+[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If the instantiated template specialization of a <TT>constexpr</TT>
+function template or member function of a class template would fail to
+satisfy the requirements for a <TT>constexpr</TT> function or
+<TT>constexpr</TT> constructor, that specialization is not a
+<TT>constexpr</TT> function or <TT>constexpr</TT> constructor.
+[<I>Note:</I> If the function is a member function it will still be
+<TT>const</TT> as described below. &#8212;<I>end note</I>] If no
+specialization of the template would yield a <TT>constexpr</TT>
+function or <TT>constexpr</TT> constructor, the program is ill-formed;
+no diagnostic required.</DEL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes, February, 2012:</B></P>
+
+<P>The proposed resolution inadvertently removes the provision
+allowing specializations of <TT>constexpr</TT> templates to violate
+the requirements of 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>].  It is being retained
+in "drafting" status pending additional work.  
+</P>
+
+</OL>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>] paragraphs 5-6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...For a <INS>non-template, non-defaulted</INS> <TT>constexpr</TT>
+function, if no function argument values exist such that the function
+invocation substitution would produce a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), the program is ill-formed; no diagnostic
+required. For a <INS>non-template, non-defaulted, non-inheriting</INS>
+<TT>constexpr</TT> constructor, if no argument values exist such that
+after function invocation substitution, every constructor call and
+full-expression in the <I>mem-initializer</I>s would be a constant
+expression (including conversions), the program is ill-formed; no
+diagnostic required. [<I>Example:</I> ... &#8212;<I>end
+example</I>]</P>
+
+<P>If the instantiated template specialization of a <TT>constexpr</TT>
+function template or member function of a class template would fail to
+satisfy the requirements for a <TT>constexpr</TT> function or
+<TT>constexpr</TT> constructor, that specialization is <DEL>not</DEL>
+<INS>still</INS> a <TT>constexpr</TT> function or <TT>constexpr</TT>
+constructor<INS>, even though a call to such a function cannot appear
+in a constant expression</INS>.  <DEL>[<I>Note:</I> If the function is
+a member function it will still be <TT>const</TT> as described below.
+&#8212;<I>end note</I>]</DEL> If no specialization of the template
+would <DEL>yield</DEL> <INS>satisfy the requirements for</INS> a
+<TT>constexpr</TT> function or <TT>constexpr</TT> constructor
+<INS>when considered as a non-template function or constructor</INS>,
+the <DEL>program</DEL> <INS>template</INS> is ill-formed; no
+diagnostic required.
+</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (January, 2013):</B></P>
+
+<P>Questions arose in the discussion of <A HREF="1581.html">issue 1581</A>
+as to whether this approach &#8212; making the specialization of a
+<TT>constexpr</TT> function template or member function of a class template
+still <TT>constexpr</TT> but unable to be invoked in a constant context
+&#8212; is correct.  The implication is that class types might be
+categorized as literal but not be able to be instantiated at compile time.
+This issue is therefore returned to "review" status to allow further
+consideration of this question.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

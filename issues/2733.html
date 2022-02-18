@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2733</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2733"></A><H4>2733.
+  
+Applying <TT>[[maybe_unused]]</TT> to a label
+</H4>
+<B>Section: </B>9.12.9&#160; [<A href="https://wg21.link/dcl.attr.unused">dcl.attr.unused</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-25
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Subclause 9.12.9 [<A href="https://wg21.link/dcl.attr.unused#2">dcl.attr.unused</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+The attribute may be applied to the declaration of a class,
+a <I>typedef-name</I>, a variable (including a structured binding
+declaration), a non-static data member, a function, an enumeration, or
+an enumerator.
+
+</BLOCKQUOTE>
+
+<P>Absent from that list are labels, but both gcc and clang
+accept <TT>[[maybe_unused]]</TT> on a label, and behave
+accordingly.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-07-14)</B></P>
+
+<P>Change in 9.12.9 [<A href="https://wg21.link/dcl.attr.unused">dcl.attr.unused</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>attribute-token</I> <TT>maybe_unused</TT> indicates that a
+name<INS>, label,</INS> or entity is possibly intentionally unused.
+No <I>attribute-argument-clause</I> shall be present.</P>
+
+<P>The attribute may be applied to the declaration of a class,
+<DEL>a</DEL> <I>typedef-name</I>, <DEL>a</DEL> variable (including a
+structured binding declaration), <DEL>a</DEL> non-static data
+member, <DEL>a</DEL> function, <DEL>an</DEL> enumeration,
+or <DEL>an</DEL> enumerator<INS>, or to an <I>identifier</I>
+label (8.2 [<A href="https://wg21.link/stmt.label">stmt.label</A>])</INS>.</P>
+
+<P>A name or entity declared without the <TT>maybe_unused</TT>
+attribute can later be redeclared with the attribute and vice
+versa. An entity is considered marked after the first declaration that
+marks it.</P>
+
+<P>
+<I>Recommended practice</I>: For an entity
+marked <TT>maybe_unused</TT>, implementations should not emit a
+warning that the entity or its structured bindings (if any) are used
+or unused. For a structured binding declaration not
+marked <TT>maybe_unused</TT>, implementations should not emit such a
+warning unless all of its structured bindings are unused.
+<INS>For a label to which <TT>maybe_unused</TT> is applied,
+implementations should not emit a warning that the label is used or
+unused.</INS>
+</P>
+
+[<I>Example 1:</I>
+<PRE>
+  [[maybe_unused]] void f([[maybe_unused]] bool thing1,
+                          [[maybe_unused]] bool thing2) {
+    [[maybe_unused]] bool b = thing1 &amp;&amp; thing2;
+    assert(b);
+<INS>#ifdef NDEBUG
+    goto x;
+#endif</INS>
+    <INS>[[maybe_unused]] x:</INS>
+  }
+</PRE>
+Implementations should not warn
+that <TT>b</TT> <INS>or <TT>x</TT></INS> is unused, whether or not
+<TT>NDEBUG</TT> is defined. &#8212; <I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-07-14</B></P>
+
+<P>
+CWG has reviewed and approved the proposed resolution.  However, this
+is a new (albeit small) feature, thus forwarding to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1585">paper issue 1585</A>
+for approval.
+</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>Accept the proposed resolution, forward to CWG for inclusion in C++26.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

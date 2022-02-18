@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2564</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2564"></A><H4>2564.
+  
+Conversion to function pointer with an explicit object parameter
+</H4>
+<B>Section: </B>12.2.2.2.3&#160; [<A href="https://wg21.link/over.call.object">over.call.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-11<BR>
+
+
+
+
+<P>Subclause 12.2.2.2.3 [<A href="https://wg21.link/over.call.object#2">over.call.object</A>] paragraph 2 considers only
+those conversion functions matching a particular grammar pattern. This
+unintendedly excludes conversion functions with an explicit object
+parameter (and, as a pre-existing defect, <CODE>noexcept</CODE>
+conversion functions): </P>
+
+<BLOCKQUOTE>
+
+In addition, for each non-explicit conversion function declared in T
+of the form
+<PRE>
+operator <I>conversion-type-id</I> ( ) <I>cv-qualifier-seq<sub>opt</sub></I> <I>ref-qualifier<sub>opt</sub></I> <I>noexcept-specifier<sub>opt</sub></I> <I>attribute-specifier-seq<sub>opt</sub></I> ;
+</PRE>
+where the optional <I>cv-qualifier-seq</I> is the same
+cv-qualification as, or a greater cv-qualification than, cv, and
+where <I>conversion-type-id</I> denotes the type &#8220;pointer to
+function of (P1 , . . . , Pn ) returning R&#8221;, or the type
+&#8220;reference to pointer to function of (P1 , . . . , Pn )
+returning R&#8221;, or the type &#8220;reference to function of (P1 ,
+. . . , Pn ) returning R&#8221;, a surrogate call function with the
+unique name <I>call-function</I> and having the form
+<PRE>
+R <I>call-function</I> ( <I>conversion-type-id</I> F, P1 a1 , ... , Pn an ) { return F (a1 , . . . , an ); }
+</PRE>
+is also considered as a
+candidate function. Similarly, surrogate call functions are added to
+the set of candidate functions for each non-explicit conversion
+function declared in a base class of T provided the function is not
+hidden within T by another intervening declaration. [ Footnote: ...]
+
+</BLOCKQUOTE>
+
+<P>For example, there is implementation divergence in handling this example:</P>
+
+<PRE>
+  using fn_t = void();
+  struct C {
+    operator fn_t * (this C const &amp;);
+  };
+
+  void foo(C c) {
+    c();
+  }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

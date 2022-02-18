@@ -1,0 +1,178 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 9</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="9"></A><H4>9.
+  
+Clarification of access to base class members
+</H4>
+<B>Section: </B>11.8.3&#160; [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>unknown
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4
+says:</P>
+<BLOCKQUOTE>A base class is said to be accessible if an invented public
+member of the base class is accessible. If a base class is accessible,
+one can implicitly convert a pointer to a derived class to a pointer to
+that base class.</BLOCKQUOTE>
+Given the above, is the following well-formed?
+<PRE>
+    class D;
+
+    class B
+    {
+     protected:
+       int b1;
+
+       friend void foo( D* pd );
+    };
+
+    class D : protected B { };
+
+    void foo( D* pd )
+    {
+       if ( pd-&gt;b1 &gt; 0 ); // Is 'b1' accessible?
+    }
+</PRE>
+Can you access the protected member <TT>b1</TT> of <TT>B</TT> in <TT>foo</TT>?
+Can you convert a <TT>D*</TT> to a <TT>B*</TT> in <TT>foo</TT>?
+
+<P><U>1st interpretation:</U></P>
+
+<P>A public member of <TT>B</TT> is accessible within <TT>foo</TT> (since
+<TT>foo</TT> is a friend), therefore <TT>foo</TT> can refer to <TT>b1</TT> and convert
+a <TT>D*</TT> to a <TT>B*</TT>.</P>
+
+<P><U>2nd interpretation:</U></P>
+
+<P>
+<TT>B</TT> is a protected base class of <TT>D</TT>, and a public member of <TT>B</TT>
+is a protected member of <TT>D</TT> and can only be accessed within members
+of <TT>D</TT> and friends of <TT>D</TT>. Therefore <TT>foo</TT> cannot refer to
+<TT>b1</TT> and cannot convert a <TT>D*</TT> to a <TT>B*</TT>.</P>
+
+<P>(See J16/99-0042 = WG21 N1218.)</P>
+
+<P><B>Proposed Resolution (04/01):</B></P>
+<OL>
+<LI>
+Add preceding 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+
+paragraph 4:
+
+<BLOCKQUOTE>
+A base class <TT>B</TT> of <TT>N</TT> is <I>accessible</I> at <I>R</I>,
+if
+<UL>
+<LI>
+an invented public member of <TT>B</TT> would be a public member
+of <TT>N</TT>, or</LI>
+<LI>
+<I>R</I> occurs in a member or friend of class <TT>N</TT>, and an
+invented public member of <TT>B</TT> would be a private or protected
+member of <TT>N</TT>, or</LI>
+<LI>
+<I>R</I> occurs in a member or friend of a class <TT>P</TT> derived
+from <TT>N</TT>, and an invented public member of <TT>B</TT> would be
+a private or protected member of <TT>P</TT>, or</LI>
+<LI>
+there exists a class <TT>S</TT> such that <TT>B</TT> is a base class
+of <TT>S</TT> accessible at <I>R</I> and <TT>S</TT> is a base class
+of <TT>N</TT> accessible at <I>R</I>. [<I>Example:</I>
+<PRE>
+    class B {
+    public:
+        int m;
+    };
+
+    class S: private B {
+        friend class N;
+    };
+
+    class N: private S {
+        void f() {
+	    B* p = this;  // <I>OK because class S satisfies the</I>
+			// <I>fourth condition above: B is a base</I>
+			// <I>class of N accessible in f() because</I>
+			// <I>B is an accessible base class of S</I>
+			// <I>and S is an accessible base class of N.</I>
+        }
+    };
+</PRE>
+&#8212;<I>end example</I>]
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+<LI>
+Delete the first sentence of
+11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4:
+
+<BLOCKQUOTE>
+A base class is said to be accessible if an invented public member
+of the base class is accessible.
+</BLOCKQUOTE>
+</LI>
+<LI>
+Replace the last sentence ("A member <I>m</I> is accessible...")
+by the following:
+<BLOCKQUOTE>
+A member <TT>m</TT> is accessible at the point <I>R</I> when
+named in class <TT>N</TT> if
+<UL>
+<LI>
+<TT>m</TT> as a member of <TT>N</TT> is public, or</LI>
+<LI>
+<TT>m</TT> as a member of <TT>N</TT> is private, and <I>R</I>
+occurs in a member or friend of class <TT>N</TT>, or</LI>
+<LI>
+<TT>m</TT> as a member of <TT>N</TT> is protected, and <I>R</I>
+occurs in a member or friend of class <TT>N</TT>, or in a member
+or friend of a class <TT>P</TT> derived from <TT>N</TT>, where
+<TT>m</TT> as a member of <TT>P</TT> is private or protected, or</LI>
+<LI>
+there exists a base class <TT>B</TT> of <TT>N</TT> that is
+accessible at <I>R</I>, and <TT>m</TT> is accessible at <I>R</I>
+when named in class <TT>B</TT>. [<I>Example:</I>...
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P>The resolution for <A HREF="207.html">issue 207</A> modifies
+this wording slightly.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

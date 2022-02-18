@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 899</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="899"></A><H4>899.
+  
+Explicit conversion functions in direct class initialization
+</H4>
+<B>Section: </B>12.2.2.5&#160; [<A href="https://wg21.link/over.match.copy">over.match.copy</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 May, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    struct C { };
+
+    struct A {
+       explicit operator int() const;
+       explicit operator C() const;
+    };
+
+    struct B {
+       int i;
+       B(const A&amp; a): i(a) { }
+    };
+
+    int main() {
+       A a;
+       int i = a;
+       int j(a);
+       C c = a;
+       C c2(a);
+    }
+</PRE>
+
+<P>It's clear that the <TT>B</TT> constructor and the declaration of
+<TT>j</TT> are well-formed and the declarations of <TT>i</TT> and
+<TT>c</TT> are ill-formed.  But what about the declaration of <TT>c2</TT>?
+This is supposed to work, but it doesn't under the current wording.
+</P>
+
+<P>
+<TT>C c2(a)</TT> is direct-initialization of a class, so
+constructors are considered.  The only possible candidate is the
+default copy constructor.  So we look for a conversion from <TT>A</TT>
+to <TT>const C&amp;</TT>.  There is a conversion operator to
+<TT>C</TT>, but it is explicit and we are now performing
+copy-initialization of a reference temporary, so it is not a
+candidate, and the declaration of <TT>c2</TT> is ill-formed.
+</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 12.2.2.5 [<A href="https://wg21.link/over.match.copy#1">over.match.copy</A>] paragraph 1 second bullet
+as follows:</P>
+
+<UL><LI>When the type of the initializer expression is a class type
+&#8220;<I>cv</I> <TT>S</TT>&#8221;, the non-explicit conversion
+functions of <TT>S</TT> and its base classes are considered. <INS>When
+initializing a temporary to be bound to the first parameter of a copy
+constructor (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) called with a single argument
+in the context of direct-initialization, explicit conversion functions
+are also considered.</INS> Those that are not hidden within <TT>S</TT>
+and yield a type whose cv-unqualified version is the same type as
+<TT>T</TT> or is a derived class thereof are candidate functions.
+Conversion functions that return &#8220;reference to <TT>X</TT>&#8221;
+return lvalues or rvalues, depending on the type of reference, of type
+<TT>X</TT> and are therefore considered to yield <TT>X</TT> for this
+process of selecting candidate functions.</LI></UL>
+
+<BR><BR>
+</BODY>
+</HTML>

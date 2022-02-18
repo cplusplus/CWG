@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 338</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="338"></A><H4>338.
+  
+Enumerator name with linkage used as class name in other translation unit
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Feb 2002<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The following declarations are allowed within a translation
+unit:</P>
+<PRE>
+  struct S;
+  enum { S };
+</PRE>
+<P>However, 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9 seems to say
+these two declarations
+cannot appear in two different translation units.  That also
+would mean that the inclusion of a header containing the above
+in two different translation units is not valid C++.</P>
+
+<P>I suspect this is an oversight and that users should be allowed
+to have the declarations above appear in different translation
+units.  (It is a fairly common thing to do, I think.)</P>
+
+<P>
+<U>Mike Miller</U>:
+I think you meant "<TT>enum E { S };</TT>" -- enumerators only have
+external linkage if the enumeration does (6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4)
+, and 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9 only
+applies to entities with external linkage.</P>
+
+<P>I don't remember why enumerators were given linkage; I don't
+think it's necessary for mangling non-type template arguments.
+In any event, I can't think why cross-TU name collisions between
+enumerators and other entities would cause a problem, so I guess
+a change here would be okay.  I can think of three changes that
+would have that effect:</P>
+
+<OL>
+<LI>
+Saying that enumerators do not have linkage.
+</LI>
+<LI>
+Removing enumerators from the list of entities in the first
+sentence of 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9.
+</LI>
+<LI>
+Saying that it's okay for an enumerator in one TU to have the
+same name as a class type in another TU only if the enumerator
+hides that same class type in both TUs (the example you gave).
+</LI>
+</OL>
+
+<P>
+<U>Daveed Vandevoorde</U>:
+I don't think any of these are sufficient in the sense that the problem
+isn't limited to enumerators.  E.g.:
+<PRE>
+  struct X;
+  extern void X();
+</PRE>
+shouldn't create cross-TU collisions either.</P>
+
+<P>
+<U>Mike Miller</U>:
+So you're saying that cross-TU collisions should only be
+prohibited if both names denote entities of the same kind (both
+functions, both objects, both types, etc.), or if they are both
+references (regardless of what they refer to, presumably)?</P>
+
+<P>
+<U>Daveed Vandevoorde</U>:
+Not exactly.  Instead, I'm saying that if two entities (with
+external linkage) can coexist when they're both declared in the
+same translation unit (TU), then they should also be allowed to
+coexist when they're declared in two different translation units.</P>
+
+<P>For example:
+<PRE>
+  int i;
+  void i();  // Error
+</PRE>
+This is an error within a TU, so I don't see a reason to make it
+valid across TUs.</P>
+
+<P>However, "tag names" (class/struct/union/enum) can sometimes
+coexist with identically named entities (variables, functions &amp;
+enumerators, but not namespaces, templates or type names).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

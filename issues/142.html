@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 142</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="142"></A><H4>142.
+  
+Injection-related errors in access example
+</H4>
+<B>Section: </B>11.8.3&#160; [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Jul 1999<BR>
+
+
+
+
+
+<P>In the example in paragraph 3 of
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+, all the references
+to <TT>B</TT> in <TT>DD::f()</TT> should be replaced by <TT>::B</TT>.
+The reason is that the class name <TT>B</TT> is private in <TT>D</TT>
+and thus inaccessible in <TT>DD</TT>.  (The example was probably not
+updated when class name injection was added.)</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Replace the example in
+11.8.3 [<A href="https://wg21.link/class.access.base#3">class.access.base</A>] paragraph 3
+with:</P>
+<PRE>
+    class B {
+    public:
+        int mi;                 // nonstatic member
+        static int si;          // static member
+    };
+    class D: private B {
+    };
+    class DD: public D {
+        void f();
+    };
+    void DD::f() {
+        mi = 3;                 // error: mi is private in D
+        si = 3;                 // error: si is private in D
+        ::B b;
+        b.mi = 3;               // OK (b.mi is different from this-&gt;mi)
+        b.si = 3;               // OK (b.si is different from this-&gt;si)
+        ::B::si = 3;            // OK
+        ::B* bp1 = this;        // error: B is a private base class
+        ::B* bp2 = (::B*)this;  // OK with cast
+        bp2-&gt;mi = 3;            // OK: access through a pointer to B
+    }
+</PRE>
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2450</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2450"></A><H4>2450.
+  
+<I>braced-init-list</I> as a <I>template-argument</I>
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Marek Polacek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-01-07<BR>
+
+
+<P>[ Resolved by paper P2308R1 (Template parameter initialization), adopted in November, 2023. ]</P>
+
+
+
+<P>Since non-type template parameters can now have class
+types, it would seem to make sense to allow a
+<I>braced-init-list</I> as a <I>template-argument</I>,
+but the grammar does not permit it.</P>
+
+<P>See also issues <A HREF="2049.html">2049</A> and
+<A HREF="2459.html">2459</A>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>The resolution also addresses <A HREF="2049.html">issue 2049</A>.</P>
+
+<OL>
+<LI>
+<P>Change in 7.3.1 [<A href="https://wg21.link/conv.general#3">conv.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression <INS>or <I>braced-init-list</I></INS> E can be
+implicitly converted to a type T if and only if the declaration <TT>T
+t = E;</TT> is well-formed, for some invented temporary variable t
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#12">expr.const</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+A converted constant expression of type T is an
+expression <INS>or <I>braced-init-list</I></INS>, implicitly converted
+to type T, where the converted expression is a constant expression and
+the implicit conversion sequence contains only
+(12.1 [<A href="https://wg21.link/over.pre">over.pre</A>])
+<UL>
+<LI>user-defined conversions,</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.3 [<A href="https://wg21.link/temp.names#1">temp.names</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+<I>template-argument:
+  constant-expression
+  type-id
+  id-expression
+  <INS>braced-init-list</INS></I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.4.2 [<A href="https://wg21.link/temp.arg.type#4">temp.arg.type</A>] paragraph 4 as follows:</P>
+
+<PRE>
+  template&lt;auto n&gt; struct B { /* ... */ };
+  B&lt;5&gt; b1;        //<SPAN CLASS="cmnt"> OK, template parameter type is int</SPAN>
+  B&lt;'a'&gt; b2;      //<SPAN CLASS="cmnt"> OK, template parameter type is char</SPAN>
+  B&lt;2.5&gt; b3;      //<SPAN CLASS="cmnt"> OK, template parameter type is double</SPAN>
+  B&lt;void(0)&gt; b4;  //<SPAN CLASS="cmnt"> error: template parameter type cannot be void</SPAN>
+<INS>  template&lt;int i&gt; struct C { /* ... */ };
+  C&lt;{ 42 }&gt; c1; //<SPAN CLASS="cmnt"> OK</SPAN></INS>
+</PRE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 614</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="614"></A><H4>614.
+  
+Results of integer <TT>/</TT> and <TT>%</TT>
+</H4>
+<B>Section: </B>7.6.5&#160; [<A href="https://wg21.link/expr.mul">expr.mul</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 January 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting as part of
+paper N2757.]</P>
+
+
+
+<P>The current Standard leaves it implementation-defined whether
+integer division rounds the result toward 0 or toward negative
+infinity and thus whether the result of <TT>%</TT> may be negative.
+C99, apparently reflecting (nearly?) unanimous hardware practice, has
+adopted the rule that integer division rounds toward 0, thus requiring
+that the result of <TT>-1 % 5</TT> be <TT>-1</TT>.  Should the C++
+Standard follow suit?</P>
+
+<P>On a related note, does <TT>INT_MIN % -1</TT> invoke undefined
+behavior?  The <TT>%</TT> operator is defined in terms of the
+<TT>/</TT> operator, and <TT>INT_MIN / -1</TT> overflows, which by
+Clause 7 [<A href="https://wg21.link/expr#5">expr</A>] paragraph 5 causes undefined behavior;
+however, that is not the &#8220;result&#8221; of the <TT>%</TT>
+operation, so it's not clear.  The wording of 7.6.5 [<A href="https://wg21.link/expr.mul#4">expr.mul</A>] paragraph 4
+appears to allow <TT>%</TT> to cause undefined behavior
+only when the second operand is 0.</P>
+
+<P><B>Proposed resolution (August, 2008):</B></P>
+
+<P>Change 7.6.5 [<A href="https://wg21.link/expr.mul#4">expr.mul</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The binary <TT>/</TT> operator yields the quotient, and the
+binary <TT>%</TT> operator yields the remainder from the division
+of the first expression by the second. If the second operand of
+<TT>/</TT> or <TT>%</TT> is zero the behavior is undefined<DEL>;
+otherwise <TT>(a/b)*b + a%b</TT> is equal to <TT>a</TT>. If both
+operands are nonnegative then the remainder is nonnegative; if
+not, the sign of the remainder is
+implementation-defined. [<I>Footnote:</I> According to work
+underway toward the revision of ISO C, the preferred algorithm
+for integer division follows the rules defined in the ISO Fortran
+standard, ISO/IEC 1539:1991, in which the quotient is always
+rounded toward zero. &#8212;<I>end footnote</I>]</DEL><INS>.  For
+integral operands, the <TT>/</TT> operator yields the
+algebraic quotient with any fractional part discarded;
+[<I>Footnote:</I> This is often called &#8220;truncation towards
+zero.&#8221; &#8212;<I>end footnote</I>] if the quotient
+<TT>a/b</TT> is representable in the type of the result,
+<TT>(a/b)*b + a%b</TT> is equal to <TT>a</TT>.</INS>
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: see C99 6.5.5 paragraph 6.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2897</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2897"></A><H4>2897.
+  
+Copying potentially-overlapping union subobjects
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-30<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/542">#542</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  union U {};
+  struct S {
+    U u [[no_unique_address]];
+    char c;
+  };
+  S s;
+  s.c = 1;
+  s.u = U();   // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>As specified, the move-assignment at #1 might disturb the value
+of <TT>s.c</TT>.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>(Note that the value representation of a union arguably depends on
+which of its members is active.)</P>
+
+<OL>
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#15">class.copy.ctor</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move constructor for a union X copies the
+<DEL>object</DEL> <INS>value</INS> representation
+(6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. For each object nested within
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the object that is the source of the
+copy, a corresponding object o nested within the destination is
+identified (if the object is a subobject) or created (otherwise), and
+the lifetime of o begins before the copy is performed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#13">class.copy.assign</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move assignment operator for a union X
+copies the <DEL>object</DEL> <INS>value</INS> representation
+(6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) of X. If the source and destination of
+the assignment are not the same object, then for each object nested
+within (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) the object that is the source of
+the copy, a corresponding object o nested within the destination is
+created, and the lifetime of o begins before the copy is performed.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

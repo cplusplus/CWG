@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1808</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1808"></A><H4>1808.
+  
+Constructor templates vs default constructors
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-11-12<BR>
+
+
+
+
+<P>It is not clear when, if ever, a constructor template can be
+considered to provide a default constructor.  For example:</P>
+
+<PRE>
+  struct A {
+    template&lt;typename ...T&gt; A(T...); //<SPAN CLASS="cmnt"> #1</SPAN>
+    A(std::initializer_list&lt;long&gt;);  //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+  A a{};
+</PRE>
+
+<P>According to 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3, <TT>A</TT>
+will be value-initialized if it has a default constructor, and
+there is implementation divergence whether this example calls #1
+or #2.</P>
+
+<P>Similarly, for an example like</P>
+
+<PRE>
+  struct B {
+    template&lt;typename T=int&gt; B(T = 0);
+  };
+</PRE>
+
+<P>it is not completely clear whether a default constructor should
+be implicitly declared or not.</P>
+
+<P>More generally, do utterances in the Standard concerning
+&#8220;constructors&#8221; also apply to constructor templates?</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>One possibility discussed was that we may need to change places that
+explicitly refer to a default constructor to use overload resolution,
+similar to the change that was made a few years ago with regard to copy
+construction vs &#8220;copy constructor.&#8221;  One additional use of
+&#8220;default constructor&#8221; is in determining the triviality of a
+class, but it might be a good idea to remove the concept of a trivial
+class altogether.  This possibility will be explored.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>CWG reaffirmed the direction from the preceding note and also
+determined that the presence of a constructor template should suppress
+implicit declaration of a default constructor.</P>
+
+<P><B>Additional notes (April, 2024)</B></P>
+
+<P>The standard does not seem to contain a use of "trivial class" outside
+of examples.  See paper P3247R0 Deprecate the notion of trivial types.</P>
+
+<P>Additional examples to consider for the definition of "trivial class":</P>
+
+<PRE>
+  struct A {
+    A() = default; //<SPAN CLASS="cmnt">eligible, second constructor unsatisfied</SPAN>
+    template&lt;class... Args&gt;
+    A(Args&amp;&amp;... args) requires (sizeof...(Args) &gt; 0) {}
+  };
+
+  struct B {
+    B() = default; //<SPAN CLASS="cmnt">ineligible, second constructor more constrained</SPAN>
+    template&lt;class... Args&gt;
+    B(Args&amp;&amp;... args) requires (sizeof...(Args) == 0) {}
+  };
+
+  struct C {
+    C() = default; //<SPAN CLASS="cmnt">eligible, but</SPAN>
+    template&lt;class... Args&gt; //<SPAN CLASS="cmnt">also eligible and non-trivial</SPAN>
+    C(Args&amp;&amp;... args) {}
+  };
+</PRE>
+
+<P>See also <A HREF="1363.html">issue 1363</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

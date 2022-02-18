@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1694</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1694"></A><H4>1694.
+  
+Restriction on reference to temporary as a constant expression
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-05-30<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>We're missing a restriction on the value of a temporary which is bound
+to a static storage duration reference:</P>
+
+<PRE>
+  void f(int n) {
+    static constexpr int *&amp;&amp;r = &amp;n;
+  }
+</PRE>
+
+<P>This is currently valid, because <TT>&amp;n</TT> is a core constant
+expression, and it is a constant expression because the reference binds to
+a temporary (of type <TT>int*</TT>) that has static storage duration
+(because it's lifetime-extended by the reference binding).</P>
+
+<P>The value of <TT>r</TT> <I>is</I> constant here (it's a constant
+reference to a temporary with a non-constant initializer), but I don't
+think we should accept this. Generally, I think a temporary which is
+lifetime-extended by a constexpr variable should also be treated as if it
+were declared to be a constexpr object.</P>
+
+<P><B>Proposed resolution (September, 2013) [SUPERSEDED]:</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#4">expr.const</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>constant expression</I> is either a glvalue core constant
+expression whose value refers to an <DEL>object with static storage
+duration or to a function</DEL> <INS>entity that is a permitted result of a
+constant expression</INS>, or a prvalue core constant expression whose
+value is an object where, for that object and its subobjects:</P>
+
+<UL>
+<LI><P>each non-static data member of reference type refers to an
+<DEL>object with static storage duration or to a function</DEL>
+<INS>entity that is a permitted result of a constant expression</INS>,
+and</P></LI>
+
+<LI><P>if the object or subobject is of pointer type, it contains the
+address of an object with static storage duration, the address past the end
+of such an object (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]), the address of a function, or
+a null pointer value.</P></LI>
+
+</UL>
+
+<P><INS>An entity is a permitted result of a constant expression if it is
+an object with static storage duration that is either not a temporary or is
+a temporary whose value satisfies the above constraints, or it is a
+function.</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#4">expr.const</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>constant expression</I> is either a glvalue core constant
+expression whose value refers to an <DEL>object with static storage
+duration or to a function</DEL> <INS>entity that is a permitted result of a
+constant expression (as defined below)</INS>, or a prvalue core constant
+expression whose value is an object where, for that object and its
+subobjects:</P>
+
+<UL>
+<LI><P>each non-static data member of reference type refers to an
+<DEL>object with static storage duration or to a function</DEL>
+<INS>entity that is a permitted result of a constant expression</INS>,
+and</P></LI>
+
+<LI><P>if the object or subobject is of pointer type, it contains the
+address of an object with static storage duration, the address past the end
+of such an object (5.7), the address of a function, or
+a null pointer value.</P></LI>
+
+</UL>
+
+<P><INS>An entity is a <I>permitted result of a constant expression</I> if
+it is an object with static storage duration that is either not a temporary
+object or is a temporary object whose value satisfies the above
+constraints, or it is a function.</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

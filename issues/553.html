@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 553</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="553"></A><H4>553.
+  
+Problems with friend allocation and deallocation functions
+</H4>
+<B>Section: </B>_N4868_.9.8.2.3&#160; [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dmitriy Litskalov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 December 2005<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    class C {
+       public: enum E {};
+
+       friend void* operator new(size_t, E);
+       friend void  operator delete(void*, E);
+    };
+
+    void foo() {
+       C::E e;
+       C* ptr = new(e) C();
+    }
+</PRE>
+
+<P>This code, which is valid in global scope, becomes ill-formed when
+the class definition is moved into a namespace, and there is no way
+to make it valid:</P>
+
+<PRE>
+    namespace N {
+       class C {
+          public: enum E {};
+
+          friend void* operator new(size_t, E);
+          friend void  operator delete(void*, E);
+       };
+    }
+
+    void foo() {
+       N::C::E e;
+       N::C* ptr = new(e) N::C();
+    }
+</PRE>
+
+<P>The reason for this is that non-member allocation and deallocation
+functions are required to be members of the global scope (6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#1">basic.stc.dynamic.allocation</A>] paragraph 1, 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#1">basic.stc.dynamic.deallocation</A>] paragraph 1)
+, unqualified friend declarations declare names in the
+innermost enclosing namespace (_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3)
+, and these functions cannot be declared in global scope
+at a point where the friend declarations could refer to them using
+<I>qualified-id</I>s because their second parameter is a member of the
+class and thus can't be named before the class containing the friend
+declarations is defined.</P>
+
+<P>Possible solutions for this conundrum include invention of some
+mechanism to allow a friend declaration to designate a namespace scope
+other than the innermost enclosing namespace in which the friend class
+or function is to be declared or to relax the innermost enclosing
+namespace lookup restriction in _N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3
+for friend declarations that nominate allocation and
+deallocation functions. </P>
+
+<P><B>Rationale (April, 2006):</B></P>
+
+<P>The CWG acknowledged that it is not always possible to move
+code from the global scope into a namespace but felt that this
+problem was not severe enough to warrant changing the language to
+accommodate it.  Possible solutions include moving the enumeration
+outside the class or defining member allocation and deallocation
+functions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

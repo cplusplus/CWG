@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 5</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="5"></A><H4>5.
+  
+CV-qualifiers and type conversions
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Josee Lajoie
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>The description of copy-initialization in 9.4 [<A href="https://wg21.link/dcl.init#14">dcl.init</A>] paragraph 14
+says:</P>
+<UL>
+<LI>
+If the destination type is a (possibly cv-qualified) class type:
+
+<BR>&#160;...</LI>
+<LI>
+Otherwise (i.e. for the remaining copy-initialization cases), user-defined
+conversion sequences that can convert from the source type to the destination
+type or (when a conversion function is used) to a derived class thereof
+are enumerated ... if the function is a constructor, the call initializes
+a temporary of the destination type. ...
+</LI>
+</UL>
+Should "destination type" in this last bullet refer to "cv-unqualified
+destination type" to make it clear that the destination type excludes any
+cv-qualifiers? This would make it clearer that the following example is
+well-formed:
+<PRE>
+     struct A {
+       A(A&amp;);
+     };
+     struct B : A { };
+
+     struct C {
+       operator B&amp;();
+     };
+
+     C c;
+     const A a = c; // allowed?
+</PRE>
+<P>The temporary created with the conversion function is an lvalue of type
+<TT>B</TT>. If the temporary must have the cv-qualifiers of the destination
+type (i.e. const) then the copy-constructor for <TT>A</TT> cannot be called
+to create the object of type <TT>A</TT> from the lvalue of type <TT>const
+B</TT>. If the temporary has the cv-qualifiers of the result type of the
+conversion function, then the copy-constructor for <TT>A</TT> can be called
+to create the object of type <TT>A</TT> from the lvalue of type <TT>const
+B</TT>. This last outcome seems more appropriate.</P>
+
+<P>
+<U>Steve Adamczyk</U>: </P>
+<P>Because of late changes to this area, the
+relevant text is now the third sub-bullet of the fourth bullet of
+9.4 [<A href="https://wg21.link/dcl.init#14">dcl.init</A>] paragraph 14:</P>
+
+<BLOCKQUOTE>
+
+Otherwise (i.e., for the remaining copy-initialization cases),
+user-defined conversion sequences that can convert from the source
+type to the destination type or (when a conversion function is used)
+to a derived class thereof are enumerated...
+The function selected is called with the initializer expression as its
+argument; if the function is a constructor, the call initializes a
+temporary of the destination type.  The result of the call (which is
+the temporary for the constructor case) is then used to
+direct-initialize, according to the rules above, the object that is
+the destination of the copy-initialization.
+
+</BLOCKQUOTE>
+
+<P>The issue still remains whether the wording should refer to "the
+cv-unqualified version of the destination type."  I think it
+should.
+</P>
+
+<P><B>Notes from 10/00 meeting:</B></P>
+
+<P>The original example does not illustrate the remaining
+problem.  The following example does:</P>
+
+<PRE>
+    struct C { };
+    C c;
+    struct A {
+        A(const A&amp;);
+        A(const C&amp;);
+    };
+    const volatile A a = c;    // Okay
+</PRE>
+
+<P><B>Proposed Resolution (04/01):</B></P>
+
+<P>In 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], paragraph 14, bullet 4,
+sub-bullet 3, change</P>
+
+<BLOCKQUOTE>
+
+if the function is a constructor, the call initializes a temporary
+of the destination type.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+if the function is a constructor, the call initializes a temporary
+of the cv-unqualified version of the destination type.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

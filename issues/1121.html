@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1121</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1121"></A><H4>1121.
+  
+Unnecessary ambiguity error in formation of pointer to member
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US33">N3092 comment
+  US&#160;33<BR></A>
+
+<P>The resolution of <A HREF="983.html">issue 983</A> restored
+an error, inadvertently removed by the resolution of
+<A HREF="39.html">issue 39</A>, for the formation of a member
+of an ambiguous base class.  For example:</P>
+
+<PRE>
+    struct B { int i; };
+    struct I1: B { };
+    struct I2: B { };
+    struct D: I1, I2 { };
+    int B::* pm = &amp;D::i;    // Originally and again ambiguous
+</PRE>
+
+<P>This error is not necessary, because the result of taking the
+address of a member of an ambiguous base class is a pointer to
+a member of that class; an actual ambiguity would occur only if
+that pointer to a base class member is converted to a pointer to
+a member of the derived class.  (See <A HREF="203.html">issue 203</A>,
+which suggests changing the result of taking the address of a
+member to reflect the naming class of the member instead of the
+class of which it is directly a member; if that change were made,
+the ambiguity error would be needed.)</P>
+
+<P>The resolution of <A HREF="983.html">issue 983</A> should
+be reverted.</P>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...If the operand is a <I>qualified-id</I> naming a non-static member
+<TT>m</TT> of some class <TT>C</TT> with type <TT>T</TT>, the result
+has type &#8220;pointer to member of class <TT>C</TT> of type
+<TT>T</TT> and is a prvalue designating <TT>C::m</TT><DEL>; the
+program is ill formed if C is an ambiguous base (10.2) of the class
+designated by the nested-name-specifier of the
+qualified-id</DEL>. Otherwise...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.5.2 [<A href="https://wg21.link/class.member.lookup#13">class.member.lookup</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Even if the result of name lookup is unambiguous, use of
+a name found in multiple subobjects might still be ambiguous
+(7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>], 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>],
+<DEL>7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>],</DEL> 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]). &#8212;<I>end note</I>]...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

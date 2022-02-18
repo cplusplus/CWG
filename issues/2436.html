@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2436</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2436"></A><H4>2436.
+  
+Copy semantics of coroutine parameters
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mathias Stearn
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-06-09<BR>
+
+
+<P>[Accepted (as paper P2107R0) at the February, 2020 (Prague) meeting.]</P>
+
+<P>(This was previously
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0664r8.html#33">issue 33</A>
+in the coroutine issue list.)</P>
+
+<P>According to 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#13">dcl.fct.def.coroutine</A>] paragraph 13,</P>
+
+<BLOCKQUOTE>
+
+When a coroutine is invoked, a copy is created for each
+coroutine parameter. Each such copy is an object with
+automatic storage duration that is direct-initialized from
+an lvalue referring to the corresponding parameter if the
+parameter is an lvalue reference, and from an xvalue
+referring to it otherwise.
+
+</BLOCKQUOTE>
+
+<P>This means that parameters to a coroutine that are
+const-qualified will be copy-constructed rather than
+move-constructed. For example, changing the signature of
+a coroutine from <TT>task&lt;void&gt; f(std::string)</TT>
+to <TT>task&lt;void&gt;(const std::string)</TT> can
+introduce an extra string copy and potential heap allocation
+that may not be obvious to the author.</P>
+
+<P>It also means that it is not possible to write a
+coroutine with a const-qualified move-only parameter type
+like <TT>const std::unique_ptr&lt;T&gt;</TT>.</P>
+
+<P>The original parameter to the function is generally not
+observable to the coroutine body, so there seems to be little
+benefit to preserving the constness of the original
+parameter when copying the parameter into the coroutine frame.</P>
+
+
+
+<P><U>Suggested resolution:</U></P>
+
+<BLOCKQUOTE>
+
+When a coroutine is invoked, a copy is created for each
+coroutine parameter. Each such copy is an object <INS>or
+reference</INS> with automatic storage duration <DEL>that</DEL>
+<INS>and has the same type as the corresponding parameter.
+Each copy</INS> is
+direct-initialized <INS>(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])</INS>
+from <DEL>an lvalue referring to</DEL> the corresponding
+parameter <DEL>if the parameter is an lvalue reference, and
+from an xvalue referring to it otherwise</DEL>. <INS>If the
+type of the copy is an rvalue reference type, then for the
+purpose of this initialization the value category of the
+corresponding parameter is an rvalue.</INS> A <DEL>reference
+to</DEL> <INS>use of</INS> a parameter in the
+<DEL>function-body</DEL> <INS><I>function-body</I></INS> of
+the coroutine and in the call to the coroutine promise
+constructor is replaced by <DEL>a reference to</DEL> its
+copy. The initialization and destruction of each parameter
+copy...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

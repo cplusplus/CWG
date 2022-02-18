@@ -1,0 +1,144 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2233</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2233"></A><H4>2233.
+  
+Function parameter packs following default arguments
+</H4>
+<B>Section: </B>9.3.4.7&#160; [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-02-25<BR>
+
+
+<P>[Accepted as a DR at the June, 2018 (Rapperswil) meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="777.html">issue 777</A> attempts to
+make this valid:</P>
+
+<PRE>
+   template&lt;typename ...T&gt; void f(int n = 0, T ...t);
+</PRE>
+
+<P>However, it fails to do so, since any parameters resulting from the
+expansion of the pack would be ordinary parameters without default
+arguments following a parameter with a default argument, which is
+ill-formed. Thus only an empty pack would be usable with such a
+declaration, which violates the restriction against such contexts in
+13.8 [<A href="https://wg21.link/temp.res#8.3">temp.res</A>] bullet 8.3.</P>
+
+<P><B>Proposed resolution, February, 2018:</B></P>
+
+<OL>
+<LI><P>Change 7.6.1.3 [<A href="https://wg21.link/expr.call#4">expr.call</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>When a function is called, each parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])
+<DEL>shall be</DEL> <INS>is</INS> initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]) with its
+corresponding argument. <INS>If there is no corresponding argument, the default argument for the parameter is used; the program is ill-formed if one is not present. [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+  int x = f&lt;int&gt;();   //<SPAN CLASS="cmnt"> error: no argument for second function parameter</SPAN></INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS> If the function is a non-static
+member function, the this parameter of the function
+(_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>]) <DEL>shall be</DEL> <INS>is</INS>
+initialized with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]). [<I>Note:</I> There is
+no access or ambiguity checking...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#1">dcl.fct.default</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If an <I>initializer-clause</I> is specified in
+a <I>parameter-declaration</I> this <I>initializer-clause</I> is used as a
+default argument. <INS>[<I>Note:</I></INS> Default arguments will be used
+in calls where trailing arguments are
+missing <INS>(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>])</INS>. <INS>&#8212;<I>end
+note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#4">dcl.fct.default</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>For non-template functions, default arguments can be added in later
+declarations of a function in the same scope. Declarations in different
+scopes have completely distinct sets of default arguments. That is,
+declarations in inner scopes do not acquire default arguments from
+declarations in outer scopes, and vice versa. In a given function
+declaration, each parameter subsequent to a parameter with a default
+argument shall have a default argument supplied in this or a previous
+declaration<INS>, unless the parameter was expanded from a parameter
+pack,</INS> or shall be a function parameter pack.  A default argument
+shall not be redefined by a later declaration (not even to the same
+value). [<I>Example:</I>
+</P>
+
+<PRE>
+  void g(int = 0, ...);   //<SPAN CLASS="cmnt"> OK, ellipsis is not a parameter so it can follow</SPAN>
+                          //<SPAN CLASS="cmnt"> a parameter with a default argument</SPAN>
+  void f(int, int);
+  void f(int, int = 7);
+  void h() {
+    f(3);                 //<SPAN CLASS="cmnt"> OK, calls </SPAN>f(3, 7)
+    void f(int = 1, int); //<SPAN CLASS="cmnt"> error: does not use default from surrounding scope</SPAN>
+  }
+  void m() {
+    void f(int, int);     //<SPAN CLASS="cmnt"> has no defaults</SPAN>
+    f(4);                 //<SPAN CLASS="cmnt"> error: wrong number of arguments</SPAN>
+    void f(int, int = 5); //<SPAN CLASS="cmnt"> OK</SPAN>
+    f(4); //<SPAN CLASS="cmnt"> OK, calls </SPAN>f(4, 5);
+    void f(int, int = 5); //<SPAN CLASS="cmnt"> error: cannot redefine, even to same value</SPAN>
+  }
+  void n() {
+    f(6);                 //<SPAN CLASS="cmnt"> OK, calls </SPAN>f(6, 7)
+  }
+<INS>  template&lt;class ... T&gt; struct C {
+    void f(int n = 0, T...);
+  };
+  C&lt;int&gt; c;               //<SPAN CLASS="cmnt"> OK; instantiates declaration </SPAN>void C::f(int n = 0, int)</INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

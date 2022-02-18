@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 48</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="48"></A><H4>48.
+  
+Definitions of unused static members
+</H4>
+<B>Section: </B>11.4.9.3&#160; [<A href="https://wg21.link/class.static.data">class.static.data</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Gibbons
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Nov 1997<BR>
+
+
+
+<P>Also see section: 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+.</P>
+
+<P>Originally, all static data members still had to be defined outside the
+class whether they were used or not.</P>
+
+<P>But that restriction was supposed to be lifted so that static
+data members need not be defined outside the class unless they are used
+in a manner which requires their definition,
+in the same manner as namespace-scope
+variables. In particular, if an integral/enum const static data member
+is initialized within the class, and its address is never taken, we agreed
+that no namespace-scope definition was required.</P>
+
+<P>For example:</P>
+<PRE>
+    struct A {
+        static const int size = 10;
+        int array[size];
+    };
+
+    int main() {
+        A a;
+        return 0;
+    }
+</PRE>
+However, 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4
+says:
+<BLOCKQUOTE>The member shall still be defined in a namespace scope if it
+is used in the program and the namespace scope definition shall not contain
+an initializer.</BLOCKQUOTE>
+A narrow interpreration of "used" in this rule would make the example ill-formed
+because there is no namespace-scope definition of "<TT>size</TT>".
+A better wording for this rule would be:
+<BLOCKQUOTE>The member shall still be defined in a namespace scope if it
+is used in the program in the manner described in 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+.
+The namespace scope definition shall not contain an initializer.</BLOCKQUOTE>
+Also, the wording in 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2:
+
+<BLOCKQUOTE>An expression is potentially evaluated unless either it is
+the operand of the <TT>sizeof</TT> operator (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]
+), or it is the operand
+of the <TT>typeid</TT> operator and does not designate an lvalue of polymorphic
+class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+).</BLOCKQUOTE>
+is incomplete because it does not mention the use of a compile-time constant
+as an array bound or template argument. It should say something like:
+<BLOCKQUOTE>An expression is potentially evaluated unless it is the operand
+of the sizeof operator (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]
+), the operand of the typeid operator,
+<U>an <I>integral constant-expression</I> used as an array bound or an
+<I>integral constant-expression</I> used as a <I>template-argument</I>
+for a non-reference <I>template-parameter</I></U>; and the expression
+does not designate an lvalue of polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+).</BLOCKQUOTE>
+
+<P>
+<B>Proposed Resolution (04/99):</B>
+Change the first sentence of 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+
+paragraph 2 from:</P>
+<BLOCKQUOTE>An expression is <I>potentially evaluated</I> unless either
+it is the operand of the <TT>sizeof</TT> operator (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]
+), or it is the
+operand of the <TT>typeid</TT> operator and does not designate an lvalue
+of polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+).</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>An expression is <I>potentially evaluated</I> unless <U>it
+appears where an <I>integral constant expression</I> is required (see 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]
+),
+is
+</U>the operand of the <TT>sizeof</TT> operator (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]
+), or
+is the operand of the <TT>typeid</TT> operator and the expression does
+not designate an lvalue of polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+).</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

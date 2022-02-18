@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2169</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2169"></A><H4>2169.
+  
+Narrowing conversions and overload resolution
+</H4>
+<B>Section: </B>12.2.4.2.6&#160; [<A href="https://wg21.link/over.ics.list">over.ics.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Krauss
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-08-26<BR>
+
+
+<P>Current implementations ignore narrowing conversions during
+overload resolution, emitting a diagnostic if calling the
+selected function would involve narrowing.  For example:</P>
+
+<PRE>
+  struct s { long m };
+  struct ss { short m; };
+
+  void f( ss );
+  void f( s );
+  void g() {
+    f({ 1000000 }); //<SPAN CLASS="cmnt"> Ambiguous in spite of narrowing for </SPAN>f(ss)
+  }
+</PRE>
+
+<P>However, the current wording of 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7
+says,</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the parameter has an aggregate type which can
+be initialized from the initializer list according to the
+rules for aggregate initialization
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), the implicit conversion
+sequence is a user-defined conversion sequence with the
+second standard conversion sequence an identity conversion.
+
+</BLOCKQUOTE>
+
+<P>In the example above, <TT>ss</TT> cannot be initialized
+from <TT>{ 1000000 }</TT> because of the narrowing conversion,
+so presumably <TT>f(ss)</TT> should not be considered.  If
+this is not the intended outcome, paragraph 7 should be
+restated in terms of having an implicit conversion sequence,
+as in, e.g., bullet 9.1, instead of a valid initialization.</P>
+
+<P><B>Rationale (March, 2016):</B></P>
+
+<P>This is a question of language design and thus more suited
+to consideration by EWG.</P>
+
+<P><B>EWG (January, 2021):</B></P>
+
+<P>Adjust the standard to follow existing implementations.
+See <A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p1018r8.html#CWG2169">vote</A>.</P>
+
+
+
+<P><B>Additional notes (March, 2023)</B></P>
+
+<P>A narrowing conversion is but one of the many circumstances that
+could make a conversion ill-formed despite the existence of an
+implicit conversion sequence. Other examples (with implementation
+divergence) are invoking a private or deleted function, binding a
+non-const reference to a bit-field, invoking an explicit constructor
+in list-initialization, invoking a consteval constructor with
+unsuitable arguments, or initializing an aggregate with
+incorrectly-ordered designated initializers.  A resolution of this
+issue should thus not be focused on narrow conversions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

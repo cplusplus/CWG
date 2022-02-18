@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2593</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2593"></A><H4>2593.
+  
+Insufficient base class restriction for pointer-to-member expression
+</H4>
+<B>Section: </B>7.6.4&#160; [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-04<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {};
+  struct AA : A { int y; };
+  struct B : A { int x; };
+  struct C : AA, B {};
+
+  constexpr int f(const A &amp;a) {
+    int A::*mp = static_cast&lt;int A::*&gt;(&amp;B::x);
+    return a.*mp;
+  }
+
+  extern char x[f(static_cast&lt;const AA &amp;&gt;(C{{{}, 13}, {{}, 42}}))];
+  extern char x[13];
+</PRE>
+
+<P>Subclause 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+Abbreviating <I>pm-expression</I>.*<I>cast-expression</I> as E1.*E2,
+E1 is called the <I>object expression</I>.  If the dynamic type of E1 does
+not contain the member to which E2 refers, the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>In the example, the dynamic type of <TT>a</TT> is <TT>C</TT>, which
+does contain <TT>B::x</TT>, and the undefined behavior provision does
+not trigger.  Thus the call to <TT>f</TT> is required to yield 42;
+however common implementations produce 13.  The behavior for this case
+ought to be undefined.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Abbreviating <I>pm-expression</I>.*<I>cast-expression</I> as E1.*E2,
+E1 is called the <I>object expression</I>.
+<DEL>If the dynamic type of E1 does not contain the member to which E2
+refers,</DEL>
+<INS>Where the type of E2 is "pointer to member of T", C is the
+(unique) class of which the member to which E2 refers is a direct
+member, and B is the object of type T that either is the result of E1
+or is the uniquely so-typed base subobject thereof, if B is neither of
+type C nor a base class subobject of an object of type C, then
+</INS>
+the behavior is undefined.
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

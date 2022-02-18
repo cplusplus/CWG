@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2740</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2740"></A><H4>2740.
+  
+Too many objects have constexpr-unknown type
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-02-10<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    A();
+    virtual constexpr int f() { return 1; }
+  };
+  struct B : A {
+    virtual constexpr int f() { return 2; }
+  };
+  B b; //<SPAN CLASS="cmnt"> not constexpr</SPAN>
+  auto &amp;id = typeid(b); //<SPAN CLASS="cmnt"> error, not constant</SPAN>
+</PRE>
+
+<P>The example had been valid, but became invalid under P2280.  The
+same happened for <TT>dynamic_cast</TT>. Furthermore, P2280 seems to
+be missing a change for <TT>static_cast</TT> from base to derived and
+for pointer-to-member access expressions, which both depend on the
+dynamic type and have historically been required to work.</P>
+
+<P>Maybe a better rule would be that objects (not references) whose
+lifetime did not begin within E are treated as having a dynamic type
+that is their declared type.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

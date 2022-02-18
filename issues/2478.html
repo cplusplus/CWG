@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2478</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2478"></A><H4>2478.
+  
+Properties of explicit specializations of implicitly-instantiated class templates
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Hall
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-02-02<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+<P>According to 13.9.4 [<A href="https://wg21.link/temp.expl.spec#16">temp.expl.spec</A>] paragraph 16,</P>
+
+<BLOCKQUOTE>
+
+A member or a member template of a class template may be
+explicitly specialized for a given implicit instantiation of
+the class template, even if the member or member template is
+defined in the class template definition. An explicit
+specialization of a member or member template is specified
+using the syntax for explicit specialization.
+
+</BLOCKQUOTE>
+
+<P>The relationship between this construct and paragraph
+14 is not clear:</P>
+
+<BLOCKQUOTE>
+
+Whether an explicit specialization of a function or variable
+template is inline, constexpr, or an immediate function is
+determined by the explicit specialization and is independent
+of those properties of the template.
+
+</BLOCKQUOTE>
+
+<P>(See also 9.2.6 [<A href="https://wg21.link/dcl.constexpr#1">dcl.constexpr</A>] paragraph 1, note
+1.)  Is this intended to apply to explicit specializations
+of members of implicitly-instantiated class templates? For
+example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct S {
+    int f();
+    constexpr int g();
+  };
+  template&lt;&gt; constexpr int S&lt;int&gt;::f() {  //<SPAN CLASS="cmnt"> OK, constexpr?</SPAN>
+    return 0;
+  }
+  template&lt;&gt; int S&lt;int&gt;::g() {            //<SPAN CLASS="cmnt"> OK, not constexpr?</SPAN>
+    return 0;
+  }
+</PRE>
+
+<P>There is implementation divergence on the treatment of
+this example. This divergence may relate to interpretation
+of the requirement in 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>] paragraph
+1,</P>
+
+<BLOCKQUOTE>
+
+If any declaration of a function or function template has a
+<TT>constexpr</TT> or <TT>consteval</TT> specifier, then
+all its declarations shall contain the same specifier.
+
+</BLOCKQUOTE>
+
+<P>Is an explicit specialization of a member of an
+implicitly-instantiated class template a declaration of
+that member? A similar question also applies to the
+<TT>constinit</TT> specifier as specified in
+9.2.7 [<A href="https://wg21.link/dcl.constinit#1">dcl.constinit</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+If the specifier is applied to any declaration of a
+variable, it shall be applied to the initializing
+declaration.
+
+</BLOCKQUOTE>
+
+<P>(Note that <TT>constinit</TT> is not mentioned in
+13.9.4 [<A href="https://wg21.link/temp.expl.spec#14">temp.expl.spec</A>] paragraph 14.)  For example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct S {
+    static constinit T x;
+  };
+  template&lt;&gt; int S&lt;int&gt;::x = 10;    //<SPAN CLASS="cmnt"> </SPAN>constinit<SPAN CLASS="cmnt"> required?</SPAN>
+  extern char c;
+  template&lt;&gt; short S&lt;char&gt;::x = c;  //<SPAN CLASS="cmnt"> error, </SPAN>c<SPAN CLASS="cmnt"> not constant?</SPAN>
+</PRE>
+
+<P>(Possibly relevant is the fact that default arguments are
+prohibited in explicit specializations of member functions
+of implicitly-instantiated class templates, per
+13.9.4 [<A href="https://wg21.link/temp.expl.spec#21.3">temp.expl.spec</A>] bullet 21.3.)</P>
+
+<P><B>CWG 2022-11-10</B></P>
+
+<P>A specialization of a member of a class template redeclares the
+member of the primary template and thus the redeclaration rules
+apply. In passing, it was noticed that the rule governing explicit
+specializations in general omitted treatment of <TT>constinit</TT>,
+which was considered an oversight.</P>
+
+<P><B>Proposed resolution (approved 2023-02-09):</B></P>
+
+<P>Change in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#13">temp.expl.spec</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+Whether an explicit specialization of a function or variable template
+is inline, constexpr, <INS>constinit,</INS> or <INS>consteval</INS> <DEL>an immediate function</DEL>
+is determined by the explicit specialization and is independent of
+those properties of the template.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

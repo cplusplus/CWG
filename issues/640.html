@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 640</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="640"></A><H4>640.
+  
+Accessing destroyed local objects of static storage duration
+</H4>
+<B>Section: </B>6.9.3.3&#160; [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Howard Hinnant
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 July 2007<BR>
+
+
+
+
+<P>6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#2">basic.start.dynamic</A>] paragraph 2 says,</P>
+
+<BLOCKQUOTE>
+
+If a function contains a local object of static storage duration
+that has been destroyed and the function is called during the
+destruction of an object with static storage duration, the
+program has undefined behavior if the flow of control passes
+through the definition of the previously destroyed local object.
+
+</BLOCKQUOTE>
+
+<P>I would like to turn this behavior from undefined to
+well-defined behavior for the purpose of achieving a graceful
+shutdown, especially in a multi-threaded world.</P>
+
+<P>Background: Alexandrescu describes the &#8220;phoenix
+singleton&#8221; in <I>Modern C++ Design</I>.  This is a class
+used as a function local static, that will reconstruct itself,
+and reapply itself to the <TT>atexit</TT> chain, if the program
+attempts to use it after it is destructed in the <TT>atexit</TT>
+chain.  It achieves this by setting a &#8220;destructed
+flag&#8221; in its own state in its destructor.  If the object is
+later accessed (and a member function is called on it), the
+member function notes the state of the &#8220;destructed
+flag&#8221; and does the reconstruction dance.  The phoenix
+singleton pattern was designed to address issues only in
+single-threaded code where accesses among static objects can have
+a non-scoped pattern.  When we throw in multi-threading, and the
+possibility that threads can be running after <TT>main</TT>
+returns, the chances of accessing a destroyed static
+significantly increase.</P>
+
+<P>The very least that I would like to see happen is to standardize what
+I believe is existing practice:  When an object is destroyed in the
+<TT>atexit</TT> chain, the memory the object occupied is left in
+whatever state the destructor put it in.  If this can only be
+reliably done for objects with standard layout, that would be an
+acceptable compromise.  This would allow objects to set &#8220;I'm
+destructed&#8221; flags in their state and then do something
+well-defined if accessed, such as throw an exception.</P>
+
+<P>A possible refinement of this idea is to have the compiler set
+up a 3-state flag around function-local statics instead of the
+current 2-state flag:</P>
+
+<UL>
+<LI>Not constructed yet</LI>
+<LI>Constructed but not destroyed yet</LI>
+<LI>Destroyed</LI>
+</UL>
+
+<P>We have the first two states today.  We might choose to add
+the third state, and if execution passes over a function-local
+static with &#8220;destroyed&#8221; state, an exception could be
+thrown.  This would mean that we would not have to guarantee
+memory stability in destroyed objects of static duration.</P>
+
+<P>This refinement would break phoenix singletons, and is not
+required for the <TT>~mutex()</TT>/<TT>~condition()</TT> I've
+described and prototyped.  But it might make it easier for Joe
+Coder to apply this kind of guarantee to his own types.</P>
+
+<P><B>Rationale (CWG 2023-05-12)</B></P>
+
+<P>This is an extension that requires a paper targeted at EWG.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

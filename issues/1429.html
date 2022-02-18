@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1429</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1429"></A><H4>1429.
+  
+Scope of a member template's template parameter
+</H4>
+<B>Section: </B>6.4.9&#160; [<A href="https://wg21.link/basic.scope.temp">basic.scope.temp</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-12-09<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+    struct A {
+        struct B { typedef int X; };
+    };
+
+    template&lt;class B&gt; struct C : A {
+        B::X q; // Ok: A::B.
+        struct U { typedef int X; };
+        template&lt;class U&gt;
+            struct D;
+    };
+
+    template&lt;class B&gt;
+    template&lt;class U&gt;
+    struct C&lt;B&gt;::D {
+        typename U::X r; // which U?
+    };
+
+    C&lt;int&gt;::D&lt;double&gt; y;
+</PRE>
+
+<P>In the definition of <TT>D</TT>, <TT>U</TT> definitely needs
+to be in scope as soon as it's declared because it might have
+been used in subsequent template parameter declarations, or it
+might have been used in the <I>id-expression</I> that names the
+declared entity &#8212; just as <TT>B</TT> is used in
+<TT>C&lt;B&gt;::D</TT>. (So 6.4.9 [<A href="https://wg21.link/basic.scope.temp">basic.scope.temp</A>] does the right
+thing for that purpose.)</P>
+
+<P>But it would be nice if the result of lookup did not depend on
+whether <TT>D</TT>'s body appears lexically inside <TT>C</TT>'s body;
+currently, we don't seem to have the wording that makes it
+so.</P>
+
+<P><B>Rationale (October, 2012):</B></P>
+
+<P>This example is covered by the wording in 13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]
+paragraphs 7-8: the template parameter is found.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

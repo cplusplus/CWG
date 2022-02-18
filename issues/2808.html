@@ -1,0 +1,198 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2808</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2808"></A><H4>2808.
+  
+Explicit specialization of defaulted special member function
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-21<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct S {
+    S(const S&amp;) = default;
+    S&amp; operator=(const S&amp;) = default;
+    int n;
+  };
+
+  //<SPAN CLASS="cmnt"> Are the explicit specializations OK?</SPAN>
+  template&lt;&gt; S&lt;int&gt;::S(const S&amp;) noexcept { }
+  template&lt;&gt; S&lt;int&gt;&amp; S&lt;int&gt;::operator=(const S&amp; other) noexcept {
+    return *this;
+  }
+</PRE>
+
+<P>If the explicit specialization were allowed, would the answer
+to <TT>std::is_trivially_copyable&lt;S&lt;int&gt;&gt;</TT> change?
+What is <TT>decltype(&amp;S::operator=)</TT> (the defaulted definition
+is <TT>noexcept</TT>, yet no instantiation or implicit definition is
+triggered)?</P>
+
+<P><B>Proposed resolution (2023-10-20) [SUPERSEDED]:</B></P>
+
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 and add bullets as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicit instantiation of a class template specialization causes
+<UL>
+<LI>the implicit instantiation of the declarations, but not of the
+definitions, of the <DEL>non-deleted</DEL> <INS>user-provided</INS>
+class member functions, member classes, scoped member enumerations,
+static data members, member templates, and friends; and
+</LI>
+
+<LI>the implicit instantiation of the definitions of
+<UL>
+<LI>
+<INS>defaulted and</INS> deleted member functions <INS>as
+defaulted (9.5.2 [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>]) or deleted
+(9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>])</INS>,</LI>
+<LI>unscoped member enumerations, and</LI>
+<LI>member anonymous unions.</LI>
+</UL>
+<INS>[ Note: The implicit instantiation determines whether a defaulted
+function is deleted, but a non-deleted defaulted function is
+implicitly defined only when it is odr-used or needed for constant
+evaluation. -- end note ]</INS>
+</LI>
+</UL>
+The implicit instantiation of a class template specialization does not
+cause the implicit instantiation of default arguments
+or <I>noexcept-specifier</I>s of the class member functions.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (October, 2023)</B></P>
+
+<P>It is desirable to require a diagnostic for such attempted explicit
+specializations.</P>
+
+<P>Furthermore, there are situations where the "potentially-throwing"
+property of a non-deleted function is queried:</P>
+
+<PRE>
+  template&lt;int...&gt;
+  struct C {
+    //<SPAN CLASS="cmnt"> This class has no eligible copy assignment operator at all.</SPAN>
+    void operator=(const C&amp;) requires false;
+    void operator=(int) noexcept;
+    operator int() const;
+  };
+
+  void f(C&lt;&gt; &amp;c) {
+    c = c;        //<SPAN CLASS="cmnt"> Convert to int, then construct from int.</SPAN>
+  }
+
+  struct D {
+    C&lt;&gt; c;
+  };
+
+  bool g(D d) {
+    return noexcept(d = d);     //<SPAN CLASS="cmnt"> #1. If this is valid, what does it return?</SPAN>
+  }
+
+  struct E {
+    C&lt;&gt; c;
+    E &amp;operator=(const E &amp;o) { c = o.c; }
+  };
+</PRE>
+
+<P>All major implementations agree that <TT>E</TT> is valid. However,
+clang, gcc, and EDG delete the copy assignment operator of <TT>D</TT>,
+thus sidestepping the question at #1.  (MSVC accepts, but #1 returns
+true despite the potentially-throwing conversion to <TT>int</TT>.)
+Apparently, user-defined conversions for the first argument
+of <TT>C</TT>'s assignment operator are ignored in implementations
+other than MSVC. However, the specification is silent on that.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 and add bullets as follows:</P>
+
+<BLOCKQUOTE>
+
+The implicit instantiation of a class template specialization causes
+<UL>
+<LI>the implicit instantiation of the declarations, but not of the
+definitions, of the <DEL>non-deleted</DEL> <INS>user-provided</INS>
+class member functions, member classes, scoped member enumerations,
+static data members, member templates, and friends; and
+</LI>
+
+<LI>the implicit instantiation of the definitions of
+<UL>
+<LI>
+<INS>defaulted and</INS> deleted member functions <INS>as
+defaulted (9.5.2 [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>]) or deleted
+(9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>])</INS>,</LI>
+<LI>unscoped member enumerations, and</LI>
+<LI>member anonymous unions.</LI>
+</UL>
+<INS>[ Note: The implicit instantiation determines whether a defaulted
+function is deleted, but a non-deleted defaulted function is
+implicitly defined only when it is odr-used or needed for constant
+evaluation. -- end note ]</INS>
+</LI>
+</UL>
+The implicit instantiation of a class template specialization does not
+cause the implicit instantiation of default arguments
+or <I>noexcept-specifier</I>s of the class member functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#7">temp.expl.spec</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a template, a member template or a member of a <INS>templated</INS>
+class <DEL>template</DEL> is explicitly specialized, a declaration of
+that specialization shall be reachable from every use of that
+specialization that would cause an implicit instantiation to take
+place, in every translation unit in which such a use occurs; no
+diagnostic is required <INS>unless the specialization is for a member
+of a templated class whose definition is implicitly instantiated as a
+result of the implicit instantiation of the class
+(13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>])</INS>. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

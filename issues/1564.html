@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1564</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1564"></A><H4>1564.
+  
+Template argument deduction from an initializer list
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Faisal Vali
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-09<BR>
+
+
+
+
+<P>An initializer list is treated differently in deducing the type of
+an <TT>auto</TT> specifier and in a function call.  In
+9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#6">dcl.spec.auto</A>] paragraph 6, an initializer list is
+given special treatment so that <TT>auto</TT> is deduced as a
+specialization of <TT>std::initializer_list</TT>:</P>
+
+<BLOCKQUOTE>
+
+Once the type of a <I>declarator-id</I> has been determined according
+to 9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>], the type of the declared variable using
+the <I>declarator-id</I> is determined from the type of its
+initializer using the rules for template argument deduction.  Let
+<TT>T</TT> be the type that has been determined for a variable
+identifier <TT>d</TT>.  Obtain <TT>P</TT> from <TT>T</TT> by replacing
+the occurrences of <TT>auto</TT> with either a new invented type
+template parameter <TT>U</TT> or, if the initializer is a
+<I>braced-init-list</I> (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), with
+<TT>std::initializer_list&lt;U&gt;</TT>.  The type deduced for the
+variable <TT>d</TT> is then the deduced <TT>A</TT> determined using
+the rules of template argument deduction from a function call
+(13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]), where <TT>P</TT> is a function
+template parameter type and the initializer for <TT>d</TT> is the
+corresponding argument.
+
+</BLOCKQUOTE>
+
+<P>In a function call, however, an initializer-list argument is a
+non-deduced context:</P>
+
+<BLOCKQUOTE>
+
+<P>Template argument deduction is done by comparing each function
+template parameter type (call it <TT>P</TT>) with the type of the corresponding
+argument of the call (call it <TT>A</TT>) as described below.  If removing
+references and cv-qualifiers from <TT>P</TT> gives <TT>std::initializer_list&lt;<I>P'</I>&gt;</TT> for some <I>P'</I> and the argument is an initializer list
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), then deduction is performed instead for
+each element of the initializer list, taking <I>P'</I> as a function
+template parameter type and the initializer element as its
+argument. Otherwise, an initializer list argument causes the parameter
+to be considered a non-deduced context (13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]). [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class T&gt; void f(std::initializer_list&lt;T&gt;);
+  f({1,2,3});          //<SPAN CLASS="cmnt"> </SPAN>T<SPAN CLASS="cmnt"> deduced to </SPAN>int
+  f({1,"asdf"});       //<SPAN CLASS="cmnt"> error: </SPAN>T<SPAN CLASS="cmnt"> deduced to both </SPAN>int<SPAN CLASS="cmnt"> and </SPAN>const char*
+
+  template&lt;class T&gt; void g(T);
+  g({1,2,3});          //<SPAN CLASS="cmnt"> error: no argument deduced for </SPAN>T
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>This seems inconsistent, but it is not clear in which direction the
+inconsistency should be resolved.  The use of an initializer list in
+a range-based <TT>for</TT> is an argument in favor of the
+9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>] treatment, but the utility of this
+deduction in other contexts is not apparent.</P>
+
+<P><B>Rationale (October, 2012):</B></P>
+
+<P>CWG felt that this language design question would be better
+considered by EWG.</P>
+
+<P><B>Additional note, April, 2015:</B></P>
+
+<P>EWG has decided not to make a change in this area.  See EWG issue
+109.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

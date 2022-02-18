@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2777</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2777"></A><H4>2777.
+  
+Type of <I>id-expression</I> denoting a template parameter object
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-26<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>The type of a template parameter object is specified to
+be <TT>const T</TT> in 13.2 [<A href="https://wg21.link/temp.param#8">temp.param</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> naming a non-type <I>template-parameter</I> of
+class type T denotes a static storage duration object of
+type <TT>const T</TT>, known as a template parameter object, whose
+value is that of the corresponding template argument after it has been
+converted to the type of the <I>template-parameter</I>.  ...
+
+</BLOCKQUOTE>
+
+<P>However, it is unclear what the type of an <I>id-expression</I> is
+that refers to such an object.  There is implementation divergence in
+the treatment of the following example:</P>
+
+<PRE>
+  struct A {};
+
+  template&lt;auto a, auto x&gt;  // <SPAN CLASS="cmnt">also consider</SPAN> A a <SPAN CLASS="cmnt">and</SPAN> const auto x
+  int f() {
+    decltype(a) b;          // <SPAN CLASS="cmnt">also consider</SPAN> decltype((a))
+    A&amp; rb = b;
+    decltype(x) y;
+    int&amp; ry = y;
+  }
+
+  int x = f&lt;A{}, 42&gt;();
+</PRE>
+
+<P>Note that non-type template parameters are handled specially for <TT>decltype</TT>, as specified in 9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype#1">dcl.type.decltype</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+For an expression E, the type denoted by <TT>decltype(E)</TT> is defined as
+follows:
+
+<UL>
+<LI>...</LI>
+<LI>
+otherwise, if E is an unparenthesized <I>id-expression</I> naming a
+non-type <I>template-parameter</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]),
+decltype(E) is the type of the <I>template-parameter</I> after
+performing any necessary type deduction (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>],
+9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]);
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+... <DEL>[<I>Note 4:</I></DEL> If the entity is a template
+parameter object for a template parameter
+of type <TT>T</TT> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), the
+type of the expression is <TT>const T</TT>. <DEL>&#8212;<I>end
+note</I>]</DEL>
+<INS>In all other cases, the type of the expression is the type of the
+entity.</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

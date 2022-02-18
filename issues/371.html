@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 371</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="371"></A><H4>371.
+  
+Interleaving of constructor calls
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matt Austern
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 August 2002<BR>
+
+
+
+
+<P>Is a compiler allowed to interleave constructor calls when
+performing dynamic initialization of nonlocal objects?
+What I mean by interleaving is: beginning to execute a
+particular constructor, then going off and doing
+something else, then going back to the original constructor.
+I can't find anything explicit about this in
+6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>].</P>
+
+<P>I'll present a few different examples, some of which get a
+bit wild.  But a lot of what this comes down to is exactly
+what the standard means when it talks about the order
+of initialization.  If it says that some object x must be
+initialized before a particular event takes place, does that
+mean that x's constructor must be entered before that
+event, or does it mean that it must be exited before that
+event?  If object x must be initialized before object y,
+does that mean that x's constructor must exit before y's
+constructor is entered?</P>
+
+<P>(The answer to that question might just be common sense,
+but I couldn't find an answer in 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>].
+Actually, when I read 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+carefully, I find there are a lot of things I took
+for granted that aren't there.)</P>
+
+<P>OK, so a few specific scenerios.</P>
+<OL>
+<LI>We have a translation unit with nonlocal objects A and B,
+both of which require dynamic initialization.  A comes before
+B.  A must be initialized before B.  May the compiler start
+to construct A, get partway through the constructor, then
+construct B, and then go back to finishing A?</LI>
+
+<LI>We have a translation unit with nonlocal object A and
+function f.  Construction of A is deferred until after the
+first statement of main.  A must be constructed before the
+first use of f.  Is the compiler permitted to start constructing
+A, then execute f, then go back to constructing A?</LI>
+
+<LI>We have nonlocal objects A and B, in two different
+translation units.  The order in which A and B are constructed
+is unspecified by the Standard.  Is the compiler permitted to
+begin constructing A, then construct B, then finish A's
+constructor?  Note the implications of a 'yes' answer.  If A's
+and B's constructor both call some function f, then the call
+stack might look like this:
+<PRE>
+   &lt;runtime gunk&gt;
+     &lt;Enter A's constructor&gt;
+        &lt;Enter f&gt;
+           &lt;runtime gunk&gt;
+              &lt;Enter B's constructor&gt;
+                 &lt;Enter f&gt;
+                 &lt;Leave f&gt;
+              &lt;Leave B's constructor&gt;
+        &lt;Leave f&gt;
+     &lt;Leave A's constructor&gt;
+</PRE>
+The implication of a 'yes' answer for users is that any function
+called by a constructor, directly or indirectly, must be reentrant.</LI>
+
+<LI>This last example is to show why a 'no' answer to #3 might
+be a problem too.  New scenerio: we've got one translation
+unit containing a nonlocal object A and a function f1, and another
+translation unit containing a nonlocal object B and a function f2.
+A's constructor calls f2.  Initialization of A and B is deferred until
+after the first statement of main().  Someone in main calls f1.
+Question: is the compiler permitted to start constructing A, then
+go off and construct B at some point before f2 gets called, then
+go back and finish constructing A?  In fact, is the compiler
+required to do that?  We've got an unpleasant tension here between
+the bad implications of a 'yes' answer to #3, and the explicit
+requirement in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#3">basic.start.static</A>] paragraph 3.</LI>
+</OL>
+
+<P>At this point, you might be thinking we could avoid all of this
+nonsense by removing compilers' freedom to defer initialization
+until after the beginning of main().  I'd resist that, for two reasons.
+First, it would be a huge change to make after the standard has
+been out.  Second, that freedom is necessary if we want to have
+support for dynamic libraries.  I realize we don't yet say anything
+about dynamic libraries, but I'd hate to make decisions that would
+make such support even harder.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

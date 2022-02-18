@@ -1,0 +1,236 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 233</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="233"></A><H4>233.
+  
+References vs pointers in UDC overload resolution
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matthias Meixner
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Jun 2000<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>There is an inconsistency in the handling of references
+vs pointers in user defined conversions and overloading. The reason
+for that is that the combination of 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] and
+7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>] circumvents the standard way of ranking
+conversion functions, which was probably not the intention of the
+designers of the standard.</P>
+
+<P>Let's start with some examples, to show what it is about:</P>
+
+<PRE>
+    struct Z { Z(){} };
+
+    struct A {
+       Z x;
+
+       operator Z *() { return &amp;x; }
+       operator const Z *() { return &amp;x; }
+    };
+
+    struct B {
+       Z x;
+
+       operator Z &amp;() { return x; }
+       operator const Z &amp;() { return x; }
+    };
+
+    int main()
+    {
+       A a;
+       Z *a1=a;
+       const Z *a2=a; // not ambiguous
+
+       B b;
+       Z &amp;b1=b;
+       const Z &amp;b2=b; // ambiguous
+    }
+</PRE>
+
+<P>So while both classes <TT>A</TT> and <TT>B</TT> are structurally
+equivalent, there is a difference in operator overloading. I want to
+start with the discussion of the pointer case (<TT>const Z
+*a2=a;</TT>): 12.2.4 [<A href="https://wg21.link/over.match.best">over.match.best</A>] is used to select the best
+viable function. Rule 4 selects <TT>A::operator const Z*()</TT> as
+best viable function using 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>] since the
+implicit conversion sequence <TT>const Z*</TT> -&gt; <TT>const Z*</TT>
+is a better conversion sequence than <TT>Z*</TT> -&gt; <TT>const
+Z*</TT>.</P>
+
+<P>So what is the difference to the reference case?  Cv-qualification
+conversion is only applicable for pointers according to 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]. According to 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] paragraphs
+4-7 references are initialized by binding using the concept of
+reference-compatibility. The problem with this is, that in this
+context of binding, there is no conversion, and therefore there is
+also no comparing of conversion sequences. More exactly all
+conversions can be considered identity conversions according to
+12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#1">over.ics.ref</A>] paragraph 1, which compare equal
+and which has the same effect.  So binding <TT>const Z*</TT> to
+<TT>const Z*</TT> is as good as binding <TT>const Z*</TT> to
+<TT>Z*</TT> in terms of overloading. Therefore <TT>const Z
+&amp;b2=b;</TT> is ambiguous.  [12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#5">over.ics.ref</A>] paragraph 5
+and 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3 rule 3
+(S1 and S2 are reference bindings ...) do not seem to apply to this
+case]</P>
+
+<P>There are other ambiguities, that result in the special treatment
+of references: Example:</P>
+
+<PRE>
+    struct A {int a;};
+    struct B: public A { B() {}; int b;};
+
+    struct X {
+       B x;
+       operator A &amp;() { return x; }
+       operator B &amp;() { return x; }
+    };
+
+    main()
+    {
+       X x;
+       A &amp;g=x; // ambiguous
+    }
+</PRE>
+
+<P>Since both references of class <TT>A</TT> and <TT>B</TT> are
+reference compatible with references of class <TT>A</TT> and since
+from the point of ranking of implicit conversion sequences they are
+both identity conversions, the initialization is ambiguous.
+</P>
+
+<P>So why should this be a defect?</P>
+
+<UL>
+
+<LI>References behave fundamentally different from pointers in combination
+with user defined conversions, although there is no reason to have this
+different treatment.</LI>
+
+<LI>This difference only shows up in combination with user defined
+conversion sequences, for all other cases, there are special rules,
+e.g. 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3 rule 3.</LI>
+
+</UL>
+
+<P>So overall I think this was not the intention of the authors of the
+standard.</P>
+
+<P>So how could this be fixed? For comparing conversion sequences (and
+only for comparing) reference binding should be treated as if it was a
+normal assignment/initialization and cv-qualification would have to be
+defined for references. This would affect 9.4.4 [<A href="https://wg21.link/dcl.init.ref#6">dcl.init.ref</A>] paragraph 6, 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>] and probably
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3.</P>
+
+<P>Another fix could be to add a special case in 12.2.4 [<A href="https://wg21.link/over.match.best#1">over.match.best</A>] paragraph 1. </P>
+
+<P><B>CWG 2023-06-13</B></P>
+
+<P>It was noted that the second example is not ambiguous, because a
+derived-to-base conversion is compared against an identity conversion.
+However, 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#1">over.ics.ref</A>] paragraph 1 needs a wording fix
+so that it applies to conversion functions as well.  CWG opined that
+the first example be made valid, by adding a missing tie-breaker for
+the conversion function case.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-04-19):</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.2">over.match.best.general</A>] bullet 2.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>the context is an initialization by user-defined conversion (see
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], and
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and the standard conversion sequence
+from the <DEL>return type</DEL> <INS>result</INS> of F1 to the
+destination type (i.e., the type of the entity being initialized) is a
+better conversion sequence than the standard conversion sequence from
+the <DEL>return type</DEL> <INS>result</INS> of F2 to the destination
+type</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new sub-bullet to 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.2">over.ics.rank</A>] bullet 3.2
+as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>S1 and S2 include reference bindings (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), and
+the types to which the references refer are the same type except for
+top-level cv-qualifiers, and the type to which the reference
+initialized by S2 refers is more cv-qualified than the type to which
+the reference initialized by S1 refers<DEL>.</DEL>
+[ Example: ... -- end example ]
+<INS>or, if not that,</INS>
+</LI>
+
+<LI class="ins">
+<TT>S1</TT> and <TT>S2</TT> bind the same reference type "reference to
+<TT>T</TT>" and have source types <TT>V1</TT> and <TT>V2</TT>,
+respectively, where the standard conversion sequence from <TT>V1*</TT>
+to <TT>T*</TT> is better than the standard conversion sequence
+from <TT>V2*</TT> to <TT>T*</TT>.  [ Example:
+<PRE>
+  struct Z {};
+
+  struct A {
+    operator Z&amp;();
+    operator const Z&amp;();       // <SPAN CLASS="cmnt">#1</SPAN>
+  };
+
+  struct B {
+    operator Z();
+    operator const Z&amp;&amp;();      // <SPAN CLASS="cmnt">#2</SPAN>
+  };
+
+  const Z&amp; r1 = A();          // <SPAN CLASS="cmnt">OK, uses #1</SPAN>
+  const Z&amp;&amp; r2 = B();         // <SPAN CLASS="cmnt">OK, uses #2</SPAN>
+</PRE>
+--- end example]
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

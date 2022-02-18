@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 387</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="387"></A><H4>387.
+  
+Errors in example in 14.6.5
+</H4>
+<B>Section: </B>_N4868_.13.8.6&#160; [<A href="https://wg21.link/temp.inject">temp.inject</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aleksey Gurtovoy
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Oct 2002<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+<P>The example in _N4868_.13.8.6 [<A href="https://wg21.link/temp.inject#2">temp.inject</A>] paragraph 2
+is incorrect:</P>
+<PRE>
+  template&lt;typename T&gt; class number {
+      number(int);
+      //...
+      friend number gcd(number&amp; x, number&amp; y) { /* ... */ }
+      //...
+  };
+
+  void g()
+  {
+      number&lt;double&gt; a(3), b(4);
+      //...
+      a = gcd(a,b);   // finds gcd because number&lt;double&gt; is an
+                      // associated class, making gcd visible
+                      // in its namespace (global scope)
+      b = gcd(3,4);   // ill-formed; gcd is not visible
+  }
+</PRE>
+<P>Regardless of the last statement ("b = gcd(3,4);"), the above code is
+ill-formed:</P>
+
+<P>  a) number's constructor is private;</P>
+<P>  b) the definition of (non-void) friend 'gcd' function does not
+contain a return statement.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>
+Replace the example in _N4868_.13.8.6 [<A href="https://wg21.link/temp.inject#2">temp.inject</A>] paragraph 2
+</P>
+
+<BLOCKQUOTE>
+<PRE>
+  template&lt;typename T&gt; class number {
+          number(int);
+          //...
+          friend number gcd(number&amp; x, number&amp; y) { /* ... */ }
+          //...
+  };
+
+  void g()
+  {
+          number&lt;double&gt; a(3), b(4);
+          //...
+          a = gcd(a,b);           //  finds  gcd  because  number&lt;double&gt;  is an
+                                  //  associated class, making  gcd  visible
+                                  //  in its namespace (global scope)
+          b = gcd(3,4);           //  ill-formed;  gcd  is not visible
+  }
+</PRE>
+</BLOCKQUOTE>
+
+by
+
+<BLOCKQUOTE>
+<PRE>
+  template&lt;typename T&gt; class number {
+     public:
+          number(int);
+          //...
+          friend number gcd(number x, number y) { return 0; }
+     private:
+          //...
+  };
+
+  void g()
+  {
+          number&lt;double&gt; a(3), b(4);
+          //...
+          a = gcd(a,b);           //  finds  gcd  because  number&lt;double&gt;  is an
+                                  //  associated class, making  gcd  visible
+                                  //  in its namespace (global scope)
+          b = gcd(3,4);           //  ill-formed;  gcd  is not visible
+  }
+</PRE>
+</BLOCKQUOTE>
+
+<P><I>Drafting note: Added "return" to the friend function, removed
+references in gcd arguments, added access specifiers.</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

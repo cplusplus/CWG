@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 844</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="844"></A><H4>844.
+  
+Is a constrained member function a template?
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 March, 2009<BR>
+
+
+
+
+<P>According to 11.4 [<A href="https://wg21.link/class.mem#19">class.mem</A>] paragraph 19,</P>
+
+<BLOCKQUOTE>
+
+A non-template <I>member-declaration</I> that has a
+<I>member-requirement</I> (_N2914_.14.11.1 [<A href="https://wg21.link/temp.req">temp.req</A>]) is a
+<I>constrained member</I> and shall occur only in a class template
+(13.7.2 [<A href="https://wg21.link/temp.class">temp.class</A>]) or nested class thereof. The
+<I>member-declaration</I> for a constrained member shall declare a
+member function. A constrained member is treated as a constrained
+template (_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>]) whose template requirements
+include the requirements specified in its <I>member-requirement</I>
+clause and the requirements of each enclosing constrained template.
+
+</BLOCKQUOTE>
+
+<P>Furthermore, 13.7.3 [<A href="https://wg21.link/temp.mem#9">temp.mem</A>] paragraph 9 says,</P>
+
+<BLOCKQUOTE>
+
+A member template of a constrained class template is itself a
+constrained template (_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>])...
+
+</BLOCKQUOTE>
+
+<P>and illustrates this statement with the following example:</P>
+
+<PRE>
+    concept C&lt;typename T&gt; { void f(const T&amp;); }
+    concept D&lt;typename T&gt; { void g(const T&amp;); }
+
+    template&lt;C T&gt; class A {
+      requires D&lt;T&gt; void h(const T&amp; x) {
+        f(x); //<SPAN CLASS="cmnt"> OK: </SPAN>C&lt;T&gt;::f
+        g(x); //<SPAN CLASS="cmnt"> OK: </SPAN>D&lt;T&gt;::g
+      }
+    };
+</PRE>
+
+<P>If these passages are taken at face value and a constrained member
+function is, in fact, &#8220;treated as a... template,&#8221; there
+are negative consequences.  For example, according to
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#2">class.copy.ctor</A>] paragraph 2, a member function template is
+never considered to be a copy constructor, so a constrained
+constructor that is in the form of a copy constructor does not
+suppress the implicit declaration and definition of a default copy
+constructor.  Also, according to 13.7.3 [<A href="https://wg21.link/temp.mem">temp.mem</A>] paragraph
+3, a member function template cannot be virtual, so it is not possible
+to specify a <I>member-requirement</I> clause for a virtual function.</P>
+
+<P>Presumably these consequences are unintended, so the wording that
+suggests otherwise should be revised to make that clear.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

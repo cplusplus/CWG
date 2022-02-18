@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1601</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1601"></A><H4>1601.
+  
+Promotion of enumeration with fixed underlying type
+</H4>
+<B>Section: </B>7.3.7&#160; [<A href="https://wg21.link/conv.prom">conv.prom</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ville Voutilainen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-09<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>According to 7.3.7 [<A href="https://wg21.link/conv.prom#4">conv.prom</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+A prvalue of an unscoped enumeration type whose underlying type is
+fixed (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted to a prvalue of its
+underlying type.  Moreover, if integral promotion can be applied to
+its underlying type, a prvalue of an unscoped enumeration type whose
+underlying type is fixed can also be converted to a prvalue of the
+promoted underlying type.
+
+</BLOCKQUOTE>
+
+<P>Because both of these conversions have the same rank, a call like
+the following is ambiguous, even though conversion to the underlying
+type might seem better than conversion to <TT>int</TT>:</P>
+
+<PRE>
+  enum E : char { e };
+  void f(char);
+  void f(int);
+  void g() {
+    f(e);      //<SPAN CLASS="cmnt"> ambiguous</SPAN>
+  }
+</PRE>
+
+<P>On the other hand, character types often have non-numeric
+semantics in programs, and programmers might use a character type
+just to set the size of the enumeration's object representation,
+not to imply character semantics for the enumeration.  It might be
+better to leave the ambiguity in place in order to require
+programmers to make their intent explicit.</P>
+
+<P><B>Proposed resolution (June, 2013):</B></P>
+
+<P>Change 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#4">over.ics.rank</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...Two conversion sequences with the same rank are indistinguishable unless
+one of the following rules applies:</P>
+
+<UL>
+<LI><P>A conversion that does not convert a pointer, a pointer to
+member, or <TT>std::nullptr_t</TT> to <TT>bool</TT> is better than one that
+does.</P></LI>
+
+<LI><P><INS>A conversion that promotes an enumeration whose underlying type
+is fixed to its underlying type is better than one that promotes to the
+promoted underlying type, if the two are different.</INS></P></LI>
+
+<LI><P>If class <TT>B</TT> is derived...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

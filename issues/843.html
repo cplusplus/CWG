@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 843</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="843"></A><H4>843.
+  
+Unclear interaction of constraints and special member functions
+</H4>
+<B>Section: </B>13.7.2&#160; [<A href="https://wg21.link/temp.class">temp.class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 March, 2009<BR>
+
+
+
+
+<P>Although the current wording does specify the outcome, it is not
+immediately apparent what the result of an example like the following
+should be:</P>
+
+<PRE>
+    template&lt;std::ObjectType T&gt;
+    struct S {
+        requires std::CopyConstructible&lt;T&gt;
+        S(const S&amp;) = default;
+    };
+</PRE>
+
+<P>The outcome (that <TT>S</TT> will have an implicitly-declared
+copy constructor that is defined as deleted in specializations in
+which <TT>T</TT> is not copy-constructible) would be clearer
+with the addition of two notes.  First, it would be helpful if
+13.7.2 [<A href="https://wg21.link/temp.class#5">temp.class</A>] paragraph 5, which currently reads,</P>
+
+<BLOCKQUOTE>
+
+A constrained member (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) in a class template is
+declared only in class template specializations in which its template
+requirements (_N2914_.14.11.1 [<A href="https://wg21.link/temp.req">temp.req</A>]) are satisfied
+(_N2914_.14.11.1.1 [<A href="https://wg21.link/temp.req.sat">temp.req.sat</A>])...
+
+</BLOCKQUOTE>
+
+<P>had a note or footnote to the effect,</P>
+
+<BLOCKQUOTE>
+
+When a constrained member of a template is a special member function,
+and when, in an instantiation, the member is not declared because its
+requirements are not satisfied, the special member is considered not
+to have been &#8220;explicitly declared&#8221; (i.e., the member is
+not user-declared); therefore a declaration may still be implicitly
+generated as specified in 11.4.4 [<A href="https://wg21.link/special">special</A>].
+
+</BLOCKQUOTE>
+
+<P>The fact that the implicitly-declared copy constructor in this
+case is defined as deleted would be clearer if somewhere in
+the second list in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#5">class.copy.ctor</A>] paragraph 5, which
+currently reads</P>
+
+<BLOCKQUOTE>
+
+<P>...An implicitly-declared copy constructor for a class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>a variant member with a non-trivial copy constructor and
+<TT>X</TT> is a union-like class,</P></LI>
+
+<LI><P>a non-static data member of class type <TT>M</TT> (or array
+thereof) that cannot be copied because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s copy
+constructor, results in an ambiguity or a function that is deleted or
+inaccessible from the implicitly-declared copy constructor,
+or</P></LI>
+
+<LI><P>a direct or virtual base class <TT>B</TT> that cannot be copied
+because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to
+<TT>B</TT>'s copy constructor, results in an ambiguity or a function
+that is deleted or inaccessible from the implicitly-declared copy
+constructor.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>there were a cross-reference to _N2914_.14.11.2.1 [<A href="https://wg21.link/temp.archetype.assemble">temp.archetype.assemble</A>],
+whose third paragraph reads,</P>
+
+<BLOCKQUOTE>
+
+If no requirement specifies a copy constructor for a type <TT>T</TT>,
+a copy constructor is implicitly declared (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>])
+in the archetype of <TT>T</TT> with the following signature:
+
+<PRE>
+    T(const T&amp;) = delete;
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 472</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="472"></A><H4>472.
+  
+Casting across protected inheritance
+</H4>
+<B>Section: </B>11.8.5&#160; [<A href="https://wg21.link/class.protected">class.protected</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Jun 2004<BR>
+
+
+<P>Does the restriction in 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>] apply to
+upcasts across protected inheritance, too?  For instance,</P>
+
+<PRE>
+    struct B {
+        int i;
+    };
+    struct I: protected B { };
+    struct D: I {
+        void f(I* ip) {
+            B* bp = ip;    // well-formed?
+            bp-&gt;i = 5;     // aka "ip-&gt;i = 5;"
+        }
+    };
+</PRE>
+
+<P>I think the rationale for the 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>]
+restriction applies equally well here &#8212; you don't know whether
+<TT>ip</TT> points to a <TT>D</TT> object or not, so <TT>D::f</TT> can't be trusted to treat
+the protected <TT>B</TT> subobject consistently with the policies of its
+actual complete object type.</P>
+
+<P>The current treatment of &#8220;accessible base class&#8221;
+in 11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4
+clearly makes the conversion from <TT>I*</TT> to <TT>B*</TT> well-formed.  I
+think that's wrong and needs to be fixed.  The rationale for
+the accessibility of a base class is whether &#8220;an invented
+public member&#8221; of the base would be accessible at the point of
+reference, although we obscured that a bit in the
+reformulation; it seems to me that the invented member ought to
+be considered a non-static member for this purpose and thus
+subject to 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>].</P>
+
+(See also issues <A HREF="385.html">385</A> and <A HREF="471.html">471</A>.).
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>The CWG tentatively agreed that casting across protective
+inheritance should be subject to the additional restriction in
+11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>].</P>
+
+
+
+<P><B>Proposed resolution (April, 2011)</B></P>
+
+<P>Change 11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A base class <TT>B</TT> of <TT>N</TT> is accessible at <I>R</I>, if</P>
+
+<UL>
+<LI><P>an invented public member of <TT>B</TT> would be a public
+member of <TT>N</TT>, or</P></LI>
+
+<LI><P>
+<I>R</I> occurs in a member or friend of class <TT>N</TT>, and
+an invented public member of <TT>B</TT> would be a private or
+protected member of <TT>N</TT>, or</P></LI>
+
+<LI><P>
+<I>R</I> occurs in a member or friend of a class <TT>P</TT>
+derived from <TT>N</TT>, and an invented public member of <TT>B</TT>
+would be a private <DEL>or</DEL> <INS>(but not a</INS> protected
+<INS>[<I>Footnote:</I> A protected invented member is disallowed here
+for the same reason the additional check of 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>]
+is applied to member access: it would allow casting a pointer to a
+derived class to a protected base class that might be a subobject of
+an object of a class that is different from the class context in which
+the reference occurs.  &#8212;<I>end footnote</I>])</INS> member of
+<TT>P</TT>, or</P></LI>
+
+<LI><P>there exists a class <TT>S</TT> such that <TT>B</TT> is a base
+class of <TT>S</TT> accessible at <I>R</I> and <TT>S</TT> is a base
+class of <TT>N</TT> accessible at <I>R</I>.</P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+    class B {
+    public:
+      int m;
+    };
+
+    class S: private B {
+      friend class N;
+    };
+    class N: private S {
+      void f() {
+        B* p = this;    // <SPAN CLASS="cmnt">OK because class </SPAN>S<SPAN CLASS="cmnt"> satisfies the fourth condition</SPAN>
+                        // <SPAN CLASS="cmnt">above: </SPAN>B<SPAN CLASS="cmnt"> is a base class of </SPAN>N<SPAN CLASS="cmnt"> accessible in </SPAN>f()<SPAN CLASS="cmnt"> because</SPAN>
+                        // B<SPAN CLASS="cmnt"> is an accessible base class of </SPAN>S<SPAN CLASS="cmnt"> and </SPAN>S<SPAN CLASS="cmnt"> is an accessible</SPAN>
+                        // <SPAN CLASS="cmnt">base class of </SPAN>N.
+      }
+    };
+<INS>
+    class N2: protected B { };
+
+    class P2: public N2 {
+      void f2(N2* n2p) {
+        B* bp = n2p;    // <SPAN CLASS="cmnt">error: invented member would be protected and naming</SPAN>
+                        // <SPAN CLASS="cmnt">class </SPAN>N2<SPAN CLASS="cmnt"> not the same as or derived from the referencing</SPAN>
+                        // <SPAN CLASS="cmnt">class </SPAN>P2
+        n2p-&gt;m = 0;     // <SPAN CLASS="cmnt">error (cf 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>]) for the same reason</SPAN>
+      }
+    };</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

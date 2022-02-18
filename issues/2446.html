@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2446</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2446"></A><H4>2446.
+  
+Questionable type-dependency of <I>concept-id</I>s
+</H4>
+<B>Section: </B>13.8.3.3&#160; [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-02-03<BR>
+
+
+<P>[Accepted at the February, 2020 (Prague) meeting.]</P>
+
+
+
+<P>The rules for type-dependency do not appear to take the
+<TT>bool</TT> type associated with <I>concept-id</I>s into
+account. For example:</P>
+
+<PRE>
+  template &lt;typename T&gt; concept C = true;
+  template &lt;typename T&gt; struct A;
+  template &lt;&gt; struct A&lt;bool&gt; { using type = bool; };
+
+  template &lt;typename T&gt;
+  void f(A&lt;decltype(C&lt;T&gt;)&gt;::type); //<SPAN CLASS="cmnt"> error: needs </SPAN>typename<SPAN CLASS="cmnt"> to avoid vexing parse</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (February, 2020):</B></P>
+
+<OL>
+<LI><P>Change 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is type-dependent if <INS>it is
+not a <I>concept-id</I> and</INS> it contains</P>
+
+<UL><LI><P>...</P></LI></UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#3">temp.dep.constexpr</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is value-dependent if:</P>
+
+<UL>
+<LI><P><INS>it is a <I>concept-id</I> and any of its
+arguments are dependent,</INS></P></LI>
+
+<LI><P>it is type-dependent,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,316 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2844</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2844"></A><H4>2844.
+  
+Enumerating a finite set of built-in candidates
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/362">#362</A>.)</P>
+
+<P>Consider the following example, which is accepted by clang, but
+rejected by gcc:</P>
+
+<PRE>
+  #include &lt;concepts&gt;
+
+  struct S1 {
+    operator int*() { return nullptr; }
+  };
+
+  struct S2 {
+    template &lt;class T&gt;
+    operator T() requires std::same_as&lt;T, int*&gt; {
+      return nullptr;
+    }
+  };
+
+  int main() {
+    S1 s1;
+    S2 s2;
+    return s1 - s2;
+  }
+</PRE>
+
+<P>The question is whether the implementation is required to find the
+built-in candidate <TT>std::ptrdiff_t operator-(int*, int*)</TT>, and
+select that candidate. Subclause 12.5 [<A href="https://wg21.link/over.built">over.built</A>] specifies
+an infinite number of built-in candidates, such as <TT>std::ptrdiff_t
+operator-(T*, T*)</TT> for every object type <TT>T</TT>.  If there are
+infinitely many built-in candidates, the implementation cannot iterate
+through all of them to determine whether each candidate is viable.</P>
+
+<P>The rule in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.3">over.match.oper</A>] paragraph 3.3 is insufficient:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+... For all other operators, the built-in candidates include all of the
+candidate operator functions defined in 12.5 [<A href="https://wg21.link/over.built">over.built</A>]
+that, compared to the given operator,
+<UL>
+<LI>have the same operator
+name, and</LI>
+<LI>accept the same number of operands, and</LI>
+<LI>accept operand types to which the given
+operand or operands can be converted according to
+12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>], and</LI>
+<LI>do not have the same
+parameter-type-list as any non-member candidate or rewritten
+non-member candidate that is not a function template specialization.</LI>
+</UL>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 12.5 [<A href="https://wg21.link/over.built#3">over.built</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+For the purposes of this subclause, a type <TT>T</TT> is <I>admissible
+for an operand E</I> if a standard conversion sequence
+(12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]) exists from <I>E</I> to <TT>T</TT>.
+If <I>E</I> has a class type, then <TT>T</TT> is also admissible
+for <I>E</I> if <I>E</I>'s class has a non-template conversion
+function <TT>F</TT> (11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>]) that would be
+viable (12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]) for a call of the
+form <TT>(<I>E</I>).<I>N</I>()</TT>, where <I>N</I> is a
+hypothetical <I>id-expression</I> that names <I>F</I>, and a standard
+conversion sequence to <TT>T</TT> exists from the type specified
+by <TT>F</TT>. If <I>E</I> denotes an overload set
+(12.3 [<A href="https://wg21.link/over.over">over.over</A>]), then <TT>T</TT> is admissible
+for <I>E</I> if <I>E</I> contains any non-template function for
+which <TT>T</TT> is admissible.
+</P>
+
+<P>In the remainder of this subclause, vq represents either
+<TT>volatile</TT> or no cv-qualifier.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.5 [<A href="https://wg21.link/over.built#4">over.built</A>] paragraph 4 through 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>For every pair (T , vq), where T is a cv-unqualified arithmetic type
+other than bool or a cv-unqualified pointer to (possibly cv-qualified)
+object type, there exist candidate operator functions of the form
+<PRE>
+vq T&amp; operator++(vq T&amp;);
+T operator++(vq T&amp;, int);
+vq T&amp; operator--(vq T&amp;);
+T operator--(vq T&amp;, int);
+</PRE>
+<INS>if <TT><I>vq</I> <I>T</I>&amp;</TT> is admissible for the operand.</INS>
+</P>
+
+<P>
+For every (possibly cv-qualified) object type T and for every function
+type T that has neither <I>cv-qualifier</I>s nor a <I>ref-qualifier</I>,
+there exist candidate operator functions of the form
+<PRE>T&amp; operator*(T *);</PRE>
+<INS>if <TT><I>T</I>*</TT> is admissible for the operand.</INS>
+</P>
+
+<P>
+For every type T <INS>such that <TT><I>T</I>*</TT> is admissible for
+the operand,</INS> there exist candidate operator functions of the
+form
+<PRE>
+T* operator+(T *);
+</PRE>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.5 [<A href="https://wg21.link/over.built#9">over.built</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+For every quintuple (C1 , C2 , T , cv1, cv2 ), where C2 is a class
+type, C1 is the same type as C2 or is a derived class of C2 , and T is
+an object type or a function type, there exist candidate operator
+functions of the form
+<PRE>
+cv12 T &amp; operator-&gt;*(cv1 C1 *, cv2 T C2 ::*);
+</PRE>
+where cv12 is the union of cv1 and cv2<INS>,
+if <TT><I>cv2</I> <I>T</I> <I>C2</I>::*</TT> is admissible for the
+second operand</INS>. The return type is shown for exposition only;
+see 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>] for the determination of the operator's
+result type.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.5 [<A href="https://wg21.link/over.built#13">over.built</A>] paragraph 13 through 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>For every cv-qualified or cv-unqualified object type T there exist
+candidate operator functions of the form
+<PRE>
+T* operator+(T *, std::ptrdiff_t);
+T&amp; operator[](T *, std::ptrdiff_t);
+T* operator-(T *, std::ptrdiff_t);
+</PRE>
+<INS>if <TT><I>T</I></TT> is admissible for the first operand.</INS>
+</P>
+
+<P>
+<INS>For every cv-qualified or cv-unqualified object type T there exist
+candidate operator functions of the form</INS>
+<PRE>
+T* operator+(std::ptrdiff_t, T *);
+T&amp; operator[](std::ptrdiff_t, T *);
+</PRE>
+<INS>if <TT><I>T</I></TT> is admissible for the second operand.</INS>
+</P>
+
+<P>For every T , where T is a pointer to object type <INS>and is
+admissible for the left or right operand</INS>, there exist candidate
+operator functions of the form
+<PRE>
+std::ptrdiff_t operator-(T , T );
+</PRE>
+</P>
+
+<P>For every T, where T is an enumeration type<INS>,</INS> or a
+pointer type <INS>that is admissible for the left or right
+operand</INS>, there exist candidate operator functions of the form
+<PRE>
+bool operator==(T , T );
+bool operator!=(T , T );
+bool operator&lt;(T , T);
+bool operator&gt;(T , T );
+bool operator&lt;=(T , T );
+bool operator&gt;=(T , T );
+R operator&lt;=&gt;(T , T );
+</PRE>
+where R is the result type specified in 7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>].
+</P>
+
+<P>
+For every T, where T is a pointer-to-member type <INS>and is
+admissible for the left or right operand,</INS> or <INS>T
+is</INS> <TT>std::nullptr_t</TT>, there exist candidate operator
+functions of the form
+<PRE>
+bool operator==(T, T );
+bool operator!=(T , T );
+</PRE>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.5 [<A href="https://wg21.link/over.built#19">over.built</A>] paragraph 19 through 21 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+For every pair (T , vq), where T is any type, there exist candidate
+operator functions of the form
+
+<PRE>
+T *vq &amp; operator=(T *vq &amp;, T *);
+</PRE>
+<INS>if <TT><I>T</I> <I>vq</I>&amp;</TT> is admissible for the left
+operand or <TT>T*</TT> is admissible for the right operand.</INS>
+</P>
+
+<P>
+For every pair (T , vq), where T is an enumeration <INS>type,</INS> or
+<INS><TT><I>T</I></TT> is a</INS> pointer-to-member type <INS>such
+that <TT><I>vq</I> <I>T</I>&amp;</TT> is admissible for the left
+operand or <TT><I>T</I></TT> is admissible for the right
+operand</INS>, there exist candidate operator functions of the form
+<PRE>
+vq T &amp; operator=(vq T &amp;, T );
+</PRE>
+</P>
+
+<P>
+For every pair (T , vq), where T is a cv-qualified or cv-unqualified
+object type, there exist candidate operator functions of the form
+<PRE>
+T *vq &amp;  operator+=(T *vq &amp;, std::ptrdiff_t);
+T *vq &amp;  operator-=(T *vq &amp;, std::ptrdiff_t);
+</PRE>
+<INS>if <TT><I>T</I>*<I>vq</I>&amp;</TT> is admissible for the left
+operand.</INS>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.5 [<A href="https://wg21.link/over.built#25">over.built</A>] paragraph 25 as follows:</P>
+
+<BLOCKQUOTE>
+
+For every type T, where <DEL>T is a pointer, pointer-to-member, or scoped
+enumeration type,</DEL>
+<UL class="ins">
+<LI>
+<TT><I>T</I></TT> is admissible for the second or third operand
+and is a pointer or pointer-to-member type, or</LI>
+<LI>
+<TT><I>T</I></TT> is a scoped enumeration type,</LI>
+</UL>
+there exist candidate operator functions of the form
+<PRE>
+operator?:(bool, T, T);
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

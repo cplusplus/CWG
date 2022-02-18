@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2329</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2329"></A><H4>2329.
+  
+Virtual base classes and generated assignment operators
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-10-31<BR>
+
+
+<P>An example like the following,</P>
+
+<PRE>
+  class A {
+  private:
+    A&amp; operator=(const A&amp;);
+  };
+
+  class B : virtual public A {
+  public:
+    B&amp; operator = (const B&amp; src);
+  };
+
+  class C: public B {
+  public:
+    void f(const C* psrc) {
+      *this = *psrc;
+    }
+  };
+</PRE>
+
+<P>is presumably well-formed, even though the copy assignment
+operator of <TT>A</TT> is inaccessible in <TT>C</TT>, because
+11.4.6 [<A href="https://wg21.link/class.copy.assign#12">class.copy.assign</A>] paragraph 12 says that only direct,
+not virtual, base class object assignment operators are invoked
+by the generated assignment operator (although there is
+implementation divergence on this question).</P>
+
+<P>Should the example also be well-formed if <TT>A</TT> were a
+direct virtual base of <TT>C</TT>? That is, if a direct virtual
+base also has an indirect derivation path, its direct derivation
+can be ignored for generated assignment operators.</P>
+
+<P>Possibly relevant to this question is the permission for an
+implementation to assign virtual base class objects more than
+once:</P>
+
+<BLOCKQUOTE>
+
+It is unspecified whether subobjects representing virtual base
+classes are assigned more than once by the implicitly-defined
+copy/move assignment operator.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

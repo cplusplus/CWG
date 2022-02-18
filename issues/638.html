@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 638</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="638"></A><H4>638.
+  
+Explicit specialization and friendship
+</H4>
+<B>Section: </B>13.7.5&#160; [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 July 2007<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>Is this code well-formed?</P>
+
+<PRE>
+    template &lt;typename T&gt; struct A {
+        struct B;
+    };
+
+    class C {
+        template &lt;typename T&gt; friend struct A&lt;T&gt;::B;
+        static int bar;
+    };
+
+    template &lt;&gt; struct A&lt;char&gt; {
+        struct B {
+            int f() {
+                return C::bar;   // Is A&lt;char&gt;::B a friend of C?
+            }
+        };
+    };
+</PRE>
+
+<P>According to 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+A member of a class template may be declared to be a friend of a
+non-template class. In this case, the corresponding member of
+every specialization of the class template is a friend of the
+class granting friendship.
+
+</BLOCKQUOTE>
+
+<P>This would tend to indicate that the example is well-formed.
+However, technically <TT>A&lt;char&gt;::B</TT> does not
+&#8220;correspond to&#8221; the same-named member of the class
+template: 13.9.4 [<A href="https://wg21.link/temp.expl.spec#4">temp.expl.spec</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+The definition of an explicitly specialized class is unrelated to
+the definition of a generated specialization.  That is, its
+members need not have the same names, types, etc. as the members
+of a generated specialization.
+
+</BLOCKQUOTE>
+
+<P>In other words, there are no &#8220;corresponding members&#8221;
+in an explicit specialization.</P>
+
+<P>Is this the outcome we want for examples like the preceding?
+There is diversity among implementations on this question, with some
+accepting the example and others rejecting it as an access violation.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>The consensus of the CWG was to allow the correspondence of similar
+members in explicit specializations.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A member of a class template may be declared to be a friend of a
+non-template class.  In this case, the corresponding member of every
+specialization of the class template is a friend of the class granting
+friendship. <INS>For explicit specializations the corresponding member
+is the member (if any) that has the same name, kind (type, function,
+class template or function template), template parameters, and
+signature as the member of the class template instantiation that would
+otherwise have been generated.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class T&gt; struct A {
+    struct B { };
+    void f();
+<INS>    struct D {
+      void g();
+    };</INS>
+  };
+<INS>  template&lt;&gt; struct A&lt;int&gt; {
+    struct B { };
+    int f();
+    struct D {
+      void g();
+    };
+  };</INS>
+
+  class C {
+    template&lt;class T&gt; friend struct A&lt;T&gt;::B;    <INS>//<SPAN CLASS="cmnt"> grants friendship to </SPAN>A&lt;int&gt;::B<SPAN CLASS="cmnt"> even though</SPAN>
+                                                //<SPAN CLASS="cmnt"> it is not a specialization of </SPAN>A&lt;T&gt;::B</INS>
+    template&lt;class T&gt; friend void A&lt;T&gt;::f();    <INS>//<SPAN CLASS="cmnt"> does not grant friendship to </SPAN>A&lt;int&gt;::f()
+                                                //<SPAN CLASS="cmnt"> because its return type does not match</SPAN></INS>
+<INS>    template&lt;class T&gt; friend void A&lt;T&gt;::D::g(); //<SPAN CLASS="cmnt"> does not grant friendship to </SPAN>A&lt;int&gt;::D::g()
+                                                //<SPAN CLASS="cmnt"> because </SPAN>A&lt;int&gt;::D<SPAN CLASS="cmnt"> is not a specialization of </SPAN>A&lt;T&gt;::D</INS>
+  };
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

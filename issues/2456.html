@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2456</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2456"></A><H4>2456.
+  
+Viable user-defined conversions in converted constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-08-17<BR>
+
+
+<P>Consider an example like the following:</P>
+
+<PRE>
+  struct A {
+    constexpr A(int i) : val(i) { }
+    constexpr operator int() const { return val; }
+    constexpr operator float() const { return val; }
+  private:
+    int val;
+  };
+  constexpr A a = 42;
+  int ary[a];
+</PRE>
+
+<P>According to 9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1,
+the array bound expression</P>
+
+<BLOCKQUOTE>
+
+shall be a converted constant expression of
+type <TT>std::size_t</TT> (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+
+</BLOCKQUOTE>
+
+<P>The user-defined conversion to <TT>float</TT> would
+involve a floating-integral conversion
+(7.3.11 [<A href="https://wg21.link/conv.fpint">conv.fpint</A>]; however, such a conversion is
+not permitted by the list of acceptable conversions in
+7.7 [<A href="https://wg21.link/expr.const#10">expr.const</A>] paragraph 10:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>converted constant expression</I> of type <TT>T</TT>
+is an expression, implicitly converted to type <TT>T</TT>,
+where the converted expression is a constant expression and
+the implicit conversion sequence contains only</P>
+
+<UL>
+<LI><P>user-defined conversions,</P></LI>
+
+<LI><P> lvalue-to-rvalue conversions
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),</P></LI>
+
+<LI><P> array-to-pointer conversions
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),</P></LI>
+
+<LI><P>function-to-pointer conversions
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]),</P></LI>
+
+<LI><P>qualification conversions
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]),</P></LI>
+
+<LI><P>integral promotions
+(7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]),</P></LI>
+
+<LI><P>integral conversions (7.3.9 [<A href="https://wg21.link/conv.integral">conv.integral</A>])
+other than narrowing conversions
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</P></LI>
+
+<LI><P>null pointer conversions
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) from
+<TT>std::nullptr_t</TT>,</P></LI>
+
+<LI><P>null member pointer conversions
+(7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) from <TT>std::nullptr_t</TT>,
+and</P></LI>
+
+<LI><P>function pointer conversions
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]),</P></LI>
+
+</UL>
+
+<P>and where the reference binding (if any) binds directly.</P>
+
+</BLOCKQUOTE>
+
+<P>It is not clear whether this list is intended to restrict
+the set of viable user-defined conversions, and there is
+implementation divergence on this point: clang accepts the
+example above, while g++ rejects it, presumably on the basis
+of an ambiguous conversion.</P>
+
+<P><B>Notes from the August, 2020 teleconference:</B></P>
+
+<P>No direction was established pending information about why
+the example is accepted by clang.</P>
+
+<P><B>Additional note, December, 2020:</B></P>
+
+<P>The clang behavior turns out to have been an oversight,
+corrected in the current version, so the example is now
+rejected by both compilers. However, it is unclear that
+this is desirable. In particular, given the example above,
+<TT>a</TT> can be used without error as a bit-field width,
+as an enumerator value, and as the operand of <TT>alignas</TT>.
+Presumably the difference between these integral constant
+expression contexts and an array bound is the fact that the
+target type is known to be <TT>size_t</TT>. However, both
+bit-field widths and <TT>alignas</TT> operands are also
+required to be non-negative. Furthermore, the definition of
+an &#8220;erroneous&#8221; array bound in
+7.6.2.8 [<A href="https://wg21.link/expr.new#9">expr.new</A>] paragraph 9 goes to awkward
+lengths to check for negative values as the result of
+user-defined conversions, which might argue in favor of
+reconsidering the converted constant expression treatment of
+array bounds.</P>
+
+<P><B>Notes from the February, 2021 teleconference:</B></P>
+
+<P>CWG agreed with the considerations in the December, 2020
+note, feeling that the difference in treatment between
+integral constant expressions and a converted constant
+expression to a specific integral type is somewhat
+gratuitous. However, it was felt that code like that of the
+example was unlikely to occur often in real-world code.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

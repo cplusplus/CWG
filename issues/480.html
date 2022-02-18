@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 480</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="480"></A><H4>480.
+  
+Is a base of a virtual base also virtual?
+</H4>
+<B>Section: </B>7.3.13&#160; [<A href="https://wg21.link/conv.mem">conv.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Oct 2004<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>When the Standard refers to a virtual base class, it should be
+understood to include base classes of virtual bases.  However,
+the Standard doesn't actually say this anywhere, so when
+7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>] (for example) forbids casting to a
+derived class member pointer from a virtual base class member
+pointer, it could be read as meaning:</P>
+
+<PRE>
+  struct B {};
+  struct D : public B {};
+  struct D2 : virtual public D {};
+
+  int B::*p;
+  int D::*q;
+
+  void f() {
+    static_cast&lt;int D2::*&gt;(p);  // <SPAN CLASS="cmnt">permitted</SPAN>
+    static_cast&lt;int D2::*&gt;(q);  // <SPAN CLASS="cmnt">forbidden</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+<LI><P>Change 7.3.13 [<A href="https://wg21.link/conv.mem#2">conv.mem</A>] paragraph 2 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...If <TT>B</TT> is an inaccessible (11.8 [<A href="https://wg21.link/class.access">class.access</A>]),
+ambiguous (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) or virtual (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]) base class of <TT>D</TT>, <INS>or a base class of a
+virtual base class of <TT>D</TT>,</INS> a program that necessitates this
+conversion is ill-formed...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#2">expr.static.cast</A>] paragraph 2 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...and <TT>B</TT> is <DEL>not</DEL> <INS>neither</INS> a virtual base class
+of <TT>D</TT> <INS>nor a base class of a virtual base class
+of <TT>D</TT></INS>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#9">expr.static.cast</A>] paragraph 9 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...and <TT>B</TT> is <DEL>not</DEL> <INS>neither</INS> a virtual base class
+of <TT>D</TT> <INS>nor a base class of a virtual base class of
+<TT>D</TT></INS>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

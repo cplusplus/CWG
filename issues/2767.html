@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2767</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2767"></A><H4>2767.
+  
+Non-defining declarations of anonymous unions
+</H4>
+<B>Section: </B>11.5.2&#160; [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-06<BR>
+
+
+
+
+<P>Currently, the specification permits this example:</P>
+
+<PRE>
+  namespace {
+    extern union { int x, y; };
+    union { int x, y; };
+  };
+</PRE>
+
+<P>However, those non-defining declarations seem to be mostly useless,
+because any definition attempt would violate the one-definition rule
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]).</P>
+
+<P><U>Possible resolution (updated 2023-10-21):</U></P>
+
+<P>This resolution also addresses <A HREF="1702.html">issue 1702</A>.</P>
+
+<OL>
+<LI>
+<P>Split 11.5.2 [<A href="https://wg21.link/class.union.anon#1">class.union.anon</A>] paragraph 1 and change as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>A union of the form</DEL>
+<INS>A <I>simple-declaration</I> or <I>member-declaration</I> of the
+form</INS>
+<PRE class="ins">
+   <I>attribute-specifier-seq</I><SUB>opt</SUB> <I>decl-specifier-seq</I> ;
+</PRE>
+<INS>where one of the <I>decl-specifier</I>s is a <I>class-specifier</I>
+of the form</INS>
+<PRE>
+  union <INS><I>attribute-specifier-seq</I><SUB>opt</SUB></INS> { <I>member-specification</I> } <DEL>;</DEL>
+</PRE>
+<DEL>is called</DEL> <INS>declares</INS> an <I>anonymous union</I>; it
+defines an unnamed type <INS><TT>T</TT></INS> and an unnamed object
+of <DEL>that</DEL> type <INS><I>cv</I> <TT>T</TT></INS> called an
+anonymous union member if it is a non-static data member or an
+anonymous union variable otherwise<INS>, where <I>cv</I> is determined
+from the <I>cv-qualifier</I>s of the declaration</INS>.
+<INS>The optional <I>attribute-specifier-seq</I> in
+the <I>simple-declaration</I> or <I>member-declaration</I> appertains
+to the data member or variable, respectively.
+The <I>storage-class-specifier</I> <TT>extern</TT>
+(9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]) shall not be among
+the <I>decl-specifier</I>s declaring an anonymous union.  The
+declaration of an anonymous union shall not be
+the <I>name-declaration</I> of a <I>linkage-specification</I>
+(9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]).</INS>
+</P>
+
+<P>
+Each <I>member-declaration</I> in the <I>member-specification</I> of
+an anonymous union shall either define one or more public non-static
+data members or be a static_<I>assert-declaration</I>. Nested types,
+anonymous unions, and functions shall not be declared within an
+anonymous union. The names of the members of an anonymous union are
+bound in the scope inhabited by the union declaration.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.5.2 [<A href="https://wg21.link/class.union.anon#2">class.union.anon</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Anonymous unions declared in the scope of</DEL> <INS>An anonymous
+union whose declaration inhabits</INS> a namespace <INS>scope</INS>
+with external linkage shall be declared <TT>static</TT>.
+<DEL>Anonymous unions declared at block scope shall be declared with
+any storage class allowed for a block variable, or with no storage
+class.  A storage class is not allowed in a declaration of an
+anonymous union in a class scope.</DEL>
+<INS>An anonymous union whose declaration inhabits a class scope shall
+not be declared with a <I>storage-class-specifier</I>.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

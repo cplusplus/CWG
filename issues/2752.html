@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2752</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2752"></A><H4>2752.
+  
+Excess-precision floating-point literals
+</H4>
+<B>Section: </B>5.13.4&#160; [<A href="https://wg21.link/lex.fcon">lex.fcon</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Peter Dimov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-29
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  int main()
+  {
+    constexpr auto x = 3.14f;
+    assert( x == 3.14f );         //<SPAN CLASS="cmnt"> can fail?</SPAN>
+    static_assert( x == 3.14f );  //<SPAN CLASS="cmnt"> can fail?</SPAN>
+  }
+</PRE>
+
+<P>Can a conforming implementation represent a floating-point literal
+with excess precision, causing the comparisons to fail?</P>
+
+<P>Subclause 5.13.4 [<A href="https://wg21.link/lex.fcon#3">lex.fcon</A>] paragraph 3 specifies:</P>
+
+<BLOCKQUOTE>
+
+If the scaled value is not in the range of representable values for
+its type, the program is ill-formed. Otherwise, the value of
+a <I>floating-point-literal</I> is the scaled value if representable,
+else the larger or smaller representable value nearest the scaled
+value, chosen in an implementation-defined manner.
+
+</BLOCKQUOTE>
+
+<P>This phrasing leaves little leeway for excess precision.  In
+contrast, C23 specifies in section 6.4.4.3 paragraph 6:
+
+<BLOCKQUOTE>
+
+The values of floating constants may be represented in greater range
+and precision than that required by the type (determined by the
+suffix); the types are not changed thereby. ...
+
+</BLOCKQUOTE>
+</P>
+
+<P>Subclause 7.1 [<A href="https://wg21.link/expr.pre#6">expr.pre</A>] paragraph 6 allows excess precision
+for floating-point computations (including their operands):</P>
+
+<BLOCKQUOTE>
+
+The values of the floating-point operands and the results of
+floating-point expressions may be represented in greater precision and
+range than that required by the type; the types are not changed
+thereby. [ Footnote: The cast and assignment operators must still
+perform their specific conversions as described in
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>] and 7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]. -- end
+footnote ]
+
+</BLOCKQUOTE>
+
+<P>Taken together, that means that <TT>314.f / 100.f</TT> can be
+computed and represented more precisely than <TT>3.14f</TT>, which is
+hard to justify.  The footnote appears to imply
+that <TT>(float)3.14f</TT> is required to yield a value
+with <TT>float</TT> precision, but that conversion (eventually) ends up at 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.9">dcl.init.general</A>] bullet 16.9:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, the initial value of the object being initialized is the
+(possibly converted) value of the initializer expression. ... </LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>If values produced from literals were permitted to carry excess
+precision, this phrasing does not seem to convery permission to
+discard excess precision when converting from a <TT>float</TT> value
+to type <TT>float</TT> ("... is the value..."), apparently requiring
+that the target object's value also carry the excess precision.</P>
+
+<P>However, if initialization is intended to drop excess precision,
+then an overloaded operator returning <TT>float</TT> can never behave
+like a built-in operation with excess precision, because returning a value
+means initializing the return value.</P>
+
+<P>The C++ standard library inherits the <TT>FLT_EVAL_METHOD</TT>
+macro from the C standard library. C23 specifies it as
+follows in section 5.2.5.3.3:</P>
+
+<BLOCKQUOTE>
+
+<TABLE>
+<TR>
+<TD>0</TD>
+<TD>evaluate all operations and constants just to the range and precision
+of the type;</TD>
+</TR>
+<TR>
+<TD VALIGN="TOP">1</TD>
+<TD>evaluate operations and constants of type float and
+double to the range and precision of the double type, evaluate long
+double operations and constants to the range and precision of the long
+double type;</TD>
+</TR>
+<TR>
+<TD>2</TD>
+<TD>evaluate all operations and constants to the range and
+precision of the long double type.</TD>
+</TR>
+</TABLE>
+
+</BLOCKQUOTE>
+
+<P>Taken together, a conforming C++ implementation cannot
+define <TT>FLT_EVAL_METHOD</TT> to 1 or 2, because literals (=
+"constants") cannot be represented with excess precision in C++.</P>
+
+<P><B>Additional notes (June, 2023)</B></P>
+
+<P>Forwarded to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1584">cplusplus/papers#1584</A>, by decision of the CWG chair.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

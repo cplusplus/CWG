@@ -1,0 +1,273 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2355</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2355"></A><H4>2355.
+  
+Deducing <I>noexcept-specifier</I>s
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-09-06<BR>
+
+
+<P>[Accepted at the July, 2022 meeting.]</P>
+
+<P>The list of deducible forms in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraph
+8 does not include the ability to deduce the value of the constant in a
+<I>noexcept-specifier</I>, although implementations appear to allow it.</P>
+
+<P><B>Notes from the April, 2018 teleconference:</B></P>
+
+<P>Although this appears to be an obvious omission, CWG felt that EWG should
+weigh in on whether this capability should be supported or not.</P>
+
+<P><B>EWG guidance (January, 2021):</B></P>
+
+<P>Modify the Standard such that the value of a constant in
+a <I>noexcept-specifier</I> can be deduced.
+See <A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p1018r8.html#CWG2355">vote</A>.</P>
+
+<P><B>Proposed resolution (June, 2022):</B></P>
+
+<OL>
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A given type <TT>P</TT> can be composed from a number of
+other types, templates, and non-type values:</P>
+
+<UL>
+<LI><P>A function type includes the types of each of the
+function parameters<DEL> and</DEL><INS>,</INS> the return
+type<INS>, and its exception specification</INS>.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following to Example 3 in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+paragraph 7:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Here is an example where two template arguments are deduced
+from a single function parameter/argument pair...</P>
+
+<P><INS>Here is an example where the exception specification
+of a function type is deduced:</INS></P>
+
+<PRE>
+<INS>  template &lt;bool E&gt; void f1(void (*)() noexcept(E));
+  template&lt;bool&gt; struct A { };
+  template&lt;bool B&gt; void f2(void (*)(A&lt;B&gt;) noexcept(B));
+
+  void g1();
+  void g2() noexcept;
+  void g3(A&lt;true&gt;);
+
+  void h() {
+    f1(g1);    //<SPAN CLASS="cmnt"> OK: </SPAN>E<SPAN CLASS="cmnt"> is </SPAN>false
+    f1(g2);    //<SPAN CLASS="cmnt"> OK: </SPAN>E<SPAN CLASS="cmnt"> is </SPAN>true
+    f2(g3);    //<SPAN CLASS="cmnt"> error: </SPAN>B<SPAN CLASS="cmnt"> deduced as both </SPAN>true<SPAN CLASS="cmnt"> and </SPAN>false
+  }</INS>
+</PRE>
+
+<P>Here is an example where a qualification conversion applies...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A template type argument <TT>T</TT>, a template template
+argument <TT>TT</TT><INS>,</INS> or a template non-type
+argument <TT>i</TT> can be deduced if <TT>P</TT>
+and <TT>A</TT> have one of the following forms:
+
+<UL>
+<DEL><TT>T</TT><BR></DEL>
+<I>cv<INS><SUB><I>opt</I></SUB></INS></I> <TT>T</TT><BR>
+<TT>T*</TT><BR>
+<TT>T&amp;</TT><BR>
+<TT>T&amp;&amp;</TT><BR>
+<TT>T<INS><SUB><I>opt</I></SUB></INS>[</TT><DEL><I>integer-constant</I></DEL>
+<INS><TT>i<SUB><I>opt</I></SUB></TT></INS><TT>]</TT><BR>
+<DEL><I>template-name</I><TT>&lt;T&gt;</TT> (where <I>template-name</I> refers to a class template)<BR>
+<I>type</I><TT>(T)</TT><BR>
+<TT>T()</TT><BR></DEL>
+<TT>T<INS><SUB><I>opt</I></SUB></INS>(T<INS><SUB><I>opt</I></SUB></INS>)<INS> noexcept(i<SUB><I>opt</I></SUB>)</INS></TT><BR>
+<DEL><TT>T</TT> <I>type</I><TT>::*</TT><BR>
+<I>type</I> <TT>T::*</TT><BR></DEL>
+<TT>T<INS><SUB><I>opt</I></SUB></INS> T<INS><SUB><I>opt</I></SUB></INS>::*</TT><BR>
+<DEL><TT>T (</TT><I>type</I><TT>::*)()</TT><BR>
+<I>type</I> <TT>(T::*)()</TT><BR>
+<I>type</I> <TT>(</TT><I>type</I><TT>::*)(T)</TT><BR>
+<I>type</I> <TT>(T::*)(T)</TT><BR>
+<TT>T (</TT><I>type</I><TT>::*)(T)</TT><BR>
+<TT>T (T::*)()</TT><BR>
+<TT>T (T::*)(T)</TT><BR></DEL>
+<DEL><I>type</I><TT>[i]</TT><BR>
+<I>template-name</I><TT>&lt;i&gt;</TT> (where <I>template-name</I> refers to a class template)<BR></DEL>
+<TT>TT<INS><SUB><I>opt</I></SUB></INS>&lt;T&gt;</TT><BR>
+<TT>TT<INS><SUB><I>opt</I></SUB></INS>&lt;i&gt;</TT><BR>
+<INS><TT>TT<SUB><I>opt</I></SUB>&lt;TT&gt;</TT><BR></INS>
+<TT>TT<INS><SUB><I>opt</I></SUB></INS>&lt;&gt;</TT><BR>
+</UL>
+
+<P>where <DEL><TT>(T)</TT> represents
+a parameter-type-list (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])
+where at least one parameter type contains a <TT>T</TT>,
+and <TT>()</TT> represents a parameter-type-list
+where no parameter type contains a <TT>T</TT>.</DEL>
+
+<UL>
+<LI><P><INS><TT>T<SUB><I>opt</I></SUB></TT> represents a
+type or parameter-type-list that either satisfies these rules
+recursively, is a non-deduced context in <TT>P</TT> or
+<TT>A</TT>, or is the same non-dependent type in <TT>P</TT>
+and <TT>A</TT>,</INS></P></LI>
+
+<LI><P><INS><TT>TT<INS><SUB><I>opt</I></SUB></INS></TT>
+represents either a class template or a template template
+parameter,</INS></P></LI>
+
+<LI><P><INS><TT>i<SUB><I>opt</I></SUB></TT> represents an expression
+that either is an <TT>i</TT>, is value-dependent in <TT>P</TT>
+or <TT>A</TT>, or has the same constant value in <TT>P</TT> and
+<TT>A</TT>, and</INS></P></LI>
+
+<LI><P><INS><TT>noexcept(i<SUB><I>opt</I></SUB>)</TT> represents an
+exception specification (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]) in which
+the (possibly-implicit, see 9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])
+<I>noexcept-specifier</I>'s operand satisfies the rules for an
+<TT>i<SUB><I>opt</I></SUB></TT> above.</INS></P></LI>
+
+</UL>
+</P>
+
+<P><INS>[<I>Note:</I> If a type matches such a form but
+contains no <TT>T</TT>s, <TT>i</TT>s, or <TT>TT</TT>s,
+deduction is not possible. &#8212;<I>end note</I>]</INS></P>
+
+<P>Similarly,
+<TT>&lt;T&gt;</TT> represents template argument lists where
+at least one argument contains
+a <TT>T</TT>, <TT>&lt;i&gt;</TT> represents template
+argument lists where at least one argument contains
+an <TT>i</TT> and &lt;&gt; represents template argument
+lists where no argument contains a <TT>T</TT>
+or an <TT>i</TT>.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraph 14:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The type of <TT>N</TT> in the type <TT>T[N]</TT>
+is <TT>std::size_t</TT>.  [<I>Example 9:</I> ...
+&#8212;<I>end example</I>]</P>
+
+<P><INS>The type of <TT>B</TT> in the <I>noexcept-specifier</I>
+<TT>noexcept(B)</TT> of a function type
+is <TT>bool</TT>.<BR>
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;bool&gt; struct A { };
+  template&lt;auto&gt; struct B;
+  template&lt;auto X, void (*F)() noexcept(X)&gt; struct B&lt;F&gt; {
+    A&lt;X&gt; ax;
+  };
+  void f_nothrow() noexcept;
+  B&lt;f_nothrow&gt; bn;   //<SPAN CLASS="cmnt"> OK: type of </SPAN>X<SPAN CLASS="cmnt"> deduced as </SPAN>bool</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>] paragraph 19 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If <TT>P</TT> has a form that contains <TT>&lt;i&gt;</TT>,
+and if the type of <TT>i</TT> differs from the type of the
+corresponding template parameter of the template named by
+the enclosing <I>simple-template-id</I>, deduction fails. If
+<TT>P</TT> has a form that contains <TT>[i]</TT>, and if the
+type of <TT>i</TT> is not an integral type, deduction
+fails.<SUP>131</SUP> <INS>If <TT>P</TT> has a form that includes
+<TT>noexcept(i)</TT> and the type of <TT>i</TT> is not
+<TT>bool</TT>, deduction fails.</INS><BR>
+[<I>Example 12:</I> ...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new section preceding
+C.2.7 [<A href="https://wg21.link/diff.cpp20.library">diff.cpp20.library</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<TABLE WIDTH="85%"><TR>
+<TD><B>C.1.4 Clause 13: templates</B></TD>
+<TD ALIGN="right"><B>[diff.cpp20.temp]</B></TD>
+</TR></TABLE>
+
+<P>
+<B>Affected subclause:</B> 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]<BR>
+<B>Change:</B> Deducing template arguments from exception
+specifications.<BR>
+<B>Rationale:</B> Facilitate generic handling of throwing and
+non-throwing functions.<BR>
+<B>Effect on original feature:</B> Valid ISO C++20 code may
+be ill-formed in this revision of C++.<BR>
+</P>
+<P>[<I>Example 1:</I>
+</P>
+<PRE>
+   template&lt;bool&gt; struct A { };
+   template&lt;bool B&gt; void f(void (*)(A&lt;B&gt;) noexcept(B));
+   void g(A&lt;false&gt;) noexcept;
+   void h() {
+     f(g);    //<SPAN CLASS="cmnt"> ill-formed; previously well-formed.</SPAN>
+   }
+</PRE>
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

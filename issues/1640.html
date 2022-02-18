@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1640</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1640"></A><H4>1640.
+  
+Array of abstract instance of class template
+</H4>
+<B>Section: </B>9.3.4.5&#160; [<A href="https://wg21.link/dcl.array">dcl.array</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-03-14<BR>
+
+
+<P>[Adopted at the June, 2018 meeting as part of papeer P0929R2.]</P>
+
+
+
+<P>According to 9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1, an array
+declarator whose element type is an abstract class is ill-formed.
+However, if the element type is a class template specialization, it
+may not be known that the class is abstract; because forming an array
+of an incomplete type is permitted (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>] paragraphs
+5-6), the class template is not required to be instantiated in order
+to use it as an element type.  The expected handling if the class
+template is later instantiated is unclear; should the compiler issue
+an error about the earlier array array type at the point at which the
+class template is instantiated?</P>
+
+<P>This also affects overload resolution:</P>
+
+<PRE>
+  template&lt;typename&gt; struct Abstract {
+    virtual void f() = 0;
+    typedef int type;
+  };
+  template&lt;typename T&gt; char &amp;abstract_test(T[1]);      //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename T&gt; char (&amp;abstract_test(...))[2];  //<SPAN CLASS="cmnt"> #2</SPAN>
+  // Abstract&lt;int&gt;::type n;
+  static_assert(sizeof(abstract_test&lt;Abstract&lt;int&gt;&gt;(nullptr)) == 2, "");
+</PRE>
+
+<P>Overload resolution will select #1 and fail the assertion; if the
+commented line is uncommented, there is implementation variance, but
+presumably #2 should be selected and satisfy the assertion.</P>
+
+<P>These effects of completing the type are troublesome.  Would it
+be better to allow array types of abstract element type and simply
+prohibit creation of objects of such arrays?</P>
+
+<P>(See also <A HREF="1646.html">issue 1646</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

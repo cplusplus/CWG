@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2159</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2159"></A><H4>2159.
+  
+Lambda capture and local <TT>thread_local</TT> variables
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-07-15<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  void f() {
+    thread_local int n = 10;
+    std::thread([&amp;] { std::cout &lt;&lt; n &lt;&lt; std::endl; }).join();
+  }
+</PRE>
+
+<P>This function prints <TT>0</TT>, because:</P>
+
+<OL>
+<LI><P>The lambda does not capture <TT>n</TT>
+</P></LI>
+
+<LI><P>
+<TT>n</TT> is not initialized on the spawned thread
+prior to the invocation of the lambda.</P></LI>
+
+</OL>
+
+<P><B>Additional note, March, 2016:</B></P>
+
+<P>SG1 discussed this issue and concluded that the issues should be
+resolved follows:</P>
+
+<OL>
+<LI><P>If the program would result in a capture by reference of a local
+thread-local variable, then it is ill-formed.</P></LI>
+
+<LI><P>If the program has a capture by value of a local thread-local variable,
+then a copy of the value from the calling thread is captured (and
+initialized in the calling thread, if necessary).</P></LI>
+
+</OL>
+
+<P>The rationale for #1 is that, if we allowed capture of local
+thread-locals, some programmers will have one intuition of what to expect
+and other programmers will have the opposite intuition.  It's better to
+forbid both interpretations.  We don't want to say simply that there is
+<B>no</B> capture by reference of thread-locals, because simply ignoring
+the local thread-local might result in name-lookup finding a global
+variable by the same name, which would be very confusing.</P>
+
+<P><B>Rationale (March, 2017):</B></P>
+
+<P>Only automatic variables are captured. A lambda accessing a thread-local
+variable would be ill-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

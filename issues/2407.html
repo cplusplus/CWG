@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2407</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2407"></A><H4>2407.
+  
+Missing entry in Annex C for defaulted comparison operators
+</H4>
+<B>Section: </B>Clause Annex C&#160; [<A href="https://wg21.link/diff">diff</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kaminski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-02-26<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+
+
+<P>The changes from
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1185r2.html">P1185R2</A>
+need an entry in Annex C, because they affect the interpretation
+of existing well-formed code. For example, given:</P>
+
+<PRE>
+  struct A {
+    operator int() const { return 10; }
+  };
+
+  bool operator==(A, int); //<SPAN CLASS="cmnt"> #1</SPAN>
+  //<SPAN CLASS="cmnt">built-in: </SPAN>bool operator==(int, int);<SPAN CLASS="cmnt"> // #2</SPAN>
+
+  A a, b;
+</PRE>
+
+<P>The expression <TT>10 == a</TT> resolves to #2 in C++17
+but now to #1. In addition, <TT>a == b</TT> is now ambiguous,
+because #1 has a user-defined conversion on the second
+argument, while the reversed order has it on the first
+argument. Similarly for <TT>operator!=.</TT>
+</P>
+
+<P><B>Notes from the March, 2019 teleconference:</B></P>
+
+<P>The ambiguity in <TT>10 == a</TT> arises from the consideration
+of the reverse ordering of the operands.</P>
+
+<P>CWG found this breakage surprising and asked for EWG's opinion
+before updating Annex C.</P>
+
+<P><B>Proposed resolution (April, 2019) [SUPERSEDED]</B></P>
+
+<P>Add the following as a new subclause in C.3 [<A href="https://wg21.link/diff.cpp17">diff.cpp17</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P><INS>C.5.6 Clause 12: Overloading</INS></P>
+
+<P><INS>Affected subclause: 12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]<BR>
+Change: Overload resolution may change for equality operators
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>].<BR>
+Rationale: Support calling <TT>operator==</TT> with reversed order
+of arguments.<BR>
+Effect on original feature: Valid C++ 2017 code that uses
+equality operators with conversion functions may be ill-formed
+or have different semantics in this International Standard.</INS></P>
+
+<PRE>
+<INS>  struct A {
+    operator int() const { return 10; }
+  };
+
+  bool operator==(A, int);               //<SPAN CLASS="cmnt"> #1</SPAN>
+  //<SPAN CLASS="cmnt"> built-in: </SPAN>bool operator==(int, int);  //<SPAN CLASS="cmnt"> #2</SPAN>
+  bool b = 10 == A();                   //<SPAN CLASS="cmnt"> uses #1 with reversed order of arguments; previously used #2</SPAN></INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Add the following as a new subclause in C.3 [<A href="https://wg21.link/diff.cpp17">diff.cpp17</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>C.5.6 Clause 12: Overloading</P>
+
+<P>Affected subclause: 12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]<BR>
+Change: Overload resolution may change for equality operators
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>].<BR>
+Rationale: Support calling <TT>operator==</TT> with reversed order
+of arguments.<BR>
+Effect on original feature: Valid C++ 2017 code that uses
+equality operators with conversion functions may be ill-formed
+or have different semantics in this International Standard.</P>
+
+<PRE>
+  struct A {
+    operator int() const { return 10; }
+  };
+
+  bool operator==(A, int);               //<SPAN CLASS="cmnt"> #1</SPAN>
+  //<SPAN CLASS="cmnt"> built-in: </SPAN>bool operator==(int, int);   //<SPAN CLASS="cmnt"> #2</SPAN>
+  bool b = 10 == A();                   //<SPAN CLASS="cmnt"> uses #1 with reversed order of arguments; previously used #2</SPAN>
+
+  struct B {
+    bool operator==(const B&amp;);          //<SPAN CLASS="cmnt"> member function with no cv-qualifier</SPAN>
+  };
+  B b1;
+  bool eq = (b1 == b1);                   //<SPAN CLASS="cmnt"> ambiguous; previously well-formed</SPAN>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

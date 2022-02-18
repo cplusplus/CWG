@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1741</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1741"></A><H4>1741.
+  
+odr-use of class object in lvalue-to-rvalue conversion
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-21<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA28">N3690 comment
+  CA&#160;28<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>According to 7.3.2 [<A href="https://wg21.link/conv.lval#2">conv.lval</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+if the glvalue has a class type, the [lvalue-to-rvalue] conversion
+copy-initializes a temporary of type <TT>T</TT> from the glvalue and the
+result of the conversion is a prvalue for the temporary.
+
+</BLOCKQUOTE>
+
+<P>The implications of such a conversion for odr-use do not appear to have
+been factored into 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3, which exempts
+constant objects that are immediately lvalue-to-rvalue converted.  For
+example, given</P>
+
+<PRE>
+  struct S { int n; };
+  struct T {
+    static constexpr S s = {};
+  };
+  void f(...);
+  void g() { f(T::s); }
+</PRE>
+
+<P>Does this odr-use <TT>T::s</TT>, requiring it to have a definition,
+because of binding it to the reference parameter of <TT>S</TT>'s
+copy constructor?  How about</P>
+
+<PRE>
+  struct S { int n; };
+  void f(...);
+  void g() {
+    constexpr S s = {};
+    [] { f(s); };
+  }
+</PRE>
+
+<P>Does <TT>s</TT> need to be captured?  There is implementation variance
+on both these examples.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A variable <TT>x</TT> whose name appears as a potentially-evaluated
+expression <TT>ex</TT> is <I>odr-used</I> unless <DEL><TT>x</TT> satisfies
+the requirements for appearing in a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</DEL> <INS>applying the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to <TT>x</TT> yields a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that does not invoke any non-trivial
+functions</INS> and, if <TT>x</TT> is an object, <TT>ex</TT> is an element
+of the set of potential results of an expression <TT>e</TT>, where either
+the lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is applied
+to <TT>e</TT>, or <TT>e</TT> is a discarded-value expression (
+Clause 7 [<A href="https://wg21.link/expr">expr</A>]). <TT>this</TT> is odr-used...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 290</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="290"></A><H4>290.
+  
+Should memcpy be allowed into a POD with a const member?
+</H4>
+<B>Section: </B>6.8&#160; [<A href="https://wg21.link/basic.types">basic.types</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Garry Lancaster
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 Jun 2001<BR>
+
+
+<P>Following the definition in Clause 11 [<A href="https://wg21.link/class#4">class</A>] paragraph 4
+the following is a valid POD (actually a POD-struct):</P>
+
+<PRE>
+    struct test
+    {
+        const int i;
+    };
+</PRE>
+
+<P>The legality of PODs with const members is also implied by the text of
+7.6.2.8 [<A href="https://wg21.link/expr.new#15.1">expr.new</A>] bullet 15.1, sub-bullet 2 and
+11.9.3 [<A href="https://wg21.link/class.base.init#4.2">class.base.init</A>] bullet 4.2.</P>
+
+<P>6.8 [<A href="https://wg21.link/basic.types#3">basic.types</A>] paragraph 3 states that</P>
+
+<BLOCKQUOTE>
+For any POD type
+<TT>T</TT>, if two pointers to <TT>T</TT> point to distinct objects
+<TT>obj1</TT> and <TT>obj2</TT>, if the value of <TT>obj1</TT> is copied
+into <TT>obj2</TT>, using the <TT>memcpy</TT> library function, <TT>obj2</TT>
+shall subsequently hold the same value as <TT>obj1</TT>.
+</BLOCKQUOTE>
+
+<P><I>[Note: this text was changed by TC1, but the essential point
+stays the same.]</I></P>
+
+<P>This implies that the following is required to work:</P>
+
+<PRE>
+    test obj1 = { 1 };
+    test obj2 = { 2 };
+    memcpy( &amp;obj2, &amp;obj1, sizeof(test) );
+</PRE>
+
+<P>The memcpy of course changes the value of the const member, surely
+something that shouldn't be allowed.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>It is recommended that 6.8 [<A href="https://wg21.link/basic.types#3">basic.types</A>] paragraph 3 be
+reworded to exclude PODs which contain (directly or indirectly) members
+of const-qualified type.</P>
+
+<P><B>Rationale (October, 2004):</B></P>
+
+<P>9.2.9.2 [<A href="https://wg21.link/dcl.type.cv#4">dcl.type.cv</A>] paragraph 4 already forbids
+modifying a const member of a POD struct.  The prohibition need
+not be repeated in 6.8 [<A href="https://wg21.link/basic.types">basic.types</A>].</P>
+
+<BR><BR>
+</BODY>
+</HTML>

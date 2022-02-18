@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1699</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1699"></A><H4>1699.
+  
+Does befriending a class befriend its friends?
+</H4>
+<B>Section: </B>11.8.4&#160; [<A href="https://wg21.link/class.friend">class.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Krauss
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-06-12
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>According to 11.8.4 [<A href="https://wg21.link/class.friend#2">class.friend</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Declaring a class to be a friend implies that the names of private and
+protected members from the class granting friendship can be accessed in
+the <I>base-specifier</I>s and member declarations of the befriended class.
+
+</BLOCKQUOTE>
+
+<P>A <TT>friend</TT> declaration is a <I>member-declaration</I>, but it
+is not clear how far the granting of friendship goes in a <TT>friend</TT>
+declaration.  For example:</P>
+
+<PRE>
+  class c {
+    class n {};
+    friend struct s;
+  };
+
+  struct s {
+    friend class c::n;          //<SPAN CLASS="cmnt"> #1</SPAN>
+    friend c::n g();            //<SPAN CLASS="cmnt"> #2</SPAN>
+    friend void f() { c::n(); } //<SPAN CLASS="cmnt"> #3</SPAN>
+  };
+</PRE>
+
+<P>In particular, if a friend function is defined inside the class
+definition, as in #3, does its definition have access to the private
+and protected members of the befriending class?  Implementations vary
+on this point.</P>
+
+
+
+<P><B>Additional note (June, 2021):</B></P>
+
+<P>The initial opinion of CWG (at the September, 2013 meeting)
+was that &#8220;member declarations&#8221; was intended to be
+the English equivalent of the syntactic nonterminal
+<I>member-declaration</I>, including a <TT>friend</TT>
+declaration/definition inside
+the <I>member-specification</I> of a class, making #3
+well-formed. However, recent discussion  has expressed concern over the different
+treatment of in-class and out-of-class definitions of friend
+functions and observed that there is still divergence among
+implementations. </P>
+
+<P><B>Rationale (November, 2021):</B></P>
+
+<P>There are two lines of analysis that lead to opposite
+conclusions. The first is that a friend defined within the
+<I>member-specification</I> is written by the class author and
+is effectively part of the class, not subject to hijacking by
+other declarations, and thus should be afforded the same access
+as all other declarations that are part of the class. The
+second is that giving different access to a friend function
+based simply on whether it was defined inside or outside of its
+befriending class is confusing.</P>
+
+<P>CWG considered this to be a design-level question, not
+simply to be determined by the usual relationship between
+English and grammar terms, and thus is asking EWG for its
+opinion.</P>
+
+<P><B>Additional note (May, 2023)</B></P>
+
+<P>Forwarded to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1573">cplusplus/papers#1573</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

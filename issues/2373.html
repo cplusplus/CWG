@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2373</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2373"></A><H4>2373.
+  
+Incorrect handling of static member function templates in partial ordering
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-02-14<BR>
+
+
+<P>[Accepted as a DR at the November, 2018 (San Diego) meeting.]</P>
+
+<P>According to 13.7.7.3 [<A href="https://wg21.link/temp.func.order#3">temp.func.order</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+...If only one of the function templates <I>M</I> is a
+non-static member of some class <I>A</I>, <I>M</I> is
+considered to have a new first parameter inserted in its
+function parameter list. Given <I>cv</I> as the
+cv-qualifiers of <I>M</I> (if any), the new parameter is of
+type &#8220;rvalue reference to <I>cv A</I>&#8221; if the
+optional <I>ref-qualifier</I> of <I>M</I> is &amp;&amp; or
+if <I>M</I> has no <I>ref-qualifier</I> and the first
+parameter of the other template has rvalue reference
+type. Otherwise, the new parameter is of type &#8220;lvalue
+reference to <I>cv A</I>&#8221;. [<I>Note:</I> This allows a
+non-static member to be ordered with respect to a non-member
+function and for the results to be equivalent to the
+ordering of two equivalent non-members. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P>This gives the wrong answer for an example like:</P>
+
+<PRE>
+  struct Foo {
+    template &lt;typename T&gt;
+    static T* f(Foo*) { return nullptr; }
+
+    template &lt;typename T, typename A1&gt;
+    T* f(const A1&amp;) { return nullptr; }
+  };
+
+  int main() {
+    Foo x;
+    x.f&lt;int&gt;(&amp;x);
+  }
+</PRE>
+
+<P>Presumably this should say something like,</P>
+
+<BLOCKQUOTE>
+
+...If only one of the function templates <I>M</I> is a member
+function, and that function is a non-static member...
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (October, 2018):</B></P>
+
+<P>Change 13.7.7.3 [<A href="https://wg21.link/temp.func.order#3">temp.func.order</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+...If only one of the function templates <I>M</I> is a
+<INS>member function, and that function is a</INS>
+non-static member of some class <I>A</I>, <I>M</I> is
+considered to have a new first parameter inserted in its
+function parameter list. Given <I>cv</I> as the
+cv-qualifiers of <I>M</I> (if any), the new parameter is of
+type &#8220;rvalue reference to <I>cv A</I>&#8221; if the
+optional <I>ref-qualifier</I> of <I>M</I> is &amp;&amp; or
+if <I>M</I> has no <I>ref-qualifier</I> and the first
+parameter of the other template has rvalue reference
+type. Otherwise, the new parameter is of type &#8220;lvalue
+reference to <I>cv A</I>&#8221;. [<I>Note:</I> This allows a
+non-static member to be ordered with respect to a non-member
+function and for the results to be equivalent to the
+ordering of two equivalent non-members. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

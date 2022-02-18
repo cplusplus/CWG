@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2312</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2312"></A><H4>2312.
+  
+Structured bindings and <TT>mutable</TT>
+</H4>
+<B>Section: </B>9.6&#160; [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-08-11<BR>
+
+
+<P>[Accepted at the November, 2020 meeting.]</P>
+
+
+
+<P>An example like the following is currently ill-formed:</P>
+
+<PRE>
+  struct A { mutable int n; };
+  void f() {
+    const auto [a] = A();
+    a = 0;
+  }
+</PRE>
+
+<P>According to 9.6 [<A href="https://wg21.link/dcl.struct.bind#4">dcl.struct.bind</A>] paragraph 4, the type of
+<TT>a</TT> is <TT>const int</TT>, since the implicitly-declared variable
+is <TT>const</TT>. This seems obviously wrong: the member <TT>n</TT> is
+mutable, so the member access expression <TT>e.n</TT> has
+type <TT>int</TT>, which should also be the type
+of <TT>a</TT>. (<TT>mutable</TT> should presumably be taken into account
+when forming the referenced type too, so that <TT>decltype(a)</TT>
+is <TT>int</TT> as would presumably be expected, rather than <TT>const
+int</TT>.)</P>
+
+<P><B>Proposed resolution, March, 2018: [SUPERSEDED]</B></P>
+
+<P>Change 9.6 [<A href="https://wg21.link/dcl.struct.bind#4">dcl.struct.bind</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+...Designating the non-static data members of <TT>E</TT>
+as <TT>m<SUB>0</SUB></TT>, <TT>m<SUB>1</SUB></TT>, <TT>m<SUB>2</SUB></TT>,
+... (in declaration order), each <TT>v</TT><I><SUB>i</SUB></I> is the name
+of an lvalue that refers to <DEL>the member <TT>m</TT><I><SUB>i</SUB></I>
+of <TT>e</TT> and whose type is <I>cv</I> <TT>T</TT><I><SUB>i</SUB></I>,
+where <TT>T</TT><I><SUB>i</SUB></I> is the declared type of that
+member</DEL> <INS><TT>e.m</TT><I><SUB>i</SUB></I></INS>; the referenced
+type is <DEL><I>cv</I> <TT>T</TT><I><SUB>i</SUB></I></DEL>
+<INS>the type of <TT>e.m</TT><I><SUB>i</SUB></I></INS>. The lvalue is a
+bit-field if...
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the June, 2018 meeting:</B></P>
+
+<P>It was observed that this resolution does not handle members with
+reference type correctly. The main problem seems to be the statement
+in 7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4, which directly handles
+members with reference type rather than allowing the type of the
+member to be the result type and relying on the general rule that
+turns reference-typed expressions into lvalues.</P>
+
+<P><B>Proposed resolution (April, 2020):</B></P>
+
+<P>Change 9.6 [<A href="https://wg21.link/dcl.struct.bind#5">dcl.struct.bind</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...Designating the non-static data members of <TT>E</TT>
+as <TT>m<SUB>0</SUB></TT>, <TT>m<SUB>1</SUB></TT>,
+<TT>m<SUB>2</SUB></TT>, ... (in declaration order),
+each <TT>v</TT><SUB><I>i</I></SUB> is the name of an lvalue
+that refers to the member <TT>m</TT><SUB><I>i</I></SUB>
+of <I>e</I> and whose type
+is <DEL><I>cv</I> <TT>T</TT><SUB><I>i</I></SUB>,
+where <TT>T</TT><SUB><I>i</I></SUB> is the declared type of
+that member</DEL> <INS>that of <I>e</I><TT>.m</TT><SUB><I>i</I></SUB>
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])</INS>; the referenced type
+is <DEL><I>cv</I> <TT>T</TT><SUB><I>i</I></SUB></DEL>
+<INS>the declared type of <TT>m</TT><SUB><I>i</I></SUB> if
+that type is a reference type, or the type of
+<I>e</I><TT>.m</TT><SUB><I>i</I></SUB> otherwise</INS>.  The
+lvalue is a bit-field if that member is a bit-field.</P>
+
+<P>[<I>Example 2:</I>
+</P>
+
+<PRE>
+  struct S { <INS>mutable</INS> int x1 : 2; volatile double y1; };
+  S f();
+  const auto [ x, y ] = f();
+</PRE>
+
+<P>The type of the <I>id-expression</I> <TT>x</TT> is
+&#8220;<TT><DEL>const</DEL> int</TT>&#8221;, the type of
+the <I>id-expression</I> <TT>y</TT> is &#8220;<TT>const
+volatile double</TT>&#8221;. &#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

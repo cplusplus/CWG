@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1048</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1048"></A><H4>1048.
+  
+<TT>auto</TT> deduction and lambda return type deduction.
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-09<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting as part of paper N3638.]</P>
+
+
+
+<P>
+<TT>auto</TT> and lambda return types use slightly different rules
+for determining the result type from an expression.  <TT>auto</TT>
+uses the rules in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>], which explicitly drops
+top-level cv-qualification in all cases, while the lambda return type
+is based on the lvalue-to-rvalue conversion, which drops cv-qualification
+only for non-class types.  As a result:</P>
+
+<PRE>
+    struct A { };
+
+    const A f();
+
+    auto a = f();               // decltype(a) is A
+    auto b = []{ return f(); }; // decltype(b()) is const A
+</PRE>
+
+<P>This seems like an unnecessary inconsistency.</P>
+
+<P>
+<U>John Spicer</U>:</P>
+
+<P>The difference is intentional; <TT>auto</TT> is intended only
+to give a <TT>const</TT> type if you explicitly ask for it, while
+the lambda return type should generally be the type of the
+expression.</P>
+
+<P>
+<U>Daniel Kr&#252;gler</U>:</P>
+
+<P>Another inconsistency: with <TT>auto</TT>, use of a
+<I>braced-init-list</I> can deduce a specialization of
+<TT>std::initializer_list</TT>; it would be helpful if the same
+could be done for a lambda return type.</P>
+
+<P><B>Additional note, February, 2014:</B></P>
+
+<P>EWG noted that g++ and clang differ in their treatment of this
+example and referred it back to CWG for resolution.</P>
+
+<P><B>Proposed resolution, November, 2014:</B></P>
+
+<P>This issue was actually resolved by paper N3638, adopted at the
+April, 2013 meeting.  It is returned to "review" status to allow
+consideration of whether the resolution should be considered a
+change for C++14 or a retroactive change to C++11.
+</P>
+
+<P><B>Notes from the November, 2014 meeting:</B></P>
+
+<P>CWG agreed that the change embodied in paper N3638 should be
+considered to have been a DR against C++11.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

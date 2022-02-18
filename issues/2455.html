@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2455</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2455"></A><H4>2455.
+  
+Concatenation of string literals vs translation phases 5 and 6
+</H4>
+<B>Section: </B>5.2&#160; [<A href="https://wg21.link/lex.phases">lex.phases</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tom Honermann
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-07-02<BR>
+
+
+<P>[Addressed by paper P2314R4, adopted at the October, 2021
+plenary.]</P>
+
+
+
+<P>According to 5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1,
+concatenation of adjacent string literals is performed in
+translation phase 6, after conversion of the literal values
+to the execution character set. However,
+5.13.5 [<A href="https://wg21.link/lex.string#11">lex.string</A>] paragraph 11 indicates that the
+interpretation of the string contents is dependent on
+the <I>encoding-prefix</I>es specified for the literals
+being concatenated:</P>
+
+<BLOCKQUOTE>
+
+In translation phase 6 (5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]),
+adjacent <I>string-literal</I>s are concatenated. If
+both <I>string-literal</I>s have the
+same <I>encoding-prefix</I>, the resulting
+concatenated <I>string-literal</I> has
+that <I>encoding-prefix</I>. If one <I>string-literal</I>
+has no <I>encoding-prefix</I>, it is treated as
+a <I>string-literal</I> of the same <I>encoding-prefix</I>
+as the other operand. If a UTF-8 string literal token is
+adjacent to a wide string literal token, the program is
+ill-formed. Any other concatenations are
+conditionally-supported with implementation-defined
+behavior. [<I>Note:</I> This concatenation is an
+interpretation, not a conversion. Because the interpretation
+happens in translation phase 6 (after each character from
+a <I>string-literal</I> has been translated into a value
+from the appropriate character set),
+a <I>string-literal</I>'s initial rawness has no effect on
+the interpretation or well-formedness of the concatenation.
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>This seems to indicate that <I>string-literal</I>s with
+different <I>encoding-prefix</I>es are separately converted
+and then joined, potentially resulting in strings containing
+code unit sequences corresponding to different character
+encodings. This reading would contradict the intent,
+expressed in adjacent table, that, e.g., <TT>u"a" "b"</TT>
+means the same as <TT>u"ab"</TT>.</P>
+
+<P>There is implementation divergence in the handling of
+this specification.</P>
+
+<P>Phases 5 and 6 cannot simply be reversed, because
+interpretation of escape sequences must precede concatenation,
+as specified later in the same paragraph:</P>
+
+<BLOCKQUOTE>
+
+<P>Characters in concatenated strings are kept distinct.</P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+"\xA" "B"
+</PRE>
+
+<P>contains the two characters <TT>'\xA'</TT> and <TT>'B'</TT>
+after concatenation (and not the single hexadecimal
+character <TT>'\xAB'</TT>). &#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>Richard Smith suggested
+<A HREF="https://groups.google.com/a/isocpp.org/forum/#!msg/std-discussion/qYf6treuLmY/dljWwyawCwAJ">here</A>
+that "we should remove phases 5 and 6 entirely, parse one or
+more <I>string-literal</I> tokens as a string literal
+expression, and only perform the translation from the
+contents of the string literal tokens into characters in the
+execution character set as part of specifying the semantics
+of a string literal expression."</P>
+
+<BR><BR>
+</BODY>
+</HTML>

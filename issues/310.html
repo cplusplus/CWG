@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 310</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="310"></A><H4>310.
+  
+Can function templates differing only in parameter cv-qualifiers be overloaded?
+</H4>
+<B>Section: </B>13.7.7.2&#160; [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Aug 2001<BR>
+
+
+<P>I get the following error diagnostic [from the EDG front end]:
+<PRE>
+line 8: error: function template "example&lt;T&gt;::foo&lt;R,A&gt;(A)" has
+          already been declared
+     R  foo(const A);
+        ^
+</PRE>
+when compiling this piece of code:
+<PRE>
+struct  example  {
+   template&lt;class R, class A&gt;   // 1-st member template
+   R  foo(A);
+   template&lt;class R, class A&gt;   // 2-nd member template
+   const R  foo(A&amp;);
+   template&lt;class R, class A&gt;   // 3-d  member template
+   R  foo(const A);
+};
+
+/*template&lt;&gt; template&lt;&gt;
+int  example&lt;char&gt;::foo(int&amp;);*/
+
+
+int  main()
+{
+   int  (example&lt;char&gt;::* pf)(int&amp;) =
+      &amp;example&lt;char&gt;::foo;
+}
+</PRE>
+</P>
+
+<P>The implementation complains that
+<PRE>
+   template&lt;class R, class A&gt;   // 1-st member template
+   R  foo(A);
+   template&lt;class R, class A&gt;   // 3-d  member template
+   R  foo(const A);
+</PRE>
+cannot be overloaded and I don't see any reason for it
+since it is function template specializations that are
+treated like ordinary non-template functions, meaning
+that the transformation of a
+parameter-declaration-clause into the corresponding
+parameter-type-list is applied to specializations
+(when determining its type) and not to function
+templates.</P>
+
+<P>What makes me think so is the contents of 13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]
+and the following sentence from 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] "If P is a
+cv-qualified type, the top level cv-qualifiers of P
+are ignored for type deduction". If the transformation
+was to be applied to function templates, then there
+would be no reason for having that sentence in
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>].</P>
+
+<P>13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr">temp.deduct.funcaddr</A>], which my example is
+based upon, says nothing
+about ignoring the top level cv-qualifiers of the
+function parameters of the function template whose
+address is being taken.</P>
+
+<P>As a result, I expect that template argument deduction
+will fail for the 2-nd and 3-d member templates and
+the 1-st one will be used for the instantiation of the
+specialization.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

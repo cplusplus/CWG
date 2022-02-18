@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2420</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2420"></A><H4>2420.
+  
+Exception specifications in explicit instantiation
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-06-19<BR>
+
+
+<P>The expected behavior of the following example is not clear:</P>
+
+<PRE>
+  template&lt;class T&gt; struct Y {
+    typedef typename T::value_type blah;
+    void swap(Y&lt;T&gt; &amp;);
+  };
+  template&lt;class T&gt;
+  void swap(Y&lt;T&gt;&amp; Left, Y&lt;T&gt;&amp; Right) noexcept(noexcept(Left.swap(Right))) {
+  }
+
+  template &lt;class T&gt; struct Z {
+     void swap(Z&lt;T&gt; &amp;);
+  };
+  template&lt;class T&gt;
+  void swap(Z&lt;T&gt;&amp; Left, Z&lt;T&gt;&amp; Right) noexcept(noexcept(Left.swap(Right))) {
+  }
+  Z&lt;int&gt; x00, y00;
+  constexpr bool b00 = noexcept(x00.swap(y00));
+  //<SPAN CLASS="cmnt"> Instantiates the </SPAN>Z&lt;int&gt;<SPAN CLASS="cmnt"> overload:</SPAN>
+  template void swap&lt;int&gt;(Z&lt;int&gt;&amp;, Z&lt;int&gt;&amp;) noexcept(b00);
+</PRE>
+
+<P>The question is whether the explicit instantiation directive
+also instantiates the <TT>Y&lt;int&gt;</TT> overload and thus
+<TT>Y&lt;int&gt;</TT> (because of the exception specification),
+which will fail because of the reference to <TT>T::value_type</TT>
+with <TT>T=int</TT>.</P>
+
+<P>According to 14.5 [<A href="https://wg21.link/except.spec#13.3">except.spec</A>] bullet 13.3, one of the
+contexts in which an exception specification is needed (thus
+triggering its instantiation) is when:</P>
+
+<BLOCKQUOTE>
+
+the exception specification is compared to that of another
+declaration (e.g., an explicit specialization or an
+overriding virtual function);
+
+</BLOCKQUOTE>
+
+<P>In this example, the declarations of <TT>swap</TT> must be
+compared in order to determine which function template is being
+instantiated, resulting in the instantiation of <TT>Y&lt;int&gt;</TT>.
+There is implementation divergence, however, with some accepting
+the example and some issuing an error for the instantiation of
+<TT>Y&lt;int&gt;</TT>.</P>
+
+<P>
+<B>Rationale (February, 2022):</B> Duplicate of
+<A HREF="2417.html">issue 2417</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

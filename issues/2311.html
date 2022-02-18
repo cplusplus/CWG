@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2311</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2311"></A><H4>2311.
+  
+Missed case for guaranteed copy elision
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-08-09<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct X {
+    X();
+  };
+  X make();
+  X x{make()}; 
+</PRE>
+
+<P>We reach 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.7">dcl.init.list</A>] bullet 3.7:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if <TT>T</TT> is a class type, constructors are
+considered. The applicable constructors are enumerated and the best
+one is chosen through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>],
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]).
+
+</BLOCKQUOTE>
+
+<P>This means we perform a redundant copy.  If <TT>T</TT> were an
+aggregate, 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.2">dcl.init.list</A>] bullet 3.2 would avoid the
+redundant copy:</P>
+
+<BLOCKQUOTE>
+
+If <TT>T</TT> is an aggregate class and the initializer list has a
+single element of type <I>cv</I> <TT>U</TT>, where <TT>U</TT>
+is <TT>T</TT> or a class derived from <TT>T</TT>, the object is
+initialized from that element (by copy-initialization for
+copy-list-initialization, or by direct-initialization for
+direct-list-initialization).
+
+</BLOCKQUOTE>
+
+<P>See also issues <A HREF="2137.html">2137</A> and
+<A HREF="2327.html">2327</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

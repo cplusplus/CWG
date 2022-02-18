@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2250</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2250"></A><H4>2250.
+  
+Implicit instantiation, destruction, and TUs
+</H4>
+<B>Section: </B>13.8.4.1&#160; [<A href="https://wg21.link/temp.point">temp.point</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dawn Perchik
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-03-21<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;class T&gt; struct A {
+    T* p;
+    A();
+    ~A() {
+	if (0 &lt; sizeof (T))
+	  delete p;
+    }
+  };
+  struct U;
+  struct C {
+    C();
+    ~C();
+    A&lt;U&gt; u;
+  };
+  int main() {
+    C c;
+    return 0;
+  }
+</PRE>
+
+<P>The intent is that <TT>A&lt;U&gt;::~A</TT> is instantiated where
+the special member functions of <TT>C</TT> are defined (at which
+point <TT>U</TT> is ostensibly complete). Preventing instantiation
+(and thus avoiding the completeness check) in the present translation
+unit is necessary for the <TT>unique_ptr</TT>-based pimpl idiom to
+work.</P>
+
+<P>
+<B>Notes from the December, 2016 teleconference:</B>
+</P>
+
+<P>The problem is that the current wording only connects name lookup
+with point of instantiation; other semantic checks, such as the
+requirement for completeness of a class, should also be performed at
+that point.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

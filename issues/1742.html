@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1742</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1742"></A><H4>1742.
+  
+<I>using-declaration</I>s and scoped enumerators
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-28<BR>
+
+
+<P>[Accepted at the July, 2019 meeting as part of paper P1099R5 (Using enum).]</P>
+
+
+
+<P>A <I>using-declaration</I> cannot name a scoped enumerator, according
+to 9.9 [<A href="https://wg21.link/namespace.udecl#7">namespace.udecl</A>] paragraph 7.  This is presumably because
+a scoped enumerator belongs to an enumeration scope and thus logically
+cannot belong to the non-enumeration scope in which the
+<I>using-declaration</I> appears.  It seems inconsistent, however, to
+permit <I>using-declaration</I>s to name unscoped enumerators but not
+scoped enumerators.</P>
+
+<P>Also, 9.9 [<A href="https://wg21.link/namespace.udecl#3">namespace.udecl</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+In a <I>using-declaration</I> used as a <I>member-declaration</I>,
+the <I>nested-name-specifier</I> shall name a base class of the class being
+defined.
+
+</BLOCKQUOTE>
+
+<P>The consequence of this is that</P>
+
+<PRE>
+  enum E { e0 };
+  void f() {
+    using E::e0;
+  }
+</PRE>
+
+<P>is well-formed, but</P>
+
+<PRE>
+  struct B {
+    enum E { e0 };
+  };
+  struct D : B {
+    using B::E::e0;
+  };
+</PRE>
+
+<P>is not.  Again, this seems inconsistent.  Should these rules be
+relaxed?</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

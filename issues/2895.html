@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2895</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2895"></A><H4>2895.
+  
+Initialization should ignore the destination type's cv-qualification
+</H4>
+<B>Section: </B>9.4.1&#160; [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-29<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/541">#541</A>.)</P>
+
+<P>Initialization of <I>cv</I> <TT>T</TT> follows the same rules as
+initialization of <TT>T</TT>.  <A HREF="2830.html">Issue 2830</A>
+clarified this for list-initialization.  Further amendments are needed
+to properly handle cv-qualified versions of <TT>char8_t</TT>
+and <TT>char16_t</TT> as well as <TT>bool</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-14):</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#16">dcl.init.general</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+The semantics of initializers are as follows. The destination type is
+the <INS>cv-unqualified</INS> type of the object or reference being
+initialized and the source type is the type of the initializer
+expression. If the initializer is not a single (possibly
+parenthesized) expression, the source type is not defined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6">dcl.init.general</A>] bullet 16.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+Otherwise, if the destination type is a <DEL>(possibly
+cv-qualified)</DEL> class type:
+<UL>
+<LI>
+If the initializer expression is a prvalue and the cv-unqualified
+version of the source type is the same <DEL>class as the class
+of</DEL> <INS>as</INS> the destination <INS>type</INS>, the
+initializer expression is used to initialize the destination object.
+[<I>Example 2:</I> T x = T(T(T())); value-initializes x. &#8212;<I>end
+example</I>]
+</LI>
+
+<LI>
+Otherwise, if the initialization is direct-initialization, or if it is
+copy-initialization where the cv-unqualified version of the source
+type is the same <DEL>class as, or a derived class of, the class of</DEL>
+<INS>as or is derived from</INS> the destination <INS>type</INS>,
+constructors are considered. The applicable constructors are
+enumerated (12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]), and the best one is chosen
+through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]). Then:
+</LI>
+
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.9">dcl.init.general</A>] bullet 16.9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+Otherwise, the initial value of the object being initialized is the
+(possibly converted) value of the initializer expression. A standard
+conversion sequence (7.3 [<A href="https://wg21.link/conv">conv</A>]) is used to convert the
+initializer expression to a prvalue of <DEL>the cv-unqualified version
+of</DEL> the destination type; no user-defined conversions are
+considered. If the conversion cannot be done, the initialization is
+ill-formed. When initializing a bit-field with a value that it cannot
+represent, the resulting value of the bit-field is
+implementation-defined.  [ Note: ... ]
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

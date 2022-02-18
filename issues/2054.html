@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2054</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2054"></A><H4>2054.
+  
+Missing description of class SFINAE
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ville Voutilainen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-12-07<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Presumably something like the following should be well-formed, where
+a deduction failure in a partial specialization is handled as a SFINAE
+case as it is with function templates and not a hard error:</P>
+
+<PRE>
+  template &lt;class T, class U&gt; struct X   {
+    typedef char member;
+  };
+
+  template&lt;class T&gt; struct X&lt;T,
+   typename enable_if&lt;(sizeof(T)&gt;sizeof(
+     float)), float&gt;::type&gt;
+  {
+    typedef long long member;
+  };
+
+  int main() {
+    cout &lt;&lt; sizeof(X&lt;double, float&gt;::member);
+  }
+</PRE>
+
+<P>However, this does not appear to be described anywhere in the
+Standard.</P>
+
+<P><B>Additional notes (January, 2023)</B></P>
+
+<P>The section on SFINAE (13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#8">temp.deduct.general</A>] paragraph 8) is
+not specific to function templates, and 13.7.6.2 [<A href="https://wg21.link/temp.spec.partial.match#2">temp.spec.partial.match</A>] paragraph 2 hands off the "matching" determination for partial
+specializations to 13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] in general.  However,
+the definition of deduction substitution loci in
+13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#7">temp.deduct.general</A>] paragraph 7 does not account
+for the template argument list of a partial specialization.</P>
+
+
+
+<P><B>Proposed resolution (approved by CWG 2023-11-08):</B></P>
+
+<P>Change in 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#7">temp.deduct.general</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+The deduction substitution loci are
+<UL>
+<LI>the function type outside of the <I>noexcept-specifier</I>,</LI>
+<LI>the <I>explicit-specifier</I>, <DEL>and</DEL>
+</LI>
+<LI>the template parameter declarations<DEL>.</DEL><INS>, and</INS>
+</LI>
+<LI><INS>the template argument list of a partial specialization
+(13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general">temp.spec.partial.general</A>]).</INS></LI>
+</UL>
+The substitution occurs in all types and expressions that are used in
+the deduction substitution loci. ...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

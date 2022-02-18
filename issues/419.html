@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 419</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="419"></A><H4>419.
+  
+Can cast to virtual base class be done on partially-constructed object?
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Judy Ward
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 June 2003<BR>
+
+
+<P>Consider</P>
+<PRE>
+  extern "C" int printf (const char *,...);
+
+  struct Base { Base();};
+  struct Derived: virtual public Base {
+     Derived() {;}
+  };
+
+  Derived d;
+  extern Derived&amp; obj = d;
+
+  int i;
+
+  Base::Base() {
+    if ((Base *) &amp;obj) i = 4;
+    printf ("i=%d\n", i);
+  }
+
+  int main() { return 0; }
+</PRE>
+
+<P>11.9.5 [<A href="https://wg21.link/class.cdtor#2">class.cdtor</A>] paragraph 2 makes this valid, but
+6.7.4 [<A href="https://wg21.link/basic.life#5">basic.life</A>] paragraph 5 implies that it isn't valid.</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+A second issue:</P>
+<PRE>
+  extern "C" int printf(const char *,...);
+  struct A                      { virtual ~A(); int x; };
+  struct B : public virtual A   { };
+  struct C : public B           { C(int); };
+  struct D : public C           { D(); };
+
+  int main()                    { D t; printf("passed\n");return 0; }
+
+  A::~A()                       {}
+  C::C(int)                     {}
+  D::D() : C(this-&gt;x)           {}
+</PRE>
+<P>
+<A HREF="52.html">Core issue 52</A> almost, but not quite,
+says that in evaluating "this-&gt;x"
+you do a cast to the virtual base class A, which would be an error
+according to 11.9.5 [<A href="https://wg21.link/class.cdtor#2">class.cdtor</A>] paragraph 2 because the base
+class B constructor hasn't started yet.
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>] should be clarified to say that
+the cast does need to get done.</P>
+
+<P>
+<U>James Kanze</U> submitted the same issue via comp.std.c++
+on 11 July 2003:</P>
+<BLOCKQUOTE>
+Richard Smith:
+Nonsense. You can use "this" perfectly happily in a constructor, just
+be careful that (a) you're not using any members that are not fully
+initialised, and (b) if you're calling virtual functions you know
+exactly what you're doing.
+</BLOCKQUOTE>
+
+<P>In practice, and I think in intent, you are right.  However, the
+standard makes some pretty stringent restrictions in
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>].  To start
+with, it says (in paragraph 1): </P>
+<BLOCKQUOTE>
+    The lifetime of an object is a runtime property of the object.  The
+    lifetime of an object of type T begins when:
+<UL>
+<LI>
+        storage with the proper alignment and size for type T is
+        obtained, and
+</LI>
+<LI>
+
+        if T is a class type with a non-trivial constructor, the
+        constructor calls has COMPLETED.
+</LI>
+</UL>
+    The lifetime of an object of type T ends when:
+<UL>
+<LI>
+        if T is a class type with a non-trivial destructor, the
+        destructor call STARTS, or
+</LI>
+<LI>
+        the storage which the object occupies is reused or released.
+</LI>
+</UL>
+</BLOCKQUOTE>
+(Emphasis added.)  Then when we get down to paragraph 5, it says:
+<BLOCKQUOTE>
+<P>
+    Before the lifetime of an object has started but after the storage
+    which the object will occupy has been allocated [which sounds to me
+    like it would include in the constructor, given the text above] or,
+    after the lifetime of an object has ended and before the storage
+    which the object occupied is reused or released, any pointer that
+    refers to the storage location where the object will be or was
+    located may be used but only in limited ways. [...] If the object
+    will be or was of a non-POD class type, the program has undefined
+    behavior if:
+</P>
+<P>
+    [...]
+</P>
+<UL>
+<LI>
+        the pointer is implicitly converted to a pointer to a base class
+        type, or [...]
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<P>I can't find any exceptions for the this pointer.</P>
+
+<P>Note that calling a non-static function in the base class, or even
+constructing the base class in initializer list, involves an implicit
+conversion of this to a pointer to the base class.  Thus undefined
+behavior.  I'm sure that this wasn't the intent, but it would seem to be
+what this paragraph is saying.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

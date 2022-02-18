@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2655</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2655"></A><H4>2655.
+  
+Instantiation of default arguments in <I>lambda-expression</I>s
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tom Honermann
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-16<BR>
+
+
+<P>Subclause 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#2">expr.prim.lambda.closure</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+The closure type is declared in the smallest block scope, class scope,
+or namespace scope that contains the
+corresponding <I>lambda-expression</I>.
+
+</BLOCKQUOTE>
+
+<P>This means the closure type is a local class if
+the <I>lambda-expression</I> appears at function scope.  A note in
+13.9.2 [<A href="https://wg21.link/temp.inst#2">temp.inst</A>] paragraph 2 claims that default arguments
+inside local classes are not separately instantiated:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 3:</I> Within a template declaration, a local class
+(11.6 [<A href="https://wg21.link/class.local">class.local</A>]) or enumeration and the members of a local
+class are never considered to be entities that can be separately
+instantiated (this includes their default
+arguments, <I>noexcept-specifier</I> s, and non-static data member
+initializers, if any, but not their <I>type-constraint</I>s
+or <I>requires-clause</I>s). As a result, the dependent names are
+looked up, the semantic constraints are checked, and any templates
+used are instantiated as part of the instantiation of the entity
+within which the local class or enumeration is declared. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P>However, 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 is not in harmony
+with the note:</P>
+
+<BLOCKQUOTE>
+
+The implicit instantiation of a class template specialization does not
+cause the implicit instantiation of default arguments
+or <I>noexcept-specifier</I> s of the class member functions.
+
+</BLOCKQUOTE>
+
+<P>Example:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  void ft() {
+   [](T p = T::value) {}; //<SPAN CLASS="cmnt"> error even though the lambda is never called</SPAN>
+  }
+  template void ft&lt;int&gt;();
+</PRE>
+
+<P>Even for a lambda declared at namespace scope is an unused default
+argument instantiated by major implementations:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  using ta = decltype([](T p = T::value) { //<SPAN CLASS="cmnt"> error</SPAN>
+	     return p;
+	    });
+  auto g = ta&lt;int&gt;{}(0);
+</PRE>
+
+<P><B>CWG 2023-11-11</B></P>
+
+<P>The behavior is as intended.  Note that 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 applies to a class template specialization and its member
+functions.  The examples do not involve class templates, but merely
+templated classes.</P>
+
+
+<BR><BR>
+</BODY>
+</HTML>

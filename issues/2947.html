@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2947</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2947"></A><H4>2947.
+  
+Limiting macro expansion in <I>pp-module</I>
+</H4>
+<B>Section: </B>15.4&#160; [<A href="https://wg21.link/cpp.module">cpp.module</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-29<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #define DOT_BAR .bar
+  export module foo DOT_BAR;
+</PRE>
+
+<P>The current rules appear to make this valid, referring to
+module <TT>foo.bar</TT> in phase 7.  This ought to be ill-formed to
+align with the goal of keeping module directives parsable by simple
+tools.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 15.4 [<A href="https://wg21.link/cpp.module#1">cpp.module</A>] paragraph 1 as follows:</P>
+
+<PRE>
+  <I>pp-module</I>:
+      export<SUB>opt</SUB> module <I>pp-tokens</I><SUB>opt</SUB> <DEL>;</DEL> <I>new-line</I>
+</PRE>
+</LI>
+
+<LI>
+<P>Delete 15.4 [<A href="https://wg21.link/cpp.module#3">cpp.module</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+Any preprocessing tokens after the module preprocessing token in the
+module directive are processed just as in normal text.  [<I>Note
+1:</I> Each identifier currently defined as a macro name is replaced
+by its replacement list of preprocessing tokens.  &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.4 [<A href="https://wg21.link/cpp.module#4">cpp.module</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The module and export (if it exists) preprocessing tokens are replaced
+by the <I>module-keyword</I> and <I>export-keyword</I> preprocessing
+tokens respectively.  [<I>Note:</I> This makes the line no longer a
+directive so it is not removed at the end of phase 4. &#8212;<I>end
+note</I>]
+
+<INS>
+After this replacement, the preprocessing tokens that constituted the
+directive are a <I>text-line</I> and are processed as normal text.
+
+[Note: No macro expansion is possible for the <I>pp-module-name</I> and
+<I>pp-module-partition</I>. -- end note]
+
+Processing the remainder of the input shall produce a <TT>;</TT>
+or <TT>[</TT> preprocessing token following the <I>pp-module-name</I> and
+optional <I>pp-module-partition</I>.
+</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add 15.4 [<A href="https://wg21.link/cpp.module#5">cpp.module</A>] paragraph 5 with examples:</P>
+
+<BLOCKQUOTE class="ins">
+[ Example:
+<PRE>
+  #define DOT_BAR .bar
+  export module foo DOT_BAR;   //<SPAN CLASS="cmnt"> error: expansion of </SPAN>DOT_BAR;<SPAN CLASS="cmnt"> does not begin with </SPAN>;<SPAN CLASS="cmnt"> or </SPAN>[
+</PRE>
+<P>-- end example ]</P>
+<P>[ Example:</P>
+<PRE>
+  #define MOD_ATTR [[vendor::shiny_module]]
+  export module M MOD_ATTR ;        // <SPAN CLASS="cmnt">OK</SPAN>
+</PRE>
+<P>-- end example ]</P>
+<P>[ Example:</P>
+<PRE>
+  export module a
+  .b;                         //<SPAN CLASS="cmnt"> error: preprocessing token after pp-module-name is not </SPAN>;<SPAN CLASS="cmnt"> or </SPAN>[
+</PRE>
+<P>-- end example ]</P>
+<P>[ Example:</P>
+<PRE>
+  export module M [[
+  attr1,
+  attr2 ]] ;                 // <SPAN CLASS="cmnt">OK</SPAN>
+</PRE>
+<P>-- end example ]</P>
+<P>[ Example:</P>
+<PRE>
+  export module M
+  [[ attr1,
+  attr2 ]] ;                 // <SPAN CLASS="cmnt">OK</SPAN>
+</PRE>
+<P>-- end example ]</P>
+<P>[ Example:</P>
+<PRE>
+  export module M; int
+  n;                         // <SPAN CLASS="cmnt">OK</SPAN>
+</PRE>
+<P>-- end example ]</P>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

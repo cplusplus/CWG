@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2426</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2426"></A><H4>2426.
+  
+Reference to destructor that cannot be invoked
+</H4>
+<B>Section: </B>14.3&#160; [<A href="https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-13<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+<P>Consider the following example:</P>
+
+<PRE>
+   template&lt;typename T&gt; struct A {
+   private:
+     ~A() {}
+   };
+   A&lt;char&gt; g();
+   A&lt;char&gt; f() { return g(); }
+</PRE>
+
+<P>According to 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+If an exception is thrown during the destruction of
+temporaries or local variables for a <TT>return</TT>
+statement (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]), the destructor for
+the returned object (if any) is also invoked.
+
+</BLOCKQUOTE>
+
+<P>In <TT>f()</TT> there is no possibility of an exception
+occuring during the processing of the <TT>return</TT>
+statement, so there appears to be no reason for a reference
+to the private destructor of <TT>A&lt;char&gt;</TT>. Current
+implementations, however, issue an access error for this
+example. Is wording needed to make that destructor potentially
+invoked in such cases?</P>
+
+<P><B>Proposed resolution (September, 2019):</B></P>
+
+<OL>
+<LI><P>Change 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...[<I>Note:</I> A <TT>return</TT> statement can involve
+an invocation of a constructor to perform a copy or move of
+the operand if it is not a prvalue or if its type differs
+from the return type of the function. A copy operation
+associated with a <TT>return</TT> statement may be elided or
+converted to a move operation if an automatic storage
+duration variable is returned
+(11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).  &#8212;<I>end note</I>]
+[<I>Example:</I>
+</P>
+
+<PRE>
+  std::pair&lt;std::string,int&gt; f(const char* p, int x) {
+    return {p,x};
+  }
+</PRE>
+
+&#8212;<I>end example</I>]
+<INS>The destructor for the returned object is potentially
+invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>],
+14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]). [<I>Example:</I></INS>
+
+<PRE>
+<INS>  class A {
+    ~A() {}
+  };
+  A f() { return A(); }   //<SPAN CLASS="cmnt"> error: destructor of </SPAN>A<SPAN CLASS="cmnt"> is private (even though it is never invoked)</SPAN></INS>
+</PRE>
+
+<INS>&#8212;<I>end example</I>]</INS>
+
+Flowing off the end...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#14">class.dtor</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A destructor can also be invoked explicitly. A destructor is
+potentially invoked if it is invoked or as specified in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], <INS>8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>],</INS>
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>], 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>],
+and 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]. A program is ill-formed if a
+destructor that is potentially invoked is deleted or not
+accessible from the context of the invocation.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

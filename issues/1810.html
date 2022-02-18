@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1810</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1810"></A><H4>1810.
+  
+Invalid <I>ud-suffix</I>es
+</H4>
+<B>Section: </B>5.13.9&#160; [<A href="https://wg21.link/lex.ext">lex.ext</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-11-13<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>In explaining the relationship between preprocessing tokens
+and tokens, 5.5 [<A href="https://wg21.link/lex.pptoken#4">lex.pptoken</A>] paragraph 4 contains the
+following example:</P>
+
+<BLOCKQUOTE>
+
+[<I>Example:</I> The program fragment <TT>1Ex</TT> is parsed
+as a preprocessing number token (one that is not a valid
+floating or integer literal token), even though a parse as
+the pair of preprocessing tokens <TT>1</TT> and <TT>Ex</TT>
+might produce a valid expression (for example,
+if <TT>Ex</TT> were a macro defined as <TT>+1</TT>).
+
+</BLOCKQUOTE>
+
+<P>This analysis does not take into account the addition of
+user-defined literals. In fact, <TT>1Ex</TT> matches the rule
+for a <I>user-defined-integer-literal</I>, which is then
+ill-formed because it uses a reserved <I>ud-suffix</I>
+(5.13.9 [<A href="https://wg21.link/lex.ext#10">lex.ext</A>] paragraph 10), as well as
+(presumably) because of a lookup failure for a matching
+literal operator, raw literal operator, or literal operator
+template.</P>
+
+<P>More generally, it might be preferable to eliminate the
+restriction on the use of a reserved <I>ud-suffix</I> and
+rely simply on the fact that it is ill-formed to declare a
+literal operator, raw literal operator, or literal operator
+template with a reserved literal suffix identifier
+(16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>], cf
+12.6 [<A href="https://wg21.link/over.literal#1">over.literal</A>] paragraph 1).</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Change 5.5 [<A href="https://wg21.link/lex.pptoken#4">lex.pptoken</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Example:</I> The program
+fragment <TT><DEL>1Ex</DEL> <INS>0xe+foo</INS></TT> is parsed as
+a preprocessing number token (one that is not a valid floating or
+integer literal token), even though a parse as <DEL>the pair of</DEL>
+<INS>three</INS> preprocessing
+tokens <TT><DEL>1</DEL> <INS>0xe</INS></TT><INS>, <TT>+</TT>, </INS>
+and <TT><DEL>Ex</DEL> <INS>foo</INS></TT> might produce a valid
+expression (for example, if <TT><DEL>Ex</DEL> <INS>foo</INS></TT>
+were a macro defined as <TT><DEL>+</DEL>1</TT>). Similarly, the
+program fragment <TT>1E1</TT> is parsed as a preprocessing number
+(one that is a valid floating literal token), whether or
+not <TT>E</TT> is a macro name. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 5.13.9 [<A href="https://wg21.link/lex.ext#10">lex.ext</A>] paragraph 10:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Some identifiers appearing as <I>ud-suffix</I>es are reserved for
+future standardization (16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>]). A program
+containing such a <I>ud-suffix</I> is ill-formed, no diagnostic
+required.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.6 [<A href="https://wg21.link/over.literal#1">over.literal</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The <I>string-literal</I> or <I>user-defined-string-literal</I> in
+a <I>literal-operator-id</I> shall have no <I>encoding-prefix</I> and shall
+contain no characters other than the implicit terminating
+'\0'. The <I>ud-suffix</I> of the <I>user-defined-string-literal</I> or the
+identifier in a <I>literal-operator-id</I> is called a <I>literal suffix
+identifier</I>. <DEL>[<I>Note:</I> some</DEL> <INS>Some</INS> literal
+suffix identifiers are reserved for future standardization; see
+16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>]. <DEL>&#8212;<I>end note</I>]</DEL>
+<INS>A declaration whose <I>literal-operator-id</I> uses such a literal
+suffix identifier is ill-formed; no diagnostic required.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix#1">usrlit.suffix</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Literal suffix identifiers <INS>(12.6 [<A href="https://wg21.link/over.literal">over.literal</A>])</INS> that do
+not start with an underscore are reserved for future standardization.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional note, May, 2014:</B></P>
+
+<P>It has been suggested that the change to 5.5 [<A href="https://wg21.link/lex.pptoken#4">lex.pptoken</A>] paragraph 4
+in the proposed resolution would be simpler and better if
+it did not venture into questions about user-defined literals but
+simply relied on a string that is a valid pp-number but not a valid
+floating-point number, as was the case before the introduction of
+user-defined literals, e.g., 1.2.3.4.  The issue has been returned to
+"review" status for discussion of this suggestion.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1360</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1360"></A><H4>1360.
+  
+<TT>constexpr</TT> defaulted default constructors
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-16<BR>
+
+
+<P>[ Resolved by P2448R2, applied in July 2022. ]</P>
+
+
+
+<P>According to 11.4.5 [<A href="https://wg21.link/class.ctor#6">class.ctor</A>] paragraph 6, a defaulted
+default constructor is <TT>constexpr</TT> if the corresponding
+user-written constructor would satisfy the <TT>constexpr</TT>
+requirements.  However, the requirements apply to the definition of
+a constructor, and a defaulted constructor is defined only if it is
+odr-used, leaving it indeterminate at declaration time whether the
+defaulted constructor is <TT>constexpr</TT> or not.</P>
+
+<P>(See also <A HREF="1358.html">issue 1358</A>.)</P>
+
+<P><B>Additional notes (February, 2013):</B></P>
+
+<P>As an example of this issue, consider:</P>
+
+<PRE>
+  struct S {
+    int i = sizeof(S);
+  };
+</PRE>
+
+<P>You can't determine the value of the initializer, and thus whether the
+initializer is a constant expression, until the class is complete, but you
+can't complete the class without declaring the default constructor, and
+whether that constructor is <TT>constexpr</TT> or not depends on whether
+the member initializer is a constant expression.</P>
+
+<P>A similar issue arises with the following example:</P>
+
+<PRE>
+  struct A {
+    int x = 37;
+    struct B { int x = 37; } b;
+    B b2[2][3] = { { } };
+  };
+</PRE>
+
+<P>This introduces an order dependency that is not specified in the
+current text: determining whether the default constructor of <TT>A</TT>
+is <TT>constexpr</TT> requires first determining the characteristics of
+the initializer of <TT>B::x</TT> and whether <TT>B::B()</TT> is
+<TT>constexpr</TT> or not.</P>
+
+<P>The problem is exacerbated with class templates, since the current
+direction of CWG is to instantiate member initializers only when they
+are needed (see <A HREF="1396.html">issue 1396</A>).  For a specific
+example:</P>
+
+<PRE>
+  struct S;
+  template&lt;class T&gt; struct X {
+    int i = T().i;
+  };
+  unsigned n = sizeof(X&lt;S&gt;); //<SPAN CLASS="cmnt"> Error?</SPAN>
+  struct S { int i; };
+</PRE>
+
+<P>This also affects determining whether a class template specialization
+is a literal type or not; presumably getting the right answer to that
+requires instantiating the class and all its nonstatic data member
+initializers.</P>
+
+<P>See also issues <A HREF="1397.html">1397</A> and <A HREF="1594.html">1594</A>.</P>
+
+<P><B>Notes from the September, 2013 meeting:</B></P>
+
+<P>This issue should be resolved together with
+<A HREF="1397.html">issue 1397</A>.</P>
+
+<P><B>Proposed resolution (May, 2014):</B></P>
+
+<P>Change 11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>] paragraphs 4-5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A defaulted default constructor for class <TT>X</TT> is defined as
+deleted if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>any potentially constructed subobject has a type with a destructor
+that is deleted or inaccessible from the defaulted default
+constructor.</P></LI>
+
+</UL>
+
+<P><INS>An implicitly-declared default constructor is <TT>constexpr</TT>
+if:</INS></P>
+
+
+<UL>
+<LI><P><INS><TT>X</TT> has no virtual bases; and</INS></P></LI>
+
+<LI><P><INS>for each non-variant non-static data member or base class
+subobject <TT>M</TT>, either <TT>M</TT> is initialized via
+<I>brace-or-equal-initializer</I> or default-initialization of
+<TT>M</TT> uses a <TT>constexpr</TT> constructor; and</INS></P></LI>
+
+<LI><P><INS>if <TT>X</TT> is a union having variant members, or, if
+<TT>X</TT> is a non-union-class, for each anonymous union member having
+variant members, exactly one non-static data member is initialized via
+<I>brace-or-equal-initializer</I>.</INS></P></LI>
+
+</UL>
+
+<P>A default constructor is trivial if it is not user-provided and if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>for all the non-static data members of its class that are of class
+type (or array thereof), each such class has a trivial default
+constructor.</P></LI>
+
+</UL>
+
+<P>Otherwise, the default constructor is <I>non-trivial</I>.</P>
+
+<P>A default constructor that is defaulted and not defined as deleted is
+<I>implicitly defined</I> when it is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) to
+create an object of its class type (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) or when it is
+explicitly defaulted after its first declaration.  The implicitly-defined
+default constructor performs the set of initializations of the class that
+would be performed by a user-written default constructor for that class
+with no <I>ctor-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) and an
+empty <I>compound-statement</I>. If that user-written default constructor
+would be ill-formed, the program is ill-formed.  <DEL>If that user-written
+default constructor would satisfy the requirements of a <TT>constexpr</TT>
+constructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]), the implicitly-defined default
+constructor is <TT>constexpr</TT>.</DEL> Before the defaulted default
+constructor for a class is implicitly defined, all the non-user-provided
+default constructors for its base classes and its non-static data members
+shall have been implicitly defined. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes, May, 2014:</B></P>
+
+<P>The proposed resolution inadvertently allows a defaulted default
+constructor of a class with virtual bases to be <TT>constexpr</TT>.
+It has been updated with a change addressing that oversight and
+returned to "review" status.</P>
+
+<P>See also <A HREF="1890.html">issue 1890</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1579</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1579"></A><H4>1579.
+  
+Return by converting move constructor
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jeffrey Yasskin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-23<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#US13">N3690 comment
+  US&#160;13<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>Currently the conditions for moving from an object returned from a
+function are tied closely to the criteria for copy elision, which
+requires that the type of the object being returned be the same as the
+return type of the function.  Another possibility that should be
+considered is to allow something like</P>
+
+<PRE>
+  optional&lt;T&gt; foo() {
+    T t;
+    ...
+    return t;
+  }
+</PRE>
+
+<P>and allow <TT>optional&lt;T&gt;::optional(T&amp;&amp;)</TT> to be
+used for the initialization of the return type.  Currently this can
+be achieved explicitly by use of <TT>std::move</TT>, but it would be
+nice not to have to remember to do so.</P>
+
+<P>Similarly, the current rules apply only to complete objects; it
+could make sense to allow moving from subobjects of local objects.</P>
+
+<P>(See also <A HREF="1493.html">issue 1493</A> for other questions
+about the criteria for moving from a returned object.)</P>
+
+<P><B>Rationale (April, 2013):</B></P>
+
+<P>CWG felt that this suggestion should be considered in a broader context
+and was thus more appropriate for EWG.</P>
+
+<P><B>Additional note (September, 2013):</B></P>
+
+<P>Returned to "open" status in light of CD National Body comment.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#32">class.copy.ctor</A>] paragraph 32 as follows:</P>
+
+<BLOCKQUOTE>
+
+When the criteria for elision of a copy operation are met <DEL>or would be
+met save for the fact that the source object is a function parameter,</DEL>
+and the object to be copied is designated by an lvalue, <INS>or when
+the <I>expression</I> in a <TT>return</TT> statement is a (possibly
+parenthesized) <I>id-expression</I> that names an object with automatic
+storage duration declared in the body
+or <I>parameter-declaration-clause</I> of the innermost enclosing function
+or <I>lambda-expression</I>,</INS> overload resolution to select the
+constructor for the copy is first performed as if the object were
+designated by an rvalue. If overload resolution fails...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

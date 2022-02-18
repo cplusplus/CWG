@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2429</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2429"></A><H4>2429.
+  
+Initialization of <TT>thread_local</TT> variables referenced by lambdas
+</H4>
+<B>Section: </B>8.8&#160; [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Princeton Ferro
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-22<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+<P>According to 6.7.6.3 [<A href="https://wg21.link/basic.stc.thread#2">basic.stc.thread</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+A variable with thread storage duration shall be initialized before its
+first odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) and, if constructed, shall be
+destroyed on thread exit.
+
+</BLOCKQUOTE>
+
+<P>According to 8.8 [<A href="https://wg21.link/stmt.dcl#4">stmt.dcl</A>] paragraph 4, for
+block-scope variables this initialization is peformed when the
+declaration statement is executed:</P>
+
+<BLOCKQUOTE>
+
+Dynamic initialization of a block-scope variable with static
+storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread
+storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is performed
+the first time control passes through its declaration; such
+a variable is considered initialized upon the completion of
+its initialization.
+
+</BLOCKQUOTE>
+
+<P>However, there are cases in which the flow of control does
+not pass through a variable's declaration, leaving it
+uninitialized in spite of it being odr-used. For example:</P>
+
+<PRE>
+  #include &lt;thread&gt;
+  #include &lt;iostream&gt;
+
+  struct Object {
+    int i;
+    Object() : i(3) {}
+  };
+
+  int main(void) {
+    static thread_local Object o;
+
+    std::cout &lt;&lt; "[main] o.i = " &lt;&lt; o.i &lt;&lt; std::endl;
+    std::thread([] {
+      std::cout &lt;&lt; "[new thread] o.i = " &lt;&lt; o.i &lt;&lt; std::endl;
+    }).join();
+  }
+
+</PRE>
+
+<P>
+<TT>o</TT> is a block-scope variable with thread storage
+and a dynamic initializer. The lambda passed
+into <TT>std::thread</TT>'s constructor refers to o<TT></TT>
+but does not capture it, which should be fine
+since <TT>o</TT> is not a variable with automatic storage.
+However, when control passes through the lambda, it will do
+so on a new thread. When that happens, it will refer
+to <TT>o</TT> for the first time. Because <TT>o</TT> is a
+thread-local variable, it should be initialized, but because
+it is declared in block scope, it will only be initialized
+when control passes through its declaration, which will
+never happen on the new thread.</P>
+
+<P>This example is straightforward, but others are more
+ambiguous:</P>
+
+<PRE>
+  #include &lt;thread&gt;
+  #include &lt;iostream&gt;
+
+  struct Object {
+    int i;
+    Object(int v) : i(3 + v) {}
+  };
+
+  int main(void) {
+    int w = 4;
+    static thread_local Object o(w);
+
+    std::cout &lt;&lt; "[main] o.i = " &lt;&lt; o.i &lt;&lt; std::endl;
+    std::thread([] {
+      std::cout &lt;&lt; "[new thread] o.i = " &lt;&lt; o.i &lt;&lt; std::endl;
+    }).join();
+  }
+</PRE>
+
+<P>Here the initialization of <TT>o</TT> uses the value of <TT>w</TT>,
+which is not captured. Perhaps it should be ill-formed for a lambda
+to refer to a block-scope thread-local variable.</P>
+
+<P><B>Proposed resolution (October, 2019):</B></P>
+
+<P>Change 6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>] paragraphs 1 and 2 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+<P>All variables declared with the <TT>thread_local</TT>
+keyword have <I>thread storage duration</I>. The storage
+for these entities <DEL>shall last</DEL> <INS>lasts</INS>
+for the duration of the thread in which they are
+created. There is a distinct object or reference per thread,
+and use of the declared name refers to the entity associated
+with the current thread.</P>
+
+<P>
+<INS>[<I>Note:</I></INS> A variable with thread storage
+duration <DEL>shall be</DEL> <INS>is</INS>
+initialized <DEL>before its first odr-use
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])</DEL>
+<INS>as specified in 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>],
+6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>], and
+8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]</INS> and, if
+constructed, <DEL>shall be</DEL> <INS>is</INS> destroyed on
+thread exit <INS>(6.9.3.4 [<A href="https://wg21.link/basic.start.term">basic.start.term</A>])</INS>.
+<INS>&#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

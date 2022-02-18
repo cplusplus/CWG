@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2634</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2634"></A><H4>2634.
+  
+Avoid circularity in specification of scope for friend class declarations
+</H4>
+<B>Section: </B>9.2.9.5&#160; [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-07-04<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+auto f(struct X* ptr) {
+  struct D {
+    private:
+      int d;
+      friend class X;      //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+  return D{};
+}
+X* b = 0;
+struct X {
+  void show() {
+    auto t = f(0);
+    t.d = 10;              //<SPAN CLASS="cmnt"> #2 error: </SPAN>::X<SPAN CLASS="cmnt"> is not a friend of </SPAN>f::D
+  }
+};
+</PRE>
+
+<P>The target scope for #2 is <TT>f</TT>'s block scope,
+making <TT>::X</TT> not a friend of <TT>f::D</TT>.  Thus the access at
+#2 is ill-formed. Clang disagrees.</P>
+
+<P>Subclause 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#3">dcl.type.elab</A>] paragraph 3 specifies:</P>
+
+<BLOCKQUOTE>
+
+<P>
+... If E contains an identifier but
+no <I>nested-name-specifier</I> and (unqualified) lookup for the
+identifier finds nothing, E shall not be introduced by the enum
+keyword and declares the identifier as a <I>class-name</I>. The target
+scope of E is the nearest enclosing namespace or block scope.
+</P>
+
+<P>If an <I>elaborated-type-specifier</I> appears with the friend
+specifier as an entire <I>member-declaration</I>, the
+<I>member-declaration</I> shall have one of the following forms:
+
+<pre>
+friend <I>class-key</I> <I>nested-name-specifier<sub>opt</sub></I> identifier ;
+...
+</pre>
+Any unqualified lookup for the <I>identifier</I> (in the first case)
+does not consider scopes that contain the target scope; no name is
+bound.</P>
+
+</BLOCKQUOTE>
+
+<P>This specification is circular in that the target scope that limits
+unqualified lookup is defined only if the <I>identifier</I> is
+actually declared, but the <I>identifier</I> is declared only if
+lookup finds nothing.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-11):</B></P>
+
+<P>Change in 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#4">dcl.type.elab</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Any unqualified lookup for the <I>identifier</I> (in the first
+case) does not consider scopes that contain the
+<DEL>target</DEL> <INS>nearest enclosing namespace or block </INS>
+scope; no name is bound. [ Note: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

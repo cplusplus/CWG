@@ -1,0 +1,303 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 339</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="339"></A><H4>339.
+  
+Overload resolution in operand of <TT>sizeof</TT> in constant expression
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 Mar 2002<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting as paper N2634.]</P>
+
+<P>I've seen some pieces of code recently that put complex expressions
+involving overload resolution inside <TT>sizeof</TT> operations in constant
+expressions in templates.</P>
+
+<P>7.7 [<A href="https://wg21.link/expr.const#1">expr.const</A>] paragraph 1 implies that some kinds of
+nonconstant expressions are allowed inside a <TT>sizeof</TT> in
+a constant expression, but it's not clear that this was intended
+to extend all the way to things like overload resolution.
+Allowing such things has some hidden
+costs.  For example, name mangling has to be able to represent all
+operators, including calls, and not just the operators that can appear
+in constant expressions.</P>
+
+<PRE>
+  template &lt;int I&gt; struct A {};
+
+  char xxx(int);
+  char xxx(float);
+
+  template &lt;class T&gt; A&lt;sizeof(xxx((T)0))&gt; f(T){}
+
+  int main()
+  {
+    f(1);
+  }
+</PRE>
+
+<P>If complex expressions are
+indeed allowed, it should be because of an explicit
+committee decision rather than because of some looseness in this
+section of the standard.</P>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>Any argument for restricting such expressions must involve a
+cost/benefit ratio: a restriction would be palatable only if it
+causes minimum hardship for users and allows a substantial
+reduction in implementation cost. If we propose a restriction,
+it must be one that library writers can live with.</P>
+
+<P>Lots of these cases fail with current compilers, so there can't
+be a lot of existing code using them.  We plan to find out what
+cases there are in libraries like Loki and Boost.</P>
+
+<P>We noted that in many cases one can move the code into a class
+to get the same result.  The implementation problem comes up
+when the expression-in-sizeof is in a template deduction
+context or part of a template signature.  The problem cases
+are ones where an error causes deduction to fail, as opposed
+to contexts where an error causes a diagnostic.  The latter
+contexts are easier to handle; however, there are situations
+where "fail deduction" may be the desired behavior.</P>
+
+<P><B>Notes from the April 2003 meeting:</B></P>
+
+<P>Here is a better example:</P>
+<PRE>
+  extern "C" int printf(const char *, ...);
+  char f(int);
+  int f(...);
+  // Approach 1 -- overload resolution in template class
+  // No problem
+  template &lt;class T&gt; struct conv_int {
+    static const bool value = (sizeof(f(T())) == 1);
+  };
+  // Approach 2 -- overload resolution in type deduction
+  // Difficult
+  template &lt;int I&gt; struct A {
+    static const int value = I;
+  };
+  template &lt;class T&gt; bool conv_int2(A&lt;sizeof(f(T()))&gt; p) {
+    return p.value == 1;
+  }
+
+  template&lt;typename T&gt;
+  A&lt;sizeof(f(T()))&gt; make_A() {
+    return A&lt;sizeof(f(T()))&gt;();
+  }
+
+  int main() {
+    printf("short: %d\n", conv_int&lt;short&gt;::value);
+    printf("int *: %d\n", conv_int&lt;int *&gt;::value);
+    printf("short: %d\n", conv_int2&lt;short&gt;(make_A&lt;short&gt;()));
+    printf("int *: %d\n", conv_int2&lt;int *&gt;(make_A&lt;int*&gt;()));
+  }
+</PRE>
+
+<P>The core working group liked the idea of a restriction that
+says that expressions inside sizeof in template signature contexts
+must be otherwise valid as nontype template argument expressions
+(i.e., integer operations only, limited casts).  This of
+course is subject to whether users can live with that restriction.
+This topic was brought up in full committee, but there was
+limited feedback from other groups.</P>
+
+<P>It was also noted that if typeof (whatever it is called)
+is added, there may be a similar issue there.</P>
+
+<P><B>Note (March, 2005):</B></P>
+
+
+
+<P>
+<U>Dave Abrahams</U> (quoting a Usenet posting by Vladimir Marko):
+The decltype and auto proposal (revision 3: N1607) presents</P>
+
+<PRE>
+    template &lt;class T,class U&gt;
+    decltype((*(T*)0)+(*(U*)0)) add(const T&amp; t,const U&amp; u);
+</PRE>
+
+<P>as a valid declaration (if the proposal is accepted). If [the
+restrictions in the April, 2003 note] really applied to decltype, the
+declaration above would be invalid. AFAICT every non-trivial use of
+decltype in a template function declaration would be invalid.  And for
+me this would render my favorite proposal useless.</P>
+
+<P>I would propose to allow any kind of expression inside <TT>sizeof</TT> (and
+<TT>decltype</TT>) and explicitly add <TT>sizeof</TT> (and
+<TT>decltype</TT>) expressions
+involving template-parameters to non-deduced contexts (add a bullet to
+13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#4">temp.deduct.partial</A>] paragraph 4).
+</P>
+
+<P>
+<U>Jaakko Jarvi</U>: Just reinforcing that this is important and
+hope for insights. The topic is discussed a bit on page 10 of the
+latest revision of the proposal (N1705).  Here's a quote from the
+proposal:
+</P>
+
+<BLOCKQUOTE>
+
+However, it is crucial that no restrictions are placed on what kinds
+of expressions are allowed inside <B><I>decltype</I></B>, and
+therefore also inside <B><I>sizeof</I></B>. We suggest that issue 339
+is resolved to require the compiler to fail deduction (apply the
+SFINAE principle), and not produce an error, for as large set of
+invalid expressions in operands of <B><I>sizeof</I></B> or
+<B><I>decltype</I></B> as is possible to comfortably implement. We wish
+that implementors aid in classifying the kinds of expressions that
+should produce errors, and the kinds that should lead to failure of
+deduction.
+
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the April, 2007 meeting:</B></P>
+
+<P>The CWG is pursuing a compromise proposal, to which the EWG has
+tentatively agreed, which would allow arbitrary expressions in the
+return types of function templates but which would restrict the
+expressions that participate in the function signature (and thus in
+overload resolution) to those that can be used as non-type
+template arguments.  During deduction and overload resolution,
+these complex return types would be ignored; that is, there would
+be no substitution of the deduced template arguments into the return
+type at this point.  If such a function were selected by overload
+resolution, however, a substitution failure in the return type would
+produce a diagnostic rather than a deduction failure.</P>
+
+<P>This approach works when doing overload resolution in the context
+of a function call, but additional tricks (still being defined) are
+needed in other contexts such as friend function declaration matching
+and taking the address of a function, in which the return type does
+play a part.</P>
+
+<P><B>Notes from the July, 2007 meeting:</B></P>
+
+<P>The problem is whether arbitrary expressions (for example,
+ones that include overload resolution) are allowed in template
+deduction contexts, and, if so, which expression errors are
+SFINAE failures and which are hard errors.</P>
+
+<P>This issue deals with arbitrary expressions inside sizeof in
+deduction contexts. That's a fringe case right now (most
+compilers don't accept them). decltype makes the problem worse,
+because the standard use case is one that involves overload
+resolution. Generalized constant expressions make it worse yet,
+because they allow overload resolution and class types to show up
+in any constant expression in a deduction context.</P>
+
+<P>Why is this an issue? Why don't we just say everything is
+allowed and be done with it?</P>
+
+<UL>
+
+<LI>Because it's hard to implement the general case. Template
+deduction/substitution has historically used a simplified model
+of semantic checking, i.e., the SFINAE rules (which are mostly
+about types), instead of full semantic checking. This limited
+semantic checking is typically done by completely separate code
+from the code for &#8220;normal&#8221; expression checking, and
+it's not easy to extend it to the general
+case. &#8220;Speculative compilation&#8221; sounds like an easy
+way out, but in practice compilers can't do that.</LI>
+
+<LI>Because it affects name mangling and therefore the ABI.</LI>
+
+<LI>Because we need to figure out what to say and how to say it
+in the Standard.</LI>
+
+</UL>
+
+<P>At the April, 2007 meeting, we were headed toward a solution
+that imposed a restriction on expressions in deduction contexts,
+but such a restriction seems to really hamper uses of constexpr
+functions. So we're now proposing that fully general expressions
+be allowed, and that most errors in such expressions be treated
+as SFINAE failures rather than errors.</P>
+
+<P>One issue with writing Standard wording for that is how to
+define &#8220;most.&#8221; There's a continuum of errors, some
+errors being clearly SFINAE failures, and some clearly
+&#8220;real&#8221; errors, with lots of unclear cases in
+between. We decided it's easier to write the definition by
+listing the errors that are not treated as SFINAE failures, and
+the list we came up with is as follows:</P>
+
+<OL>
+
+<LI>errors that occur while processing some entity external to
+the expression, e.g., an instantiation of a template or the
+generation of the definition of an implicitly-declared copy
+constructor</LI>
+
+<LI>errors due to implementation limits</LI>
+
+<LI>errors due to access violations (this is a judgment call,
+but the philosophy of access has always been that it doesn't
+affect visibility)</LI>
+
+</OL>
+
+<P>Everything else produces a SFINAE failure rather than a hard
+error.</P>
+
+<P>There was broad consensus that this felt like a good solution,
+but that feeling was mixed with trepidation on several
+fronts:</P>
+
+<UL>
+
+<LI>The implementation cost is quite significant, at least for
+EDG and Microsoft (under GCC, it may be easier). It involves
+moving around a large amount of code. This may delay
+implementation and introduce bugs in compilers.</LI>
+
+<LI>While it seems upward compatible with C++03, it's possible it
+will break existing code. Any big change in template processing
+has a pretty good chance of breaking something.</LI>
+
+<LI>Since there is no implementation, we don't really know how it
+will work in the real world.</LI>
+
+</UL>
+
+<P>We will be producing wording for the Working Draft for the
+October, 2007 meeting.</P>
+
+<P>(See also <A HREF="657.html">issue 657</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

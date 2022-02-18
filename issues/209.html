@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 209</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="209"></A><H4>209.
+  Must friend declaration names be
+accessible?</H4>
+<B>Section: </B>11.8.4&#160; [<A href="https://wg21.link/class.friend">class.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Judy Ward
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 Mar 2000<BR>
+
+
+
+<P>
+11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>], paragraph 7, says
+
+<BLOCKQUOTE>
+
+A name nominated by a friend declaration shall be accessible in the
+scope of the class containing the friend declaration.
+
+</BLOCKQUOTE>
+</P>
+<P>
+Does that mean the following should be illegal?
+</P>
+
+<PRE>
+    class A { void f(); };
+    class B { friend void A::f(); }; // Error: A::f not accessible from B
+</PRE>
+
+<P>
+I discussed this with Bjarne in email, and he thinks it was an
+editorial error and this was not the committee's intention. The
+paragraph seems to have been added in the pre-Kona (24 Sept 1996)
+mailing, and I could not find anything in the previous meeting's
+(Stockholm) mailings which led me to believe this was intentional. The
+only compiler vendor which I think currently implements it is the
+latest release (2.43) of the EDG front end.
+</P>
+
+<P>
+<B>Proposed resolution (10/00):</B>
+</P>
+<P>
+Remove the first sentence of 11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>], paragraph 7.
+</P>
+
+<P><B>Rationale (04/01):</B></P>
+
+<P>After the 10/00 vote to accept this issue as a DR with the
+proposed resolution, it was noted that the first two sentences
+of 11.8 [<A href="https://wg21.link/class.access#3">class.access</A>] paragraph 3 cause the proposed change
+to have no effect:</P>
+
+<BLOCKQUOTE>
+
+Access control is applied uniformly to all names, whether the names
+are referred to from declarations or expressions. [<I>Note:</I> access
+control applies to names nominated by <TT>friend</TT> declarations
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) and <I>using-declaration</I>s
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]). ]
+
+</BLOCKQUOTE>
+
+<P>In addition to the obvious editing to the text of the note,
+an exception to the blanket statement in the first sentence
+would also be required.  However, discussion during the 04/01
+meeting failed to produce consensus on exactly <I>which</I> names
+in the <TT>friend</TT> declaration should be exempted from the
+requirements of access control.</P>
+
+<P>One possibility would be that only the name nominated as
+<TT>friend</TT> should be exempt.  However, that approach
+would make it impossible to name a function as a friend if it
+used private types in its parameters or return type.  Another
+suggestion was to ignore access for every name used in a
+<TT>friend</TT> declaration.  That approach raised a question
+about access within the body of a <TT>friend</TT> function
+defined inline in the class body &#8212; the body is part of
+the declaration of a function, but references within the body
+of a <TT>friend</TT> function should still be subject to the
+usual access controls.</P>
+
+<P>Other possibilities were raised, such as allowing the
+declaration of a <TT>friend</TT> member function if the
+declaration were permissible in its containing class, or
+taking the union of the access within the befriending class
+and the befriended entity.  However, these suggestions would
+have been complex and difficult to specify correctly.</P>
+
+<P>Ultimately it was decided that the original perceived
+defect was not sufficiently serious as to warrant the degree
+of complexity required to resolve it satisfactorily and the
+issue was consequently declared not to be a defect.  It was
+observed that most of the problems involved with the current
+state of affairs result from inability to declare a
+particular member function as a <TT>friend</TT>; in such cases,
+an easy workaround is simply to befriend the entire class
+rather than the specific member function.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

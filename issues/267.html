@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 267</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="267"></A><H4>267.
+  
+Alignment requirement for <I>new-expression</I>s
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Kuyper
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 Dec 2000<BR>
+
+
+<P>Requirements for the alignment of pointers returned by
+<I>new-expression</I>s are given in 7.6.2.8 [<A href="https://wg21.link/expr.new#10">expr.new</A>] paragraph 10:
+</P>
+
+<BLOCKQUOTE>
+
+For arrays of <TT>char</TT> and <TT>unsigned char</TT>, the difference
+between the result of the <I>new-expression</I> and the address
+returned by the allocation function shall be an integral multiple of
+the most stringent alignment requirement (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>])
+of any object type whose size is no greater than the size of the array
+being created.
+
+</BLOCKQUOTE>
+
+<P>The intent of this wording is that the pointer returned by the
+<I>new-expression</I> will be suitably aligned for any data type
+that might be placed into the allocated storage (since the
+allocation function is constrained to return a pointer to
+maximally-aligned storage).  However, there is an implicit
+assumption that each alignment requirement is an integral multiple
+of all smaller alignment requirements.  While this is probably a
+valid assumption for all real architectures, there's no reason
+that the Standard should require it.</P>
+
+<P>For example, assume that <TT>int</TT> has an alignment requirement
+of 3 bytes and <TT>double</TT> has an alignment requirement of 4
+bytes.  The current wording only requires that a buffer that is big
+enough for an <TT>int</TT> or a <TT>double</TT> be aligned on a 4-byte
+boundary (the more stringent requirement), but that would allow the
+buffer to be allocated on an 8-byte boundary &#8212; which might
+<I>not</I> be an acceptable location for an <TT>int</TT>.</P>
+
+<P>
+<U>Suggested resolution</U>: Change "of any object type" to
+"of every object type."</P>
+
+<P>A similar assumption can be found in
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+...converting an rvalue of type "pointer to <TT>T1</TT>" to the type
+"pointer to <TT>T2</TT>" (where ... the alignment requirements of
+<TT>T2</TT> are no stricter than those of <TT>T1</TT>) and back to its
+original type yields the original pointer value...
+
+</BLOCKQUOTE>
+
+<P>
+<U>Suggested resolution</U>: Change the wording to</P>
+
+<BLOCKQUOTE>
+
+...converting an rvalue of type "pointer to <TT>T1</TT>" to the type
+"pointer to <TT>T2</TT>" (where ...  the alignment requirements of
+<INS><TT>T1</TT> are an integer multiple of those of <TT>T2</TT></INS>)
+and back to its original type yields the original pointer value...
+
+</BLOCKQUOTE>
+
+<P>The same change would also be needed in paragraph 9.</P>
+
+<P><B>Additional note (June, 2022):</B></P>
+
+<P>Subclause 6.7.3 [<A href="https://wg21.link/basic.align#4">basic.align</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+... Every alignment value shall be a non-negative integral power of two.
+
+</BLOCKQUOTE>
+
+<P>Thus, the situation that a stricter alignment is not an integral
+multiple of a weaker alignment does not arise.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

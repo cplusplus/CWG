@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2799</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2799"></A><H4>2799.
+  
+Inheriting default constructors
+</H4>
+<B>Section: </B>11.4.5.2&#160; [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-09-01<BR>
+
+
+
+
+<P>(See also submission
+<A HREF="https://github.com/cplusplus/CWG/issues/545">#545</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A { int n; };
+  struct B : A {
+    using A::A;
+    B(int);
+  };
+</PRE>
+
+<P>Does <TT>B</TT> have a default constructor?</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#4">namespace.udecl</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a constructor or assignment operator brought from a base class into
+a derived class has the signature of a <INS>default constructor
+or</INS> copy/move constructor or assignment operator for the derived
+class (<INS>11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>],</INS>
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]),
+the <I>using-declaration</I> does not by itself suppress the implicit
+declaration of the derived class member; the member from the base
+class is hidden or overridden by the
+implicitly-declared <DEL>copy/move constructor or assignment
+operator</DEL> <INS>special member function</INS> of the derived
+class, as described below.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#1">class.default.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>default constructor</I> for a class X is a constructor of class X
+for which each parameter that is not a function parameter pack has a
+default argument (including the case of a constructor with no
+parameters). If there is no user-declared constructor for class
+<TT>X</TT>, <INS>or if <TT>X</TT> inherits (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])
+one or more default constructors and there is no user-declared default
+constructor for <TT>X</TT>,</INS> a non-explicit constructor having no
+parameters is implicitly declared as defaulted
+(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). An implicitly-declared default constructor
+is an inline public member of its class.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>(This also resolves <A HREF="2632.html">issue 2632</A>.)</P>
+
+<OL>
+<LI>
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#4">namespace.udecl</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>If a constructor or assignment operator brought from a base class
+into a derived class has the signature of a copy/move constructor or
+assignment operator for the derived class
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]),
+the <I>using-declaration</I> does not by itself suppress the implicit
+declaration of the derived class member; the member from the base
+class is hidden or overridden by the implicitly-declared copy/move
+constructor or assignment operator of the derived class, as described
+below.</DEL>
+
+<INS>[ Note: A <I>using-declarator</I> that names a member function of
+a base class does not suppress the implicit declaration of a special
+member function in the derived class, even if their signatures are the
+same (<INS>11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>],</INS>
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]). -- end note ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 11.4.1 [<A href="https://wg21.link/class.mem.general#2">class.mem.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... For any other <I>member-declaration</I>, each declared entity that
+is not an unnamed bit-field (11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]) is a member
+of the class, <INS>termed a <I>user-declared</I> member,</INS>
+and each such <I>member-declaration</I> shall either declare at least
+one member name of the class or declare at least one unnamed
+bit-field.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#1">class.default.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>default constructor</I> for a class X is a constructor of class X
+for which each parameter that is not a function parameter pack has a
+default argument (including the case of a constructor with no
+parameters). If <DEL>there is no</DEL> <INS>a class <TT>X</TT> does
+not have a</INS> user-declared constructor <DEL>for class
+<TT>X</TT></DEL>, <INS>or if <TT>X</TT> inherits
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) one or more default constructors
+and <TT>X</TT> does not have a user-declared default
+constructor,</INS> a non-explicit constructor having no parameters is
+implicitly declared as defaulted (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). An
+implicitly-declared default constructor is an inline public member of
+its class.
+<INS>[ Example:</INS>
+<PRE class="ins">
+  struct A {};
+  struct B {};
+  struct C : A, B {
+    using A::A, B::B;
+    C(int);
+  };
+  C c;     // <SPAN CLASS="cmnt">OK</SPAN>
+
+  struct X { X(int = 0, int = 0); };  // <SPAN CLASS="cmnt">#1</SPAN>
+  struct Y { Y(int = 0); };           // <SPAN CLASS="cmnt">#2</SPAN>
+  struct Z : X, Y {
+    using X::X, Y::Y;
+  };
+  Z z2(1, 1);   // <SPAN CLASS="cmnt">OK, invokes </SPAN>X(1, 1)<SPAN CLASS="cmnt"> and </SPAN>Y()
+  Z z1(1);      // <SPAN CLASS="cmnt">error: ambiguous between #1 and #2</SPAN>
+  Z z0;         // <SPAN CLASS="cmnt">OK, invokes </SPAN>X()<SPAN CLASS="cmnt"> and </SPAN>Y()
+
+</PRE>
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#6">class.copy.ctor</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the class <DEL>definition</DEL> does not <DEL>explicitly
+declare</DEL> <INS>have</INS> a <INS>user-declared</INS> copy
+constructor, a non-explicit one is declared implicitly. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If <DEL>the definition of</DEL> a class X does not <DEL>explicitly
+declare</DEL> <INS>have</INS> a <INS>user-declared</INS> move
+constructor, a non-explicit one will be implicitly declared as
+defaulted if and only if ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">[ Note: A <I>using-declaration</I> in a derived class C
+that names a constructor from a base class never suppresses the
+implicit declaration of a copy/move constructor of C, even if the base
+class constructor would be a copy or move constructor if declared as a
+member of C. -- end note]</P>
+
+<P>A copy/move constructor for class X is trivial if it is not
+user-provided and if: ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#2">class.copy.assign</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the class <DEL>definition</DEL> does not <DEL>explicitly
+declare</DEL> <INS>have</INS> a <INS>user-declared</INS> copy
+assignment operator, one is declared implicitly. If the class
+<DEL>definition declares</DEL> <INS>has</INS>
+a <INS>user-declared</INS> move constructor or move assignment
+operator, the implicitly declared copy assignment operator is defined
+as deleted; otherwise, it is defaulted (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). The
+latter case is deprecated if the class has a user-declared copy
+constructor or a user-declared destructor
+(D.6 [<A href="https://wg21.link/depr.impldec">depr.impldec</A>]). ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (November, 2023)</B></P>
+
+<P>How does access checking interact with the proposed resolution above?</P>
+
+<PRE>
+  struct B {
+  protected:
+    B(int = 0);
+  };
+  struct A : B {
+    using B::B;
+    A(void *);
+  };
+  A a;       //<SPAN CLASS="cmnt"> okay?</SPAN>
+  A aa(42);  //<SPAN CLASS="cmnt"> not okay</SPAN>
+</PRE>
+
+<P><B>CWG 2023-11-06</B></P>
+
+<P>CWG resolved not to declare a default constructor in the derived
+class, but instead apply the usual rules for inherited constructors
+for this case.  The wording should be changed so that the presence of a
+default constructor is never checked, in particular for "trivial class"
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>], fixed by
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3247r1.html">P3247R1</A>
+(Deprecate the notion of trivial types)), vacuous initialization
+(6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1, fixed by <A HREF="2859.html">issue 2859</A>), and value initialization (9.4.1 [<A href="https://wg21.link/dcl.init.general#9">dcl.init.general</A>] paragraph 9, also fixed by <A HREF="2859.html">issue 2859</A>).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

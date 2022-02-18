@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1704</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1704"></A><H4>1704.
+  
+Type checking in explicit instantiation of variable templates
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-06-20<BR>
+
+
+<P>[Voted into the WP at the July, 2017 meeting.]</P>
+
+
+
+<P>It is not clear whether the following is well-formed or not:</P>
+
+<PRE>
+  template&lt;typename T&gt; int arr[sizeof(T)] = {};
+  template int arr&lt;int&gt;[];
+</PRE>
+
+<P>Are we supposed to instantiate the specialization and treat the explicit
+instantiation declaration as if it were a redeclaration (in which case the
+omitted array bound would presumably be OK), or is the type of the explicit
+instantiation declaration required to exactly match the type that the
+instantiated specialization has (in which case the omitted bound would
+presumably not be OK)? Or something else?</P>
+
+<P>(See also <A HREF="1728.html">issue 1728</A>.)</P>
+
+<P><B>Proposed resolution (May, 2017):</B></P>
+
+<OL>
+<LI><P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#3">temp.explicit</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the explicit instantiation is for a class or member class,
+the <I>elaborated-type-specifier</I> in the <I>declaration</I>
+shall include a <I>simple-template-id</I><INS>; otherwise,
+the <I>declaration</I> shall be a <I>simple-declaration</I>
+whose <I>init-declarator-list</I> comprises a single
+<I>init-declarator</I> that does not have
+an <I>initializer</I></INS>. If the explicit instantiation is for
+a function or member function, the <I>unqualified-id</I> in the
+<DEL><I>declaration</I></DEL> <INS><I>declarator</I></INS> shall
+be either a <I>template-id</I> or, where all template arguments
+can be deduced, a <I>template-name</I>
+or <I>operator-function-id</I>. [<I>Note:</I> The declaration may
+declare a <I>qualified-id</I>, in which case
+the <I>unqualified-id</I> of the <I>qualified-id</I> must be
+a <I>template-id</I>. &#8212;<I>end note</I>] If the explicit
+instantiation is for a member function, a member class or a
+static data member of a class template specialization, the name
+of the class template specialization in the <I>qualified-id</I>
+for the member name shall be a <I>simple-template-id</I>. If the
+explicit instantiation is for a variable <INS>template
+specialization</INS>, the <I>unqualified-id</I> in the
+<DEL>declaration</DEL> <INS>declarator</INS> shall be
+a <I><INS>simple-</INS>template-id</I>. An explicit instantiation
+shall appear in an enclosing namespace of its template. If the
+name declared in the explicit instantiation is an unqualified
+name, the explicit instantiation shall appear in the namespace
+where its template is declared or, if that namespace is inline
+(9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]), any namespace from its enclosing
+namespace set. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>The <I>declaration</I> in an <I>explicit-instantiation</I>
+and the <I>declaration</I> produced by the corresponding
+substitution into the templated function, variable, or class are
+two declarations of the same entity. [<I>Note:</I> These declarations
+are required to have matching types as specified in
+6.6 [<A href="https://wg21.link/basic.link">basic.link</A>], except as specified in
+14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>   template&lt;typename T&gt; T var = {};
+   template float var&lt;float&gt;;   //<SPAN CLASS="cmnt"> OK, instantiated variable has type</SPAN> float
+   template int var&lt;int[16]&gt;[]; //<SPAN CLASS="cmnt"> OK, absence of major array bound is permitted</SPAN>
+   template int *var&lt;int&gt;;      //<SPAN CLASS="cmnt"> error: instantiated variable has type</SPAN> int
+
+   template&lt;typename T&gt; auto av = T();
+   template int av&lt;int&gt;;        //<SPAN CLASS="cmnt"> OK, variable with type </SPAN>int<SPAN CLASS="cmnt"> can be redeclared with type</SPAN> auto
+
+   template&lt;typename T&gt; auto f() {}
+   template void f&lt;int&gt;();      //<SPAN CLASS="cmnt"> error: function with deduced return type redeclared with non-deduced return type (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>])</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>] &#8212;<I>end note</I>] Despite its
+syntactic form, the <I>declaration</I> in an <I>explicit-instantiation</I>
+for a variable is not itself a definition and does not conflict with the
+definition instantiated by an explicit instantiation definition for
+that variable.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI>
+<P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#10">temp.explicit</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+Except for inline functions and variables, declarations with
+types deduced from their initializer or return value
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]), <TT>const</TT> variables of
+literal types, variables of reference types, and class template
+specializations, explicit instantiation declarations have the
+effect of suppressing the implicit instantiation of
+the <INS>definition of the</INS> entity to which they
+refer. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1728.html">issue 1728</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

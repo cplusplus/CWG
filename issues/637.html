@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 637</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="637"></A><H4>637.
+  
+Sequencing rules and example disagree
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ofer Porat
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 June 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>In 6.9.1 [<A href="https://wg21.link/intro.execution#16">intro.execution</A>] paragraph 16, the following expression is
+still listed as an example of undefined behavior:</P>
+
+<PRE>
+    i = ++i + 1;
+</PRE>
+
+<P>However, it appears that the new sequencing rules make this expression
+well-defined:</P>
+<OL>
+<LI><P>The assignment side-effect is required to be sequenced
+after the value computations of both its LHS and RHS
+(7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1).</P></LI>
+
+<LI><P>The LHS (<TT>i</TT>) is an lvalue, so its value
+computation involves computing the address
+of <TT>i</TT>.</P></LI>
+
+<LI><P>In order to value-compute the RHS (<TT>++i + 1</TT>), it is necessary to
+first value-compute the lvalue expression <TT>++i</TT> and then do an
+lvalue-to-rvalue conversion on the result.  This guarantees that the
+incrementation side-effect is sequenced before the computation of the
+addition operation, which in turn is sequenced before the assignment
+side effect.  In other words, it yields a well-defined order and final
+value for this expression.</P></LI>
+</OL>
+
+<P>It should be noted that a similar expression</P>
+
+<PRE>
+    i = i++ + 1;
+</PRE>
+
+<P>is still not well-defined, since the incrementation side-effect remains
+unsequenced with respect to the assignment side-effect.</P>
+
+<P>It's unclear whether making the expression in the example
+well-defined was intentional or just a coincidental byproduct of
+the new sequencing rules.  In either case either the example
+should be fixed, or the rules should be changed.</P>
+
+<P>
+<U>Clark Nelson</U>: In my opinion, the poster's argument is
+perfectly correct. The rules adopted reflect the CWG's desired
+outcome for <A HREF="222.html">issue 222</A>. At the Portland
+meeting, I presented (and still sympathize with) Tom Plum's case
+that these rules go a little too far in nailing down required
+behavior; this is a consequence of that.</P>
+
+<P>One way or another, a change needs to be made, and I think we
+should seriously consider weakening the resolution of <A HREF="222.html">issue 222</A> to keep this example as having
+undefined behavior. This could be done fairly simply by having
+the sequencing requirements for an assignment expression depend
+on whether it appears in an lvalue context.</P>
+
+<P>
+<U>James Widman</U>: How's this for a possible re-wording?</P>
+
+<BLOCKQUOTE>
+
+In all cases, the side effect of the assignment expression is
+sequenced after the value computations of the right and left
+operands.  Furthermore, if the assignment expression appears in a
+context where an lvalue is required, the side effect of the
+assignment expression is sequenced before its value computation.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the February, 2008 meeting:</B></P>
+
+<P>There was no real support in the CWG for weakening the resolution
+of <A HREF="222.html">issue 222</A> and returning the example to
+having undefined behavior. No one knew of an implementation that
+doesn't already do the (newly) right thing for such an example, so
+there was little motivation to go out of our way to increase the
+domain of undefined behavior. So the proposed resolution is to change
+the example to one that definitely does have undependable behavior in
+existing practice, and undefined behavior under the new rules.</P>
+
+<P>Also, the new formulation of the sequencing rules approved in
+Oxford contained the wording that by and large resolved <A HREF="222.html">issue 222</A>, so with the resolution of this issue, we
+can also close <A HREF="222.html">issue 222</A>.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>Change the example in 6.9.1 [<A href="https://wg21.link/intro.execution#16">intro.execution</A>] paragraph 16 as
+follows:</P>
+
+<PRE>
+    i = v[i++];             //<SPAN CLASS="cmnt"> the behavior is undefined</SPAN>
+    i = 7, i++, i++;        //<SPAN CLASS="cmnt"> </SPAN>i<SPAN CLASS="cmnt"> becomes </SPAN>9
+    i = <DEL>++i</DEL> <INS>i++</INS> + 1;        //<SPAN CLASS="cmnt"> the behavior is undefined</SPAN>
+    i = i + 1;              //<SPAN CLASS="cmnt"> the value of </SPAN>i<SPAN CLASS="cmnt"> is incremented</SPAN>
+</PRE>
+
+<P>This resolution also resolves <A HREF="222.html">issue 222</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

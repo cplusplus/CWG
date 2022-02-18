@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2788</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2788"></A><H4>2788.
+  
+Correspondence and redeclarations
+</H4>
+<B>Section: </B>6.4.1&#160; [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-09<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    void f() &amp;;
+  };
+  void S::f(this S&amp;) {}
+</PRE>
+
+<P>Both declarations of <TT>S::f</TT> correspond
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4), but are ill-formed according to
+6.6 [<A href="https://wg21.link/basic.link#1">basic.link</A>] paragraph 1, because the functions are not of
+the same type:</P>
+
+<BLOCKQUOTE>
+
+For any two declarations of an entity E:
+<UL>
+<LI>If one declares E to
+be a variable or function, the other shall declare E as one of the
+same type.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>A similar situation arises for the following example:</P>
+
+<PRE>
+  struct S {
+    void g() &amp;;
+  };
+  void S::g() { }
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Add a note in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+<INS>[ Note: Two function declarations with
+different <I>ref-qualifier</I>s or parameter-type-lists do not have
+the same type even if they correspond (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]). --
+end note ]</INS><BR>
+
+[ Example 2:
+<PRE>
+  typedef int Int;
+  ...
+   
+<INS>    void m();
+    void n();</INS>
+  };
+
+<INS> X::m() &amp; {}       // <SPAN CLASS="cmnt">error: redeclaration of </SPAN>X::m<SPAN CLASS="cmnt"> with a different type</SPAN>
+ X::n(this X&amp;) {}  // <SPAN CLASS="cmnt">error: redeclaration of </SPAN>X::n<SPAN CLASS="cmnt"> with a different type</SPAN></INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

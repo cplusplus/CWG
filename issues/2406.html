@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2406</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2406"></A><H4>2406.
+  
+<TT>[[fallthrough]]</TT> attribute and iteration statements
+</H4>
+<B>Section: </B>9.12.6&#160; [<A href="https://wg21.link/dcl.attr.fallthrough">dcl.attr.fallthrough</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-03-08<BR>
+
+
+<P>[Accepted as a DR at the July, 2019 meeting.]</P>
+
+<P>According to 9.12.6 [<A href="https://wg21.link/dcl.attr.fallthrough#1">dcl.attr.fallthrough</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+A fallthrough statement may only appear within an enclosing
+<TT>switch</TT> statement (8.5.3 [<A href="https://wg21.link/stmt.switch">stmt.switch</A>]). The
+next statement that would be executed after a fallthrough
+statement shall be a labeled statement whose label is a case
+label or default label for the same <TT>switch</TT>
+statement.
+
+</BLOCKQUOTE>
+
+<P>The meaning of &#8220;next statement that would be
+executed&#8221; is unclear with respect to the controlled
+substatement of an iteration statement. There is
+implementation divergence on an example like:</P>
+
+<PRE>
+  void f(int n) {
+    switch (n) {
+      case 0:
+        while (true)
+          [[fallthrough]]; //<SPAN CLASS="cmnt"> Well-formed?</SPAN>
+      case 1:
+        break;
+    }
+  }
+</PRE>
+
+<P><B>Proposed resolution, April, 2019:</B></P>
+
+<OL>
+<LI><P>Change 9.12.6 [<A href="https://wg21.link/dcl.attr.fallthrough#1">dcl.attr.fallthrough</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The <I>attribute-token</I> <TT>fallthrough</TT> may be
+applied to a null statement (8.3 [<A href="https://wg21.link/stmt.expr">stmt.expr</A>]); such
+a statement is a fallthrough
+statement. The <I>attribute-token</I> <TT>fallthrough</TT>
+shall appear at most once in each <I>attribute-list</I> and
+no <I>attribute-argument-clause</I> shall be present. A
+fallthrough statement may only appear within an enclosing
+<TT>switch</TT> statement (8.5.3 [<A href="https://wg21.link/stmt.switch">stmt.switch</A>]). The
+next statement that would be executed after a fallthrough
+statement shall be a labeled statement whose label is a case
+label or default label for the same <TT>switch</TT>
+statement <INS>and, if the fallthrough statement is
+contained in an iteration statement, the next statement
+shall be part of the same execution of the substatement of
+the innermost enclosing iteration statement</INS>. The
+program is ill-formed if there is no such statement.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the example in 9.12.6 [<A href="https://wg21.link/dcl.attr.fallthrough">dcl.attr.fallthrough</A>] paragraph
+3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  void f(int n) {
+    void g(), h(), i();
+    switch (n) {
+    case 1:
+    case 2:
+      g();
+      [[fallthrough]];
+    case 3:              //<SPAN CLASS="cmnt"> warning on fallthrough discouraged</SPAN>
+<INS>      do {
+        [[fallthrough]]; //<SPAN CLASS="cmnt"> error: next statement is not part of the same substatement execution</SPAN>
+      } while (false);
+    case 6:
+      do {
+        [[fallthrough]]; //<SPAN CLASS="cmnt"> error: next statement is not part of the same substatement execution</SPAN>
+      } while (n--);
+    case 7:
+      while (false) {
+        [[fallthrough]]; //<SPAN CLASS="cmnt"> error: next statement is not part of the same substatement execution</SPAN>
+      }
+    case 5:</INS>
+      h();
+    case 4:              //<SPAN CLASS="cmnt"> implementation may warn on fallthrough</SPAN>
+      i();
+      [[fallthrough]];   //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    }
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

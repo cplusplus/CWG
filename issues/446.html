@@ -1,0 +1,263 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 446</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="446"></A><H4>446.
+  
+Does an lvalue-to-rvalue conversion on the "?" operator produce a temporary?
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Potter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Dec 2003<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>The problem occurs when the value of the operator is determined to
+be an rvalue, the selected argument is an lvalue, the type is a class
+type and a non-const member is invoked on the modifiable rvalue result.</P>
+<PRE>
+    struct B {
+        int v;
+        B (int v) : v(v) { }
+        void inc () { ++ v; }
+        };
+    struct D : B {
+        D (int v) : B(v) { }
+        };
+
+    B b1(42);
+    (0 ? B(13) : b1).inc();
+    assert(b1.v == 42);
+</PRE>
+
+<P>The types of the second and third operands are the same and
+one is an rvalue.  Nothing changes until p6 where an lvalue to
+rvalue conversion is performed on the third operand.
+6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>] states that an lvalue to rvalue
+conversion produces a temporary and there is nothing to remove
+it.  It seems clear that the assertion must pass, yet most
+implementations fail.</P>
+
+<P>There seems to be a defect in p3 b2 b1.  First, the conditions to get
+here and pass the test.</P>
+<BLOCKQUOTE>
+  If E1 and E2 have class type, and the underlying class types are the
+  same or one is a base class of the other: E1 can be converted to
+  match E2 if the class of T2 is the same type as, or a base class of,
+  the class of T1, and the cv-qualification of T2 is the same
+  cv-qualification as, or a greater cv-qualification than, the
+  cv-qualification of T1.
+</BLOCKQUOTE>
+<P>If both E1 and E2 are lvalues, passing the conditions here also passes
+the conditions for p3 b1.  Thus, at least one is an rvalue.  The case of
+two rvalues is not interesting and the action is covered by the case
+when E1 is an rvalue.</P>
+<PRE>
+    (0 ? D(13) : b1).inc();
+    assert(b1.v == 42);
+</PRE>
+<BLOCKQUOTE>
+  E1 is changed to an rvalue of type T2 that still refers to the
+  original source class object (or the appropriate subobject thereof).
+  [Note: that is, no copy is made. ]
+</BLOCKQUOTE>
+<P>Having changed the rvalue to base type, we are back to the above case
+where an lvalue to rvalue conversion is required on the third operand
+at p6.  Again, most implementations fail.</P>
+
+<P>The remaining case, E1 an lvalue and E2 an rvalue, is the defect.</P>
+<PRE>
+    D d1(42);
+    (0 ? B(13) : d1).inc();
+    assert(d1.v == 42);
+</PRE>
+<P>The above quote states that an lvalue of type T1 is changed to an rvalue
+of type T2 without creating a temporary.  This is in contradiction to
+everything else in the standard about lvalue to rvalue conversions.
+Most implementations pass in spite of the defect.</P>
+
+<P>The usual accessible and unambiguous is missing from the base class.</P>
+
+<P>There seems to be two possible solutions.  Following other temporary
+creations would produce a temporary rvalue of type T1 and change it
+to an rvalue of type T2.  Keeping the no copy aspect of this bullet
+intact would change the lvalue of type T1 to an lvalue of type T2.
+In this case the lvalue to rvalue conversion would happen in p6 as
+usual.</P>
+
+<P>Suggested wording for p3 b2 b1</P>
+
+<P>The base part:</P>
+<BLOCKQUOTE>
+  If E1 and E2 have class type, and the underlying class types are the
+  same or one is a base class of the other: E1 can be converted to match
+  E2 if the class of T2 is the same type as, or an accessible and
+  unambiguous base class of, the class of T1, and the cv-qualification
+  of T2 is the same cv-qualification as, or a greater cv-qualification
+  than, the cv-qualification of T1.  If the conversion is applied:
+</BLOCKQUOTE>
+<P>The same type temporary version:</P>
+<BLOCKQUOTE>
+  If E1 is an lvalue, an lvalue to rvalue conversion is applied.  The
+  resulting or original rvalue is changed to an rvalue of type T2 that
+  refers to the same class object (or the appropriate subobject
+  thereof).  [Note: that is, no copy is made in changing the type of
+  the rvalue. ]
+</BLOCKQUOTE>
+<P>The never copy version:</P>
+<BLOCKQUOTE>
+  The lvalue(rvalue) E1 is changed to an lvalue(rvalue) of type T2
+  that refers to the original class object (or the appropriate
+  subobject thereof).  [Note: that is, no copy is made. ]
+</BLOCKQUOTE>
+<P>The test case was posted to clc++m and results for implementations
+were reported.</P>
+<PRE>
+#include &lt;cassert&gt;
+struct B {
+    int v;
+    B (int v) : v(v) { }
+    void inc () { ++ v; }
+    };
+struct D : B {
+    D (int v) : B(v) { }
+    };
+int main () {
+    B b1(42);
+    D d1(42);
+    (0 ? B(13) : b1).inc();
+    assert(b1.v == 42);
+    (0 ? D(13) : b1).inc();
+    assert(b1.v == 42);
+    (0 ? B(13) : d1).inc();
+    assert(d1.v == 42);
+    }
+
+// CbuilderX(EDG301) FFF  Rob Williscroft
+// ICC-8.0           FFF  Alexander Stippler
+// COMO-4.301        FFF  Alexander Stippler
+
+// BCC-5.4           FFP  Rob Williscroft
+// BCC32-5.5         FFP  John Potter
+// BCC32-5.65        FFP  Rob Williscroft
+// VC-6.0            FFP  Stephen Howe
+// VC-7.0            FFP  Ben Hutchings
+// VC-7.1            FFP  Stephen Howe
+// OpenWatcom-1.1    FFP  Stephen Howe
+
+// Sun C++-6.2       PFF  Ron Natalie
+
+// GCC-3.2           PFP  John Potter
+// GCC-3.3           PFP  Alexander Stippler
+
+// GCC-2.95          PPP  Ben Hutchings
+// GCC-3.4           PPP  Florian Weimer
+</PRE>
+
+<P>I see no defect with regards to lvalue to rvalue conversions; however,
+there seems to be disagreement about what it means by implementers.
+It may not be surprising because 5.16 and passing a POD struct to an
+ellipsis are the only places where an lvalue to rvalue conversion
+applies to a class type.  Most lvalue to rvalue conversions are on
+basic types as operands of builtin operators.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>We decided all "?" operators that return a class rvalue should
+copy the second or third operand to a temporary.  See
+<A HREF="86.html">issue 86</A>.</P>
+
+<P><B>Proposed resolution (October 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#3.2">expr.cond</A>] bullet 3.2
+sub-bullet 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+if <TT>E1</TT> and <TT>E2</TT> have class type, and the
+underlying class types are the same or one is a base class of the
+other: <TT>E1</TT> can be converted to match <TT>E2</TT> if the
+class of <TT>T2</TT> is the same type as, or a base class of, the
+class of <TT>T1</TT>, and the cv-qualification of <TT>T2</TT> is
+the same cv-qualification as, or a greater cv-qualification than,
+the cv-qualification of <TT>T1</TT>. If the conversion is
+applied, <TT>E1</TT> is changed to an rvalue of type <TT>T2</TT>
+<DEL>that still refers to the original source class object (or the
+appropriate subobject thereof). [<I>Note:</I> that is, no copy is
+made. &#8212;<I>end note</I>]</DEL> <INS>by copy-initializing a
+temporary of type <TT>T2</TT> from <TT>E1</TT> and using that
+temporary as the converted operand.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#6.1">expr.cond</A>] bullet 6.1 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+The second and third operands have the same type; the result is
+of that type. <INS>If the operands have class type, the result is an
+rvalue temporary of the result type, which is copy-initialized
+from either the second operand or the third operand depending on
+the value of the first operand.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.3.2 [<A href="https://wg21.link/conv.lval#2">conv.lval</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The value contained in the object indicated by the lvalue is
+the rvalue result.</DEL> When an lvalue-to-rvalue conversion occurs
+within the operand of <TT>sizeof</TT> (7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]) the value contained in the referenced object is
+not accessed, since that operator does not evaluate its operand.
+<INS>Otherwise, if the lvalue has a class type, the conversion
+copy-initializes a temporary of type <TT>T</TT> from the lvalue
+and the result of the conversion is an rvalue for the temporary.
+Otherwise, the value contained in the object indicated by the
+lvalue is the rvalue result.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><I>[Note: this wording partially resolves <A HREF="86.html">issue 86</A>.  See also <A HREF="462.html">issue 462</A>.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

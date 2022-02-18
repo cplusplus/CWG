@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1760</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1760"></A><H4>1760.
+  
+Access of member corresponding to <I>init-capture</I>
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>United Kingdom
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-23<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#GB3">N3690 comment
+  GB&#160;3<BR></A>
+
+<P>[Applied to WP at the February, 2014 meeting.]</P>
+
+<P>The access of the non-static data member corresponding to an
+<I>init-capture</I> is not specified.  The question would be moot if
+the member were unnamed like the other non-static data members of the
+closure class.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<OL>
+<LI>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#11">expr.prim.lambda</A>] paragraph 11 as follows:</LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>For every <I>init-capture</I> a non-static data member named by the
+<I>identifier</I> of the <I>init-capture</I> is declared in the closure
+type. This member is not a bit-field and not <TT>mutable</TT>. The type of
+that member corresponds to the type of a hypothetical</DEL> <INS>An
+<I>init-capture</I> behaves as if it declares and explicitly captures
+a</INS> variable <DEL>declaration</DEL> of the form
+&#8220;<TT>auto</TT> <I>init-capture</I> ;&#8221; <INS>whose declarative
+region is the <I>lambda-expression</I>'s <I>compound-statement</I></INS>,
+except that <DEL>the variable name (i.e., the <I>identifier</I> of
+the <I>init-capture</I>) is replaced by a unique
+identifier.</DEL><INS>:</INS>
+</P>
+
+<UL>
+<LI><P><INS>if the capture is by copy (see below), the non-static data
+member declared for the capture and the variable are treated as two
+different ways of referring to the same object, which has the lifetime of
+the non-static data member, and no additional copy and destruction is
+performed, and</INS></P></LI>
+
+<LI><P><INS>if the capture is by reference, the variable's lifetime ends
+when the closure object's lifetime ends.</INS></P></LI>
+
+</UL>
+
+<P>[<I>Note:</I> This enables an <I>init-capture</I> like &#8220;<TT>x =
+std::move(x)</TT>&#8221;; the second &#8220;<TT>x</TT>&#8221; must bind to
+a declaration in the surrounding context.  &#8212;<I>end note</I>] <DEL>No
+entity is captured by an <I>init-capture</I>. Within
+the <I>lambda-expression</I>s <I>lambda-declarator</I>
+and <I>compound-statement</I>, the <I>identifier</I> in
+the <I>init-capture</I> hides any declaration of the same name in scopes
+enclosing the <I>lambda-expression</I>.</DEL> [<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#15">expr.prim.lambda</A>] paragraph 15 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An entity is <I>captured by copy</I> if it is implicitly captured and
+the <I>capture-default</I> is <TT>=</TT> or if it is explicitly captured
+with a capture that <DEL>does not include an <TT>&amp;</TT></DEL> <INS>is
+not of the form <TT>&amp;</TT> <I>identifier</I>
+or <TT>&amp;</TT> <I>identifier initializer</I></INS>. For each entity...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#18">expr.prim.lambda</A>] paragraph 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Every <I>id-expression</I> <INS>within the <I>compound-statement</I> of
+a <I>lambda-expression</I></INS> that is an odr-use
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of an entity captured by copy is transformed
+into an access to the corresponding unnamed data member of the closure
+type. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1681.html">issue 1681</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2721</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2721"></A><H4>2721.
+  
+When exactly is storage reused?
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-03-23<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>Subclause 6.7.4 [<A href="https://wg21.link/basic.life#1.5">basic.life</A>] bullet 1.5 specifies:</P>
+
+<BLOCKQUOTE>
+
+The lifetime of an object o of type T ends when:
+<UL>
+<LI>if T is a non-class type, the object is destroyed, or</LI>
+<LI>if T is a class type, the destructor call starts, or</LI>
+<LI>the storage which the object occupies is released, or is reused by
+an object that is not nested within o
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Consider the expression <TT>new (p) T(x)</TT>.  Does the lifetime
+of <TT>*p</TT> end when <TT>p</TT> is returned from the allocation
+function, before <TT>x</TT> is evaluated?  Or does the lifetime end
+when the constructor body starts executing, after <TT>x</TT> is
+evaluated?</P>
+
+<P>The second option is conceivable for initialization by constructor
+and non-class types; for aggregate initialization, the first option
+must be used, because evaluation of <TT>x</TT> directly initializes a
+part of the resulting object.  The first option is simpler to
+implement for constant evaluation.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-05-12):</B></P>
+
+<P>Change in  6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The lifetime of an object o of type T ends when:
+<UL>
+<LI>if T is a non-class type, the object is destroyed, or</LI>
+<LI>if T is a class type, the destructor call starts, or</LI>
+<LI>the storage which the object occupies is released, or is reused by
+an object that is not nested within o
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).</LI>
+</UL>
+
+<INS>When evaluating a <I>new-expression</I>, storage is considered
+reused after it is returned from the allocation function, but before
+the evaluation of the <I>new-initializer</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). [ Example:</INS>
+
+<PRE class="ins">
+  struct S {
+    int m;
+  };
+
+  void f() {
+    S x{1};
+    new(&amp;x) S(x.m);  // <SPAN CLASS="cmnt">undefined behavior</SPAN>
+  }
+</PRE>
+
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

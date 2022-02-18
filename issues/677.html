@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 677</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="677"></A><H4>677.
+  
+Deleted <TT>operator delete</TT> and virtual destructors
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 February, 2008<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>Deallocation functions can't be virtual because they are static
+member functions; however, according to 11.4.11 [<A href="https://wg21.link/class.free#7">class.free</A>] paragraph 7,
+ they behave like virtual functions when the class's
+destructor is virtual:</P>
+
+<BLOCKQUOTE>
+
+Since member allocation and deallocation functions are <TT>static</TT>
+they cannot be virtual. [<I>Note:</I> however, when
+the <I>cast-expression</I> of a <I>delete-expression</I> refers to an
+object of class type, because the deallocation function actually
+called is looked up in the scope of the class that is the dynamic type
+of the object, if the destructor is virtual, the effect is the same.
+
+</BLOCKQUOTE>
+
+<P>Because the intent is to make any use of a deleted function
+diagnosable at compile time, a virtual deleted function can neither
+override nor be overridden by a non-deleted function, as described
+in 11.7.3 [<A href="https://wg21.link/class.virtual#14">class.virtual</A>] paragraph 14:</P>
+
+<BLOCKQUOTE>
+
+A function with a deleted definition (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]) shall
+not override a function that does not have a deleted
+definition. Likewise, a function that does not have a deleted
+definition shall not override a function with a deleted definition.
+
+</BLOCKQUOTE>
+
+<P>One would assume that a similar kind of prohibition is needed for
+deallocation functions in a class hierarchy with virtual destructors,
+but it's not clear that the current specification says that.
+9.5 [<A href="https://wg21.link/dcl.fct.def#10">dcl.fct.def</A>] paragraph 10 says,</P>
+
+<BLOCKQUOTE>
+
+A program that refers to a deleted function implicitly or explicitly,
+other than to declare it, is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>Furthermore, the deallocation function is looked up at the point
+of definition of a virtual destructor (11.4.7 [<A href="https://wg21.link/class.dtor#11">class.dtor</A>] paragraph 11)
+, and the function found by this lookup is considered
+to be &#8220;used&#8221; (6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2).
+However, it's not completely clear that this &#8220;use&#8221;
+constitutes a &#8220;reference&#8221; in the sense of
+9.5 [<A href="https://wg21.link/dcl.fct.def#10">dcl.fct.def</A>] paragraph 10, especially in a program in
+which an object of a type that would call that deallocation function
+is never deleted.</P>
+
+<U>Suggested resolution:</U>
+
+<P>Augment the list of lookup results from a virtual destructor that
+render a program ill-formed in 11.4.7 [<A href="https://wg21.link/class.dtor#10">class.dtor</A>] paragraph 10
+to include a deleted function:</P>
+
+<BLOCKQUOTE>
+
+If the result of this lookup is ambiguous or inaccessible, or if the
+lookup selects a placement deallocation function <INS>or a function with
+a deleted definition (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#10">class.dtor</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the result of this lookup is ambiguous or inaccessible, or if the
+lookup selects a placement deallocation function <INS>or a function with
+a deleted definition (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

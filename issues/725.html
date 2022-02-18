@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 725</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="725"></A><H4>725.
+  
+When should the requirement for <TT>std::Returnable&lt;T&gt;</TT>, etc., apply?
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alberto Ganesh Barbati
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 September, 2008<BR>
+
+
+
+
+<P>If we write</P>
+
+<PRE>
+    concept C&lt;class T&gt; {}
+
+    template&lt;C T&gt;
+    struct B {
+         B f();
+         virtual void g() = 0;
+    };
+</PRE>
+
+<P>... it seems reasonable to expect a diagnostic about
+<TT>B&lt;T&gt;::f()</TT> not because it doesn't require
+<TT>std::Returnable&lt;B&lt;T&gt;&gt;</TT> (which I think should not
+draw an error), but because <TT>g()</TT> is a pure virtual function.
+</P>
+
+<P>Now how about this:</P>
+
+<PRE>
+    template&lt;C T&gt;
+    struct G {
+         B&lt;T&gt; f() { return B&lt;T&gt;(); }
+    };
+</PRE>
+
+<P>Here, I'd like to see an error not because we lack the requirement
+<TT>std::Returnable&lt;B&lt;T&gt;&gt;</TT>, but because, when we
+instantiate <TT>B&lt;T'&gt;</TT> (as the current wording indicates we
+must within the definition of <TT>G&lt;T&gt;::f()</TT>), it turns out
+to be an abstract class.</P>
+
+<P>Now, it could be that when we instantiate <TT>G</TT>, we get a
+different partial specialization of <TT>B</TT>, and that partial
+specialization could have a pure virtual member.  So you might see an
+instantiation-time error.  But partial specializations present dangers
+like this anyway.</P>
+
+<P>I suggest we make the rule about <TT>Returnable&lt;T&gt;</TT> apply
+only in the case where <TT>T</TT> is not an instantiated archetype.
+The rationale is that with an instantiated archetype, it's possible to
+see at template definition time whether the type is abstract, whereas
+with a non-instantiated archetype, the only known attributes come
+from requirements.</P>
+
+<P>I suspect we need similar changes for the declarator section.
+E.g., for a class template <TT>A</TT>, we shouldn't need to explicitly
+require <TT>VariableType&lt;A&lt;T&gt;&gt;</TT> if we want to declare a
+variable of type <TT>A&lt;T&gt;</TT>.  Instead, we just instantiate
+<TT>A&lt;T'&gt;</TT> (as would be naturally required at the point of
+definition of a variable of type <TT>A&lt;T'&gt;</TT>), and issue
+errors when appropriate like we do with ordinary classes today.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

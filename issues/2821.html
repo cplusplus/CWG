@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2821</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2821"></A><H4>2821.
+  
+Lifetime, zero-initialization, and dynamic initialization
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-24<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  int i = i;
+</PRE>
+
+<P>According to 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2, <TT>i</TT> is
+zero-initialized and then dynamic initialization is applied.  However,
+it is unclear whether the lifetime of <TT>i</TT> has started at the
+point when the dynamic initialization occurs. According to
+6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... The lifetime of an object of type T begins when:
+<UL>
+<LI>storage with
+the proper alignment and size for type T is obtained, and</LI>
+<LI>its
+initialization (if any) is complete (including vacuous initialization)
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]),</LI>
+</UL>
+except ...
+
+</BLOCKQUOTE>
+
+<P>Possible directions:</P>
+
+<UL>
+<LI>Zero-initialization starts the lifetime, and the dynamic
+initialization just modifies the value, similar to a delegating
+constructor.</LI>
+
+<LI>The lifetime doesn't begin until the dynamic initialization is
+complete, but we allow scalar objects to be "under construction"
+(11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]).
+</LI>
+
+<LI>Zero-initialization starts the lifetime, and dynamic
+initialization transparently replaces the object.</LI>
+</UL>
+
+<P>The example in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#3">basic.start.static</A>] paragraph 3 suggests the
+first option.</P>
+
+<P><B>CWG 2024-01-19</B></P>
+
+<P>The first option is is intended.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Split and change 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+... The lifetime of an object of type T begins when:
+<UL>
+<LI>storage with
+the proper alignment and size for type T is obtained, and</LI>
+<LI>
+<DEL>its</DEL> <INS>any</INS> initialization <DEL>(if any)</DEL>
+is complete (including vacuous initialization)
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]),</LI>
+</UL>
+except that if the object is a union member or subobject thereof, its
+lifetime only begins if that union member is the initialized member in
+the union (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>], 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]),
+or as described in 11.5 [<A href="https://wg21.link/class.union">class.union</A>],
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>], and 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>], and
+except as described in 20.2.10.2 [<A href="https://wg21.link/allocator.members">allocator.members</A>].
+<INS>[ Note: In particular, the lifetime of a complete class object
+begins when the non-delegating constructor returns
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).  The lifetime of a complete object with
+static or thread storage duration begins when static initialization is
+complete (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]). -- end note ]</INS>
+</P>
+
+<P>
+The lifetime of an object o of type T ends when:  ...
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

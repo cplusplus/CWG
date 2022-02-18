@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1485</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1485"></A><H4>1485.
+  
+Out-of-class definition of member unscoped opaque enumeration
+</H4>
+<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-26<BR>
+
+
+
+
+<P>The scope in which the names of enumerators are entered for
+a member unscoped opaque enumeration is not clear.  According to
+9.7.1 [<A href="https://wg21.link/dcl.enum#10">dcl.enum</A>] paragraph 10,</P>
+
+<BLOCKQUOTE>
+
+Each <I>enum-name</I> and each unscoped enumerator is declared in the
+scope that immediately contains the <I>enum-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P>In the case of a member opaque enumeration defined outside its
+containing class, however, it is not clear whether the enumerator
+names are declared in the class scope or in the lexical scope
+containing the definition. Declaring them in the class scope would
+be a violation of 11.4 [<A href="https://wg21.link/class.mem#1">class.mem</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+The <I>member-specification</I> in a class definition declares the
+full set of members of the class; no member can be added elsewhere.
+
+</BLOCKQUOTE>
+
+<P>Declaring the names in the lexical scope containing the
+definition would be contrary to the example in
+13.7.2.6 [<A href="https://wg21.link/temp.mem.enum#1">temp.mem.enum</A>] paragraph 1:</P>
+
+<PRE>
+  template&lt;class T&gt; struct A {
+    enum E : T;
+  };
+  A&lt;int&gt; a;
+  template&lt;class T&gt; enum A&lt;T&gt;::E : T { e1, e2 };
+  A&lt;int&gt;::E e = A&lt;int&gt;::e1;
+</PRE>
+
+<P>There also appear to be problems with the rules for dependent
+types and members of the current instantiation.</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>CWG agreed that an unscoped opaque enumeration in class scope
+should be forbidden.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

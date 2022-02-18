@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 432</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="432"></A><H4>432.
+  
+Is injected class name visible in base class specifier list?
+</H4>
+<B>Section: </B>6.4.7&#160; [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 August 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P>Consider the following example (inspired by a
+question from comp.lang.c++.moderated):</P>
+<PRE>
+  template&lt;typename&gt; struct B {};
+  template&lt;typename T&gt; struct D: B&lt;D&gt; {};
+</PRE>
+<P>Most (all?) compilers reject this code because
+D is handled as a template name rather than as
+the injected class name.</P>
+
+<P>Clause 11 [<A href="https://wg21.link/class">class</A>]/2 says that the injected class
+name is "inserted into the scope of the class."</P>
+
+<P>6.4.7 [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>]/1 seems to be the text
+intended to describe
+what "scope of a class" means, but it assumes that
+every name in that scope was introduced using a
+"declarator".  For an implicit declaration such
+as the injected-class name it is not clear what
+that means.</P>
+
+<P>So my questions:</P>
+<OL>
+<LI>
+Should the injected class name be available
+in the base class specifiers?
+<BLOCKQUOTE>
+<U>John Spicer:</U>
+I do not believe the injected class name should be available in the base
+specifier.  I think the semantics of injected class names should be as
+if a magic declaration were inserted after the opening "{" of the class
+definition.  The injected class name is a member of the class and
+members don't exist at the point where the base specifiers are scanned.
+</BLOCKQUOTE>
+</LI>
+<LI>
+Do you agree the wording should be clarified
+whatever the answer to the first question?
+<BLOCKQUOTE>
+<U>John Spicer:</U>
+I believe the 6.4.7 [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>] wording should be
+updated to reflect the fact that not all names come from declarators.
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We agree with John Spicer's suggested answers above.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>
+The answer to question 1 above is
+No and no change is required.</P>
+<P>
+For question 1, change 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1
+rule 1 to:</P>
+<BLOCKQUOTE>
+1) The potential scope of a name declared in a class consists not only of the
+declarative region following the name's <INS>point of declaration</INS>
+<DEL>declarator</DEL>,
+but also of all function
+bodies, default arguments, and constructor <I>ctor-initializers</I>
+in that class (including such things in nested classes).
+The point of declaration of an <I>injected-class-name</I>
+(Clause 11 [<A href="https://wg21.link/class">class</A>]) is
+immediately following the opening brace of the class definition.
+</BLOCKQUOTE>
+<P>(Note that this change overlaps a change in
+<A HREF="417.html">issue 417</A>.)</P>
+<P>
+Also change 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]
+by adding a new paragraph 8 for the <I>injected-class-name</I> case:</P>
+<BLOCKQUOTE>
+The point of declaration for an <I>injected-class-name</I>
+(Clause 11 [<A href="https://wg21.link/class">class</A>]) is
+immediately following the opening brace of the class definition.
+</BLOCKQUOTE>
+<P>Alternatively this paragraph could be added after paragraph 5 and before the
+two note paragraphs (i.e. it would become paragraph 5a).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

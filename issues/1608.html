@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1608</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1608"></A><H4>1608.
+  
+Operator lookup in trailing return type
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-23<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>There is an unfortunate disparity between the treatment of an
+example like</P>
+
+<PRE>
+  struct S {
+    int operator[](int);
+    auto f() -&gt; decltype(this-&gt;operator[](0));
+  };
+</PRE>
+
+<P>(which is permitted, cf _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#3">expr.prim.general</A>] paragraph 3), and</P>
+
+<PRE>
+  struct S {
+    int operator[](int);
+    auto f() -&gt; decltype((*this)[0]);
+  };
+</PRE>
+
+<P>which is not.  The reason for rejecting the latter is
+12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+<P>For a unary operator <TT>@</TT> with an operand of a type whose
+cv-unqualified version is <TT>T1</TT>, and for a binary operator <TT>@</TT>
+with a left operand of a type whose cv-unqualified version is <TT>T1</TT>
+and a right operand of a type whose cv-unqualified version is <TT>T2</TT>,
+three sets of candidate functions, designated member candidates, non-member
+candidates and built-in candidates, are constructed as follows:</P>
+
+<UL>
+<LI><P>If <TT>T1</TT> is a complete class type, the set of member
+candidates is the result of the qualified lookup of <TT>T1::operator@</TT>
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]); otherwise, the set of member candidates
+is empty.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>It would be desirable to update the latter specification to allow lookup
+of preceding declarations in a class currently being defined, analogously
+with the lookup performed in the function-notation case.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>Change 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.1">over.match.oper</A>] bullet 3.1 as follows:</P>
+
+<UL>
+<LI>
+
+<P>If <TT>T1</TT> is a complete class type <INS>or a class
+currently being defined</INS>, the set of member candidates
+is the result of the qualified lookup
+of <TT>T1::operator@</TT> (12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]);
+otherwise, the set of member candidates is empty.</P>
+</LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

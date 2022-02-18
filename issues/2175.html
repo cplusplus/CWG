@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2175</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2175"></A><H4>2175.
+  
+Ambiguity with attribute in conversion operator declaration
+</H4>
+<B>Section: </B>9.3.3&#160; [<A href="https://wg21.link/dcl.ambig.res">dcl.ambig.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-09-17<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+<P>The declaration</P>
+
+<PRE>
+  operator int [[noreturn]] ();
+</PRE>
+
+<P>is ambiguous with respect to the binding of the attribute.  It
+could either be parsed (as apparently intended by the user) as
+part of the <I>noptr-declarator</I> (9.3 [<A href="https://wg21.link/dcl.decl#4">dcl.decl</A>] paragraph 4)
+ or as part of the <I>type-specifier-seq</I>
+(9.2.9 [<A href="https://wg21.link/dcl.type#1">dcl.type</A>] paragraph 1) of the
+<I>conversion-type-id</I> (11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1)
+.  Current implementations disambiguate this
+declaration in favor of the latter interpretation, issuing an
+error for the declaration because the <TT>noreturn</TT>
+attribute cannot apply to a type.</P>
+
+<P><B>Proposed resolution (February, 2016):</B></P>
+
+<P>Change 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#3">class.conv.fct</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>conversion-type-id</I> shall not represent a function
+type nor an array type. The <I>conversion-type-id</I> in
+a <I>conversion-function-id</I> is the longest <DEL>possible</DEL>
+sequence of <DEL><I>conversion-declarator</I>s</DEL>
+<INS>tokens that could possibly form a
+<I>conversion-type-id</I></INS>. [<I>Note:</I>
+This prevents ambiguities between the declarator operator <TT>*</TT>
+and its expression counterparts. [<I>Example:</I>
+</P>
+
+<PRE>
+  &amp;ac.operator int*i;  //<SPAN CLASS="cmnt"> syntax error:</SPAN>
+                       //<SPAN CLASS="cmnt"> parsed as: </SPAN>&amp;(ac.operator int *)i
+                       //<SPAN CLASS="cmnt"> not as: </SPAN>&amp;(ac.operator int)*i
+</PRE>
+
+<P>The <TT>*</TT> is the pointer declarator and not the
+multiplication operator. &#8212;<I>end
+example</I>] <INS>This rule also prevents ambiguities for
+attributes.  [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  operator int [[noreturn]] (); //<SPAN CLASS="cmnt"> error: </SPAN>noreturn<SPAN CLASS="cmnt"> attribute applied to a type</SPAN></INS>
+
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS> &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2657</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2657"></A><H4>2657.
+  
+Cv-qualification adjustment when binding reference to temporary
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-11-10<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>
+<A HREF="2481.html">Core issue 2481</A> was resolved by
+clarifying that the temporary object in p5.4.2 is cv-qualified if the
+reference being initialized is cv-qualified. However, this is not the
+right bullet point for the example given,</P>
+
+<PRE>
+  constexpr const int &amp;r = 42;
+</PRE>
+
+<P>Such an initialization would actually use bullet 5.3.1
+instead. (5.4.2 would be used if the initializer were, for example,
+3.14.) We therefore need to make a similar clarification in bullet
+5.3, and ideally using the same language.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the initializer expression
+<UL>
+<LI>is an rvalue (but
+not a bit-field) or function lvalue and &#8220;cv1 T1&#8221; is
+reference-compatible with &#8220;cv2 T2&#8221;, or</LI>
+<LI>has a
+class type (i.e., T2 is a class type), where T1 is not
+reference-related to T2, and can be converted to an rvalue or function
+lvalue of type &#8220;cv3 T3&#8221;, where &#8220;cv1 T1&#8221; is
+reference-compatible with &#8220;cv3 T3&#8221; (see
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]),</LI>
+</UL>
+then the initializer expression in the
+first case and the converted expression in the second case is called
+the converted initializer. If the converted initializer is a prvalue,
+<INS>let</INS> its type <INS>be denoted by</INS> <TT>T4</TT><INS>; the
+temporary materialization conversion (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is
+applied, considering the type of the prvalue to be</INS> <DEL>is
+adjusted to type</DEL> &#8220;cv1 T4&#8221;
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) <DEL>and the temporary materialization
+conversion (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied</DEL>. In any case, the
+reference binds to the resulting glvalue (or to an appropriate base
+class subobject).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Append to the example in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
+
+<PRE>
+  B&amp;&amp; rrb = x;  //<SPAN CLASS="cmnt"> binds directly to the result of</SPAN> operator B
+
+  <INS>constexpr int f() {
+    const int &amp;x = 42;
+    const_cast&lt;int &amp;&gt;(x) = 1;  // <SPAN CLASS="cmnt">undefined behavior</SPAN>
+    return x;
+  }
+  constexpr int z = f();   // <SPAN CLASS="cmnt">error: not a constant expression</SPAN></INS>
+</PRE>
+
+</LI>
+
+<LI>
+
+<P>Change the example in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4">dcl.init.ref</A>] bullet 5.4 as follows:</P>
+
+<PRE>
+  const double&amp; rcd2 = 2;   //<SPAN CLASS="cmnt"> rcd2 refers to temporary with <INS>type</INS> </SPAN><INS>const double</INS><SPAN CLASS="cmnt"> <INS>and</INS> value 2.0</SPAN>
+</PRE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

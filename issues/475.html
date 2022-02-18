@@ -1,0 +1,579 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 475</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="475"></A><H4>475.
+  
+When is <TT>std::uncaught_exception()</TT> true? (take 2)
+</H4>
+<B>Section: </B>14.6.3&#160; [<A href="https://wg21.link/except.uncaught">except.uncaught</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Sep 2004<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+<P> See also <A HREF="37.html">issue 37</A>.</P>
+
+<P>Given this piece of code and <TT>S</TT> having a user-defined
+ctor, at precisely which point must
+<TT>std::uncaught_exception()</TT> return <TT>true</TT> and where
+<TT>false</TT>?</P>
+
+<PRE>
+    try { S s0; throw s0; } catch (S s2) { }
+</PRE>
+
+<P>My understanding of the semantics of the code is as
+follows:</P>
+
+<OL>
+
+<LI>The throw expression creates a temporary for a copy of
+<TT>s0</TT>, say <TT>s1</TT>, using the copy ctor of
+<TT>S</TT>. In this invocation of the copy ctor
+<TT>uncaught_exception()</TT> must return <TT>true</TT>.</LI>
+
+<LI>
+<TT>s0</TT> is destroyed during stack unwinding. In the
+invocation of <TT>S</TT> dtor <TT>uncaught_exception()</TT> must
+still return <TT>true</TT>.</LI>
+
+<LI>The variable <TT>s2</TT> is initialized from <TT>s1</TT> by
+invoking the copy ctor of <TT>S</TT>. In this invocation
+<TT>uncaught_exception()</TT> must also return
+<TT>true</TT>.</LI>
+
+<LI>
+<TT>s2</TT> and <TT>s1</TT> are destroyed. In the invocations
+of <TT>S</TT> dtor <TT>uncaught_exception()</TT> must return
+<TT>false</TT>.</LI>
+
+</OL>
+
+<P>Is my understanding correct?</P>
+
+<P>14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 talks about &#8220;the
+exception object&#8221; when describing the semantics of the
+<I>throw-expression</I>:</P>
+
+<BLOCKQUOTE>
+a <I>throw-expression</I> initializes a temporary object, called
+the <I>exception object</I>...  </BLOCKQUOTE>
+
+<P>However, 14.6.2 [<A href="https://wg21.link/except.terminate#1">except.terminate</A>] paragraph 1 talks about
+&#8220;the expression to be thrown&#8221; when enumerating the
+conditions under which <TT>terminate()</TT> is called:</P>
+
+<BLOCKQUOTE>
+when the exception handling mechanism, after completing
+evaluation of the expression to be thrown but before the
+exception is caught (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), calls a user
+function that exits via an uncaught exception... </BLOCKQUOTE>
+
+<P>And, 14.6.3 [<A href="https://wg21.link/except.uncaught#1">except.uncaught</A>] paragraph 1 refers to
+&#8220;the object to be thrown&#8221; in the description of
+<TT>uncaught_exception()</TT>:</P>
+
+<BLOCKQUOTE>
+The function <TT>std::uncaught_exception()</TT> returns
+<TT>true</TT> after completing evaluation of the object to be
+thrown... </BLOCKQUOTE>
+
+<P>Are all these objects one and the same? I believe the answer
+is important in case the construction of the temporary exception
+object throws another exception.</P>
+
+<P>Suppose they are the same. Then <TT>uncaught_exception()</TT>
+invoked from the copy ctor for <TT>s1</TT> (from the example
+[above]) must return <TT>false</TT> and a new exception (e.g.,
+<TT>bad_alloc</TT>) may be thrown and caught by a matching
+handler (i.e., without calling <TT>terminate()</TT>).</P>
+
+<P>But if they are not the same, then
+<TT>uncaught_exception()</TT> invoked from the copy ctor for
+<TT>s1</TT> must return <TT>true</TT> and throwing another
+exception would end up calling <TT>terminate()</TT>. This would,
+IMO, have pretty severe consequences on writing exception safe
+exception classes.</P>
+
+<P>As in the first case, different compilers behave differently,
+with most compilers not calling <TT>terminate()</TT> when the
+ctor for the temporary exception object throws. Unfortunately,
+the two compilers that I trust the most do call
+<TT>terminate()</TT>.</P>
+
+<P>FWIW, my feeling is that it should be possible for the copy
+ctor invoked to initialize the temporary exception object to
+safely exit by throwing another exception, and that the new
+exception should be allowed to be caught without calling
+<TT>terminate</TT>.</P>
+
+<P>
+<U>Mike Miller</U>: The way I see this, a <I>throw-expression</I> has an
+<I>assignment-expression</I> as an operand.  This expression is
+&#8220;the expression to be thrown.&#8221; Evaluation of this
+expression yields an object; this object is &#8220;the object to
+be thrown.&#8221; This object is then copied to the exception
+object.</P>
+
+<P>
+<U>Martin Sebor</U>: Here's a survey of the return value from
+<TT>uncaught_exception()</TT> in the various stages of exception
+handling, implemented by current compilers:</P>
+
+<TABLE FRAME="BOX" RULES="ALL">
+<THEAD>
+<TR>
+<TH></TH>
+<TH>expr</TH>
+<TH>temp</TH>
+<TH>unwind</TH>
+<TH>handlr</TH>
+<TH>2nd ex</TH>
+</TR>
+</THEAD>
+<TBODY>
+<TR>
+<TD>HP aCC 6</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+<TR>
+<TD>Compaq C++ 6.5</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">ABRT</TD>
+</TR>
+<TR>
+<TD>EDG eccp 3.4</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">ABRT</TD>
+</TR>
+<TR>
+<TD>g++ 3.4.2</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+<TR>
+<TD>Intel C++ 7.0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+<TR>
+<TD>MIPSpro 7.4.1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">ABRT</TD>
+</TR>
+<TR>
+<TD>MSVC 7.0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+<TR>
+<TD>SunPro 5.5</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+<TR>
+<TD>VisualAge 6.0</TD>
+<TD ALIGN="CENTER">0</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">1</TD>
+<TD ALIGN="CENTER">OK</TD>
+</TR>
+</TBODY>
+</TABLE>
+
+<P>In the table above:</P>
+
+<UL>
+<TABLE FRAME="VOID" RULES="NONE" CELLPADDING="10">
+<TR>
+<TD VALIGN="TOP">expr</TD>
+<TD VALIGN="TOP">is the evaluation of the <I>assignment-expression</I> in the
+<I>throw-expression</I>
+</TD>
+</TR>
+<TR>
+<TD VALIGN="TOP">temp</TD>
+<TD VALIGN="TOP">is the invocation of the copy ctor for the unnamed temporary
+exception object created by the runtime.</TD>
+</TR>
+<TR>
+<TD VALIGN="TOP">unwind</TD>
+<TD VALIGN="TOP">is stack unwinding.</TD>
+</TR>
+<TR>
+<TD VALIGN="TOP">handlr</TD>
+<TD VALIGN="TOP">is the invocation of the copy ctor in the
+<I>exception-declaration</I> in the catch handler.</TD>
+</TR>
+<TR>
+<TD VALIGN="TOP">2nd ex</TD>
+<TD VALIGN="TOP">describes the behavior of the implementation when the
+invocation of the copy ctor for the unnamed temporary exception
+object [temp] throws another exception.</TD>
+</TR>
+</TABLE>
+</UL>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<OL>
+
+<LI>
+<P>Change 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>throw-expression</I> initializes a temporary object, called the
+<I>exception object</I>, <DEL>the</DEL> <INS>by copying the <I>thrown
+object</I> (i.e., the result of evaluating its
+<I>assignment-expression</I> operand) to it. The</INS> type of
+<DEL>which</DEL> <INS>the exception object</INS> is determined by
+removing any top-level <I>cv-qualifier</I>s from the static type
+of the operand of <TT>throw</TT> and adjusting the type from
+&#8220;array of <TT>T</TT>&#8221; or &#8220;function returning
+<TT>T</TT>&#8221; to &#8220;pointer to <TT>T</TT>&#8221; or
+&#8220;pointer to function returning <TT>T</TT>,&#8221;
+respectively.  [<I>Note:</I> the temporary object created <DEL>for</DEL>
+<INS>by</INS> a <I>throw-expression</I> <DEL>that</DEL> <INS>whose
+operand</INS> is a string literal is never of type <TT>char*</TT>
+or <TT>wchar_t*</TT>; that is, the special conversions for string
+literals from the types &#8220;array of <TT>const
+char</TT>&#8221; and &#8220;array of <TT>const
+wchar_t</TT>&#8221; to the types &#8220;pointer to
+<TT>char</TT>&#8221; and &#8220;pointer to
+<TT>wchar_t</TT>,&#8221; respectively (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), are never applied to <INS>the operand of</INS> a
+<I>throw-expression</I>. &#8212;<I>end note</I>] The temporary is
+an lvalue and is used to initialize the variable named in the
+matching handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).  The type of the
+<INS>operand of a</INS> <I>throw-expression</I> shall not be an
+incomplete type, or a pointer to an incomplete type other than
+(possibly cv-qualified) <TT>void</TT>. [...]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the note in 14.4 [<A href="https://wg21.link/except.handle#3">except.handle</A>] paragraph 3
+as follows:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> a <I>throw-expression</I> <INS>operand that</INS>
+<DEL>which</DEL> is an integral constant expression of integer type
+that evaluates to zero does not match a handler of pointer type;
+that is, the null pointer constant conversions (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>], 7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) do not
+apply. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 14.6.2 [<A href="https://wg21.link/except.terminate#1.1">except.terminate</A>] bullet 1.1
+as follows:</P>
+
+<BLOCKQUOTE>
+
+when the exception handling mechanism, after completing
+evaluation of the <DEL>expression to be thrown</DEL> <INS>operand of
+<TT>throw</TT></INS> but before the exception is caught
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), calls a user function that exits
+via an uncaught exception,
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 14.6.3 [<A href="https://wg21.link/except.uncaught#1">except.uncaught</A>] paragraph 1 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+The function <TT>std::uncaught_exception()</TT> returns
+<TT>true</TT> after completing evaluation of the <DEL>object to be
+thrown</DEL> <INS>operand of <TT>throw</TT></INS> until completing the
+initialization of the <I>exception-declaration</I> in the
+matching handler (_N4140_.18.8.4 [<A href="https://wg21.link/uncaught">uncaught</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change _N4140_.18.8.4 [<A href="https://wg21.link/uncaught#1">uncaught</A>] paragraph 1 by adding
+the indicated words:</P>
+
+<BLOCKQUOTE>
+
+<I>Returns:</I> <TT>true</TT> after completing evaluation of
+<INS>the operand of</INS> a <I>throw-expression</I> until either
+completing initialization of the <I>exception-declaration</I> in
+the matching handler or entering <TT>unexpected()</TT> due to the
+throw; or after entering <TT>terminate()</TT> for any reason
+other than an explicit call to <TT>terminate()</TT>.
+[<I>Note:</I> This includes stack unwinding (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The CWG discussed this resolution both within the group and with
+other interested parties.  Among the points that were made:</P>
+
+<UL>
+<LI>
+<P>Martin Sebor  pointed to a
+<A HREF="http://gcc.gnu.org/ml/libstdc++/2005-01/msg00033.html">posting</A>
+in which he argues that writing copy constructors is more difficult if
+an exception during the copy to the exception object will result in a
+call to <TT>std::terminate()</TT>.</P>
+</LI>
+
+<LI><P>In response to a question about why the copy to the exception
+object is different from the copy from the exception object to the
+object in the <I>exception-declaration</I>, it was observed that the
+writer of the handler can avoid the second copy (by using a reference
+declaration), but the first copy is unavoidable.</P></LI>
+
+<LI><P>John Spicer observed that not exiting via exception should be a
+design constraint for copy constructors in exception objects,
+regardless of whether <TT>std::terminate()</TT> is called or
+not.</P></LI>
+
+<LI><P>Adopting the position that <TT>uncaught_exception()</TT>
+returns <TT>false</TT> during the copy to the exception object would
+reduce the differences between the case where that copy is elided and
+the case where it is performed.</P></LI>
+
+<LI><P>Jason Merrill observed that making <TT>uncaught_exception()</TT>
+return <TT>false</TT> during the copy to the exception object would
+simplify the code generated by g++; as it currently stands, the
+compiler must generate code to catch exceptions during that copy so
+<TT>std::terminate()</TT> can be called.</P></LI>
+
+<LI><P>Bjarne Stroustrup worried that allowing the copy constructor to
+throw an exception during the copy to the exception object could
+result in a serious and specific exception being silently transformed
+into a more trivial and generic one (although the CWG later noted that
+this risk already exists if something in the expression being thrown
+throws an exception before the expression completes).</P></LI>
+
+</UL>
+
+<P>The CWG felt that more input from a wider audience was necessary
+before a decision could be made on the appropriate resolution.
+</P>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>The CWG agreed with the position that <TT>std::uncaught_exception()</TT>
+should return <TT>false</TT> during the copy to the exception object
+and that <TT>std::terminate()</TT> should not be called if that
+constructor exits with an exception.  The issue was returned to
+&#8220;drafting&#8221; status for rewording to reflect this position.</P>
+
+<P><B>Additional notes (September, 2007):</B></P>
+
+<P>Although this issue deals primarily with when
+<TT>std::uncaught_exception()</TT> begins to return <TT>true</TT>, the
+specification of when it begins to return <TT>false</TT> is also
+problematic.  There are two parallel sections that define the meaning
+of <TT>std::uncaught_exception()</TT> and each has a different
+problem.  14.6.3 [<A href="https://wg21.link/except.uncaught">except.uncaught</A>] reads,</P>
+
+<BLOCKQUOTE>
+
+The function <TT>std::uncaught_exception()</TT> returns <TT>true</TT>
+after completing evaluation of the object to be thrown until
+completing the initialization of the <I>exception-declaration</I> in
+the matching handler (_N4140_.18.8.4 [<A href="https://wg21.link/uncaught">uncaught</A>]).
+
+</BLOCKQUOTE>
+
+<P>The problem here is that whether an exception is considered
+caught (the underlying condition tested by the function) is here
+presented in terms of having initialized the <I>exception-declaration</I>,
+while in other places it is specified by having an active handler for
+the exception, e.g., 14.2 [<A href="https://wg21.link/except.throw#6">except.throw</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+An exception is considered caught when a handler for that exception
+becomes active (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).
+
+</BLOCKQUOTE>
+
+<P>This distinction is important because of 14.4 [<A href="https://wg21.link/except.handle#3">except.handle</A>] paragraph 3:
+</P>
+
+<BLOCKQUOTE>
+
+A handler is considered active when initialization is complete for the
+formal parameter (if any) of the catch clause.  [<I>Note:</I> the
+stack will have been unwound at that point. &#8212;<I>end note</I>]
+Also, an implicit handler is considered active
+when <TT>std::terminate()</TT> or <TT>std::unexpected()</TT> is
+entered due to a throw.
+
+</BLOCKQUOTE>
+
+<P>Note that there is no <I>exception-declaration</I> to be
+initialized for the <TT>std::terminate()</TT> and
+<TT>std::unexpected()</TT> cases; nevertheless, according to
+_N4140_.18.8.4 [<A href="https://wg21.link/uncaught">uncaught</A>], <TT>std::uncaught_exception()</TT>
+is supposed to return <TT>false</TT> when one of those two functions
+is entered.</P>
+
+<P>The specification in _N4140_.18.8.4 [<A href="https://wg21.link/uncaught">uncaught</A>] is not well
+phrased, however, and is open to misinterpretation.  It reads,</P>
+
+<BLOCKQUOTE>
+
+<I>Returns:</I> <TT>true</TT> after completing evaluation of a
+<I>throw-expression</I> until either completing initialization of the
+<I>exception-declaration</I> in the matching handler or entering
+<TT>unexpected()</TT> due to the throw; or after
+entering <TT>terminate()</TT> for any reason other than an explicit
+call to <TT>terminate()</TT>.
+
+</BLOCKQUOTE>
+
+<P>The problem here is lack of parallelism: does &#8220;after
+entering <TT>terminate</TT>&#8221; refer to the condition for returning
+<TT>true</TT> or <TT>false</TT>?  This would be better phrased along
+the lines of</P>
+
+<BLOCKQUOTE>
+
+<I>Returns:</I> <TT>true</TT> after completing evaluation of a
+<I>throw-expression</I> until a handler for the exception becomes
+active (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (March, 2010):</B></P>
+
+<OL>
+<LI><P>Change 14.6.2 [<A href="https://wg21.link/except.terminate#1.1">except.terminate</A>] bullet 1.1 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>In the following situations exception handling must be
+abandoned for less subtle error handling techniques:</P>
+
+<UL>
+<LI><P>when the exception handling mechanism, after
+completing <DEL>evaluation of the expression to be thrown</DEL>
+<INS>the initialization of the exception object</INS> but before
+the <DEL>exception is caught</DEL> <INS>activation of a handler
+for the exception</INS> (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), calls a
+function that exits via an uncaught exception, [<I>Footnote:</I>
+For example, if the object being thrown is of a class with a copy
+constructor, <TT>std::terminate()</TT> will be called if that
+copy constructor exits with an exception during <DEL>a
+<TT>throw</TT></DEL> <INS>the initialization of the formal
+parameter of a catch clause</INS>. &#8212;<I>end
+footnote</I>]</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.6.3 [<A href="https://wg21.link/except.uncaught#1">except.uncaught</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The function <TT>std::uncaught_exception()</TT> returns
+<TT>true</TT> after completing <DEL>evaluation of the object to
+be thrown</DEL> <INS>the initialization of the exception object
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>])</INS> until completing the
+<DEL>initialization of the <I>exception-declaration</I> in the
+matching handler</DEL> <INS>activation of a handler for the
+exception</INS> (<INS>14.4 [<A href="https://wg21.link/except.handle">except.handle</A>],
+</INS>_N4140_.18.8.4 [<A href="https://wg21.link/uncaught">uncaught</A>])...
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4140_.18.8.4 [<A href="https://wg21.link/uncaught#1">uncaught</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<I>Returns:</I> <TT>true</TT> after <DEL>completing evaluation of a
+<I>throw-expression</I></DEL> <INS>initializing an exception
+object 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]</INS> until <DEL>either
+completing initialization of the <I>exception-declaration</I> in
+the matching handler or entering <TT>unexpected()</TT> due to the
+throw; or after entering <TT>terminate()</TT> for any reason
+other than an explicit call to <TT>terminate()</TT></DEL> <INS>a
+handler for the exception (including <TT>unexpected()</TT> or
+<TT>terminate()</TT>) is activated (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])</INS>.  [<I>Note:</I> This includes stack unwinding
+(14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

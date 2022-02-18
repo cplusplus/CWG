@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 662</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="662"></A><H4>662.
+  
+Forming a pointer to a reference type
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 November 2007<BR>
+
+
+<P>The Standard currently specifies (9.2.4 [<A href="https://wg21.link/dcl.typedef#9">dcl.typedef</A>] paragraph 9,
+13.4.2 [<A href="https://wg21.link/temp.arg.type#4">temp.arg.type</A>] paragraph 4) that an attempt to create a
+reference to a reference (via a typedef or template type
+parameter) is effectively ignored.  The same is not true of an attempt
+to form a pointer to a reference; that is, assuming that <TT>T</TT> is
+specified to be a reference type,</P>
+
+<PRE>
+    template &lt;typename T&gt; void f(T t) {
+        T&amp; tr = t;   //<SPAN CLASS="cmnt"> OK</SPAN>
+        T* tp = &amp;t;  //<SPAN CLASS="cmnt"> error</SPAN>
+    }
+</PRE>
+
+<P>It would be more consistent to allow pointers to references to
+collapse in the same way that references to references do.</P>
+
+<P><B>Rationale (February, 2008):</B></P>
+
+<P>In the absence of a compelling need, the CWG felt that it was
+better not to change the existing rules.  Allowing this case could
+cause a quiet change to the meaning of a program, because attempting
+to create a pointer to a reference type is currently a deduction
+failure.</P>
+
+<P><B>Additional discussion (May, 2009):</B></P>
+
+<P>Consider the following slightly extended version of the example
+above:</P>
+
+<PRE>
+    template &lt;typename T&gt; void f(T t) {
+        T&amp; tr = t;   // OK
+        T* tp = &amp;t;  // error
+        auto * ap = &amp;t; // OK!
+    }
+</PRE>
+
+<P>This means that a template that expects a reference type will need
+to use <TT>auto</TT> just to work around the failure to collapse
+pointer-to-reference types.  The result might, in fact, be subtly
+different with <TT>auto</TT>, as well, in case there is an overloaded
+<TT>operator&amp;</TT> function that doesn't return exactly
+<TT>T*</TT>.  This contradicts one of the main goals of C++0x, to make
+it simpler, more consistent, and easier to teach.</P>
+
+<P><B>Rationale (July, 2009):</B></P>
+
+<P>The CWG reaffirmed its early decision.  In general, templates will
+need to be written differently for reference and non-reference type
+parameters.  Also, the Standard library provides a facility,
+<TT>std::remove_reference</TT>, that can be used easily for such
+cases.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2367</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2367"></A><H4>2367.
+  
+Lambdas in default arguments vs the ODR
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-11-10<BR>
+
+
+<P>According to 6.3 [<A href="https://wg21.link/basic.def.odr#6.5">basic.def.odr</A>] bullet 6.5,</P>
+
+<UL>
+<LI>
+
+<P>in each definition of <TT>D</TT>, a default argument used by an (implicit or
+explicit) function call is treated as if its token sequence were present in
+the definition of <TT>D</TT>; that is, the default argument is subject to the
+requirements described in this paragraph (and, if the default argument has
+subexpressions with default arguments, this requirement applies
+recursively)</P>
+</LI>
+
+</UL>
+
+<P>However, this rule is insufficient to handle a case like:</P>
+
+<PRE>
+  struct A {
+    template&lt;typename T&gt; A(T);
+  };
+  void f(A a = []{});
+  inline void g() {
+    f();
+  }
+</PRE>
+
+<P>This should be an ODR violation, because the call to f() will invoke a
+different specialization of the constructor template in each translation
+unit, but it is not, because the rule says this example is equivalent
+to:</P>
+
+<PRE>
+  inline void g() {
+   f([]{});
+  }
+</PRE>
+
+<P>which is not an ODR violation, since the type of the closure object
+will be the same in every translation unit (9.2.8 [<A href="https://wg21.link/dcl.inline#6">dcl.inline</A>] paragraph 6)
+..</P>
+
+<P><B>Notes from the October, 2018 teleconference:</B></P>
+
+This will be addressed by work already underway to rework the
+relationship between lambdas and the ODR.
+
+
+<P><B>Rationale (February, 2021):</B></P>
+
+<P>The resolution of <A HREF="2300.html">issue 2300</A>
+makes clear that this example is an ODR violation.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

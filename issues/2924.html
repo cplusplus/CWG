@@ -1,0 +1,373 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2924</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2924"></A><H4>2924.
+  
+Undefined behavior during constant evaluation
+</H4>
+<B>Section: </B>3.65&#160; [<A href="https://wg21.link/defns.undefined">defns.undefined</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-04<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From editorial issue
+<A HREF="https://github.com/cplusplus/draft/issues/7042">#7042</A>
+and submission
+<A HREF="https://github.com/cplusplus/CWG/issues/595">#595</A>.)</P>
+
+<P>Subclause 3.65 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] states:</P>
+
+<BLOCKQUOTE>
+
+[Note 1 to entry: ... Evaluation of a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
+specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>However, 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8
+excludes <TT>[[noreturn]]</TT> and <TT>[[assume]]</TT>; see also
+7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 3.65 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+[Note 1 to entry: ... Evaluation of a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
+specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]<INS>, excluding
+9.12 [<A href="https://wg21.link/dcl.attr">dcl.attr</A>]</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-09-13</B></P>
+
+<P>Admitting unbounded core-language undefined behavior in constant
+expressions is to be avoided.  The quoted note is correct; the
+semantics of <TT>[[noreturn]]</TT> and <TT>[[assume]]</TT> need to be
+clarified.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated. If the converted expression would
+evaluate to true at the point where the assumption appears <INS>or if
+the assumption is evaluated in a context that is manifestly
+constant-evaluated</INS>, the assumption has no effect.  Otherwise,
+the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute<INS>, the function call
+is evaluated in a context that is not manifestly constant-evaluated
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</INS> and <TT>f</TT> eventually
+returns, the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-09-27</B></P>
+
+<P>The suggested resolution is circular with the rules in
+7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated. If the converted expression would
+evaluate to true at the point where the assumption appears, the
+assumption has no effect.  Otherwise, <INS>outside of an evaluation to
+determine whether an expression is a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</INS> the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute<INS>, the function call
+is evaluated outside of an evaluation to determine whether an
+expression is a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</INS> and <TT>f</TT> eventually returns,
+the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-10-11</B></P>
+
+<P>Implementations have two options: Either a violation of an
+attribute causes an expressions not to be a constant expression,
+leading to runtime undefined behavior, or the attribute has no effect
+during constant evaluation.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">It is implementation-defined whether <I>E</I> is a core
+constant expression in the situations specified in
+9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>] and 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>].
+</P>
+
+<P>It is unspecified whether E is a core constant expression if E
+satisfies the constraints of a core constant expression, but
+evaluation of E would evaluate</P>
+<UL>
+<LI>an operation that has undefined behavior as specified in
+Clause 16 [<A href="https://wg21.link/library">library</A>] through Clause 33 [<A href="https://wg21.link/exec">exec</A>]<DEL>,</DEL>
+<INS>or</INS>
+</LI>
+<LI>an invocation of the va_start macro
+(17.13.2 [<A href="https://wg21.link/cstdarg.syn">cstdarg.syn</A>])<DEL>,</DEL><INS>.</INS>
+</LI>
+<LI class="del">a call to a function that was previously declared with
+the noreturn attribute (9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>]) and that call
+returns to its caller, or</LI>
+<LI class="del">a statement with an assumption (9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]) whose
+converted <I>conditional-expression</I>, if evaluated where the
+assumption appears, would not disqualify E from being a core constant
+expression and would not evaluate to true.  [<I>Note 5:</I> E is not
+disqualified from being a core constant expression if the hypothetical
+evaluation of the converted <I>conditional-expression</I> would
+disqualify E from being a core constant expression. &#8212;<I>end
+note</I>]</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated.
+<UL>
+<LI>If the converted expression would evaluate to true at the point
+where the assumption appears, the assumption has no effect.</LI>
+<LI class="ins">Otherwise, if the statement with the assumption would
+be evaluated as part of an evaluation of an expression <I>E</I> that
+satisfies the constraints of a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]):
+<UL>
+<LI>If the converted expression, evaluated at the point where the
+assumption appears, would disqualify <I>E</I> from being a core
+constant expression, the assumption is ignored.</LI>
+<LI>Otherwise, it is implementation-defined whether <I>E</I> is a core
+constant expression; if <I>E</I> is evaluated as a core constant
+expression, the assumption has no effect.</LI>
+</UL>
+</LI>
+<LI>Otherwise, the behavior is undefined.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute and <TT>f</TT>
+eventually returns<INS>:</INS>
+<UL>
+<LI class="ins">If the function call would be part of an evaluation of
+an expression <I>E</I> that satisfies the constraints of a core
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), it is
+implementation-defined whether <I>E</I> is a core constant expression;
+if <I>E</I> is evaluated as a core constant expression, the attribute
+has no effect.</LI>
+<LI>
+<INS>Otherwise</INS>, the behavior is undefined.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-10-25</B></P>
+
+<P>CWG prefers an approach suggested by Richard Smith that defines a
+new term "runtime undefined behavior".</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-08):</B></P>
+
+<OL>
+<LI>
+<P>Add to Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>
+<B>constant evaluation</B> [defns.const.eval]</P>
+<P>evaluation that is performed as part of evaluating an expression as a core constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</P>
+
+<P>
+<B>runtime-undefined behavior</B> [defns.undefined.runtime]</P>
+<P>behavior that is undefined except when it occurs during constant evaluation</P>
+<P>[Note 1 to entry: During constant evaluation,
+<UL>
+<LI>it is
+implementation-defined whether runtime-undefined behavior results in
+the expression being deemed non-constant (as specified in
+7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and</LI>
+<LI>runtime-undefined behavior has
+no other effect.]</LI>
+</UL>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>an operation that would have undefined or erroneous behavior as
+specified in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]<DEL>, excluding 9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]
+and 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>]</DEL>;
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph after 7.7 [<A href="https://wg21.link/expr.const#5">expr.const</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+It is implementation-defined whether <I>E</I> is a core constant expression
+if <I>E</I> satisfies the constraints of a core constant expression, but
+evaluation of <I>E</I> has runtime-undefined behavior.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+<P>It is unspecified whether E is a core constant expression if E
+satisfies the constraints of a core constant expression, but
+evaluation of E would evaluate</P>
+<UL>
+<LI>an operation that has undefined behavior as specified in
+Clause 16 [<A href="https://wg21.link/library">library</A>] through Clause 33 [<A href="https://wg21.link/exec">exec</A>]<DEL>,</DEL>
+<INS>or</INS>
+</LI>
+<LI>an invocation of the va_start macro
+(17.13.2 [<A href="https://wg21.link/cstdarg.syn">cstdarg.syn</A>])<DEL>,</DEL><INS>.</INS>
+</LI>
+<LI class="del">a call to a function that was previously declared with
+the noreturn attribute (9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>]) and that call
+returns to its caller, or</LI>
+<LI class="del">a statement with an assumption (9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]) whose
+converted <I>conditional-expression</I>, if evaluated where the
+assumption appears, would not disqualify E from being a core constant
+expression and would not evaluate to true.  [<I>Note 5:</I> E is not
+disqualified from being a core constant expression if the hypothetical
+evaluation of the converted <I>conditional-expression</I> would
+disqualify E from being a core constant expression. &#8212;<I>end
+note</I>]</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If the converted expression would evaluate to true at the point
+where the assumption appears, the assumption has no
+effect. Otherwise, <DEL>the behavior is
+undefined</DEL> <INS>evaluation of the assumption has
+runtime-undefined behavior</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function f is <DEL>called</DEL> <INS>invoked</INS> where f was
+previously declared with the noreturn attribute
+and <DEL>f</DEL> <INS>that invocation</INS> eventually returns, the
+behavior is <INS>runtime-</INS>undefined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

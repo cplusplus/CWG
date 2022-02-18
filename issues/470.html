@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 470</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="470"></A><H4>470.
+  
+Instantiation of members of an explicitly-instantiated class template
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matt Austern
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 May 2004<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+
+<P>13.9.3 [<A href="https://wg21.link/temp.explicit#7">temp.explicit</A>] paragraph 7 says,</P>
+
+<BLOCKQUOTE>
+The explicit instantiation of a class template specialization
+implies the instantiation of all of its members not previously
+explicitly specialized in the translation unit containing the
+explicit instantiation.
+</BLOCKQUOTE>
+
+<P>It's not clear whether this &#8220;implied&#8221;
+instantiation is implicit or explicit instantiation.  It makes a
+difference in cases like the following:</P>
+
+<PRE>
+    template &lt;typename T&gt; struct foo {
+        struct bar { };
+    };
+
+    template struct foo&lt;int&gt;;         // #1
+
+    template struct foo&lt;int&gt;::bar;    // #2
+</PRE>
+
+<P>If the instantiation of <TT>foo&lt;int&gt;::bar</TT> implied
+by <TT>#1</TT> is implicit, the explicit instantiation in
+<TT>#2</TT> is well-formed.  Otherwise, <TT>#2</TT> violates the
+requirement in 13.9 [<A href="https://wg21.link/temp.spec">temp.spec</A>] that</P>
+
+<BLOCKQUOTE>
+No program shall explicitly instantiate any template more than
+once ... for a given set of <I>template-argument</I>s.
+</BLOCKQUOTE>
+
+<P>It's also unclear whether the implied instantiation applies
+only to direct members of the class template or to inherited
+members, as well.</P>
+
+<P>
+<U>John Spicer:</U> I have always interpreted this as meaning
+only the members declared in the class, not those inherited from
+other classes.  This is what EDG does, and appears to be what
+g++, Microsoft and Sun do, too.  I also think this is the correct
+thing for the Standard to require.  If I were to derive a class
+from a class in the standard library, an explicit instantiation
+of my class should not cause the explicit instantiation of things
+in the standard library (because the library might provide such
+explicit instantiations, thus causing my program to run afoul of
+the "can't instantiate more than once" rule).</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Change 13.9.3 [<A href="https://wg21.link/temp.explicit#7">temp.explicit</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+The explicit instantiation of a class template specialization
+<DEL>implies the instantiation of all</DEL> <INS>also explicitly
+instantiates each</INS> of its members <DEL>not</DEL> <INS>(not including
+members inherited from base classes) whose definition is visible at
+the point of instantiation and that has not been</INS> previously
+explicitly specialized in the translation unit containing the explicit
+instantiation.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

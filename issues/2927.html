@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2927</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2927"></A><H4>2927.
+  
+Unclear status of translation unit with <TT>module</TT> keyword
+</H4>
+<B>Section: </B>15.1&#160; [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Chuanqi Xu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-15<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  using module = int;
+  module i;
+  int foo() {
+    return i;
+  }
+</PRE>
+
+<P>Is this a valid translation unit?</P>
+
+<P>It is not a valid <I>module-file</I>, because the translation unit
+does not start with <TT>module</TT> or <TT>export module</TT>
+(15.4 [<A href="https://wg21.link/cpp.module">cpp.module</A>]).  It is also not a valid
+traditional <I>preprocessing-file</I> (15.1 [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]),
+because <TT>module i</TT> is considered a preprocessing directive
+(15.1 [<A href="https://wg21.link/cpp.pre#1.3">cpp.pre</A>] bullet 1.3, which is never
+a <I>text-line</I> (15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2):
+</P>
+
+<BLOCKQUOTE>
+
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token. ...
+
+</BLOCKQUOTE>
+
+<P>A clarifying note would be appreciated.</P>
+
+<P><U>Possible resolution (August, 2024):</U></P>
+
+<P>Change in 15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token.
+<INS>[ Note: A source line starting
+with <TT>module</TT> <I>identifier</I> is always interpreted as a
+preprocessing directive, not as a
+<I>text-line</I>, even if parsing the source file as a
+<I>preprocessing-file</I> subsequently fails.  -- end note ]</INS>
+</P>
+
+<P>A sequence of preprocessing tokens is only a
+<I>conditionally-supported-directive</I> if ...</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-09-13</B></P>
+
+<P>A source line starting with <TT>module</TT> <I>identifier</I>
+appearing in a macro argument may or may not be interpreted as a
+preprocessing directive (15.6.2 [<A href="https://wg21.link/cpp.subst#13">cpp.subst</A>] paragraph 13), thus
+the note as written is incorrect.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-27):</B></P>
+
+<P>Change in 15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token.
+<INS>[ Example:</INS>
+</P>
+
+<PRE class="ins">
+  using module = int;
+  module i;       // <SPAN CLASS="cmnt">not a <I>text-line</I> and not a <I>control-line</I></SPAN>
+  int foo() {
+    return i;
+  }
+</PRE>
+
+<INS>The example is not a valid <I>preprocessing-file</I>. -- end example]</INS>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

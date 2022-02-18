@@ -1,0 +1,336 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 459</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="459"></A><H4>459.
+  
+Hiding of template parameters by base class members
+</H4>
+<B>Section: </B>13.8.2&#160; [<A href="https://wg21.link/temp.local">temp.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Feb 2004<BR>
+
+
+<P>Currently, member of nondependent base classes hide
+references to template parameters in the definition
+of a derived class template.</P>
+
+<P>Consider the following example:</P>
+<PRE>
+   class B {
+      typedef void *It;    // (1)
+      // ...
+    };
+
+    class M: B {};
+
+    template&lt;typename&gt; X {};
+
+    template&lt;typename It&gt; struct S   // (2)
+        : M, X&lt;It&gt; {   // (3)
+      S(It, It);   // (4)
+      // ...
+    };
+</PRE>
+<P>As the C++ language currently stands, the name "It"
+in line (3) refers to the template parameter declared
+in line (2), but the name "It" in line (4) refers to
+the typedef in the private base class (declared in
+line (1)).</P>
+
+<P>This situation is both unintuitive and a hindrance
+to sound software engineering.  (See also the Usenet
+discussion at http://tinyurl.com/32q8d .)  Among
+other things, it implies that the private section
+of a base class may change the meaning of the derived
+class, and (unlike other cases where such things
+happen) there is no way for the writer of the derived
+class to defend the code against such intrusion (e.g.,
+by using a qualified name).</P>
+
+<P>Changing this can break code that is valid today.
+However, such code would have to:
+<OL>
+<LI>
+name a template parameter and not use it
+         after the opening brace, and
+</LI>
+<LI>
+use that same name to access a base-class
+         name within the braces.
+</LI>
+</OL>
+I personally have no qualms breaking such a program.</P>
+
+<P>It has been suggested to make situations like these
+ill-formed.  That solution is unattractive however
+because it still leaves the writer of a derived class
+template without defense against accidental name
+conflicts with base members.  (Although at least the
+problem would be guaranteed to be caught at compile
+time.)  Instead, since just about everyone's intuition
+agrees, I would like to see the rules changed to
+make class template parameters hide members of the
+same name in a base class.</P>
+
+<P>See also <A HREF="458.html">issue 458</A>.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>We have some sympathy for a change, but the current rules fall
+straightforwardly out of the lookup rules, so they're not
+&#8220;wrong.&#8221; Making private members invisible also would solve
+this problem.  We'd be willing to look at a paper proposing that.</P>
+
+<P><B>Additional discussion (April, 2005):</B></P>
+
+
+
+<P>
+<U>John Spicer</U>: Base class members are more-or-less treated as
+members of the class, [so] it is only natural that the base [member]
+would hide the template parameter.</P>
+
+<P>
+<U>Daveed Vandevoorde</U>: Are base class members really
+&#8220;more or less&#8221; members of the class from a lookup
+perspective?  After all, derived class members can hide base class
+members of the same name.  So there is some pretty definite
+boundary between those two sets of names.  IMO, the template
+parameters should either sit between those two sets, or they
+should (for lookup purposes) be treated as members of the class
+they parameterize (I cannot think of a practical difference
+between those two formulations).</P>
+
+<P>
+<U>John Spicer</U>: How is [hiding template parameters]
+different from the fact that namespace members can be hidden
+by private parts of a base class?  The addition of <TT>int C</TT>
+to <TT>N::A</TT> breaks the code in namespace <TT>M</TT> in this
+example:</P>
+
+<PRE>
+    namespace N {
+       class A {
+    private:
+         int C;
+       };
+    }
+
+    namespace M {
+       typedef int C;
+       class B : public N::A {
+         void f() {
+             C c;
+         }
+       };
+    }
+</PRE>
+
+<P>
+<U>Daveed Vandevoorde</U>: C++ has a mechanism in place to handle
+such situations: qualified names.  There is no such mechanism in place
+for template parameters.</P>
+
+<P>
+<U>Nathan Myers</U>: What I see as obviously incorrect ... is
+simply that a name defined right where I can see it, and directly
+attached to the textual scope of <TT>B</TT>'s class body, is ignored
+in favor of something found in some other file.  I don't care that
+<TT>C1</TT> is defined in <TT>A</TT>, I have a <TT>C1</TT> right
+here that I have chosen to use.  If I want <TT>A::C1</TT>, I can
+say so.</P>
+
+<P>I doubt you'll find any regular C++ coder who doesn't find the
+standard behavior bizarre.  If the meaning of any code is changed
+by fixing this behavior, the overwhelming majority of cases will
+be mysterious bugs magically fixed.</P>
+
+<P>
+<U>John Spicer</U>: I have not heard complaints that this is
+actually a cause of problems in real user code.  Where is the
+evidence that the status quo is actually causing problems?</P>
+
+<P>In this example, the <TT>T2</TT> that is found is the one from
+the base class.  I would argue that this is natural because base
+class members are found as part of the lookup in class <TT>B</TT>:</P>
+
+<PRE>
+    struct A {
+             typedef int T2;
+    };
+    template &lt;class T2&gt; struct B : public A {
+             typedef int T1;
+             T1 t1;
+             T2 t2;
+    };
+</PRE>
+
+<P>This rule that base class members hide template parameters was
+formalized about a dozen years ago because it fell out of the
+principle that base class members should be found at the same
+stage of lookup as derived class members, and that to do otherwise
+would be surprising.</P>
+
+<P>
+<U>Gabriel Dos Reis</U>: The bottom line is that:</P>
+
+<OL>
+
+<LI>the proposed change is a <B>silent</B> change of meaning;</LI>
+
+<LI>the proposed change does not make the language any more regular;
+the current behavior is consistent with everything else, however
+&#8220;surprising&#8221; that might be;</LI>
+
+<LI>the proposed change does have its own downsides.</LI>
+
+</OL>
+
+<P>Unless presented with real major programming problems the current
+rules exhibit, I do not think the simple rule &#8220;scopes
+nest&#8221; needs a change that silently mutates program meaning.</P>
+
+<P>
+<U>Mike Miller</U>: The rationale for the current specification is
+really very simple:</P>
+
+<OL>
+
+<LI>&#8220;Unless redeclared in the derived class, members of a base
+class are also considered to be members of the derived class.&#8221;
+(11.7 [<A href="https://wg21.link/class.derived#2">class.derived</A>] paragraph 2)</LI>
+
+<LI>In class scope, members hide nonmembers.</LI>
+
+</OL>
+
+<P>That's it.  Because template parameters are not members, they
+are hidden by member names (whether inherited or not).  I don't find
+that &#8220;bizarre,&#8221; or even particularly surprising.</P>
+
+<P>I believe these rules are straightforward and consistent, so I
+would be opposed to changing them.  However, I am not unsympathetic
+toward Daveed's concern about name hijacking from base classes.  How
+about a rule that would make a program ill-formed if a direct or
+inherited member hides a template parameter?</P>
+
+<P>Unless this problem is a lot more prevalent than I've heard so
+far, I would not want to change the lookup rules; making this kind of
+collision a diagnosable error, however, would prevent hijacking
+without changing the lookup rules.</P>
+
+<P>
+<U>Erwin Unruh</U>: I have a different approach that is consistent
+and changes the interpretation of the questionable code.  At present
+lookup is done in this sequence:</P>
+
+<UL>
+block scope<BR>
+derived class scope<BR>
+base class scope<BR>
+template parameters<BR>
+namespace scope
+</UL>
+
+<P>If we change this order to</P>
+
+<UL>
+template parameters<BR>
+block scope<BR>
+derived class scope<BR>
+base class scope<BR>
+namespace scope<BR>
+</UL>
+
+<P>it is still consistent in that no lookup is placed between the base
+class and the derived class.  However, it introduces another
+inconsistency: now scopes do not nest the same way as curly braces
+nest &#8212; but base classes are already inconsistent this way.</P>
+
+<P>
+<U>Nathan Myers</U>: This looks entirely satisfactory.  If even this
+seems like too big a change, it would suffice to say that finding a
+different name by this search order makes the program ill-formed.
+Of course, a compiler might issue only a portability warning in that
+case and use the name found Erwin's way, anyhow.</P>
+
+<P>
+<U>Gabriel Dos Reis</U>: It is a simple fact, even without
+templates, that a writer of a derived class cannot protect himself
+against declaration changes in the base class.</P>
+
+<P>
+<U>Richard Corden</U>: If a change is to be made, then making it
+ill-formed is better than just changing the lookup rules.</P>
+
+<PRE>
+    struct B
+    {
+      typedef int T;
+      virtual void bar (T const &amp; );
+    };
+
+    template &lt;typename T&gt;
+    struct D : public B
+    {
+      virtual void bar (T const &amp; );
+    };
+
+    template class D&lt;float&gt;;
+</PRE>
+
+<P>I think changing the semantics of the above code silently would
+result in very difficult-to-find problems.</P>
+
+<P>
+<U>Mike Miller</U>: Another case that may need to be considered in
+deciding on Erwin's suggestion or the &#8220;ill-formed&#8221;
+alternative is the treatment of <TT>friend</TT> declarations
+described in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10:</P>
+
+<PRE>
+    struct A {
+        typedef int T;
+        void f(T);
+    };
+    template&lt;typename T&gt; struct B {
+        friend void A::f(T);  //<SPAN CLASS="cmnt"> Currently </SPAN>T<SPAN CLASS="cmnt"> is </SPAN>A::T
+    };
+</PRE>
+
+<P><B>Notes from the October, 2005 meeting:</B></P>
+
+<P>The CWG decided not to consider a change to the existing rules at
+this time without a paper exploring the issue in more detail.</P>
+
+<P><B>CWG 2023-12-01</B></P>
+
+<P>CWG has no consensus to pursue a change in this area, without prejudice to a potential future paper addressed to EWG.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

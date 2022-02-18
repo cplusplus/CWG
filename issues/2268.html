@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2268</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2268"></A><H4>2268.
+  
+Unions with mutable members in constant expressions revisited
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-05-26<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>
+<A HREF="2004.html">Issue 2004</A> concerns this example:</P>
+
+<PRE>
+  union U { int a; mutable int b; };
+  constexpr U u1 = {1};
+  int k = (u1.b = 2);
+  constexpr U u2 = u1; 
+</PRE>
+
+<P>Clearly this must be ill-formed. But issue 2004 goes too far
+by making the copy and move operations of <TT>U</TT> non-constexpr.
+This breaks reasonable code such as:</P>
+
+<PRE>
+  constexpr int f() {
+    U u = {1};
+    U v = u;
+    return v.a;
+  } 
+</PRE>
+
+<P><B>Proposed resolution (February, 2017):</B></P>
+
+<OL>
+<LI><P>Add the following as a new bullet following
+7.7 [<A href="https://wg21.link/expr.const#2.8">expr.const</A>] bullet 2.8</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>conditional-expression</I> <TT>e</TT> is a <I>core constant
+expression</I> unless the evaluation of <TT>e</TT> , following the rules of
+the abstract machine (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the
+following expressions:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) that is
+applied to a glvalue that refers to a non-active member of a union or a
+subobject thereof;</P></LI>
+
+<LI><P><INS>an invocation of an implicitly-defined copy/move constructor
+or copy/move assignment operator for a union whose active member (if any)
+is mutable, unless the lifetime of the union object began within the
+evaluation of <TT>e</TT>;</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete bullet 3.2 in 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]:</P></LI>
+
+<UL>
+<LI><P><DEL>for a defaulted copy/move assignment, the class of which it
+is a member shall not have a mutable subobject that is a variant
+member;</DEL></P></LI>
+
+</UL>
+
+<LI><P>Delete bullet 4.2 in 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]:</P></LI>
+
+<UL>
+<LI><P><DEL>for a defaulted copy/move constructor, the class shall not
+have a mutable subobject that is a variant member;</DEL></P></LI>
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

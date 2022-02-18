@@ -1,0 +1,148 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1395</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1395"></A><H4>1395.
+  
+Partial ordering of variadic templates reconsidered
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-09-21<BR>
+
+
+<P>[Moved to DR at the November, 2016 meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="692.html">issue 692</A> (found in
+document N3281) made the following example ambiguous and thus
+ill-formed:</P>
+
+<PRE>
+    template&lt;class T&gt;
+    void print(ostream &amp;os, const T &amp;t) {
+        os &lt;&lt; t;
+    }
+
+    template &lt;class T, class... Args&gt;
+    void print(ostream &amp;os, const T &amp;t, const Args&amp;... rest) {
+        os &lt;&lt; t &lt;&lt; ", ";
+        print(os, rest...);
+    }
+
+    int main() {
+        print(cout, 42);
+        print(cout, 42, 1.23);
+    }
+</PRE>
+
+<P>This pattern seems fairly intuitive; is it reason to reconsider or
+modify the outcome of <A HREF="692.html">issue 692</A>?</P>
+
+<P>(See also <A HREF="1432.html">issue 1432</A>.)</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>CWG agreed that the example should be accepted, handling this case
+as a late tiebreaker, preferring an omitted parameter over a parameter
+pack.</P>
+
+<P><B>Additional note (March, 2013):</B></P>
+
+<P>For another example:</P>
+
+<PRE>
+  template&lt;typename ...T&gt; int f(T*...) {
+    return 1;
+  }
+  template&lt;typename T&gt; int f(const T&amp;) {
+    return 2;
+  }
+  int main() {
+    if (f((int*)0) != 1) {
+       return 1;
+    }
+    return 0;
+  }
+</PRE>
+
+<P>This worked as expected prior to the resolution of
+<A HREF="692.html">issue 692</A>.</P>
+
+<P><B>Proposed resolution (June, 2016):</B></P>
+
+<OL>
+<LI><P>Change 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#8">temp.deduct.partial</A>] paragraph 8 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If <TT>A</TT> was transformed from a function parameter pack
+and <TT>P</TT> is not a parameter pack, type deduction fails.  Otherwise,
+using</DEL> <INS>Using</INS> the resulting types <TT>P</TT> and <TT>A</TT>,
+the deduction is then done as described in
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]. If <TT>P</TT> is a function parameter pack,
+the type <TT>A</TT> of each remaining parameter type of the argument
+template is compared with the type <TT>P</TT> of the <I>declarator-id</I>
+of the function parameter pack. Each comparison deduces template arguments
+for subsequent positions in the template parameter packs expanded by the
+function parameter pack. <INS>Similarly, if <TT>A</TT> was transformed from a
+function parameter pack, it is compared with each remaining parameter type
+of the parameter template.</INS> If deduction succeeds for a given type,
+the type from the argument template is considered to be at least as
+specialized as the type from the parameter template. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#10">temp.deduct.partial</A>] paragraph 10:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Function template <TT>F</TT> is at least as specialized as function
+template <TT>G</TT> if, for each pair of types used to determine the
+ordering, the type from <TT>F</TT> is at least as specialized as the type
+from <TT>G</TT>. <TT>F</TT> is more specialized than <TT>G</TT>
+if <TT>F</TT> is at least as specialized as <TT>G</TT> and <TT>G</TT> is
+not at least as specialized as <TT>F</TT>.</P>
+
+<P><INS>If, after considering the above, function template <TT>F</TT> is at
+least as specialized as function template <TT>G</TT> and vice-versa, and if
+<TT>G</TT> has a trailing paramter pack for which <TT>F</TT> does not have a
+corresponding parameter, and if <TT>F</TT> does not have a trailing
+parameter pack, then <TT>F</TT> is more specialized
+than <TT>G</TT>. </INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1825.html">issue 1825</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

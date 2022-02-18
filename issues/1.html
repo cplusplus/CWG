@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1"></A><H4>1.
+  
+What if two using-declarations refer to the same function but the declarations introduce different default-arguments?
+</H4>
+<B>Section: </B>9.3.4.7&#160; [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Gibbons
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<P>6.4 [<A href="https://wg21.link/basic.scope#4">basic.scope</A>] paragraph 4
+says:</P>
+<BLOCKQUOTE>
+Given a set of declarations in a single declarative region, each of
+which specifies the same unqualified name,
+<UL><LI>
+they shall all refer to the same entity, or all refer to functions ...
+</LI></UL>
+</BLOCKQUOTE>
+9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#9">dcl.fct.default</A>] paragraph 9
+says:
+<BLOCKQUOTE>When a declaration of a function is introduced by way of a
+<I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]),
+any default argument information associated with the
+declaration is imported as well.</BLOCKQUOTE>
+This is not really clear regarding what happens in the following case:
+<PRE>
+    namespace A {
+            extern "C" void f(int = 5);
+    }
+    namespace B {
+            extern "C" void f(int = 7);
+    }
+
+    using A::f;
+    using B::f;
+
+    f(); // ???
+</PRE>
+<B>Proposed resolution (10/00):</B>
+
+<P>Add the following at the end of 12.2.4 [<A href="https://wg21.link/over.match.best">over.match.best</A>]:</P>
+
+<BLOCKQUOTE>
+If the best viable function resolves to a function for which
+multiple declarations were found, and if at least two of these
+declarations &#8212; or
+the declarations they refer to in the case of
+<I>using-declaration</I>s &#8212; specify
+a default argument that made the function viable, the program is ill-formed.
+[<I>Example:</I>
+<BR><TT>&#160;&#160;&#160; namespace A {</TT>
+<BR><TT>&#160;&#160;&#160;&#160;&#160;&#160; extern "C" void f(int = 5);</TT>
+<BR><TT>&#160;&#160;&#160; }</TT>
+<BR><TT>&#160;&#160;&#160; namespace B {</TT>
+<BR><TT>&#160;&#160;&#160;&#160;&#160;&#160; extern "C" void f(int = 5);</TT>
+<BR><TT>&#160;&#160;&#160; }</TT>
+<P>
+<TT>&#160;&#160;&#160; using A::f;</TT>
+<BR><TT>&#160;&#160;&#160; using B::f;</TT>
+</P>
+<P>
+<TT>&#160;&#160;&#160; void use() {</TT>
+<BR><TT>&#160;&#160;&#160;&#160;&#160;&#160; f(3);&#160;&#160;&#160;&#160;&#160;&#160;
+// OK, default argument was not used for viability</TT>
+<BR><TT>&#160;&#160;&#160;&#160;&#160;&#160; f();&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+// Error: found default argument twice</TT>
+<BR><TT>&#160;&#160;&#160; }</TT>
+</P>
+<P>&#160; &#8212;<I>end example</I>]</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

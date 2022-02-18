@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 900</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="900"></A><H4>900.
+  
+Lifetime of temporaries in range-based <TT>for</TT>
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Thomas J. Gritzan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2009-05-12<BR>
+
+
+<P>[Accepted at the November, 2022 meeting as part of paper P2718R0.]</P>
+
+<P>Temporaries created in the <I>expression</I> of the range-based
+<TT>for</TT> statement are not given special treatment, so they only
+persist to the end of the expression.  This can lead to undefined
+behavior as <TT>__range</TT> and the iterators are used in the
+expansion of the statement.  Such temporaries should have their
+lifetimes extended until the end of the statement.</P>
+
+<P><B>Rationale (October, 2009):</B></P>
+
+<P>In the expansion, <I>expression</I> is used to initialize a
+reference.  If <I>expression</I> is a temporary, its lifetime is
+thus extended to that of the reference, which is the entire <TT>for</TT>
+statement.</P>
+
+<P><B>Additional notes, February, 2017:</B></P>
+
+<P>Posting from Daniel Frey to the <TT>std-discussion</TT> group:</P>
+
+<P>Some people have tried</P>
+
+<PRE>
+  namespace detail {
+    template&lt; class C &gt; struct reverse_range {
+      explicit reverse_range (C&amp; _c) : c(_c) {}
+      auto begin () { using std::rbegin; return rbegin(c); }
+      auto end () { using std::rend; return rend(c); }
+     private:
+      C&amp; c;
+    };
+  }
+
+
+  template&lt; class C &gt; auto reverse (C&amp; c) {
+    return detail::reverse_range&lt;C&gt;{c};
+  }
+</PRE>
+
+<P>In an attempt to allow:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> some function</SPAN>
+  std::vector&lt;int&gt; foo();
+
+  //<SPAN CLASS="cmnt"> correct usage</SPAN>
+  auto v = foo();
+  for( auto i : reverse(v) ) { std::cout &lt;&lt; i &lt;&lt; std::endl; }
+
+  //<SPAN CLASS="cmnt"> problematic usage</SPAN>
+  for( auto i : reverse(foo()) ) { std::cout &lt;&lt; i &lt;&lt; std::endl; }
+</PRE>
+
+<P>The problem is that the temporary returned by <TT>foo()</TT> is
+destructed before the loop starts executing. [This issue] was supposed
+to be about that, but considers only the top-level temporary.</P>
+
+<P>It might be reasonable to make the range-based <TT>for</TT> treat
+the <I>for-range-initializer</I> like a function argument: all
+temporaries of the expression should be destructed after the execution
+of the loop. This also removes the only place where binding a reference
+to a temporary extends its lifetime implicitly, unseen by the user.</P>
+
+<P><B>Notes from the February, 2017 meeting:</B></P>
+
+<P>CWG was inclined to accept the suggested change but felt that
+EWG involvement was necessary prior to such a decision.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

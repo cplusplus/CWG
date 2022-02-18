@@ -1,0 +1,203 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 647</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="647"></A><H4>647.
+  
+Non-constexpr instances of constexpr constructor templates
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 Aug 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>According to 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a constexpr function
+template would fail to satisfy the requirements for a constexpr
+function, the <TT>constexpr</TT> specifier is ignored and the
+specialization is not a constexpr function.
+
+</BLOCKQUOTE>
+
+<P>One would expect to see a similar provision for an instantiated
+constructor template (because the requirements for a constexpr function
+[paragraph 3] are different from the requirements for a constexpr
+constructor [paragraph 4]), but there is none; constexpr constructor
+templates are not mentioned.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change the wording of 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5 as
+indicated:</P>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a constexpr function
+template would fail to satisfy the requirements for a constexpr
+function <INS>or constexpr constructor, as appropriate to the function
+template</INS>, the <TT>constexpr</TT> specifier is ignored and the
+specialization is not a constexpr function <INS>or constexpr
+constructor</INS>.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P><I>[Drafting note: This resolution goes beyond the problem
+described in the issue discussion, which is one aspect of the general
+failure of the existing wording to deal consistently with the
+distinctions between constexpr functions and constexpr
+constructors. The wording below attempts to rectify that problem
+systematically.]</I></P>
+
+<OL>
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#2">dcl.constexpr</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <TT>constexpr</TT> specifier used in <DEL>a function declaration</DEL>
+<INS>the declaration of a function that is not a constructor</INS>
+declares that function to be a <I>constexpr function</I>. Similarly, a
+<TT>constexpr</TT> specifier used in a constructor declaration
+declares that constructor to be a <I>constexpr
+constructor</I>. Constexpr functions and constexpr constructors are
+implicitly <TT>inline</TT> (9.2.3 [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]). <DEL>A constexpr
+function shall not be virtual (10.3).</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#3">dcl.constexpr</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The definition of a constexpr function shall satisfy the following
+constraints:</P>
+
+<UL>
+<LI><P><INS>it shall not be virtual (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>])</INS></P></LI>
+
+<LI><P>its return type shall be a literal type</P></LI>
+
+<LI><P>each of its parameter types shall be a literal type</P></LI>
+
+<LI>
+<P>its function-body  shall be a compound-statement  of the form</P>
+
+<UL>
+<TT>{ return</TT> <I>expression</I> <TT>; }</TT>
+</UL>
+
+<P>where <I>expression</I> is a potential constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</P>
+
+</LI>
+
+<LI><P>every implicit conversion used in converting <I>expression</I>
+to the function return type (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) shall be one of
+those allowed in a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).</P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The definition of a constexpr constructor shall satisfy the
+following constraints:</P>
+
+<UL>
+<LI><P><INS>each of its parameter types shall be a literal
+type</INS></P></LI>
+
+<LI><P><INS>its <I>function-body</I> shall not be a
+<I>function-try-block</I></INS></P></LI>
+
+<LI><P>the <I>compound-statement</I> of its <I>function-body</I> shall
+be empty</P></LI>
+
+<LI><P>every non-static data member and base class sub-object shall be
+initialized (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</P></LI>
+
+<LI><P>every constructor involved in initializing non-static data
+members and base class sub-objects <INS>invoked by a
+<I>mem-initializer</I></INS> shall be a constexpr constructor <DEL>invoked
+with potential constant expression arguments, if any.</DEL>
+</P></LI>
+
+<LI><P><INS>every constructor argument and full-expression in a
+<I>mem-initializer</I> shall be a potential constant
+expression</INS></P></LI>
+
+<LI><P><INS>every implicit conversion used in converting a constructor
+argument to the corresponding parameter type and converting a
+full-expression to the corresponding member type shall be one of those
+allowed in a constant expression.</INS></P></LI>
+
+</UL>
+
+<P>A trivial copy constructor is also a constexpr
+constructor. [<I>Example:</I> ...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the instantiated template specialization of a constexpr function
+template would fail to satisfy the requirements for a constexpr
+function <INS>or constexpr constructor</INS>, the <TT>constexpr</TT>
+specifier is ignored <DEL>and the specialization is not a constexpr
+function</DEL>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <TT>constexpr</TT> specifier <DEL>used in</DEL> <INS>for</INS> a non-static
+member function <DEL>definition</DEL> <INS>that is not a constructor</INS>
+declares that member function to be <TT>const</TT> (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]). [<I>Note:</I> ...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

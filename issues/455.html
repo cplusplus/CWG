@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 455</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="455"></A><H4>455.
+  
+Partial ordering and non-deduced arguments
+</H4>
+<B>Section: </B>12.2.4&#160; [<A href="https://wg21.link/over.match.best">over.match.best</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Rani Sharoni
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Jan 2004<BR>
+
+
+<P>
+It's not clear how overloading and partial ordering handle non-deduced pairs
+of corresponding arguments. For example:</P>
+<PRE>
+template&lt;typename T&gt;
+struct A { typedef char* type; };
+
+template&lt;typename T&gt; char* f1(T, typename A&lt;T&gt;::type);  // #1
+template&lt;typename T&gt; long* f1(T*, typename A&lt;T&gt;::type*); // #2
+
+long* p1 = f1(p1, 0); // #3
+</PRE>
+<P>I thought that #3 is ambiguous but different compilers disagree on that.
+Comeau C/C++ 4.3.3 (EDG 3.0.3) accepted the code, GCC 3.2 and BCC 5.5
+selected #1 while VC7.1+ yields ambiguity.</P>
+
+<P>I intuitively thought that the second pair should prevent overloading from
+triggering partial ordering since both arguments are non-deduced and has
+different types - (char*, char**). Just like in the following:</P>
+<PRE>
+template&lt;typename T&gt; char* f2(T, char*);   // #3
+template&lt;typename T&gt; long* f2(T*, char**); // #4
+
+long* p2 = f2(p2, 0); // #5
+</PRE>
+<P>In this case all the compilers I checked found #5 to be ambiguous.
+The standard and DR <A HREF="214.html">214</A> is not clear
+about how partial ordering handle such
+cases.</P>
+
+<P>I think that overloading should not trigger partial ordering (in step
+12.2.4 [<A href="https://wg21.link/over.match.best">over.match.best</A>]/1/5) if some candidates have
+non-deduced pairs with different
+(specialized) types. In this stage the arguments are already adjusted so no
+need to mention it (i.e. array to pointer). In case that one of the
+arguments is non-deuced then partial ordering should only consider the type
+from the specialization:</P>
+<PRE>
+template&lt;typename T&gt; struct B { typedef T type; };
+
+template&lt;typename T&gt; char* f3(T, T);                   // #7
+template&lt;typename T&gt; long* f3(T, typename B&lt;T&gt;::type); // #8
+
+char* p3 = f3(p3, p3); // #9
+</PRE>
+<P>According to my reasoning #9 should yield ambiguity since second pair is (T,
+long*). The second type (i.e. long*) was taken from the specialization
+candidate of #8.
+EDG and GCC accepted the code. VC and BCC found an ambiguity.</P>
+
+<P>
+<U>John Spicer:</U>
+There may (or may not) be an issue concerning whether nondeduced
+contexts are handled properly in the partial ordering rules.  In
+general, I think nondeduced contexts work, but we should walk through
+some examples to make sure we think they work properly.</P>
+
+<P>Rani's description of the problem suggests that he believes that
+partial ordering is done on the specialized types.  This is not
+correct.  Partial ordering is done on the templates themselves,
+independent of type information from the specialization.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>John Spicer will investigate further to see if any action is
+required.</P>
+
+<P>(See also <A HREF="885.html">issue 885</A>.)</P>
+
+
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>The second function parameter contains template parameters not
+deducible in its context, thus that parameter does not contribute to
+partial ordering.  There is no implementation divergence.  Close as
+NAD.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

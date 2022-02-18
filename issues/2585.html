@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2585</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2585"></A><H4>2585.
+  
+Name lookup for coroutine allocation
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Xu Chuanqi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-12<BR>
+
+
+<P>[Accepted at the July, 2022 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Allocator;
+
+  struct resumable::promise_type {
+    void* operator new(std::size_t sz, Allocator&amp;);
+    //<SPAN CLASS="cmnt"> ...</SPAN>
+  };
+  resumable foo() {
+    co_return;
+  }
+</PRE>
+
+<P>Subclause 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#9">dcl.fct.def.coroutine</A>] paragraph 9 specifies:</P>
+
+<BLOCKQUOTE>
+
+... The allocation function's name is looked up by searching for it in the
+scope of the promise type.
+<UL>
+<LI>If any declarations are found, overload resolution is performed on
+a function call created by assembling an argument list. The first
+argument is the amount of space requested, and has
+type <TT>std::size_t</TT>.  The lvalues p1 . . . pn are the succeeding
+arguments.
+</LI>
+<LI>Otherwise, a search is performed in the global scope.
+</LI>
+</UL>
+If no viable function is found (12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]), overload
+resolution is performed again on a function call created by passing
+just the amount of space required as an argument of
+type <TT>std::size_t</TT>.
+
+</BLOCKQUOTE>
+
+<P>Is the example ill-formed because <TT>resumable::promise_type</TT>
+is not viable, or is the example well-formed because the
+global <TT>operator new</TT> can be used?  There is implementation
+divergence.</P>
+
+<P>See also <A HREF="https://github.com/llvm/llvm-project/issues/54881">LLVM issue 54881</A>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-06-17):</B></P>
+
+<P>(updated according to 2022-05-20, 2022-06-03, and 2022-06-17 CWG
+guidance)</P>
+
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#9">dcl.fct.def.coroutine</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The allocation function's name is looked up by searching for it in
+the scope of the promise type.
+
+<UL>
+<LI>
+If <INS>the search finds</INS> any declarations <DEL>are found</DEL>,
+overload resolution is performed on a function call created
+by assembling an argument list. The first argument is the amount of
+space requested, and <DEL>has</DEL> <INS>is a prvalue of</INS> type <TT>std::size_t</TT>.  The lvalues p1
+... pn are the <DEL>succeeding</DEL> <INS>successive</INS> arguments.
+<DEL>Otherwise, a search is performed in the global scope.</DEL>
+If no
+viable function is found (12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]), overload
+resolution is performed again on a function call created by passing
+just the amount of space required as <DEL>an argument</DEL> <INS>a prvalue</INS> of
+type <TT>std::size_t</TT>.
+</LI>
+
+<LI>
+<INS>If the search finds no declarations, a search is performed in
+the global scope.  Overload resolution is performed on a function call
+created by passing the amount of space required as a prvalue of
+type <TT>std::size_t</TT>.</INS>
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,229 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 136</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="136"></A><H4>136.
+  
+Default arguments and friend declarations
+</H4>
+<B>Section: </B>9.3.4.7&#160; [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 July 1999<BR>
+
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#4">dcl.fct.default</A>] paragraph 4
+says,</P>
+
+<BLOCKQUOTE>
+For non-template functions, default arguments can be added in later
+declarations of a function in the same scope.  Declarations in
+different scopes have completely distinct sets of default arguments.
+That is, declarations in inner scopes do not acquire default arguments
+from declarations in outer scopes, and vice versa.
+</BLOCKQUOTE>
+
+It is unclear how this wording applies to friend function declarations.
+For example,
+
+<PRE>
+    void f(int, int, int=0);             // #1
+    class C {
+        friend void f(int, int=0, int);  // #2
+    };
+    void f(int=0, int, int);             // #3
+</PRE>
+
+Does the declaration at #2 acquire the default argument from #1, and
+does the one at #3 acquire the default arguments from #2?
+
+<P>There are several related questions involved with this issue:</P>
+
+<OL>
+<LI>Is the friend
+declaration in the scope of class C or in the surrounding namespace
+scope?
+
+<P>
+<U>Mike Miller</U>:
+9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#4">dcl.fct.default</A>] paragraph 4
+
+is speaking about the lexical location of the
+declaration...
+The friend declaration occurs in a different declarative region
+from the declaration at #1, so I would read [this paragraph] as saying that it
+starts out with a clean slate of default arguments.</P>
+
+<P>
+<U>Bill Gibbons</U>:
+Yes.  It occurs in a different region, although it declares a name
+in the same region (i.e. a redeclaration).  This is the same as with
+local externs and is intended to work the same way.  We decided that
+local extern declarations cannot add (beyond the enclosing block) new
+default arguments, and the same should apply to friend declarations.</P>
+
+<P>
+<U>John Spicer</U>:
+The question is whether [this paragraph]
+does (or should) mean declarations that appear in the same lexical
+scope or declarations that declare names in the same scope.  In my opinion,
+it really needs to be the latter.  It seems somewhat paradoxical to say
+that a friend declaration declares a function in namespace scope yet the
+declaration in the class still has its own attributes.  To make that work
+I think you'd have to make friends more like block externs that really do
+introduce a name into the scope in which the declaration is contained.</P>
+</LI>
+
+<LI>Should default arguments be permitted in friend function
+declarations, and what effect should they have?
+
+<P>
+<U>Bill Gibbons</U>:
+In the absence of a declaration visible in class scope to which
+they could be attached, default arguments on friend declarations
+do not make sense.
+[They should be] ill-formed, to prevent surprises.</P>
+
+<P>
+<U>John Spicer</U>:
+It is important that
+the following case work correctly:</P>
+
+<PRE>
+        class X {
+                friend void f(X x, int i = 1){}
+        };
+
+        int main()
+        {
+                X x;
+                f(x);
+        }
+</PRE>
+
+<P>In other words, a function first declared in a friend declaration must be
+permitted to have default arguments and those default arguments must be
+usable when the function is found by argument dependent lookup.  The reason
+that this is important is that it is common practice to <I>define</I> functions
+in friend declarations in templates, and that definition is the only place
+where the default arguments can be specified.</P>
+</LI>
+
+<LI>What restrictions should be placed on default argument usage with
+friend declarations?
+
+<P>
+<U>John Spicer</U>:
+We want to avoid instantiation side effects.  IMO, the way to do this
+would be to prohibit a friend declaration from providing default arguments
+if a declaration of that function is already visible.
+Once a function has had a default specified in a friend
+declaration it should not be possible to add defaults in another declaration
+be it a friend or normal declaration.</P>
+
+<P>
+<U>Mike Miller</U>:
+The position that seems most reasonable to me is to
+allow default arguments in friend declarations to be used in
+Koenig lookup, but to say that they are
+completely unrelated to default arguments in declarations in
+the surrounding scope; and to forbid use of a default argument
+in a call if more than one declaration in the overload set has
+such a default, as in the proposed resolution for
+<A HREF="1.html">issue 1</A>.</P>
+</LI>
+
+</OL>
+
+(See also issues
+<A HREF="21.html">21</A>,
+<A HREF="95.html">95</A>,
+<A HREF="138.html">138</A>,
+<A HREF="139.html">139</A>,
+<A HREF="143.html">143</A>,
+<A HREF="165.html">165</A>, and
+<A HREF="166.html">166</A>.)
+
+<P><B>Notes from 10/99 meeting:</B></P>
+
+<P>Four possible outcomes were identified:</P>
+
+<OL>
+
+<LI>If a friend declaration declares a default parameter, allow no
+other declarations of that function in the translation unit.</LI>
+
+<LI>Same as preceding, but only allow the friend declaration if it is
+also a definition.</LI>
+
+<LI>Disallow default arguments in friend declarations.</LI>
+
+<LI>Treat the default arguments in each friend declaration as a
+distinct set, causing an error if the call would be ambiguous.</LI>
+
+</OL>
+
+<P>The core group eliminated the first and fourth options from
+consideration, but split fairly evenly between the remaining two.</P>
+
+<P>A straw poll of the full committee yielded the following results
+(given as number favoring/could live with/"over my dead body"):</P>
+
+<OL>
+
+<LI>0/14/5</LI>
+
+<LI>8/13/5</LI>
+
+<LI>11/7/14</LI>
+
+<LI>7/10/9</LI>
+
+</OL>
+
+<P>Additional discussion is recorded in the "Record of Discussion" for
+the meeting, J16/99-0036 = WG21 N1212.  See also paper
+J16/00-0040 = WG21 N1263.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>In 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>], add following paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+If a friend declaration specifies a default argument expression,
+that declaration must be a definition and shall be the only declaration
+of the function or function template in the translation unit.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

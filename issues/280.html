@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 280</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="280"></A><H4>280.
+  
+Access and surrogate call functions
+</H4>
+<B>Section: </B>12.2.2.2.3&#160; [<A href="https://wg21.link/over.call.object">over.call.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Apr 2001<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>According to 12.2.2.2.3 [<A href="https://wg21.link/over.call.object#2">over.call.object</A>] paragraph 2, when
+the <I>primary-expression</I> <TT>E</TT> in the function call syntax
+evaluates to a class object of type "<I>cv</I> <TT>T</TT>", a
+surrogate call function corresponding to an appropriate conversion
+function declared in a direct or indirect base class <TT>B</TT> of
+<TT>T</TT> is included or not included in the set of candidate
+functions based on class <TT>B</TT> being accessible.</P>
+
+<P>For instance in the following code sample, as per the paragraph in
+question, the expression <TT>c(3)</TT> calls <TT>f2</TT>, instead of
+the construct being ill-formed due to the conversion function
+<TT>A::operator fp1</TT> being inaccessible and its corresponding
+surrogate call function providing a better match than the surrogate
+call function corresponding to <TT>C::operator fp2</TT>:</P>
+
+<PRE>
+    void  f1(int)  {   }
+    void  f2(float)  {   }
+    typedef void  (* fp1)(int);
+    typedef void  (* fp2)(float);
+
+    struct  A  {
+       operator fp1()
+       {   return  f1;   }
+    };
+
+    struct  B :  private A  {   };
+
+    struct  C :  B  {
+       operator  fp2()
+       {   return  f2;   }
+    };
+
+    int  main()
+    {
+       C   c;
+       c(3);  // f2 is called, instead of the construct being ill-formed.
+       return  0;
+    }
+</PRE>
+
+<P>The fact that the accessibility of a base class influences the
+overload resolution process contradicts the fundamental language rule
+(6.5 [<A href="https://wg21.link/basic.lookup#1">basic.lookup</A>] paragraph 1, and 12.2 [<A href="https://wg21.link/over.match#2">over.match</A>] paragraph 2) that access checks are applied only once
+name lookup and function overload resolution (if applicable) have
+succeeded.</P>
+
+<P><B>Notes from 4/02 meeting:</B></P>
+
+<P>There was some concern about whether 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>] (or
+anything else, for that matter) actually defines "ambiguous base class".
+See <A HREF="39.html">issue 39</A>.  See also
+<A HREF="156.html">issue 156</A>.</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>It was suggested that the ambiguity check is done as part of the
+call of the conversion function.</P>
+
+<P><B>Proposed resolution (revised October 2002):</B></P>
+
+<P>In 12.2.2.2.3 [<A href="https://wg21.link/over.call.object#2">over.call.object</A>] paragraph 2, replace the
+last sentence</P>
+
+<BLOCKQUOTE>
+
+Similarly, surrogate call functions are added to the set of candidate
+functions for each conversion function declared in an accessible base
+class provided the function is not hidden within <TT>T</TT> by another
+intervening declaration.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+Similarly, surrogate call functions are added to the set of candidate
+functions for each conversion function declared in a base class of
+<TT>T</TT> provided the function is not hidden within <TT>T</TT> by
+another intervening declaration.
+</BLOCKQUOTE>
+
+<P>Replace 12.2.2.2.3 [<A href="https://wg21.link/over.call.object#3">over.call.object</A>] paragraph 3
+<BLOCKQUOTE>
+If  such a surrogate call function is selected by overload resolution,
+its body, as defined above, will be  executed  to  convert  <TT>E</TT>  to  the
+appropriate  function  and then to invoke that function with the
+arguments of the call.
+</BLOCKQUOTE>
+by
+<BLOCKQUOTE>
+If  such a surrogate call function is selected by overload resolution,
+the corresponding conversion function will be called to convert
+<TT>E</TT>  to  the appropriate  function pointer or reference,
+and the function will then be invoked with the  arguments of the call.
+If the conversion function cannot be called
+(e.g., because of an ambiguity), the program is ill-formed.
+</BLOCKQUOTE>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

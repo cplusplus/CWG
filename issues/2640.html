@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2640</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2640"></A><H4>2640.
+  
+Allow more characters in an n-char sequence
+</H4>
+<B>Section: </B>5.3.1&#160; [<A href="https://wg21.link/lex.charset">lex.charset</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-11-03<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2720r0.pdf#US1-028">P2720R0 comment
+  US&#160;1-028<BR></A>
+
+<P>[Accepted at the November, 2022 meeting.]</P>
+
+<P>The n-char grammar term is defined to match only the Latin uppercase, Latin digit, hyphen and space characters. This results in \N{ABC} matching named-universal-character while \N{abc} does not. This leads to programs like the following being unexpectedly well-formed because the \N{abc} sequence is lexed as the preprocessing token sequence , N, {, abc, }. The expansion of macro a then leads to the token sequence being passed as an argument to macro z where it is discarded.</P>
+
+<PRE>
+  #define z(x) 0
+  #define a z(
+  int x = a\N{abc});
+</PRE>
+
+<P>Changes to make the above program ill-formed would provide two benefits:
+
+<UL>
+<LI>Implementations could diagnose the \N{abc} sequence as an
+ill-formed named-universal-character regardless of where it appears in
+a program.</LI>
+<LI>The <TT>\N{...}</TT> syntax space would be reserved for expansion (e.g., for
+extensions or future support of UAX44-LM2 loose matching
+schemes).</LI>
+</UL>
+</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-07):</B></P>
+
+<P>Change the grammar in 5.3.1 [<A href="https://wg21.link/lex.charset#3">lex.charset</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+<I>n-char</I>:
+     <DEL>A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</DEL>
+     <DEL>0 1 2 3 4 5 6 7 8 9</DEL>
+     <DEL>U+002d hyphen-minus</DEL>
+     <DEL>U+0020 space</DEL>
+     <INS>any member of the translation character set except the U+007D RIGHT CURLY BRACKET or new-line character</INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 126</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="126"></A><H4>126.
+  
+Exception specifications and <TT>const</TT>
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin von Loewis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 June 1999<BR>
+
+
+
+<P>The standard is inconsistent about constness inside exception
+specifications.</P>
+
+<PRE>
+    struct X {};
+    struct Y:X {};
+
+    const Y bar() {return Y();}
+
+    void foo()throw(const X)
+    {
+      throw bar();
+    }
+</PRE>
+
+It is unclear whether calling <TT>foo</TT> will result in a call
+to <TT>std::unexpected</TT>.  According to
+14.5 [<A href="https://wg21.link/except.spec#7">except.spec</A>] paragraph 7,
+
+only two cases are treated
+specially with regard to inheritance: If "class X" appears in the
+<I>type-id-list</I>, or if "class X*" appears in the
+<I>type-id-list</I>. Neither is
+the case here, so <TT>foo</TT> only allows exceptions of the same type
+(<TT>const X</TT>). As a result, <TT>std::unexpected</TT> should be called.
+
+<P>On the other hand, the intent of exception specification appears to
+allow an implementation of this example as</P>
+
+<PRE>
+    void foo()
+    try{
+      throw bar();
+    }catch(const X){
+      throw;
+    }catch(...){
+      std::unexpected();
+    }
+</PRE>
+
+According to
+14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]
+,
+this replacement code would catch the exception, so
+<TT>std::unexpected</TT> would not be called.
+
+<P>Suggested resolution: Change
+14.5 [<A href="https://wg21.link/except.spec#7">except.spec</A>] paragraph 7
+to read</P>
+
+<BLOCKQUOTE>
+A function is said to <I>allow</I> all exception objects of all
+types <TT>E</TT> for which one of the types <TT>T</TT>
+in the <I>type-id-list</I> would be a handler, according to
+14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]
+.
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Replace 14.5 [<A href="https://wg21.link/except.spec#7">except.spec</A>] paragraph 7 with the
+following:</P>
+
+<BLOCKQUOTE>
+
+A function is said to <I>allow</I> an exception of type <TT>E</TT> if
+its <I>exception-specification</I> contains a type <TT>T</TT> for
+which a handler of type <TT>T</TT> would be a match (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) for an exception of type <TT>E</TT>.
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

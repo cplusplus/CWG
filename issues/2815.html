@@ -1,0 +1,167 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2815</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2815"></A><H4>2815.
+  
+Overload resolution for references/pointers to <TT>noexcept</TT> functions
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-05<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)() noexcept) {}
+  void g(void (&amp;)()) {}
+
+  int main() {
+    g(f);     // <SPAN CLASS="cmnt">error: ambiguous</SPAN>
+  }
+</PRE>
+
+<P>In contrast:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)()) {} 
+  void g(void (&amp;)()) {}      // <SPAN CLASS="cmnt">#1</SPAN>
+
+  int main() {
+    g(f);    // <SPAN CLASS="cmnt">OK, calls #1</SPAN>
+  }
+</PRE>
+
+<P>In both cases, binding <TT>void(&amp;)()</TT> to <TT>void()
+noexcept</TT> is considered an identity conversion, without further
+disambiguation by 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>].</P>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>Binding a reference to a function should not be considered an
+identity conversion if it strips a non-throwing exception
+specification.  This amendment removes the ambiguity for the first
+example and makes the second example ambiguous, which is
+desirable.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#1">over.ics.ref</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a parameter of type &#8220;reference to cvT&#8221; binds directly
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to an argument expression:
+<UL>
+<LI>If the argument expression has a type that is a derived class of
+the parameter type, the implicit conversion sequence is a
+derived-to-base conversion (12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]).</LI>
+<LI>Otherwise, <DEL>if T is a function type, or</DEL> if the type of
+the argument is possibly cv-qualified T, or if T is an array type of
+unknown bound with element type U and the argument has an array type
+of known bound whose element type is possibly cv-qualified U, the
+implicit conversion sequence is the identity
+conversion.  <DEL>[<I>Note 1:</I> When T is a function type, the type
+of the argument can differ only by the presence of noexcept.
+&#8212;<I>end note</I>]</DEL>
+</LI>
+<LI class="ins">Otherwise, if T is a function type, the implicit
+conversion sequence is a function pointer conversion.</LI>
+<LI>Otherwise, the implicit conversion
+sequence is a qualification conversion.
+</LI>
+</UL>
+
+[<I>Example 1:</I>
+<PRE>
+  struct A {};
+  struct B : public A {} b;
+  int f(A&amp;);
+  int f(B&amp;);
+  int i = f(b);    //<SPAN CLASS="cmnt"> calls f(B&amp;), an exact match, rather than f(A&amp;), a conversion</SPAN>
+</PRE>
+<PRE class="ins">
+   void g() noexcept;
+   int h(void (&amp;)() noexcept); //<SPAN CLASS="cmnt"> #1</SPAN>
+   int h(void (&amp;)());          //<SPAN CLASS="cmnt"> #2</SPAN>
+   int j = h(g);               //<SPAN CLASS="cmnt"> calls #1, an exact match, rather than #2, a function pointer conversion</SPAN>
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.2.6">over.ics.rank</A>] bullet 3.2.6 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  int f(const int &amp;);
+  int f(int &amp;);
+  int g(const int &amp;);
+  int g(int);
+  int i;
+  int j = f(i);   //<SPAN CLASS="cmnt"> calls </SPAN>f(int &amp;)
+  int k = g(i);   //<SPAN CLASS="cmnt"> ambiguous</SPAN>
+
+  struct X {
+    void f() const;
+    void f();
+  };
+  void g(const X&amp; a, X b) {
+    a.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f() const
+    b.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f()
+  }
+
+  int h1(int (&amp;)[]);
+  int h1(int (&amp;)[1]);
+<DEL>  int h2(void (&amp;)());
+  int h2(void (&amp;)() noexcept);</DEL>
+  void g2() {
+    int a[1];
+    h1(a);
+<DEL>    extern void f2() noexcept;
+    h2(f2);</DEL>
+  }
+</PRE>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

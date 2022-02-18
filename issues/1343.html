@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1343</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1343"></A><H4>1343.
+  Sequencing of non-class initialization
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-12<BR>
+
+
+<P>[Moved to DR at the November, 2016 meeting as paper P0507R0.]</P>
+
+
+
+<P>The current wording does not indicate that initialization of a
+non-class object is a full-expression, but presumably should do
+so.</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>There is implementation variance in the treatment of the
+following example:</P>
+
+<PRE>
+  struct A {
+    A() { puts("ctor"); }
+    A(const A&amp;) { puts("copy"); }
+    const A&amp;get() const { return *this; }
+    ~A() { puts("dtor"); }
+  };
+  struct B { B(A, A) {} };
+
+  typedef A A2[2];
+  A2 a = { A().get(), A().get() };
+  B b = { A().get(), A().get() };
+  int c = (A2{ A().get(), A().get() }, 0);
+  int d = (B{ A().get(), A().get() }, 0);
+
+  int main() {}
+</PRE>
+
+
+
+<P><B>Additional note (February, 2014):</B></P>
+
+<P>Aggregate initialization could also involve more than one
+full-expression, so the limitation above to &#8220;initialization
+of a non-class object&#8221; is not correct.
+</P>
+
+<P><B>Additional note (October, 2015):</B></P>
+
+<P>For additional examples, consider:</P>
+
+<PRE>
+   int i = i++;
+   int j = j;
+</PRE>
+
+<P>The current sequencing rules do not cover these initializations.</P>
+
+<P>Also, in</P>
+
+<PRE>
+  const int&amp; f(const int&amp; x) { return x; }
+  int y = f(5);
+</PRE>
+
+<P>it doesn't appear that 6.9.1 [<A href="https://wg21.link/intro.execution#10">intro.execution</A>] paragraph 10
+requires the temporary for <TT>5</TT> to persist until the
+initialization of <TT>y</TT> is complete.</P>
+
+
+
+<P><B>Proposed resolution (June, 2016):</B></P>
+
+<P>The resolution is given in paper P0507R0.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

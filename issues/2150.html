@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2150</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2150"></A><H4>2150.
+  
+Initializer list array lifetime
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-26<BR>
+
+
+
+
+<P>The resolution of <A HREF="1696.html">issue 1696</A>
+appears to have removed the wording that makes the initialization
+of <TT>A::i4</TT> in 9.4.5 [<A href="https://wg21.link/dcl.init.list#6">dcl.init.list</A>] paragraph 6
+create a dangling reference:</P>
+
+<BLOCKQUOTE>
+
+<P>The array has the same lifetime as any other temporary
+object (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]), except that initializing
+an initializer_list object from the array extends the
+lifetime of the array exactly like binding a reference to a
+temporary.  [<I>Example:</I>
+</P>
+
+<PRE>
+  typedef std::complex&lt;double&gt; cmplx;
+  std::vector&lt;cmplx&gt; v1 = { 1, 2, 3 };
+
+  void f() {
+    std::vector&lt;cmplx&gt; v2{ 1, 2, 3 };
+    std::initializer_list&lt;int&gt; i3 = { 1, 2, 3 };
+  }
+
+  struct A {
+    std::initializer_list&lt;int&gt; i4;
+    A() : i4{ 1, 2, 3 } {} //<SPAN CLASS="cmnt"> creates an </SPAN>A<SPAN CLASS="cmnt"> with a dangling reference</SPAN>
+  };
+</PRE>
+
+<P>For <TT>v1</TT> and <TT>v2</TT>,
+the <TT>initializer_list</TT> object is a parameter in a
+function call, so the array created for <TT>{ 1, 2, 3 }</TT>
+has full-expression lifetime. For <TT>i3</TT>,
+the <TT>initializer_list</TT> object is a variable, so the
+array persists for the lifetime of the
+variable. For <TT>i4</TT>, the <TT>initializer_list</TT>
+object is initialized in a constructor's ctor-initializer,
+so the array persists only until the constructor exits, and
+so any use of the elements of <TT>i4</TT> after the constructor exits
+produces undefined behavior. &#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>Binding a reference to a temporary in a
+<I>mem-initializer</I> or default member initializer is now
+ill-formed, per 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] paragraphs 8 and
+11, which undercuts the description here.</P>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>The example is incorrect and will be fixed editorially.  The
+issue is left in "review" status to check that the editorial
+change has been made.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

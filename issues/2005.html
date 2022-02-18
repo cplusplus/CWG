@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2005</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2005"></A><H4>2005.
+  
+Incorrect <TT>constexpr</TT> reference initialization requirements
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Krauss
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-09-18<BR>
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+  constexpr int f() { return 5; } //<SPAN CLASS="cmnt"> function must be constexpr</SPAN>
+  constexpr int &amp;&amp; q = f();       //<SPAN CLASS="cmnt"> but result is not constant</SPAN>
+  constexpr int const &amp; r = 2;    //<SPAN CLASS="cmnt"> temporary is still not constant</SPAN>
+  int main() {
+    q = 11;                       //<SPAN CLASS="cmnt"> OK</SPAN>
+    const_cast&lt; int &amp; &gt;( r ) = 3; //<SPAN CLASS="cmnt"> OK (temporary object is not ROMable)</SPAN>
+
+    constexpr int &amp;&amp; z = 7;       //<SPAN CLASS="cmnt"> Error? Temporary does not have static storage duration?</SPAN>
+  }
+</PRE>
+
+<P>A constexpr reference must be initialized by a constant
+expression (9.2.6 [<A href="https://wg21.link/dcl.constexpr#9">dcl.constexpr</A>] paragraph 9),
+yet it may refer to a modifiable temporary object.
+Such a temporary is guaranteed static initialization, but it's not ROMable.</P>
+
+<P>A non-const constexpr reference initialized with an lvalue
+expression is useful, because it indicates that the
+underlying storage of the reference may be statically
+initialized, or that no underlying storage is required at
+all.</P>
+
+<P>When the initializer is a temporary, finding its address is
+trivial. There is no reason to declare any intent the
+computation of its address. On the other hand, an initial
+value is provided, and that is also required to be a
+constant expression, although it's never treated as a
+constant.</P>
+
+<P>The situation is worse for local constexpr references. The
+initializer generates a temporary when the declaration is
+executed. The temporary is a locally scoped, unique
+object. This renders constexpr meaningless, because although
+the address computation is trivial, it still must be done
+dynamically.</P>
+
+<P>
+C++11 constexpr references required initialization by
+reference constant expressions, which had to &#8220;designate an
+object with static storage duration or a function&#8221;
+(C++11 7.7 [<A href="https://wg21.link/expr.const#3">expr.const</A>] paragraph 3). A
+temporary with automatic storage duration granted by the
+reference fails this requirement.</P>
+
+<P>C++14 removes reference constant expressions and the static
+storage requirement, rendering the program well-defined with
+an apparently defeated constexpr specifier. (GCC and Clang
+currently provide the C++11 diagnosis.)</P>
+
+<P>Suggested resolution: a temporary bound to a constexpr
+reference should itself be constexpr, implying
+const-qualified type. Forbid binding a constexpr reference
+to a temporary unless both have static storage duration. (In
+local scope, the static specifier fixes the issue nicely.)</P>
+
+<P><B>Rationale (November, 2014):</B></P>
+
+<P>This issue is already covered by 7.7 [<A href="https://wg21.link/expr.const#4">expr.const</A>] paragraph 4,
+ which includes conversions and temporaries in the
+analysis.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

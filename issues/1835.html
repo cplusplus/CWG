@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1835</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1835"></A><H4>1835.
+  
+Dependent member lookup before <TT>&lt;</TT>
+</H4>
+<B>Section: </B>_N4868_.6.5.6&#160; [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-17<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>According to _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#1">basic.lookup.classref</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+In a class member access expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), if
+the <TT></TT>. or <TT>-&gt;</TT> token is immediately
+followed by an <I>identifier</I> followed by
+a <TT>&lt;</TT>, the identifier must be looked up to
+determine whether the <TT>&lt;</TT> is the beginning of a
+template argument list (13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]) or a
+less-than operator. The identifier is first looked up in the
+class of the object expression. If the identifier is not
+found, it is then looked up in the context of the
+entire <I>postfix-expression</I> and shall name a class
+template.
+
+</BLOCKQUOTE>
+
+<P>Given</P>
+
+<PRE>
+   template&lt;typename T&gt; T end(T);
+   template&lt;typename T&gt;
+   bool Foo(T it) {
+     return it-&gt;end &lt; it-&gt;end;
+   }
+</PRE>
+
+<P>since <TT>it</TT> is dependent and thus <TT>end</TT> cannot
+be looked up in the class of the object expression, it is looked
+up in the context of the <I>postfix-expression</I>.  This lookup
+finds the function template, making the expression ill-formed.</P>
+
+<P>One possibility might be to limit the lookup to the class of
+the object expression when the object expression is dependent.</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

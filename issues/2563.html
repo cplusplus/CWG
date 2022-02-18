@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2563</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2563"></A><H4>2563.
+  
+Initialization of coroutine result object
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-06
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Subclause 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#7">dcl.fct.def.coroutine</A>] paragraph 7 specifies:</P>
+
+<BLOCKQUOTE>
+
+The expression <TT><I>promise</I>.get_return_object()</TT> is used to
+initialize the returned reference or prvalue result object of a call
+to a coroutine. The call to <TT>get_return_object</TT> is sequenced
+before the call to <I>initial-suspend</I> and is invoked at most once.
+
+</BLOCKQUOTE>
+
+<P>It is unclear:</P>
+<UL>
+<LI>whether <TT>get_return_object()</TT> is invoked inside or outside
+of the <I>try-block</I> shown in paragraph 5 (see
+<A HREF="2562.html">issue 2562</A>),
+</LI>
+
+<LI>whether the prvalue result object may be initialized later
+(e.g. before the first actual suspension), and
+</LI>
+
+<LI>if the initialization does occur later, by what mechanism the prvalue
+result of <TT>get_return_object</TT> is forwarded to that
+initialization.
+</LI>
+
+</UL>
+
+<P>There is implementation divergence.</P>
+
+<P>Note that a user-defined conversion may be involved in the
+initialization of the coroutine's prvalue result object
+from <TT>get_return_object()</TT>.  Note also that the return type
+of <TT>get_return_object</TT> might be non-copyable and
+non-movable. However, there are certain programming patterns that
+would benefit from a late-initialized return value.</P>
+
+<P>See also <A HREF="https://godbolt.org/z/fqxb67nnx">compiler explorer</A>.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#7">dcl.fct.def.coroutine</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The expression <TT><I>promise</I>.get_return_object()</TT> is
+used to initialize the</DEL> <INS>The</INS> returned reference or
+prvalue result object of a call to a coroutine <INS>is
+copy-initialized with
+<TT><I>promise</I>.get_return_object()</TT></INS>.  The <DEL>call
+to <TT>get_return_object</TT></DEL> <INS>initialization</INS> is
+sequenced before the call to <I>initial-suspend</I> <DEL>and is
+invoked at most once</DEL>.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (January, 2023)</B></P>
+
+<P>See also
+<A HREF="https://github.com/llvm/llvm-project/issues/56532">clang bug report #56532</A>.</P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1414">paper issue 1414</A>,
+by decision of the CWG chair.
+</P>
+
+<P><B>EWG 2023-02-06</B></P>
+
+<P>EWG agrees that <TT>get_return_object</TT> is invoked outside of
+the try-block and that, if a conversion is needed, the return value
+of <TT>get_return_object</TT> is considered an xvalue that is later
+converted to the result object.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

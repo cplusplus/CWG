@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2179</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2179"></A><H4>2179.
+  
+Required diagnostic for partial specialization after first use
+</H4>
+<B>Section: </B>13.7.6.1&#160; [<A href="https://wg21.link/temp.spec.partial.general">temp.spec.partial.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-10-12<BR>
+
+
+<P>According to 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#1">temp.spec.partial.general</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+A partial specialization shall be declared before the first
+use of a class template specialization that would make use
+of the partial specialization as the result of an implicit
+or explicit instantiation in every translation unit in which
+such a use occurs; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+<P>There are two problems with this wording.  First, the
+&#8220;no diagnostic required&#8221; provision is presumably
+to avoid mandating cross-translation-unit analysis, but there
+is no reason not to require the diagnostic if the rule is
+violated within a single translation unit.  Also, &#8220;would
+make use&#8221; is imprecise; it could be interpreted as
+applying only when the partial specialization would have been
+selected by a previous specialization, but it should also apply to
+cases where the partial specialization would have made a
+previous specialization ambiguous.</P>
+
+<P>Making these two changes would guarantee that a diagnostic is
+issued for the following example:</P>
+
+<PRE>
+   template &lt;class T1, class T2&gt; class A;
+   template &lt;class T&gt; struct A&lt;T, void&gt; { void f(); };
+   template &lt;class T&gt; void g(T) { A&lt;char, void&gt;().f(); }   //<SPAN CLASS="cmnt"> #1</SPAN>
+   template&lt;typename T&gt; struct A&lt;char, T&gt; {};
+   A&lt;char, void&gt; f;   //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>It is unspecified whether the reference to
+<TT>A&lt;char, void&gt;</TT> at #1 is the &#8220;first
+use&#8221; or not.  If so, <TT>A&lt;char, void&gt;</TT>
+is bound to the first partial specialization and, under the
+current wording, an implementation is not required to
+diagnose the ambiguity resulting from the second partial
+specialization.  If #2 is the &#8220;first use,&#8221; it is
+clearly ambiguous and must result in a diagnostic.  There is
+implementation divergence on the handling of this example
+that would be addressed by the suggested changes.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

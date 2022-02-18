@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2554</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2554"></A><H4>2554.
+  
+Overriding virtual functions, also with explicit object parameters
+</H4>
+<B>Section: </B>11.7.3&#160; [<A href="https://wg21.link/class.virtual">class.virtual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-12-10<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct B {
+    virtual void f();   //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  struct D : B {
+    void f();           //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+</PRE>
+
+<P>Subclause 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 says:</P>
+
+<BLOCKQUOTE>
+
+If a virtual member function F is declared in a class B, and, in a
+class D derived (directly or indirectly) from B, a declaration of a
+member function G corresponds (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) to a
+declaration of F, ignoring trailing <I>requires-clause</I>s, then G
+<I>overrides</I> [ <I>Footnote:</I> ... ] F .
+
+</BLOCKQUOTE>
+
+<P>Subclause 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4">basic.scope.scope</A>] paragraph 4 defines "corresponds"
+as follows:</P>
+
+<BLOCKQUOTE>
+
+Two declarations correspond if they (re)introduce the same name, both
+declare constructors, or both declare destructors, unless
+
+<UL>
+<LI>...</LI>
+<LI>
+each declares a function or function template,
+except when
+<UL>
+<LI>both declare functions with
+the same non-object-parameter-type-list, equivalent
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]) trailing <I>requires-clause</I>s (if
+any, except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]), and, if both
+are non-static members, they have corresponding object parameters, or
+</LI>
+<LI>
+both declare function templates with...
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Subclause 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3 defines "corresponding object
+parameters" as follows:</P>
+
+<BLOCKQUOTE>
+
+Two non-static member functions have corresponding object parameters
+if:
+<UL>
+<LI>
+exactly one is an implicit object member function with
+no <I>ref-qualifier</I> and the types of their object parameters
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), after removing top-level references,
+are the same, or
+</LI>
+
+<LI>their object parameters have the same type.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>In the example, <TT>B::f</TT> has an object parameter of
+type <TT>B</TT>, but <TT>D::f</TT> has an object parameter of
+type <TT>D</TT>.  Thus, the two functions do not correspond, and
+thus <TT>D::f</TT> does not override <TT>B::f</TT>.  That is an
+unintended alteration of the status quo ante.</P>
+
+<P>See also <A HREF="2553.html">issue 2553</A>.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<OL>
+<LI>
+<P>Change in 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a virtual member function F is declared in a class B, and, in a
+class D derived (directly or indirectly) from B, a declaration of a
+member function G corresponds (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) to a
+declaration of F
+<INS>as if declared in D (12.2.2.1 [<A href="https://wg21.link/over.match.funcs.general">over.match.funcs.general</A>])</INS>,
+ignoring trailing <I>requires-clause</I>s,
+<INS>and, if G is an explicit object member function, ignoring object
+parameters, and, if G is an implicit object member function, F and G
+have the same <I>ref-qualifier</I> (or absence thereof),
+</INS>
+then G <I>overrides</I> [ <I>Footnote:</I> ... ] F .
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.7.3 [<A href="https://wg21.link/class.virtual#7">class.virtual</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The <I>ref-qualifier</I> , or lack thereof, of an overriding function
+shall be the same as that of the overridden function.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+
+<BR><BR>
+</BODY>
+</HTML>

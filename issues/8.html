@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 8</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="8"></A><H4>8.
+  
+Access to template arguments used in a function return type and in the nested name specifier
+</H4>
+<B>Section: </B>11.8&#160; [<A href="https://wg21.link/class.access">class.access</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Ball
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+<PRE>
+    class A {
+       class A1{};
+       static void func(A1, int);
+       static void func(float, int);
+       static const int garbconst = 3;
+     public:
+       template &lt; class T, int i, void (*f)(T, int) &gt; class int_temp {};
+       template&lt;&gt; class int_temp&lt;A1, 5, func&gt; { void func1() };
+       friend int_temp&lt;A1, 5, func&gt;::func1();
+       int_temp&lt;A1, 5, func&gt;* func2();
+   };
+   A::int_temp&lt;A::A1, A::garbconst + 2, &amp;A::func&gt;* A::func2() {...}
+</PRE>
+<B><U>ISSUE 1:</U></B>
+
+<P>In 11.8 [<A href="https://wg21.link/class.access#5">class.access</A>] paragraph 5
+we have:
+<UL>All access controls in clause 11 affect the ability to access a class
+member name from a particular scope... In particular, access controls
+apply as usual to member names accessed as part of a function return type,
+even though it is not possible to determine the access privileges of that
+use without first parsing the rest of the function declarator.</UL>
+This means, if we take the loosest possible definition of "access from
+a particular scope", that we have to save and check later the following
+names</P>
+<PRE>
+      A::int_temp
+      A::A1
+      A::garbconst (part of an expression)
+      A::func (after overloading is done)
+</PRE>
+I suspect that member templates were not really considered when this was
+written, and that it might have been written rather differently if they
+had been. Note that access to the template arguments is only legal because
+the class has been declared a friend, which is probably not what most programmers
+would expect.
+
+<P><B>Rationale:</B></P>
+
+<P>Not a defect. This behavior is as intended.</P>
+
+<P><B><U>ISSUE 2:</U></B></P>
+
+<P>Now consider <TT>void A::int_temp&lt;A::A1, A::garbconst + 2, &amp;A::func&gt;::func1()
+{...}</TT> By my reading of 11.8.8 [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]
+, the references to
+<TT>A::A1</TT>, <TT>A::garbconst</TT> and <TT>A::func</TT> are now illegal,
+and there is no way to define this function outside of the class. Is there
+any need to do anything about either of these Issues?</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>The resolution for this issue is contained in the resolution
+for <A HREF="45.html">issue 45</A>.</P>
+<BR><BR>
+</BODY>
+</HTML>

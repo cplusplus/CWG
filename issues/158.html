@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 158</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="158"></A><H4>158.
+  
+Aliasing and qualification conversions
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Stump
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Aug 1999<BR>
+
+
+
+<P>[Moved to DR at 4/02 meeting.]</P>
+
+<P>7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>] paragraph 15 lists the types via which
+an lvalue can be used to access the stored value of an object; using
+an lvalue type that is not listed results in undefined behavior.  It
+is permitted to add cv-qualification to the actual type of the object
+in this access, but only at the top level of the type ("a cv-qualified
+version of the dynamic type of the object").</P>
+
+<P>However, 7.3.6 [<A href="https://wg21.link/conv.qual#4">conv.qual</A>] paragraph 4 permits a
+"conversion [to] add cv-qualifiers at levels other than the first in
+multi-level pointers."  The combination of these two rules
+allows creation of pointers that cannot be dereferenced without
+causing undefined behavior.  For instance:</P>
+
+<PRE>
+    int* jp;
+    const int * const * p1 = &amp;jp;
+    *p1;    // undefined behavior!
+</PRE>
+
+<P>The reason that <TT>*p1</TT> results in undefined behavior
+is that the type of the lvalue is <TT>const int * const"</TT>,
+which is <I>not</I> "a cv-qualified version of" <TT>int*</TT>.</P>
+
+<P>Since the conversion is permitted, we must give it defined
+semantics, hence we need to fix the wording in 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>] to include all possible conversions of the type via
+7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>].</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>Add a new bullet to 7.2.1 [<A href="https://wg21.link/basic.lval#15">basic.lval</A>] paragraph 15,
+following "a cv-qualified version of the dynamic type of the
+object:"</P>
+
+<UL>
+<LI>A type similar (as defined in 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to
+the dynamic type of the object,</LI>
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2929</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2929"></A><H4>2929.
+  
+Lifetime of trivially-destructible static or thread-local objects
+</H4>
+<B>Section: </B>6.9.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mathias Stearn
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-05<BR>
+
+
+
+
+<P>
+<A HREF="2256.html">Issue 2256</A> (adopted in February, 2019)
+changed the rules such that the lifetimes of objects do not depend on
+whether the destructor is trivial or not.  However, the motivation of
+that issue mentioned only objects with automatic storage duration.  To
+be able to avoid order-of-destruction issues across translation units,
+it would be useful to never end the lifetime of trivially-destructible
+objects with static storage duration and to delay the end of the
+lifetime of such objects with thread storage duration as long as
+possible.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Constructed <INS>class</INS> objects (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with
+static storage duration <INS>and having a non-trivial destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed and functions
+registered with std::atexit are called as part of a call to std::exit
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
+the destructions and the registered functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+
+Constructed <INS>class</INS> objects with thread storage duration
+within a given thread <INS>and having a non-trivial destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed as a result of
+returning from the initial function of that thread and as a result of
+that thread calling std::exit. The destruction
+of <DEL>all</DEL> <INS>those</INS> constructed objects with thread
+storage duration within that thread strongly happens before
+<INS>releasing the storage for objects with thread storage duration
+within that thread, which in turn strongly happens before</INS>
+destroying any object with static storage duration.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-09-27</B></P>
+
+<P>Also allow for constant destruction, consider arrays of class type,
+and adjust the happens-before requirements.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with static storage
+duration <INS>and not having constant destruction
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed and functions
+registered with std::atexit are called as part of a call to std::exit
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
+the destructions and the registered functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects with thread storage duration
+within a given thread <INS>and not having constant destruction
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed as a result of
+returning from the initial function of that thread and as a result of
+that thread calling std::exit. <INS>The destruction of those
+constructed objects within that thread is sequenced before releasing
+the storage for all objects with thread storage duration within that
+thread (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]).  Also, the</INS> <DEL>The</DEL>
+destruction of <DEL>all</DEL> <INS>those</INS> constructed
+objects <DEL>with thread storage duration</DEL> within that thread
+strongly happens before destroying any object with static storage
+duration.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-11-22</B></P>
+
+<P>Continue to actually destroy constant-destruction objects, but do
+so after all dynamic destruction is done.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

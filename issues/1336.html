@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1336</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1336"></A><H4>1336.
+  
+Definition of &#8220;converting constructor&#8221;
+</H4>
+<B>Section: </B>11.4.8.2&#160; [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Niels Dekker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-07-03<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>Although the normative wording of 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1
+defining a converting constructor says</P>
+
+<BLOCKQUOTE>
+
+A constructor declared without the <I>function-specifier</I>
+<TT>explicit</TT> specifies a conversion from the types of its
+parameters to the type of its class.
+
+</BLOCKQUOTE>
+
+<P>implying that a constructor with multiple parameters can be a
+converting constructor, it would be helpful if the example contained
+such a constructor.</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<OL>
+<LI><P>Change the example in 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1
+as follows:</P></LI>
+
+<PRE>
+  struct X {
+      X(int);
+      X(const char*, int =0);
+<INS>      X(int, int);</INS>
+  };
+
+  void f(X arg) {
+    X a = 1;          // a = X(1)
+    X b = "Jessie";   // b = X("Jessie",0)
+    a = 2;            // a = X(2)
+    f(3);             // f(X(3))
+<INS>    f({1, 2});        // f(X(1,2))</INS>
+  }
+</PRE>
+
+<LI><P>Change the example in 11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#2">class.conv.ctor</A>] paragraph 2
+as follows:</P></LI>
+
+<PRE>
+  struct Z {
+    explicit Z();
+    explicit Z(int);
+<INS>    explicit Z(int, int);</INS>
+  };
+
+  Z a;                       //<SPAN CLASS="cmnt"> OK: default-initialization performed</SPAN>
+  Z a1 = 1;                  //<SPAN CLASS="cmnt"> error: no implicit conversion</SPAN>
+  Z a3 = Z(1);               //<SPAN CLASS="cmnt"> OK: direct initialization syntax used</SPAN>
+  Z a2(1);                   //<SPAN CLASS="cmnt"> OK: direct initialization syntax used</SPAN>
+  Z* p = new Z(1);           //<SPAN CLASS="cmnt"> OK: direct initialization syntax used</SPAN>
+  Z a4 = (Z)1;               //<SPAN CLASS="cmnt"> OK: explicit cast used</SPAN>
+  Z a5 = static_cast&lt;Z&gt;(1);  //<SPAN CLASS="cmnt"> OK: explicit cast used</SPAN>
+<INS>  Z a6 = { 3, 4 };           //<SPAN CLASS="cmnt"> error: no implicit conversion</SPAN></INS>
+</PRE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

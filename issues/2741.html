@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2741</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2741"></A><H4>2741.
+  
+Implicit conversion sequence from empty list to array of unknown bound
+</H4>
+<B>Section: </B>12.2.4.2.6&#160; [<A href="https://wg21.link/over.ics.list">over.ics.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-01<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  int f(int const(&amp;)[]) { return 1; }   //<SPAN CLASS="cmnt"> #1</SPAN>
+  int f(int const(&amp;)[2]) { return 2; }  //<SPAN CLASS="cmnt"> #2</SPAN>
+  int x = f({});
+</PRE>
+
+<P>Subclause 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#6">over.ics.list</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the parameter type is &#8220;array of N X&#8221; or
+&#8220;array of unknown bound of X&#8221;, if there exists an implicit
+conversion sequence from each element of the initializer list (and
+from {} in the former case if N exceeds the number of elements in the
+initializer list) to X, the implicit conversion sequence is the worst
+such implicit conversion sequence.
+
+</BLOCKQUOTE>
+
+<P>What is the "worst [...] implicit conversion sequence" when the
+initializer list is empty? Should #1 even be viable for this call,
+given that it's not valid to initialize an <TT>int const
+(&amp;)[]</TT> from <TT>{}</TT>?</P>
+
+<P>There is implementation divergence: Clang and MSVC treat #1 as
+being non-viable; GCC calls #1 and creates a temporary of type
+`int[0]` (even in -pedantic-errors mode).  Should the "worst
+conversion sequence" over an empty set be the identity conversion,
+selecting #1 and then failing the parameter initialization?</P>
+
+<BR><BR>
+</BODY>
+</HTML>

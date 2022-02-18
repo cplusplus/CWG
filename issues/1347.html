@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1347</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1347"></A><H4>1347.
+  
+Consistency of <TT>auto</TT> in multiple-declarator declarations
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-16<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>The intent of 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7 appears to
+have been that the type represented by <TT>auto</TT> should be the
+same for each declarator in the declaration.  However, the current
+wording does not achieve that goal.  For example, in</P>
+
+<PRE>
+    auto a = 0, b = { 1, 2, 2 };
+</PRE>
+
+<P>the <TT>auto</TT> specifier represents <TT>int</TT> in the
+first declarator and <TT>std::initializer_list&lt;int&gt;</TT>
+in the second.  (See also <A HREF="1265.html">issue 1265</A>.)</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<P>Move the example in 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7 into
+that of paragraph 6 and change paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...[<I>Example:</I>
+</P>
+
+<PRE>
+  auto x1 = { 1, 2 };   //<SPAN CLASS="cmnt"> </SPAN>decltype(x1)<SPAN CLASS="cmnt"> is </SPAN>std::initializer_list&lt;int&gt;
+  auto x2 = { 1, 2.0 }; //<SPAN CLASS="cmnt"> error: cannot deduce element type</SPAN>
+
+<INS>  const auto &amp;i = expr;</INS>
+</PRE>
+
+<P><INS>The type of <TT>i</TT> is the deduced type of the parameter
+<TT>u</TT> in the call <TT>f(expr)</TT> of the following invented
+function template:</INS></P>
+
+<PRE>
+<INS>  template &lt;class U&gt; void f(const U&amp; u);</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>If the <DEL>list of declarators</DEL>
+<INS><i>init-declarator-list</i></INS> contains more than one
+<DEL>declarator</DEL> <INS><I>init-declarator</I></INS>, the type of
+each declared variable is determined as described above. If the type
+<DEL>deduced for the template parameter <TT>U</TT></DEL> <INS>that
+replaces the occurrence of <TT>auto</TT></INS> is not the same in each
+deduction, the program is ill-formed.</P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+<DEL>  const auto &amp;i = expr;</DEL>
+</PRE>
+
+<P><DEL>The type of <TT>i</TT> is the deduced type of the parameter
+<TT>u</TT> in the call <TT>f(expr)</TT> of the following invented
+function template:</DEL></P>
+
+<PRE>
+<DEL>  template &lt;class U&gt; void f(const U&amp; u);</DEL>
+<INS>  auto x = 5, *y = &amp;x;       //<SPAN CLASS="cmnt"> OK: </SPAN>auto<SPAN CLASS="cmnt"> is </SPAN>int
+  auto a = 5, b = { 1, 2 };  //<SPAN CLASS="cmnt"> error: different types for </SPAN>auto</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

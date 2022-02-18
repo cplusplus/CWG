@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1595</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1595"></A><H4>1595.
+  
+Constructors &#8220;involved in&#8221; subobject initialization
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-12-19<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>According to 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5</P>
+
+<BLOCKQUOTE>
+
+For a <TT>constexpr</TT> constructor, if no argument values exist such that
+after function invocation substitution, every constructor call and
+full-expression in the <I>mem-initializer</I>s would be a constant
+expression (including conversions), the program is ill-formed; no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<P>However, paragraph 4 also says,</P>
+
+<BLOCKQUOTE>
+
+every constructor involved in initializing non-static data members and
+base class sub-objects shall be a constexpr constructor;
+
+</BLOCKQUOTE>
+
+<P>violation of which requires a diagnostic.  The question is whether
+a constructor call appearing in a <I>mem-initializer</I> expression is
+&#8220;involved in&#8221; the initialization of <TT>X::m</TT>.  Given
+the &#8220;no diagnostic required&#8221; status of constructor calls
+in paragraph 5, the intent of the &#8220;involved in&#8221; phrasing
+would appear to be referring to constructors of members with class types
+and of base-class subobjects, but the wording should be clarified.
+For example, in a constructor definition like</P>
+
+<PRE>
+  constexpr X(): m(f(S())) { }
+</PRE>
+
+<P>if <TT>S::S()</TT> is not constexpr, is a diagnostic required?  For
+another example,</P>
+
+<PRE>
+  struct S {
+    constexpr S() {}
+    S(int);
+  };
+
+  struct A { S s; };
+
+  struct C {
+    A x;
+    constexpr C(): x{ 1 } {}
+  };
+</PRE>
+
+<P>Is <TT>S::S(int)</TT> &#8220;involved?&#8221;</P>
+
+<P><B>Proposed resolution (August, 2013):</B></P>
+
+<P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...In addition, either its <I>function-body</I> shall be <TT>=
+delete</TT>, or it shall satisfy the following constraints:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<INS>for a non-delegating constructor,</INS> every constructor
+<DEL>involved in initializing</DEL> <INS>selected to initialize</INS>
+non-static data members and base class sub-objects shall be
+a <TT>constexpr</TT> constructor<DEL>.</DEL><INS>;</INS>
+</P></LI>
+
+<LI><P><INS>for a delegating constructor, the target constructor shall
+be a <TT>constexpr</TT> constructor.</INS></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2922</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2922"></A><H4>2922.
+  
+constexpr placement-new is too permissive
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-10<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>constexpr placement new requires (just) pointer-interconvertibility
+for the argument pointer, whereas <TT>static_cast</TT>
+from <TT>void*</TT> to <TT>T*</TT> requires similarity.  Requiring
+pointer-interconvertibility would not allow to differentiate two
+members of some union of the same type; such differentiation is
+required diagnose access to inactive union members.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-08-16):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.18.2">expr.const</A>] bullet 5.18.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+the selected allocation function is a non-allocating form
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]) with an allocated type T, where
+<UL>
+<LI>the placement argument to the <I>new-expression</I> points to an
+object <DEL>that is pointer-interconvertible with an object
+of</DEL> <INS>whose</INS> type <INS>is similar to</INS>
+T <INS>(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])</INS> or, if T is an array
+type, <DEL>with</DEL> <INS>to</INS> the first element of an object
+of <INS>a</INS> type <INS>similar to</INS> T, and</LI>
+<LI>the placement argument points to storage whose
+duration began within the evaluation of E;</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-11-19</B></P>
+
+<P>The proposed resolution does not address the ambiguity with
+different union members of the same type, but is a good fix to
+increase consistency with <TT>static_cast</TT> regardless.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

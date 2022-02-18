@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1757</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1757"></A><H4>1757.
+  
+Const integral subobjects
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-20<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>The requirements for a constant expression in 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]
+permit an lvalue-to-rvalue conversion on</P>
+
+<BLOCKQUOTE>
+
+a non-volatile glvalue of integral or enumeration type that refers to a
+non-volatile const object with a preceding initialization, initialized
+with a constant expression
+
+</BLOCKQUOTE>
+
+<P>This does not exclude subobjects of objects that are not compile-time
+constants, for example:</P>
+
+<PRE>
+  int f();
+  struct S {
+    S() : a(f()), b(5) {}
+    int a, b;
+  };
+  const S s;
+  constexpr int k = s.b;
+</PRE>
+
+<P>This rule is intended to provide backward compatibility with
+pre-<TT>constexpr</TT> C++, but it should be restricted to complete
+objects.  Care should be taken in resolving this issue not to break
+the handling of string literals, since use of their elements in
+constant expressions depends on the current form of this rule.</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#2.7">expr.const</A>] bullet 2.7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>conditional-expression</I> <TT>e</TT> is a <I>core constant
+expression</I> unless the evaluation of <TT>e</TT>, following the rules of
+the abstract machine (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the
+following expressions:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) unless it
+is applied to</P></LI>
+
+<UL>
+<LI><P>a non-volatile glvalue of integral or enumeration type that
+refers to a <INS>complete</INS> non-volatile const object with a preceding
+initialization, initialized with a constant expression <DEL>[<I>Note:</I> a
+string literal (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) corresponds to an array of
+such objects. &#8212;<I>end note</I>]</DEL>, or</P></LI>
+
+<LI><P><INS>a non-volatile glvalue that refers to a subobject of a
+string literal (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]), or</INS></P></LI>
+
+<LI><P>a non-volatile glvalue that refers to a non-volatile object defined
+with <TT>constexpr</TT>...</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

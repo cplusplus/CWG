@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2886</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2886"></A><H4>2886.
+  
+Temporaries and trivial potentially-throwing special member functions
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-27<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/531">#531</A>.)</P>
+
+<P>Paper P1286R2 (Contra CWG DR1778) allowed trivial
+potentially-throwing special member functions.  Whether such a trivial
+special member function is actually invoked is thus observable via
+the <TT>noexcept</TT> operator. <A HREF="2820.html">Issue 2820</A>
+clarified the situation for value-initialization and removed a special
+case for a trivial default constructor.</P>
+
+<P>Subclause 6.7.7 [<A href="https://wg21.link/class.temporary#4">class.temporary</A>] paragraph 4 appears to
+normatively avoid invoking a trivial constructor or destructor,
+something best left to the as-if rule.  There is implementation
+divergence for this example:</P>
+
+<PRE>
+  struct C {
+    C() = default;
+    ~C() noexcept(false) = default;
+  };
+
+  static_assert(noexcept(C()));
+</PRE>
+
+<P>A related question arises from the introduction of temporaries for
+function parameters and return values in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3.  However, this situation can never result in actually
+throwing an exception during forward evolution: when the constructor
+becomes non-trivial, the permission to create a temporary object
+evaporates.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-31):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type X is passed to or returned from a
+<INS>potentially-evaluated</INS> function <INS>call</INS>, if X has at
+least one eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is trivial, and
+the destructor of X is either trivial or deleted, implementations are
+permitted to create a temporary object to hold the function parameter
+or result object. The temporary object is constructed from the
+function argument or return value, respectively, and the function's
+parameter or return object is initialized as if by using the eligible
+trivial constructor to copy the temporary (even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#4">class.temporary</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When an implementation
+introduces a temporary object of a
+class that has a non-trivial constructor
+(11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]),
+it shall ensure that a constructor is
+called for the temporary object. Similarly, the destructor shall
+be called for a temporary with a non-trivial destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</DEL> Temporary objects are destroyed
+as the last step in evaluating the full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) that (lexically) contains the point where
+they were created. This is true even if that evaluation ends in
+throwing an exception. The value computations and side effects of
+destroying a temporary object are associated only with the
+full-expression, not with any specific subexpression.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

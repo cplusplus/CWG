@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2472</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2472"></A><H4>2472.
+  
+Value categories in <I>await-expression</I>s
+</H4>
+<B>Section: </B>7.6.2.4&#160; [<A href="https://wg21.link/expr.await">expr.await</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-01-18<BR>
+
+
+<P>According to 7.6.2.4 [<A href="https://wg21.link/expr.await">expr.await</A>] bullets 3.3 and 3.4,</P>
+
+<BLOCKQUOTE>
+
+<P>Evaluation of an <I>await-expression</I> involves the
+following auxiliary types, expressions, and objects:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>
+<I>o</I> is determined by enumerating the applicable
+<TT>operator co_await</TT> functions for an
+argument <I>a</I> (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]), and
+choosing the best one through overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]). If overload resolution is
+ambiguous, the program is ill-formed. If no viable functions
+are found, <I>o</I> is <I>a</I>. Otherwise, <I>o</I> is a
+call to the selected function with the
+argument <I>a</I>. If <I>o</I> would be a prvalue, the
+temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied.</P>
+</LI>
+
+<LI><P>
+<I>e</I> is an lvalue referring to the result of
+evaluating the (possibly-converted) <I>o</I>.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, the temporary materialization conversion
+produces an xvalue, not an lvalue. Should <I>e</I>
+be a glvalue instead of an lvalue?</P>
+
+<P><B>Rationale (February, 2021):</B></P>
+
+<P>The specification is as intended; <I>o</I> is converted
+to an lvalue if it is an xvalue result of the temporary
+materialization conversion. <I>e</I> is used in both bullets
+3.7 and 3.8; if it were an xvalue instead of an lvalue,
+the call to <TT>await_suspend</TT> could steal <I>e</I>'s
+resources and leave the call to <TT>await_resume</TT> with
+a defunct object, which would be undesirable.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

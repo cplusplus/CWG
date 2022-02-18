@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1172</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1172"></A><H4>1172.
+  
+&#8220;instantiation-dependent&#8221; constructs
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-05<BR>
+
+
+<P>There are certain constructs that are not covered by the existing
+categories of &#8220;type dependent&#8221; and &#8220;value
+dependent.&#8221;  For example, the expression
+<TT>sizeof(sizeof(T()))</TT> is neither type-dependent nor
+value-dependent, but its validity depends on whether <TT>T</TT>
+can be value-constructed.  We should be able to overload on
+such characteristics and select via deduction failure, but we
+need a term like &#8220;instantiation-dependent&#8221; to
+describe these cases in the Standard.  The phrase &#8220;expression
+involving a template parameter&#8221; seems to come pretty close to
+capturing this idea.</P>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+<P>The CWG favored extending the concepts of &#8220;type-dependent&#8221;
+and &#8220;value-dependent&#8221; to cover these additional cases,
+rather than adding a new concept.</P>
+
+<P><B>Notes from the March, 2011 meeting:</B></P>
+
+<P>The CWG reconsidered the direction from the November, 2010 meeting,
+as it would make more constructs dependent, thus requiring more
+<TT>template</TT> and <TT>typename</TT> keywords, resulting in worse
+error messages, etc.</P>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<P>The following example (from <A HREF="1273.html">issue 1273</A>)
+was deemed relevant for this issue:</P>
+
+<PRE>
+    template &lt;class T&gt; struct C;
+
+    class A {
+       int i;
+       friend struct C&lt;int&gt;;
+    } a;
+
+    class B {
+       int i;
+       friend struct C&lt;float&gt;;
+    } b;
+
+    template &lt;class T&gt;
+    struct C {
+       template &lt;class U&gt; decltype (a.i) f() { } // #1
+       template &lt;class U&gt; decltype (b.i) f() { } // #2
+    };
+
+    int main() {
+       C&lt;int&gt;().f&lt;int&gt;();     // calls #1
+       C&lt;float&gt;().f&lt;float&gt;(); // calls #2
+    }
+</PRE>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

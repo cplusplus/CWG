@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2286</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2286"></A><H4>2286.
+  
+Assignment evaluation order
+</H4>
+<B>Section: </B>7.6.19&#160; [<A href="https://wg21.link/expr.ass">expr.ass</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-07-06<BR>
+
+
+
+
+<P>P0145 caused this situation:</P>
+
+<PRE>
+  extern "C" void abort();
+
+  struct A
+  {
+    int i;
+    int data[10000];
+  } a;
+
+  A&amp; aref() { a.i++; return a; }
+  int main()
+  {
+    aref() = a;
+    if (a.i != 0)
+      abort();
+  }
+</PRE>
+
+<P>Is <TT>a.i</TT> now required to be 0?</P>
+
+<P>A related example is this:</P>
+
+<PRE>
+  int b;
+  int&amp; bref() { ++b; return b; }
+  int main() {
+    bref() = b;
+    if (b != 0)
+      abort();
+  }
+</PRE>
+
+<P>Here, <TT>b</TT> is required to be 0 after the assignment, because
+the value computation of the RHS of the assignment is sequenced before
+any side-effects on the LHS.  The difference in guaranteed behavior
+between class and non-class types is disturbing.</P>
+
+<P><B>Rationale (April, 2017):</B></P>
+
+<P>Class copy assignment binds a <TT>const T&amp;</TT>, so
+the <TT>A</TT> example actually yields <TT>a.i == 1</TT> after the
+assignment.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

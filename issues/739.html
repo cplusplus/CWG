@@ -1,0 +1,189 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 739</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="739"></A><H4>739.
+  
+Signedness of plain bit-fields
+</H4>
+<B>Section: </B>11.4.10&#160; [<A href="https://wg21.link/class.bit">class.bit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 November, 2008<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+<P>11.4.10 [<A href="https://wg21.link/class.bit#3">class.bit</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+It is implementation-defined whether a plain (neither explicitly
+signed nor unsigned) <TT>char</TT>, <TT>short</TT>, <TT>int</TT> or
+<TT>long</TT> bit-field is signed or unsigned.
+
+</BLOCKQUOTE>
+
+<P>The implications of this permission for an implementation that
+chooses to treat plain bit-fields as unsigned are not clear.  Does
+this mean that the type of such a bit-field is adjusted to the
+unsigned variant or simply that sign-extension is not performed when
+the value is fetched?  C99 is explicit in specifying the former (6.7.2
+paragraph 5: &#8220;for bit-fields, it is implementation-defined
+whether the specifier <TT>int</TT> designates the same type as
+<TT>signed int</TT> or the same type as <TT>unsigned
+int</TT>&#8221;), while C90 takes the latter approach (6.5.2.1:
+&#8220;Whether the high-order bit position of a (possibly qualified)
+'plain' int bit-field is treated as a sign bit is
+implementation-defined&#8221;).</P>
+
+(See also <A HREF="675.html">issue 675</A> and
+<A HREF="741.html">issue 741</A>.)
+
+<P><B>Additional note, May, 2009:</B></P>
+
+<P>As an example of the implications of this question, consider the
+following declaration:</P>
+
+<PRE>
+    struct S {
+      int i: 2;
+      signed int si: 2;
+      unsigned int ui: 2;
+    } s;
+</PRE>
+
+<P>Is it implementation-defined which expression,
+<TT>cond?s.i:s.si</TT> or <TT>cond?s.i:s.ui</TT>, is an lvalue (the
+lvalueness of the result depends on the second and third operands
+having the same type, per 7.6.16 [<A href="https://wg21.link/expr.cond#4">expr.cond</A>] paragraph 4)?</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<P>Change 11.4.10 [<A href="https://wg21.link/class.bit#3">class.bit</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A bit-field shall not be a static member.  A bit-field shall have
+integral or enumeration type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]). <DEL>It is
+implementation-defined whether a plain (neither explicitly signed nor
+unsigned) <TT>char</TT>, <TT>short</TT>, <TT>int</TT>, <TT>long</TT>,
+or <TT>long long</TT> bit-field is signed or unsigned.</DEL>
+<INS>For a bit-field with a non-dependent type (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])
+that is specified to be plain (neither explicitly signed nor unsigned)
+<TT>short</TT>, <TT>int</TT>, <TT>long</TT>, or <TT>long long</TT> or a
+<I>typename-name</I> that is so defined (possibly through multiple
+levels of <TT>typedef</TT>s), it is implementation-defined whether the
+type of the bit-field is the corresponding signed or unsigned
+type. [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct B {
+    long x : 3;
+    typedef signed int si;
+    si y : 1;
+    typedef int i;
+    i z : 1;
+  };
+
+  template&lt;class T&gt;
+  struct A {
+    T x : 7;
+  };</INS>
+</PRE>
+
+<P><INS>It is implementation-defined whether <TT>B::x</TT> has type
+<TT>signed long</TT> or <TT>unsigned long</TT>.  <TT>B::y</TT> has
+type <TT>signed int</TT>.  It is implementation-defined whether
+<TT>B::z</TT> has type <TT>signed int</TT> or <TT>unsigned int</TT>.
+<TT>A&lt;int&gt;::x</TT> and <TT>A&lt;signed int&gt;::x</TT> designate
+the same entity of type <TT>signed int</TT>.  <TT>A&lt;unsigned
+int&gt;::x</TT> has type <TT>unsigned int</TT>. &#8212;<I>end
+example</I>]</INS></P>
+
+<P>A <TT>bool</TT> value...</P>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="675.html">issue 675</A>.</P>
+
+<P><B>Note, January, 2012:</B></P>
+
+<P>Additional questions have been raised about the proposed resolution,
+so the status was returned to "review" to allow further discussion.
+
+</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 11.4.10 [<A href="https://wg21.link/class.bit#3">class.bit</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A bit-field shall not be a static member.  A bit-field shall have
+integral or enumeration type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).  <DEL>It is
+implementation-defined whether a plain (neither explicitly signed nor
+unsigned) <TT>char</TT>, <TT>short</TT>, <TT>int</TT>, <TT>long</TT>,
+or <TT>long long</TT> bit-field is signed or unsigned.</DEL>  A
+<TT>bool</TT> value can successfully be stored...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new section in C.7.7 [<A href="https://wg21.link/diff.class">diff.class</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><B>11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]</B></P>
+
+<P>
+<B>Change:</B> Bit-fields of type plain <TT>int</TT> are signed.</P>
+
+<P>
+<B>Rationale:</B> Leaving the choice of signedness to implementations
+could lead to inconsistent definitions of template specializations.  For
+consistency, the implementation freedom was eliminated for non-dependent
+types, too.</P>
+
+<P>
+<B>Effect on original feature:</B> The choice is implementation-defined
+in C, but not so in C++.</P>
+
+<P>
+<B>Difficulty of converting:</B> Syntactic transformation.</P>
+
+<P>
+<B>How widely used:</B> Seldom.</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="675.html">issue 675</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2523</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2523"></A><H4>2523.
+  
+Undefined behavior via omitted destructor call in constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-09-06<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>According to 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8,
+one criterion that disqualifies an expression from
+being a core constant expression is:</P>
+
+<BLOCKQUOTE>
+
+an operation that would have undefined behavior as specified
+in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]
+
+</BLOCKQUOTE>
+
+<P>One potential source of undefined behavior is the
+omission of a call to a destructor for a constructed object,
+as described in 6.7.4 [<A href="https://wg21.link/basic.life#5">basic.life</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+A program may end the lifetime of an object of class type
+without invoking the destructor, by reusing or releasing the
+storage as described above.  [<I>Note 3:</I>
+A <I>delete-expression</I> (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>])
+invokes the destructor prior to releasing the
+storage. &#8212;<I>end note</I>] In this case, the
+destructor is not implicitly invoked and any program that
+depends on the side effects produced by the destructor has
+undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>For example:</P>
+
+<PRE>
+  #include &lt;memory&gt;
+
+  constexpr int test_basic_life_p5() {
+    class guard_t {
+      int &amp;ref_;
+    public:
+      explicit constexpr guard_t(int &amp;i) : ref_{i} {}
+      constexpr ~guard_t() { ref_ = 42; }
+    };
+
+    int result = 0;
+
+    auto alloc = std::allocator&lt;guard_t&gt;{};
+    auto pguard = alloc.allocate(1);
+    std::construct_at(pguard, result);
+    // std::destroy_at(pguard);
+    alloc.deallocate(pguard, 1);
+
+    return result;  //<SPAN CLASS="cmnt"> value depends on destructor execution</SPAN>
+  }
+
+  int main() {
+    constexpr auto v = test_basic_life_p5();
+    return v;
+  }
+</PRE>
+
+<P>It is not clear that it is reasonable to require
+implementations to diagnose this form of undefined
+behavior in constant expressions.</P>
+
+<P>A somewhat related question is raised by the
+restrictions on the use of <TT>longjmp</TT> in
+17.13.3 [<A href="https://wg21.link/csetjmp.syn#2">csetjmp.syn</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+A <TT>setjmp</TT>/<TT>longjmp</TT> call pair has undefined
+behavior if replacing the <TT>setjmp</TT>
+and <TT>longjmp</TT> by <TT>catch</TT> and <TT>throw</TT>
+would invoke any non-trivial destructors for any objects
+with automatic storage duration.
+
+</BLOCKQUOTE>
+
+<P>Here the undefined behavior occurs for any non-trivial
+destructor that is skipped, not just one for which the
+program depends on its side effects, as in
+6.7.4 [<A href="https://wg21.link/basic.life#5">basic.life</A>] paragraph 5. Perhaps these two
+specifications should be harmonized.</P>
+
+<P><B>Additional notes (April, 2022):</B></P>
+
+<P>The phrase "[a] program that depends on the side effects" may have
+these meanings:</P>
+
+<UL>
+<LI>the program depends on the side effects if it would have undefined
+behavior if they don't happen (which they don't): this would mean the
+second half of the sentence has no normative effect and can be
+struck</LI>
+<LI>the program depends on the side effects if it would have different
+observable behavior if (in violation of the standard) the destructor
+were actually invoked by the implementation when the object's lifetime
+ended</LI>
+<LI>something else</LI>
+</UL>
+
+<P>The second option would need a fork in the evaluation of constant
+expressions to determine whether undefined behavior occurs.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-11):</B></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#5">basic.life</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A program may end the lifetime of an object of class type
+without invoking the destructor, by reusing or releasing the
+storage as described above.  [<I>Note 3:</I>
+A <I>delete-expression</I> (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>])
+invokes the destructor prior to releasing the
+storage. &#8212;<I>end note</I>] In this case, the
+destructor is not implicitly invoked<DEL> and any program that
+depends on the side effects produced by the destructor has
+undefined behavior</DEL>.
+<INS>[<I>Note:</I> The correct behavior of a program often depends on
+the destructor being invoked for each object of class type.  -- <I>end
+note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

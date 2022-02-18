@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2368</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2368"></A><H4>2368.
+  
+Differences in relational and three-way constant comparisons
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-11-11<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>According to 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] bullets 2.21 and
+2.22, the characteristics of three-way and relational
+comparisons that disqualify them as constant expressions are
+different:</P>
+
+<UL>
+<LI><P>a three-way comparison
+(7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]) comparing pointers that do not
+point to the same complete object or to any subobject
+thereof;</P></LI>
+
+<LI><P>a relational (7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]) or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</P></LI>
+
+</UL>
+
+<P>These are <I>not</I> equivalent, with odd results:</P>
+
+<PRE>
+  struct A {
+    int a;
+  private:
+    int b;
+    constexpr auto f() { return &amp;a &lt; &amp;b; }   //<SPAN CLASS="cmnt"> not constant </SPAN>
+    constexpr auto g() { return &amp;a &lt;=&gt; &amp;b; } //<SPAN CLASS="cmnt"> returns unspecified value </SPAN>
+  };
+</PRE>
+
+<P>Similarly,</P>
+
+<PRE>
+  struct B { int n; };
+  struct C : B { int m; } c;
+  constexpr auto x = &amp;c.n &lt; &amp;c.m;   //<SPAN CLASS="cmnt"> not constant </SPAN>
+  constexpr auto y = &amp;c.n &lt;=&gt; &amp;c.m; //<SPAN CLASS="cmnt"> returns unspecified value </SPAN>
+</PRE>
+
+<P>The three-way rule seems to be the correct one, but
+additional wording is needed in 7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>] to
+specify the relational ordering within a single object:
+addresses of subobjects of the same complete object should
+be weakly ordered, and when restricted to subobjects that
+are not permitted to have the same address, should be
+totally ordered.</P>
+
+<P><B>Notes from the October, 2018 teleconference:</B></P>
+
+<P>The consensus of CWG was to make the 3-way operator cases
+non-constant, as the relational cases are.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<P>Change 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] bullets 2.22 and 2.23 as follows,
+merging tbe bullets:</P>
+
+<BLOCKQUOTE>
+
+<P>An expression <TT>e</TT> is a <I>core constant
+expression</I> unless the evaluation of <TT>e</TT>,
+following the rules of the abstract machine
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the
+following expressions:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>])<INS>,</INS>
+<DEL>comparing pointers that do not point to the same complete
+object or to any subobject thereof;</DEL>
+</P></LI>
+
+<LI><P>
+<DEL>a</DEL> relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>])<INS>,</INS> or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,170 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 392</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="392"></A><H4>392.
+  
+Use of full expression lvalue before temporary destruction
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Stephen Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Nov 2002<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<PRE>
+class C {
+public:
+    C();
+    ~C();
+    int&amp; get() { return p; } // reference return
+private:
+    int p;
+};
+
+int main ()
+{
+    if ( C().get() ) // OK?
+}
+</PRE>
+
+<P>Section 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 says a temp is
+destroyed as the last step in
+evaluating the full expression.  But the expression C().get() has a
+reference type.  Does 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 require
+that the dereference to get a
+boolean result occur before the destructor runs, making the code
+valid?  Or does the code have undefined behavior?</P>
+
+<P>
+<U>Bill Gibbons:</U>
+It has undefined behavior, though clearly this wasn't intended.
+The lvalue-to-rvalue conversion that occurs in the "if" statement is
+not currently part of the full-expression.</P>
+
+<P>From section 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3:</P>
+<BLOCKQUOTE>
+   Temporary objects are destroyed as the last step in evaluating
+   the full-expression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>])
+that (lexically) contains the point
+   where they were created.
+</BLOCKQUOTE>
+
+<P>From section 6.9.1 [<A href="https://wg21.link/intro.execution#12">intro.execution</A>] paragraph 12:</P>
+<BLOCKQUOTE>
+   A full-expression is an expression that is not a subexpression
+   of another expression. If a language construct is defined to
+   produce an implicit call of a function, a use of the language
+   construct is considered to be an expression for the purposes
+   of this definition.
+</BLOCKQUOTE>
+
+<P>The note in section 6.9.1 [<A href="https://wg21.link/intro.execution#12">intro.execution</A>] paragraph 12 goes
+on to explain that this covers
+expressions used as initializers, but it does not discuss
+lvalues within temporaries.</P>
+
+<P>It is a small point but it is probably worth correcting
+6.9.1 [<A href="https://wg21.link/intro.execution#12">intro.execution</A>] paragraph 12.
+Instead of the "implicit call of a function" wording, it might
+be better to just say that a full-expression includes any implicit
+use of the expression value in the enclosing language construct,
+and include a note giving implicit calls and lvalue-to-rvalue
+conversions as examples.</P>
+
+<P>Offhand the places where this matters include:
+
+   initialization (including member initializers),
+   selection statements,
+   iteration statements,
+   return,
+   throw
+</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>Change 6.9.1 [<A href="https://wg21.link/intro.execution#12">intro.execution</A>] paragraph 12-13 to read:</P>
+<BLOCKQUOTE>
+<P>A <I>full-expression</I> is an expression that is not a
+subexpression of another expression.  If a language construct is
+defined to produce an implicit call of a function, a use of the
+language construct is considered to be an expression for the
+purposes of this definition.  <INS>Conversions applied to the result of
+an expression in order to satisfy the requirements of the language
+construct in which the expression appears are also considered to be
+part of the full-expression.</INS>
+</P>
+
+<P>
+<DEL>[<I>Note:</I> certain contexts in C++ cause the evaluation
+of a full-expression that results from a syntactic construct other
+than <I>expression</I> (7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]).  For example,
+in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] one syntax for
+<I>initializer</I> is
+
+<UL><DEL><TT>( </TT><I>expression-list</I><TT> )</TT></DEL></UL>
+
+<DEL>but the resulting construct is a function call upon a constructor
+function with <I>expression-list</I> as an argument list; such a
+function call is a full-expression.  For example, in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], another
+syntax for <I>initializer</I> is
+
+<UL><DEL><TT>= </TT><I>initializer-clause</I></DEL></UL>
+
+but again the resulting construct might be a function call upon a
+constructor function with one <I>assignment-expression</I> as an
+argument; again, the function call is a full-expression. ]</DEL></DEL>
+<INS>[<I>Example:</I></INS>
+</P>
+<PRE>
+<INS>  struct S {
+      S(int i): I(i) { }
+      int&amp; v() { return I; }
+    private:
+      int I;
+  };
+
+  S s1(1);           // <I>full-expression is call of S::S(int)</I>
+  S s2 = 2;          // <I>full-expression is call of S::S(int)</I>
+
+  void f() {
+      if (S(3).v())  // <I>full-expression includes lvalue-to-rvalue and</I>
+                     // int<I> to</I> bool<I> conversions, performed before</I>
+                     // <I>temporary is deleted at end of full-expression</I>
+      { }
+  }
+</INS>
+</PRE>
+<INS>&#8212;<I>end example</I>]</INS>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

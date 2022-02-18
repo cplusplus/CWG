@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 269</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="269"></A><H4>269.
+  
+Order of initialization of multiply-defined static data members
+of class templates
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Feb 2001<BR>
+
+
+<P>According to 6.3 [<A href="https://wg21.link/basic.def.odr#5">basic.def.odr</A>] paragraph 5, it is possible
+for a static data member of a class template to be defined more than
+once in a given program provided that each such definition occurs in a
+different translation unit and the ODR is met.</P>
+
+<P>Now consider the following example:</P>
+
+<P><I><B>src1.cpp:</B></I></P>
+
+<PRE>
+    #include &lt;iostream&gt;
+
+    int  initializer()
+    {
+       static int   counter;
+       return  counter++;
+    }
+
+    int   g_data1 = initializer();
+
+    template&lt;class T&gt;
+    struct  exp  {
+       static int   m_data;
+    };
+    template&lt;class T&gt;
+    int  exp&lt;T&gt;::m_data = initializer();
+
+    int   g_data2 = initializer();
+    extern int   g_data3;
+
+    int  main()
+    {
+       std::cout &lt;&lt; exp&lt;char&gt;::m_data &lt;&lt; ", " &lt;&lt; g_data1 &lt;&lt; ", "
+	  &lt;&lt; g_data2 &lt;&lt; ", " &lt;&lt; g_data3 &lt;&lt; std::endl;
+       return  0;
+    }
+</PRE>
+
+<P><I><B>src2.cpp:</B></I></P>
+
+<PRE>
+    extern int  initializer();
+    int  g_data3 = initializer();
+
+    template&lt;class T&gt;
+    struct  exp  {
+       static int   m_data;
+    };
+    template&lt;class T&gt;
+    int  exp&lt;T&gt;::m_data = initializer();
+
+    void  func()
+    {
+      exp&lt;char&gt;::m_data++;
+    }
+</PRE>
+
+<P>The specialization <TT>exp&lt;char&gt;::m_data</TT> is implicitly
+instaniated in both translation units, hence (13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1) its initialization occurs. And for both
+definitions of <TT>exp&lt;T&gt;::m_data</TT> the ODR is met. According
+to 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+Objects with static storage duration defined in namespace scope in the
+same translation unit and dynamically initialized shall be initialized
+in the order in which their definition appears in the translation
+unit.
+
+</BLOCKQUOTE>
+
+<P>But for <TT>exp&lt;T&gt;::m_data</TT> we have two definitions. Does
+it mean that both <TT>g_data1</TT> and <TT>g_data3</TT> are guaranteed
+to be dynamically initialized before
+<TT>exp&lt;char&gt;::m_data</TT>?</P>
+
+<P>
+<U>Suggested Resolution</U>:
+Insert the following sentence before the last two sentences of
+6.3 [<A href="https://wg21.link/basic.def.odr#5">basic.def.odr</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+<P>In the case of <TT>D</TT> being a static data member of a class
+template the following shall also hold:</P>
+
+<UL>
+<LI>
+for a given (not explicit) specialization of <TT>D</TT> initialized dynamically
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]), the accumulated set of objects initialized dynamically
+in namespace scope before the specialization of <TT>D</TT> shall be the same in every
+translation unit that contains the definition for this specialization.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>It was decided that this issue is not linked to
+<A HREF="270.html">issue 270</A> and that there is no problem, because
+there is only one instantiation (see 5.2 [<A href="https://wg21.link/lex.phases#8">lex.phases</A>] paragraph 8).
+</P>
+<BR><BR>
+</BODY>
+</HTML>

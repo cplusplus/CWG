@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 164</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="164"></A><H4>164.
+  
+Overlap between Koenig and normal lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Derek Inglis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 Sep 1999<BR>
+
+
+
+<P>The description of Koenig lookup in
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#1">basic.lookup.argdep</A>] paragraph 1
+says,</P>
+
+<BLOCKQUOTE>
+...other namespaces not considered during the usual unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+) may be
+searched.
+</BLOCKQUOTE>
+
+Does this mean that Koenig lookup does <I>not</I> search namespaces
+that were already searched during the usual unqualified lookup?  The
+answer is academic except for the two-stage lookup during template
+instantiation.  If a given namespace is searched in the context of the
+template definition, are declarations in that namespace in the
+instantiation context ignored during the Koenig lookup?  For instance,
+
+<PRE>
+    void f(int);
+
+    template &lt;class T&gt; void g(T t) {
+        f(t);
+    }
+
+    enum E { e };
+
+    void f(E);
+
+    void h() {
+        g(e);
+    }
+</PRE>
+
+In this example, the call <TT>f(t)</TT> in the template function will
+resolve to <TT>f(E)</TT> if Koenig lookup reexamines already-searched
+namespaces and to <TT>f(int)</TT> if not.
+
+<P><B>Proposed Resolution (10/00):</B></P>
+
+<P>Immediately preceding the example
+at the end of
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2,
+ add
+the following:</P>
+
+<BLOCKQUOTE>
+[<I>Note:</I> the namespaces and classes associated with the argument
+types can include namespaces and classes already considered by the
+ordinary unqualified lookup.]
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

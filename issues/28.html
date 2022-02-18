@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 28</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="28"></A><H4>28.
+  
+'exit', 'signal' and static object destruction
+</H4>
+<B>Section: </B>6.9.3.3&#160; [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin J. O'Riordan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Oct 1997<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting.]</P>
+
+
+
+<P>The C++ standard has inherited the definition of the 'exit' function
+more or less unchanged from ISO C.</P>
+
+<P>However, when the 'exit' function is called, objects of static extent
+which have been initialised, will be destructed if their types posses a
+destructor.</P>
+
+<P>In addition, the C++ standard has inherited the definition of the 'signal'
+function and its handlers from ISO C, also pretty much unchanged.</P>
+
+<P>The C standard says that the only standard library functions that may
+be called while a signal handler is executing, are the functions 'abort',
+'signal' and 'exit'.</P>
+
+<P>This introduces a bit of a nasty turn, as it is not at all unusual for
+the destruction of static objects to have fairly complex destruction semantics,
+often associated with resource release. These quite commonly involve apparently
+simple actions such as calling 'fclose' for a FILE handle.</P>
+
+<P>Having observed some very strange behaviour in a program recently which
+in handling a SIGTERM signal, called the 'exit' function as indicated by
+the C standard.</P>
+
+<P>But unknown to the programmer, a library static object performed some
+complicated resource deallocation activities, and the program crashed.</P>
+
+<P>The C++ standard says nothing about the interaction between signals,
+exit and static objects. My observations, was that in effect, because the
+destructor called a standard library function other than 'abort', 'exit'
+or 'signal', while transitively in the execution context of the signal
+handler, it was in fact non-compliant, and the behaviour was undefined
+anyway.</P>
+
+<P>This is I believe a plausible judgement, but given the prevalence of
+this common programming technique, it seems to me that we need to say something
+a lot more positive about this interaction.</P>
+
+<P>Curiously enough, the C standard fails to say anything about the analogous
+interaction with functions registered with 'atexit' ;-)</P>
+
+
+
+<P><B>Proposed Resolution (10/98):</B></P>
+
+<P>The current Committee Draft of the next version of the ISO C standard
+specifies that the only standard library function that may be called while
+a signal handler is executing is 'abort'. This would solve the above problem.</P>
+
+<P>[This issue should remain open until it has been decided that the next
+version of the C++ standard will use the next version of the C standard
+as the basis for the behavior of 'signal'.]</P>
+
+<P><B>Notes (November, 2006):</B></P>
+
+<P>C89 is slightly contradictory here: It allows any signal handler to
+<I>terminate</I> by calling <TT>abort</TT>, <TT>exit</TT>,
+<TT>longjmp</TT>, but (for asynchronous signals, i.e. not those
+produced by <TT>abort</TT> or <TT>raise</TT>) then makes calling any
+library function other than <TT>signal</TT> with the current signal
+undefined behavior (C89 7.7.1.1). For synchronous signals, C99 forbids
+calls to <TT>raise</TT>, but imposes no other restrictions. For
+asynchronous signals, C99 allows only calls
+to <TT>abort</TT>, <TT>_Exit</TT>, and <TT>signal</TT> with the
+current signal (C99 7.14.1.1). The current C++ WP refers to
+&#8220;plain old functions&#8221; and &#8220;conforming C
+programs&#8221; (17.13 [<A href="https://wg21.link/support.runtime#6">support.runtime</A>] paragraph 6). </P>
+
+<P><B>Proposed Resolution (November, 2006):</B></P>
+
+<P>Change the footnote in 17.13 [<A href="https://wg21.link/support.runtime#6">support.runtime</A>] paragraph 6 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+In particular, a signal handler using exception handling is very
+likely to have problems.  <INS>Also, invoking <TT>std::exit</TT> may
+cause destruction of objects, including those of the standard library
+implementation, which, in general, yields undefined behavior in a
+signal handler (see 6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]).</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

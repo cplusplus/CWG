@@ -1,0 +1,238 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1274</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1274"></A><H4>1274.
+  
+Common nonterminal for <I>expression</I> and <I>braced-init-list</I>
+</H4>
+<B>Section: </B>8.6.5&#160; [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-03-25<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>It would be helpful to have a single grammar term for
+<I>expression</I> and <I>braced-init-list</I>, which often occur
+together in the text.  In particular, 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1
+allows both, but the description of <TT>__RangeT</TT>
+refers only to the <I>expression</I> case; such errors would be less
+likely if the common term were available.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<OL>
+<LI><P>Add a new production to the grammar in 9.4 [<A href="https://wg21.link/dcl.init#1">dcl.init</A>] paragraph 1:
+</P></LI>
+
+<UL>
+<INS><I>expr-or-braced-init-list:</I></INS>
+<UL>
+<INS><I>expression</I></INS><BR>
+<INS><I>braced-init-list</I></INS>
+</UL>
+</UL>
+
+<LI><P>Change the grammar in 7.6.1 [<A href="https://wg21.link/expr.post#1">expr.post</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>postfix-expression:</I>
+<UL>
+<I>primary-expression</I><BR>
+<I>postfix-expression</I> <TT>[</TT> <I><DEL>expression</DEL> <INS>expr-or-braced-init-list</INS></I> <TT>]</TT><BR>
+<DEL><I>postfix-expression</I> <TT>[</TT> <I>braced-init-list</I> <TT>]</TT><BR></DEL>
+<I>postfix-expression</I> <TT>(</TT> <I>expression-list<SUB>opt</SUB></I> <TT>)</TT><BR>
+...
+</UL>
+</UL>
+
+<LI><P>Change the grammar in 8.6 [<A href="https://wg21.link/stmt.iter#1">stmt.iter</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>for-range-initializer:</I>
+<UL>
+<DEL><I>expression</I></DEL><BR>
+<DEL><I>braced-init-list</I></DEL><BR>
+<INS><I>expr-or-braced-init-list</I></INS>
+</UL>
+</UL>
+
+<LI><P>Change 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>For a range-based <TT>for</TT> statement of the form</DEL></P>
+
+<UL>
+<DEL><TT>for (</TT> <I>for-range-declaration</I> <TT>:</TT> <I>expression</I> <TT>)</TT> <I>statement</I></DEL>
+</UL>
+
+<P><DEL>let <I>range-init</I> be equivalent to the <I>expression</I>
+surrounded by parentheses<SUP>90</SUP></DEL></P>
+
+<UL><DEL><TT>(</TT> <I>expression</I> <TT>)</TT></DEL></UL>
+
+<P><DEL>and for a range-based <TT>for</TT> statement of the form</DEL></P>
+
+<UL>
+<DEL><TT>for (</TT> <I>for-range-declaration</I> <TT>:</TT> <I>braced-init-list</I> <TT>)</TT> <I>statement</I></DEL>
+</UL>
+
+<P>
+<DEL>let <I>range-init</I> be equivalent to
+the <I>braced-init-list</I>. In each case,
+a</DEL> <INS>A</INS> range-based for statement is equivalent
+to</P>
+
+<PRE>
+  {
+  auto &amp;&amp; __range = <DEL>range-init</DEL> <INS><I>for-range-initializer</I></INS>;
+    for ( auto __begin = begin-expr,
+               __end = end-expr;
+          __begin != __end;
+          ++__begin ) {
+      <I>for-range-declaration</I> = *__begin;
+      <I>statement</I>
+    }
+  }
+</PRE>
+
+<P>where</P>
+
+<UL>
+<LI><P><INS>if the <I>for-range-initializer</I> is an
+<I>expression</I>, it is regarded as if it were surrounded
+by parentheses (so that a comma operator cannot be
+reinterpreted as delimiting
+two <I>init-declarator</I>s);</INS></P></LI>
+
+<LI><P>
+<TT>__range</TT>, <TT>__begin</TT>,
+and <TT>__end</TT> are variables defined for exposition
+only<DEL>,</DEL><INS>;</INS> and</P></LI>
+
+<LI><P><DEL><TT>_RangeT</TT> is the type of the expression,
+and</DEL></P></LI>
+
+<LI><P>
+<I>begin-expr</I> and <I>end-expr</I> are determined as
+follows:</P></LI>
+
+<UL>
+<LI><P>if <DEL><TT>_RangeT</TT></DEL> <INS>the
+<I>for-range-initializer</I></INS> is an <INS>expression
+of</INS> array type <INS><TT>R</TT></INS>, <I>begin-expr</I>
+and <I>end-expr</I> are <TT>__range</TT> and <TT>__range +
+__bound</TT>, respectively, where <TT>__bound</TT> is the
+array
+bound. If <DEL><TT>_RangeT</TT></DEL> <INS><TT>R</TT></INS>
+is an array of unknown size or an array of incomplete type,
+the program is ill-formed;</P></LI>
+
+<LI><P>if <DEL><TT>_RangeT</TT></DEL> <INS>the
+<I>for-range-initializer</I></INS> is <DEL>a</DEL>
+<INS>an expression of</INS> class type <INS><TT>C</TT></INS>,
+the <I>unqualified-id</I>s <TT>begin</TT> and <TT>end</TT>
+are looked up in the scope of <DEL>class <TT>_RangeT</TT></DEL>
+<INS><TT>C</TT></INS> as if by class member access lookup
+(_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]), and if either (or both) finds
+at least one declaration, <I>begin-expr</I>
+and <I>end-expr</I> are
+<TT>__range.begin()</TT> and <TT>__range.end()</TT>,
+respectively;</P></LI>
+
+<LI><P>otherwise, <I>begin-expr</I> and <I>end-expr</I> are
+<TT>begin(__range)</TT> and <TT>end(__range)</TT>,
+respectively, where <TT>begin</TT> and <TT>end</TT> are
+looked up in the associated namespaces
+(6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]). [<I>Note:</I> Ordinary
+unqualified lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) is not
+performed. &#8212;<I>end note</I>]</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar of 8.7 [<A href="https://wg21.link/stmt.jump#1">stmt.jump</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>jump-statement:</I>
+<UL>
+<TT>break ;</TT><BR>
+<TT>continue ;</TT><BR>
+<TT>return</TT> <I><DEL>expression</DEL> <INS>expr-or-braced-init-list</INS><SUB>opt</SUB></I> <TT>;</TT><BR>
+<DEL><TT>return</TT> <I>braced-init-list</I> <TT>;</TT></DEL><BR>
+<TT>goto</TT> <I>identifier</I> <TT>;</TT>
+</UL>
+</UL>
+
+<LI><P>Change 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The <DEL><I>expression</I>
+or <I>braced-init-list</I></DEL> <INS><I>expr-or-braced-init-list</I></INS>
+of a <TT>return</TT> statement is called its operand. A
+return statement...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.4.5 [<A href="https://wg21.link/over.sub#1">over.sub</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<TT>operator[]</TT> shall be a non-static member function with
+exactly one parameter. It implements the subscripting
+syntax</P>
+
+<UL>
+<I>postfix-expression</I> <TT>[</TT> <I><DEL>expression</DEL> <INS>expr-or-braced-init-list</INS></I> <TT>]</TT>
+</UL>
+
+<P><DEL>or</DEL></P>
+
+<UL>
+<DEL><I>postfix-expression</I> <TT>[</TT> <I>braced-init-list</I> <TT>]</TT></DEL>
+</UL>
+
+<P>Thus, a subscripting expression...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2967</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2967"></A><H4>2967.
+  
+Explicit conversion functions
+</H4>
+<B>Section: </B>12.2.2.7&#160; [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-11<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct T {
+    T(T&amp;&amp;);
+  };
+
+  struct U {
+    explicit operator T&amp;&amp;();
+  };
+
+  int main() {
+    T t(U{});
+  }
+</PRE>
+
+<P>To perform the direct-initialization of <TT>t</TT> using the move
+constructor of <TT>T</TT>, we have to find an implicit conversion
+sequence from <TT>U</TT> to <TT>T&amp;&amp;</TT>, which is covered by
+9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3.2">dcl.init.ref</A>] bullet 5.3.2.  The corresponding overload
+resolution in 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1 specifies:</P>
+
+<BLOCKQUOTE>
+
+The permissible types for non-explicit conversion functions are the
+members of R where &#8220;cv1 T&#8221; is reference-compatible
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) with &#8220;cv2 T2&#8221;. For
+direct-initialization, the permissible types for explicit conversion
+functions are the members of R where T2 can be converted to type T
+with a (possibly trivial) qualification conversion
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]); otherwise there are none.
+
+</BLOCKQUOTE>
+
+<P>However, the reference in question is not direct-initialized (the
+first parameter of the constructor is copy-initialized), thus the
+explicit conversion function is not considered.  However, all
+implementations agree that the example is valid.</P>
+
+<P>Subclause 12.2.2.5 [<A href="https://wg21.link/over.match.copy#1.2">over.match.copy</A>] paragraph 1.2 already handles
+this case for passing values.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The permissible types for non-explicit conversion functions are
+the members of R where &#8220;cv1 T&#8221; is reference-compatible
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) with &#8220;cv2 T2&#8221;. For
+direct-initialization<INS>, and for copy-initialization of the first
+parameter of a constructor where the constructor is called with a
+single argument in the context of direct-initialization of an object
+of type "cv3 T"</INS>, the permissible types for explicit conversion
+functions are the members of R where T2 can be converted to type T
+with a (possibly trivial) qualification conversion
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]); otherwise there are none.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

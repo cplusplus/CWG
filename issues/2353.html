@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2353</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2353"></A><H4>2353.
+  
+Potential results of a member access expression for a static data member
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-08-18<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>According to 6.3 [<A href="https://wg21.link/basic.def.odr#2.3">basic.def.odr</A>] bullet 2.3, the potential
+results of a member access expression are simply the object expression.
+This rule incorrectly handles an example like:</P>
+
+<PRE>
+  struct X {
+    static const int n = 0;
+  };
+  X x = {};
+
+  int b = x.n;
+</PRE>
+
+<P>Because <TT>X::n</TT> is not one of the potential results, the
+expression <TT>x.n</TT> odr-uses <TT>X::n</TT>, requiring it to be
+defined.</P>
+
+<P><B>Notes from the April, 2018 teleconference:</B></P>
+
+<P>CWG agreed with the suggested direction to make the member a
+potential result in cases like the example.</P>
+
+<P><B>Proposed resolution (February, 2019):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An expression is potentially evaluated unless it is an
+unevaluated operand (7.2 [<A href="https://wg21.link/expr.prop">expr.prop</A>]) or a
+subexpression thereof.  The set of potential results of an
+expression <TT>e</TT> is defined as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>If <TT>e</TT> is a class member access expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) <INS>of the form
+<TT>e1 . template</TT><SUB><I>opt</I></SUB><TT> e2</TT>
+naming a non-static data member</INS>, the set contains the
+potential results of <DEL>the object expression</DEL>
+<INS><TT>e1</TT></INS>.</P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a class member access expression
+naming a static data member, the set contains the
+<I>id-expression</I> designating the data member.</INS></P></LI>
+
+<LI><P>If <TT>e</TT> is a pointer-to-member expression
+(7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]) <DEL>whose second operand is a
+constant expression</DEL> <INS>of the form
+<TT>e1 .* e2</TT></INS>, the set contains the potential results
+of <DEL>the object expression</DEL>
+<INS><TT>e1</TT></INS>.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

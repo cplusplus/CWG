@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 349</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="349"></A><H4>349.
+  
+Template argument deduction for conversion functions and qualification conversions
+</H4>
+<B>Section: </B>13.10.3.4&#160; [<A href="https://wg21.link/temp.deduct.conv">temp.deduct.conv</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 April 2002<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+
+
+<P>We ran into an issue concerning qualification conversions when doing
+template argument deduction for conversion functions.</P>
+
+<P>The question is: What is the type of T in the conversion functions
+called by this example?  Is T "int" or "const int"?</P>
+
+<P>If T is "int", the conversion function in class A works and the one in
+class B fails (because the return expression cannot be converted to
+the return type of the function).  If T is "const int", A fails and B
+works.</P>
+
+<P>Because the qualification conversion is performed on the result of the
+conversion function, I see no benefit in deducing T as const int.</P>
+
+<P>In addition, I think the code in class A is more likely to occur than
+the code in class B.  If the author of the class was planning on returning
+a pointer to a const entity, I would expect the function to have been
+written with a const in the return type.</P>
+
+<P>Consequently, I believe the correct result should be that T is int.</P>
+<PRE>
+struct A {
+	template &lt;class T&gt; operator T***() {
+		int*** p = 0;
+		return p;
+	}
+};
+
+struct B {
+	template &lt;class T&gt; operator T***() {
+		const int*** p = 0;
+		return p;
+	}
+};
+
+int main()
+{
+	A a;
+	const int * const * const * p1 = a;
+	B b;
+	const int * const * const * p2 = b;
+}
+</PRE>
+<P>We have just implemented this feature, and pending clarification by
+the committee, we deduce T as int.  It appears that g++ and the Sun
+compiler deduce T as const int.</P>
+
+<P>One way or the other, I think the standard should be clarified to
+specify how cases like this should be handled.</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>There was consensus on having the deduced type be "int" in the
+above.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>
+Add to the end of 13.10.3.4 [<A href="https://wg21.link/temp.deduct.conv">temp.deduct.conv</A>] (as a new paragraph
+following paragraph 3):</P>
+<BLOCKQUOTE>
+<P>When the deduction process requires a qualification conversion for a
+pointer or pointer to member type as described above, the following
+process is used to determine the deduced template argument values:</P>
+
+<P> If <TT>A</TT> is a type <I>cv</I><SUB>1,0</SUB> pointer to ... <I>cv</I>
+<SUB>1,<I>n</I>-1</SUB>
+pointer to <I>cv</I><SUB>1,<I>n</I></SUB> <I>T1</I>
+</P>
+<P> and <TT>P</TT> is a type <I>cv</I><SUB>2,0</SUB>
+pointer to ... <I>cv</I><SUB>2,<I>n</I>-1</SUB>
+pointer to <I>cv</I><SUB>2,<I>n</I></SUB> <I>T2</I>
+</P>
+<P> The cv-unqualified T1 and T2 are used as the types of
+<TT>A</TT> and <TT>P</TT> respectively for type deduction.</P>
+
+<P>
+[<I>Example:</I>
+<PRE>
+struct A {
+	template &lt;class T&gt; operator T***();
+};
+
+A a;
+const int * const * const * p1 = a;  // T is deduced as int, not const int
+</PRE>
+-- <I>end example</I>]
+</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

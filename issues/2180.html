@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2180</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2180"></A><H4>2180.
+  
+Virtual bases in destructors and defaulted assignment operators
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-10-13<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>According to 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#28">class.copy.ctor</A>] paragraph 28,</P>
+
+<BLOCKQUOTE>
+
+The implicitly-defined copy/move assignment operator for a
+non-union class X performs memberwise copy/move assignment
+of its subobjects. The direct base classes of X are assigned
+first, in the order of their declaration in
+the <I>base-specifier-list</I>, and then the immediate
+non-static data members of X are assigned, in the order in
+which they were declared in the class definition...
+It is unspecified whether subobjects representing virtual
+base classes are assigned more than once by the
+implicitly-defined copy/move assignment operator.
+
+</BLOCKQUOTE>
+
+<P>However, the determination of whether a defaulted
+copy/move assignment operator is defined as deleted
+(paragraph 23) considers only the &#8220;potentially
+constructed&#8221; subobjects:</P>
+
+<BLOCKQUOTE>
+
+<P>A defaulted copy/move assignment operator for class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a potentially constructed subobject of class type <TT>M</TT> (or
+array thereof) that cannot be copied/moved...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>where &#8220;potentially constructed&#8221; is defined (in
+11.4.4 [<A href="https://wg21.link/special#5">special</A>] paragraph 5) as:</P>
+
+<BLOCKQUOTE>
+
+For a class, its non-static data members, its non-virtual
+direct base classes, and, if the class is not abstract
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), its virtual base classes are
+called its <I>potentially constructed subobjects</I>.
+
+</BLOCKQUOTE>
+
+<P>i.e., excluding direct virtual base classes of abstract
+classes.  This seems contradictory, since an implementation is
+expressly permitted to assign such base classes and thus
+presumably is permitted to fail if no such assignment is
+possible.</P>
+
+<P>Similarly, 11.4.7 [<A href="https://wg21.link/class.dtor#8">class.dtor</A>] paragraph 8 says,</P>
+
+<BLOCKQUOTE>
+
+After executing the body of the destructor and destroying
+any automatic objects allocated within the body, a
+destructor for class <TT>X</TT> calls the destructors
+for <TT>X</TT>'s direct non-variant non-static data members,
+the destructors for <TT>X</TT>'s direct base classes and,
+if <TT>X</TT> is the type of the most derived class
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), its destructor calls the
+destructors for <TT>X</TT>'s virtual base classes.
+
+</BLOCKQUOTE>
+
+<P>This appears to allow a virtual base's destructor to be
+called more than once, once for each class naming it as a
+direct virtual base and once for the most-derived class.</P>
+
+<P><B>Proposed resolution (February, 2016):</B></P>
+
+<OL>
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#8">class.dtor</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+After executing the body of the destructor and destroying
+any automatic objects allocated within the body, a
+destructor for class <TT>X</TT> calls the destructors
+for <TT>X</TT>'s direct non-variant non-static data members,
+the destructors for <TT>X</TT>'s <INS>non-virtual</INS>
+direct base classes and, if <TT>X</TT> is the type of the
+most derived class (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), its
+destructor calls the destructors for <TT>X</TT>'s virtual
+base classes. All destructors are called as if...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#23.4">class.copy.ctor</A>] bullet 23.4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A defaulted copy/move assignment operator for class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<DEL>a potentially constructed
+subobject</DEL> <INS>direct non-static data member</INS> of
+class type <TT>M</TT> (or array thereof) <INS>or a direct base
+class <TT>M</TT></INS> that cannot be
+copied/moved because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s
+corresponding assignment operator, results in an ambiguity
+or a function that is deleted or inaccessible from the
+defaulted assignment operator.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

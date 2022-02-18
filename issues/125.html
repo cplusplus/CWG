@@ -1,0 +1,298 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 125</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="125"></A><H4>125.
+  
+Ambiguity in <TT>friend</TT> declaration syntax
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin von Loewis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 June 1999<BR>
+
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+<P>The example below is ambiguous.</P>
+
+<PRE>
+    struct A{
+      struct B{};
+    };
+
+    A::B C();
+
+    namespace B{
+      A C();
+    }
+
+    struct Test {
+      friend A::B ::C();
+    };
+</PRE>
+
+Here, it is not clear whether the friend declaration denotes
+<TT>A B::C()</TT> or <TT>A::B C()</TT>, yet the standard does not resolve this
+ambiguity.
+
+<P>The ambiguity arises since both the <I>simple-type-specifier</I>
+(9.2.9.3 [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ paragra 1) and an
+<I>init-declararator</I>
+(9.3 [<A href="https://wg21.link/dcl.decl#1">dcl.decl</A>] paragraph 1)
+
+contain an optional <TT>::</TT> and an optional
+<I>nested-name-specifier</I>
+(_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#1">expr.prim.general</A>] paragraph 1)
+.
+Therefore, two different ways to analyse this code are
+possible:</P>
+
+<BLOCKQUOTE>
+<I>simple-type-specifier</I> = <TT>A::B</TT><BR>
+<I>init-declarator</I> = <TT>::C()</TT><BR>
+<I>simple-declaration</I> = <TT>friend A::B ::C();</TT>
+</BLOCKQUOTE>
+
+or
+
+<BLOCKQUOTE>
+<I>simple-type-specifier</I> = <TT>A</TT><BR>
+<I>init-declarator</I> = <TT>::B::C()</TT><BR>
+<I>simple-declaration</I> = <TT>friend A ::B::C();</TT>
+</BLOCKQUOTE>
+
+Since it is a friend declaration, the init-declarator may be
+qualified, and start with a global scope.
+
+<P>Suggested Resolution: In the definition of
+<I>nested-name-specifier</I>, add a
+sentence saying that a <TT>::</TT> token immediately following a
+<I>nested-name-specifier</I> is always considered as part of the
+<I>nested-name-specifier</I>. Under this interpretation, the example is
+ill-formed, and should be corrected as either</P>
+
+<PRE>
+    friend A (::B::C)();   //or
+    friend A::B (::C)();
+</PRE>
+
+<P>An alternate suggestion &#8212; changing
+9.2 [<A href="https://wg21.link/dcl.spec">dcl.spec</A>]
+ to say that</P>
+
+<BLOCKQUOTE>
+The longest sequence of <B>tokens</B> that could possibly be a type
+name is taken as the <I>decl-specifier-seq</I> of a <I>declaration</I>.
+</BLOCKQUOTE>
+
+<P>&#8212; is undesirable because it would make the example well-formed
+rather than requiring the user to disambiguate the declaration
+explicitly.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P><B>(See below for problem with this, from 10/01 meeting.)</B></P>
+
+<P>In _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#7">expr.prim.general</A>] paragraph 7,</P>
+
+<OL>
+
+<LI>
+<P>Before the grammar for <I>qualified-id</I>, start a new
+paragraph 7a with the text </P>
+
+<BLOCKQUOTE>
+
+A <I>qualified-id</I> is an <I>id-expression</I> that contains the
+scope resolution operator <TT>::</TT>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Following the grammar fragment, insert the following:</P>
+
+<BLOCKQUOTE>
+
+<P>The longest sequence of tokens that could form a <I>qualified-id</I>
+constitutes a single <I>qualified-id</I>.  [<I>Example:</I>
+</P>
+
+<PRE>
+    // classes C, D; functions F, G, namespace N; non-class type T
+    friend C ::D::F();   // ill-formed, means friend (C::D::F)();
+    friend C (::D::F)(); // well-formed
+    friend N::T ::G();   // ill-formed, means friend (N::T::G)();
+    friend N::T (::G)(); // well-formed
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI><P>Start a new paragraph 7b following the example.</P></LI>
+
+</OL>
+
+<P>(This resolution depends on that of
+<A HREF="215.html">issue 215</A>.)</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>It was pointed out that the proposed resolution does not deal with
+cases like <TT>X::Y</TT> where <TT>X</TT> is a type but not a class type.
+The working group reaffirmed its decision that the disambiguation should
+be syntactic only, i.e., it should depend only on whether or not the name is a
+type.</P>
+
+<U>Jason Merrill</U>
+:
+
+<P>At the Seattle meeting, I suggested that a solution might be to change the
+<I>class-or-namespace-name</I> in the <I>nested-name-specifier</I>
+rule to just be
+"identifier"; there was some resistance to this idea.  FWIW, I've tried
+this in g++.  I had to revise the idea so that only the second and
+subsequent names were open to being any identifier, but that seems to work
+just fine.</P>
+
+<P>So, instead of</P>
+
+<UL>
+<I>nested-name-specifier</I>:
+<UL>
+<I>class-or-namespace-name</I> <TT>::</TT> <I>nested-name-specifier</I><SUB>opt</SUB>
+<BR><I>class-or-namespace-name</I> <TT>::</TT> <I>template nested-name-specifier</I>
+</UL>
+</UL>
+
+<P>it would be</P>
+
+<UL>
+<I>nested-name-specifier</I>:
+<UL>
+<I>type-or-namespace-name</I> <TT>::</TT> (per issue 215)
+<BR><I>nested-name-specifier</I> <I>identifier</I> <TT>::</TT>
+<BR><I>nested-name-specifier</I> <TT>template</TT> <I>template-id</I> <TT>::</TT>
+</UL>
+</UL>
+
+<P>Or some equivalent but right-associative formulation, if people feel that's
+important, but it seems irrelevant to me.</P>
+
+<P>
+<U>Clark Nelson</U>
+:</P>
+
+<P>Personally, I prefer the left-associative rule. I think it makes it easier
+to understand. I was thinking about this production a lot at the meeting,
+considering also some issues related to <A HREF="301.html">301</A>.
+My formulation was getting kind
+of ugly, but with a left-associative rule, it gets a lot nicer.</P>
+
+<P>Your proposal isn't complete, however, as it doesn't allow template
+arguments without an explicit template keyword. You probably want to add an
+alternative for:</P>
+
+<UL>
+<I>nested-name-specifier type-or-namespace-name</I> <TT>::</TT>
+</UL>
+
+<P>There is admittedly overlap between this alternative and</P>
+
+<UL>
+<I>nested-name-specifier identifier</I> <TT>::</TT>
+</UL>
+
+<P>but I think they're both necessary.</P>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>The changes look good.  Clark Nelson will merge the two proposals
+to produce a single proposed resolution.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>
+<I>nested-name-specifier</I> is currently defined in
+_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#7">expr.prim.general</A>] paragraph 7 as:
+</P>
+
+<UL>
+<I>nested-name-specifier:</I>
+<UL>
+<I>class-or-namespace-name</I> <TT>::</TT> <I>nested-name-specifier<sub>opt</sub></I><BR>
+<I>class-or-namespace-name</I> <TT>:: template</TT> <I>nested-name-specifier</I>
+</UL>
+<I>class-or-namespace-name:</I>
+<UL>
+<I>class-name</I><BR>
+<I>namespace-name</I>
+</UL>
+</UL>
+
+<P>
+The proposed definition is instead:
+</P>
+
+<UL>
+<I>nested-name-specifier:</I>
+<UL>
+<I>type-name</I> <TT>::</TT><BR>
+<I>namespace-name</I> <TT>::</TT><BR>
+<I>nested-name-specifier</I> <I>identifier</I> <TT>::</TT><BR>
+<I>nested-name-specifier</I> <TT>template</TT><I><sub>opt</sub> template-id</I> <TT>::</TT>
+</UL>
+</UL>
+<P>
+<A HREF="215.html">Issue 215</A>
+is addressed by using <I>type-name</I> instead of <I>class-name</I> in the first alternative.
+Issue 125 (this issue)
+is addressed by using <I>identifier</I> instead of anything more specific in the third alternative.
+Using left association instead of right association helps eliminate the need for <I>class-or-namespace-name</I> (or <I>type-or-namespace-name</I>, as suggested for <A HREF="215.html">issue 215</A>).
+</P>
+
+<P>
+It should be noted that this formulation also rules out the possibility of <TT>A::template B::</TT>, i.e. using the <TT>template</TT> keyword without any template arguments.
+I think this is according to the purpose of the <TT>template</TT> keyword, and that the former rule allowed such a construct only because of the difficulty of formulation of a right-associative rule that would disallow it.
+But I wanted to be sure to point out this implication.
+</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>See also <A HREF="96.html">issue 96</A>.</P>
+
+<P>The proposed change resolves only part of
+<A HREF="215.html">issue 215</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

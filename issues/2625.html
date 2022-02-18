@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2625</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2625"></A><H4>2625.
+  
+Deletion of pointer to out-of-lifetime object
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Blacktea Hamburger
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-27<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+struct S {};
+
+int main() {
+  S* p = new S;
+  p-&gt;~S();
+  delete p;
+}
+</PRE>
+
+<P>This code appears to be allowed per 6.7.4 [<A href="https://wg21.link/basic.life#6.1">basic.life</A>] bullet 6.1:</P>
+
+<BLOCKQUOTE>
+
+The program has undefined behavior if:
+
+<UL>
+<LI>the object will be or was of a class type with a non-trivial
+destructor and the pointer is used as the operand of
+a <I>delete-expression</I>,</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, this calls the (trivial) destructor on <TT>*p</TT> twice.
+Invoking a non-static member function of an out-of-lifetime object is
+generally undefined behavior per 6.7.4 [<A href="https://wg21.link/basic.life#6.2">basic.life</A>] bullet 6.2 and 6.7.4 [<A href="https://wg21.link/basic.life#7.2">basic.life</A>] bullet 7.2.  The rules
+ought to be consistent.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-10-07):</B></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#6.1">basic.life</A>] bullet 6.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The program has undefined behavior if:
+
+<UL>
+<LI>
+<DEL>the object will be or was of a class type with a non-trivial
+destructor and</DEL> the pointer is used as the operand of
+a <I>delete-expression</I>,</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

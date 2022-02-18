@@ -1,0 +1,238 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 198</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="198"></A><H4>198.
+  
+Definition of "use" in local and nested classes
+</H4>
+<B>Section: </B>11.6&#160; [<A href="https://wg21.link/class.local">class.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Erwin Unruh
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Jan 2000<BR>
+
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+
+
+<P>11.6 [<A href="https://wg21.link/class.local#1">class.local</A>] paragraph 1
+says,</P>
+
+<BLOCKQUOTE>
+Declarations in a local class can use only type names, static
+variables, <TT>extern</TT> variables and functions, and enumerators
+from the enclosing scope.
+</BLOCKQUOTE>
+
+The definition of when an object or function is "used" is found in
+6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2
+and
+essentially says that the operands of <TT>sizeof</TT> and
+non-polymorphic <TT>typeid</TT> operators are not used.  (The
+resolution for <A HREF="48.html">issue 48</A> will add
+contexts in which integral constant expressions are required to the
+list of non-uses.)
+
+<P>This definition of "use" would presumably allow code like</P>
+
+<PRE>
+    void foo() {
+        int i;
+        struct S {
+            int a[sizeof(i)];
+        };
+    };
+</PRE>
+
+which is required for C compatibility.
+
+<P>However, the restrictions on nested classes in
+11.4.12 [<A href="https://wg21.link/class.nest#1">class.nest</A>] paragraph 1
+are very
+similar to those for local classes, and the example there explicitly
+states that a reference in a <TT>sizeof</TT> expression is a forbidden
+use (abbreviated for exposition):</P>
+
+<PRE>
+    class enclose {
+    public:
+        int x;
+        class inner {
+            void f(int i)
+            {
+                int a = sizeof(x);  // <I>error: refers to </I>enclose::x
+            }
+        };
+    };
+</PRE>
+
+<P>[As a personal note, I have seen real-world code that was exactly like
+this; it was hard to persuade the author that the required
+writearound, <TT>sizeof(((enclose*) 0)-&gt;x)</TT>, was an improvement
+over <TT>sizeof(x)</TT>. <I>&#8212;wmm</I>]</P>
+
+<P>Similarly, 11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9 would appear to
+prohibit examples like the following:</P>
+
+<PRE>
+    struct B {
+        char x[10];
+    };
+    struct D: B {
+        char y[sizeof(x)];
+    };
+</PRE>
+
+<P>
+<B>Suggested resolution:</B> Add cross-references to
+6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ following the word
+"use" in both 11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>]
+ and
+11.6 [<A href="https://wg21.link/class.local">class.local</A>]
+, and change the example
+in 11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>]
+ to indicate that a
+reference in a <TT>sizeof</TT> expression is permitted.  In
+11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9, "referred to" should be
+changed to "used" with a cross_reference to
+6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>].</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>It was noted that the suggested resolution did not make the
+<TT>sizeof()</TT> example in 11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>] valid.
+Although the reference to the argument of <TT>sizeof()</TT> is not regarded
+as a use, the right syntax must be used nonetheless to reference a non-static
+member from the enclosing class. The use of the member name by itself is not
+valid. The consensus within the core working group was that nothing should be
+done about this case. It was later discovered that
+11.4.9 [<A href="https://wg21.link/class.static#3">class.static</A>] paragraph 3 states that</P>
+<BLOCKQUOTE>
+<P>The
+definition of a <TT>static</TT>
+member shall not use directly the names of the nonstatic members of its class
+or of a base class of its class (including as operands of the <TT>sizeof</TT>
+operator). The definition of a <TT>static</TT> member may only refer to
+these members to
+form pointer to members (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) or
+with the class member access syntax (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).</P>
+</BLOCKQUOTE>
+
+<P>This seems to
+reinforce the decision of the working group.</P>
+
+<P>The use of "use" should still be cross-referenced. The
+statements in 11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>] and 11.6 [<A href="https://wg21.link/class.local">class.local</A>]
+should also be rewritten to state the requirement
+positively rather than negatively as the list of "can't"s is already missing
+some cases such as template parameters. </P>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>We backed away from "use" in the technical sense, because the
+requirements on the form of reference are the same whether or not
+the reference occurs inside a <TT>sizeof</TT>.</P>
+
+<P><B>Proposed Resolution (revised October 2002):</B></P>
+
+<P>In 11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9, replace </P>
+<BLOCKQUOTE>
+  <P>Except when used to form a pointer to member
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]), when used in the body of a
+ nonstatic member function of
+  its class or of a class derived from its class
+ (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]), or when used in
+ a <I>mem-initializer</I> for a
+  constructor for its class or for a class derived from its class
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), a nonstatic data or function member
+ of a class shall only be referred to with the class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).</P>
+</BLOCKQUOTE>
+<P>with the following paragraph</P>
+<BLOCKQUOTE>
+  <P>Each occurrence in an expression of the name of a nonstatic data
+  member or nonstatic member function of a class shall be expressed as a class
+  member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), except when it appears
+  in the formation of a pointer to member
+  (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]), when it appears in the body
+  of a nonstatic member function
+  of its class or of a class derived from its class
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]), or when it appears in a
+<I>mem-initializer</I> for
+  a constructor for its class or for a class derived from its class
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</P>
+</BLOCKQUOTE>
+<P>In 11.4.12 [<A href="https://wg21.link/class.nest#1">class.nest</A>] paragraph 1,
+ replace the last sentence,</P>
+<BLOCKQUOTE>
+  <P>Except by using explicit pointers, references, and object names,
+  declarations in a nested class can use only type names, static members, and
+  enumerators from the enclosing class.</P>
+</BLOCKQUOTE>
+<P>with the following</P>
+<BLOCKQUOTE>
+  <P>[Note: In accordance with 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>],
+  except by using explicit pointers,
+  references, and object names, declarations in a nested class shall not use
+  nonstatic data members or nonstatic member functions from the
+  enclosing class. This restriction applies in all constructs including the
+  operands of the <TT>sizeof</TT> operator.]</P>
+</BLOCKQUOTE>
+<P>In the example following 11.4.12 [<A href="https://wg21.link/class.nest#1">class.nest</A>] paragraph 1,
+ change the comment on the first statement of
+function <TT>f</TT> to emphasize that <TT>sizeof(x)</TT> is an error. The
+example reads in full:</P>
+<PRE>
+  int x;
+  int y;
+  class enclose {
+  public:
+    int x;
+    static int s;
+    class inner {
+      void f(int i)
+      {
+        int a = sizeof(x);  // <I>error: direct use of</I> <TT>enclose::x</TT> <I>even in sizeof</I>
+        x = i;              // <I>error: assign to </I><TT>enclose::x</TT>
+        s = i;              // <I>OK: assign to </I><TT>enclose::s</TT>
+        ::x = i;            // <I>OK: assign to global</I> <TT>x</TT>
+        y = i;              // <I>OK: assign to global</I> <TT>y</TT>
+      }
+      void g(enclose* p, int i)
+      {
+        p-&gt;x = i;        // <I>OK: assign to</I> <TT>enclose::x</TT>
+      }
+    };
+  };
+
+  inner* p = 0;             // <I>error:</I> <TT>inner</TT><I> not in scope</I>
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

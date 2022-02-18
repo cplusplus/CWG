@@ -1,0 +1,272 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2174</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2174"></A><H4>2174.
+  
+Unclear rules for friend definitions in templates
+</H4>
+<B>Section: </B>13.7.5&#160; [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-09-17<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>According to 13.7.5 [<A href="https://wg21.link/temp.friend#4">temp.friend</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+When a function is defined in a friend function declaration
+in a class template, the function is instantiated when the
+function is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]). The same
+restrictions on multiple declarations and definitions that
+apply to non-template function declarations and definitions
+also apply to these implicit definitions.
+
+</BLOCKQUOTE>
+
+<P>This seems to imply that:</P>
+
+<OL>
+<LI><P>Instantiating a class template that contains a friend
+function definition instantiates the declaration, but not
+the definition, of that friend function, as usual (but see
+below).</P></LI>
+
+<LI>
+
+<P>If the function is odr-used, a definition is instantiated
+for each such class template specialization whose template
+had a definition.</P>
+</LI>
+
+<LI>
+
+<P>If that results in multiple definitions, the program is
+ill-formed as usual.</P>
+</LI>
+
+</OL>
+
+<P>The intent appears to be that the instantiated friend
+function declarations should be treated as if they were
+definitions, but that's not clear from the wording.  This
+wording is also missing similar provisions for friend
+function template definitions; there is implementation
+divergence on the treatment of such cases.</P>
+
+<P>There also does not appear to be wording that says that
+instantiating a class template specialization results in
+the instantiation of friend functions declared/defined
+therein (the relevant wording was removed from this section
+by <A HREF="329.html">issue 329</A>). Presumably this
+should be covered in 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1,
+which also includes the following wording that could be
+reused for the <TT>friend</TT> case:</P>
+
+<BLOCKQUOTE>
+
+However, for the purpose of determining whether an
+instantiated redeclaration of a member is valid according to
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], a declaration that corresponds to
+a definition in the template is considered to be a
+definition.
+
+</BLOCKQUOTE>
+
+<P>Also, the reliance on odr-use to trigger friend instantiation
+is out of date, as there are other contexts that can require
+an instantiation when there is no odr-use (a <TT>constexpr</TT>
+function invoked within an unevaluated operand).</P>
+
+<P><B>Proposed resolution (October, 2015) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Delete 13.7.5 [<A href="https://wg21.link/temp.friend#4">temp.friend</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>When a function is defined in a friend function declaration
+in a class template, the function is instantiated when the
+function is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]). The same
+restrictions on multiple declarations and definitions that
+apply to non-template function declarations and definitions
+also apply to these implicit definitions.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The implicit instantiation of a class template
+specialization causes the implicit instantiation of the
+declarations, but not of the definitions, default arguments,
+or <I>exception-specification</I>s of the class member
+functions, member classes, scoped member enumerations,
+static data members<INS>,</INS> <DEL>and</DEL> member
+templates<INS>, and friends</INS>; and it causes the
+implicit instantiation of the definitions of unscoped member
+enumerations and member anonymous unions. However, for the
+purpose of determining whether an instantiated redeclaration
+<DEL>of a member</DEL> is valid according
+to <INS>6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] and</INS>
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], a declaration that corresponds to
+a definition in the template is considered to be a
+definition. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Unless a function template specialization has been
+explicitly instantiated or explicitly specialized, the
+function template specialization is implicitly instantiated
+when the specialization is referenced in a context that
+requires a function definition to exist. <INS>A function
+whose declaration was instantiated from a friend function
+definition is implicitly instantiated when it is referenced
+in a context that requires a function definition to
+exist.</INS> Unless a call is to a function template
+explicit specialization or to a member function of an
+explicitly specialized class template, a default argument
+for a function template or a member function of a class
+template is implicitly instantiated when the function is
+called in a context that requires the value of the default
+argument.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>
+<B>Proposed resolution (November, 2016):</B>
+</P>
+
+<OL>
+<LI><P>Delete 13.7.5 [<A href="https://wg21.link/temp.friend#4">temp.friend</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>When a function is defined in a friend function declaration in a class
+template, the function is instantiated when the function is odr-used
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]). The same restrictions on multiple declarations
+and definitions that apply to non-template function declarations and
+definitions also apply to these implicit definitions.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1 as follows,
+splitting it into two paragraphs as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>... [<I>Note:</I> Within a template declaration, a local class
+(11.6 [<A href="https://wg21.link/class.local">class.local</A>]) or enumeration and the members of a local class
+are never considered to be entities that can be separately instantiated
+(this includes their default arguments, <I>exception-specification</I>s,
+and non-static data member initializers, if any). As a result, the
+dependent names are looked up, the semantic constraints are checked, and
+any templates used are instantiated as part of the instantiation of the
+entity within which the local class or enumeration is
+declared. &#8212;<I>end note</I>]</P>
+
+<P>The implicit instantiation of a class template specialization causes
+the implicit instantiation of the declarations, but not of the definitions,
+default arguments, or <I>exception-specification</I>s of the class member
+functions, member classes, scoped member enumerations, static data
+members<INS>,</INS> <DEL>and</DEL> member templates<INS>, and
+friends</INS>; and it causes the implicit instantiation of the definitions
+of unscoped member enumerations and member anonymous unions. However, for
+the purpose of determining whether an instantiated redeclaration <DEL>of a
+member</DEL> is valid according to <INS>6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] and</INS>
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], a declaration
+that corresponds to a definition in the template is considered to be a
+definition.  [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class T, class U&gt;
+  struct Outer {
+    template&lt;class X, class Y&gt; struct Inner;
+    template&lt;class Y&gt; struct Inner&lt;T, Y&gt;;     //<SPAN CLASS="cmnt"> #1a</SPAN>
+    template&lt;class Y&gt; struct Inner&lt;T, Y&gt; { }; //<SPAN CLASS="cmnt"> #1b; OK: valid redeclaration of #1a</SPAN>
+    template&lt;class Y&gt; struct Inner&lt;U, Y&gt; { }; //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+
+  Outer&lt;int, int&gt; outer; //<SPAN CLASS="cmnt"> error at #2</SPAN>
+</PRE>
+
+<P>
+<TT>Outer&lt;int, int&gt;::Inner&lt;int, Y&gt;</TT> is redeclared at
+#1b. (It is not defined but noted as being associated with a definition
+in <TT>Outer&lt;T, U&gt;</TT>.) #2 is also a redeclaration of #1a. It is
+noted as associated with a definition, so it is an invalid redeclaration of
+the same partial specialization.</P>
+
+<PRE>
+<INS>  template&lt;typename T&gt; struct Friendly {
+    template&lt;typename U&gt; friend int f(U) { return sizeof(T); }
+  };
+  Friendly&lt;char&gt; fc;
+  Friendly&lt;float&gt; ff; //<SPAN CLASS="cmnt"> ill-formed: produces second definition of </SPAN>f(U)</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI>
+<P> Change 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Unless a function template specialization has been explicitly instantiated
+or explicitly specialized, the function template specialization is
+implicitly instantiated when the specialization is referenced in a context
+that requires a function definition to exist. <INS>A function whose
+declaration was instantiated from a friend function definition is
+implicitly instantiated when it is referenced in a context that requires
+a function definition to exist.</INS> Unless a call is to a function
+template explicit specialization or to a member function of an explicitly
+specialized class template, a default argument for a function template or a
+member function of a class template is implicitly instantiated when the
+function is called in a context that requires the value of the default
+argument.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

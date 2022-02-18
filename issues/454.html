@@ -1,0 +1,255 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 454</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="454"></A><H4>454.
+  
+When is a definition of a static data member required?
+</H4>
+<B>Section: </B>11.4.9.3&#160; [<A href="https://wg21.link/class.static.data">class.static.data</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gennaro Prota
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Jan 2004<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>As a result of the resolution of <A HREF="48.html">core issue 48</A>, the current C++ standard is not in sync with existing
+practice and with user expectations as far as definitions of static
+data members having const integral or const enumeration type are
+concerned. Basically what current implementations do is to require a
+definition only if the address of the constant is taken. Example:</P>
+<PRE>
+void f() {
+
+  std::string s;
+  ...
+
+  // current implementations don't require a definition
+  if (s.find('a', 3) == std::string::npos) {
+   ...
+  }
+</PRE>
+<P>To the letter of the standard, though, the above requires a
+definition of <TT>npos</TT>, since the
+expression <TT>std::string::npos</TT> is potentially evaluated. I
+think this problem would be easily solved with simple changes to
+11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4, 11.4.9.3 [<A href="https://wg21.link/class.static.data#5">class.static.data</A>] paragraph 5 and 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] paragraph
+3.</P>
+
+
+<P>Suggested resolution:</P>
+
+<P>Replace 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4 with:</P>
+<BLOCKQUOTE>
+<P>If a static data member is of const integral or const enumeration
+type, its declaration in the class definition can specify a
+constant-initializer which shall be [note1] an integral constant
+expression (5.19). In that case, the member can appear in integral
+constant expressions. No definition of the member is required, unless
+an lvalue expression that designates it is potentially evaluated and
+either used as operand to the built-in unary &amp; operator [note 2] or
+directly bound to a reference.</P>
+
+<P>If a definition exists, it shall be at namespace scope and shall not
+contain an initializer.</P>
+</BLOCKQUOTE>
+
+<P>In 11.4.9.3 [<A href="https://wg21.link/class.static.data#5">class.static.data</A>] paragraph 5 change</P>
+<BLOCKQUOTE>
+There shall be exactly one definition of a static data member that is
+used in a program; no diagnostic is required; see 3.2.
+</BLOCKQUOTE>
+<P>to</P>
+<BLOCKQUOTE>
+Except as allowed by 9.4.2 par. 4, there shall be exactly one
+definition of a static data member that is potentially evaluated (3.2)
+in a program; no diagnostic is required.
+</BLOCKQUOTE>
+
+<P>In 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 add, at the beginning:</P>
+<BLOCKQUOTE>
+Except for the omission allowed by 9.4.2, par. 4, ...
+</BLOCKQUOTE>
+
+
+<P>[note 1] Actually it shall be a "= followed by a constant-expression".
+This could probably be an editorial fix, rather than a separate DR.</P>
+
+
+<P>[note 2] Note that this is the case when reinterpret_cast-ing to a
+reference, like in
+<PRE>
+struct X { static const int value = 0; };
+const char &amp; c = reinterpret_cast&lt;const char&amp;&gt;(X::value);
+</PRE>
+
+See 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]/10</P>
+
+<P><I>More information, in response to a question about why
+<A HREF="48.html">issue 48</A> does not resolve the problem:</I></P>
+
+<P>The problem is that the issue was settled in a way that solves much
+less than it was supposed to solve; that's why I decided to file, so
+to speak, a DR on a DR.</P>
+
+<P>I understand this may seem a little 'audacious' on my part, but please
+keep reading. Quoting from the text of DR 48 (emphasis mine):</P>
+<BLOCKQUOTE>
+ <P>
+ Originally, all static data members still had to be defined
+  outside the class whether they were used or not.</P>
+
+  <P>But that restriction was supposed to be lifted [...]</P>
+
+  <P>In particular, if an integral/enum const static data member is
+  initialized within the class, <I>and its address is never taken</I>,
+  we agreed that no namespace-scope definition was required.</P>
+</BLOCKQUOTE>
+
+<P>The corresponding resolution doesn't reflect this intent, with the
+definition being still required in most situations anyway: it's enough
+that the constant appears outside a place where constants are
+<I>required</I> (ignoring the obvious cases of sizeof and typeid) and you
+have to provide a definition. For instance:</P>
+<PRE>
+  struct X {
+   static const int c = 1;
+  };
+
+  void f(int n)
+  {
+   if (n == X::c)   // &lt;-- potentially evaluated
+    ...
+  }
+</PRE>
+
+<P>&lt;start digression&gt;</P>
+
+<P>Most usages of non-enum BOOST_STATIC_COSTANTs, for instance, are (or
+were, last time I checked) non-conforming. If you recall, Paul
+Mensonides pointed out that the following template</P>
+<PRE>
+// map_integral
+
+template&lt;class T, T V&gt; struct map_integral : identity&lt;T&gt; {
+  static const T value = V;
+};
+
+template&lt;class T, T V&gt; const T map_integral&lt;T, V&gt;::value;
+</PRE>
+
+<P>whose main goal is to map the same couples (type, value) to the same
+storage, also solves the definition problem. In this usage it is an
+excellent hack (if your compiler is good enough), but IMHO still a
+hack on a language defect.</P>
+
+<P>&lt;end digression&gt;</P>
+
+<P>What I propose is to solve the issue according to the original intent,
+which is also what users expect and all compilers that I know of
+already do. Or, in practice, we would have a rule that exists only as
+words in a standard document.</P>
+
+<P>PS: I've sent a copy of this to Mr. Adamczyk to clarify an important
+doubt that occurred to me while writing this reply:</P>
+
+<P>if no definition is provided for an integral static const data member
+is that member an object? Paragraph 1.8/1 seems to say no, and in fact
+it's difficult to think it is an object without assuming/pretending
+that a region of storage exists for it (an object *is* a region of
+storage according to the standard).</P>
+
+<P>I would think that when no definition is required we have to assume
+that it could be a non-object. In that case there's nothing in 3.2
+which says what 'used' means for such an entity and the current
+wording would thus be defective. Also, since the name of the member is
+an lvalue and 3.10/2 says an lvalue refers to an object we would have
+another problem.</P>
+
+<P>OTOH the standard could pretend it is always an object (though the
+compiler can optimize it away) and in this case it should probably
+make a special case for it in 3.2/2.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>We sort of like this proposal, but we don't feel it has very
+high priority.  We're not going to spend time discussing it, but
+if we get drafting for wording we'll review it.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+<LI>
+<P>Change the first two sentences of 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2
+from:</P>
+
+<BLOCKQUOTE>
+
+An expression is <I>potentially evaluated</I> unless it appears where
+an integral constant expression is required (see 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), is the operand of the <TT>sizeof</TT> operator
+(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]), or is the operand of
+the <TT>typeid</TT> operator and the expression does not designate an
+lvalue of polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]). An
+object or non-overloaded function is <I>used</I> if its name appears
+in a potentially-evaluated expression.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+An expression that is the operand of the <TT>sizeof</TT> operator
+(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]) is <I>unevaluated</I>, as is an
+expression that is the operand of the <TT>typeid</TT> operator if it
+is not an lvalue of a polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]); all other expressions are <I>potentially
+evaluated</I>. An object or non-overloaded function whose name appears
+as a potentially-evaluated expression is <I>used</I>, unless it is an
+object that satisfies the requirements for appearing in an integral
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is immediately applied.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI><P>Change the first sentence of 11.4.9.3 [<A href="https://wg21.link/class.static.data#2">class.static.data</A>] paragraph 2
+as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+If a static data member is of const integral or const enumeration
+type, its declaration in the class definition can specify a
+<I>constant-initializer</I> <DEL>which</DEL> <INS>whose <I>constant-expression</I></INS>
+shall be an integral constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

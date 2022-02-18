@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1475</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1475"></A><H4>1475.
+  
+Errors in <TT>[[carries_dependency]]</TT> example
+</H4>
+<B>Section: </B>9.12.4&#160; [<A href="https://wg21.link/dcl.attr.depend">dcl.attr.depend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Stephan Lavavej
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-06<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>The example in 9.12.4 [<A href="https://wg21.link/dcl.attr.depend#4">dcl.attr.depend</A>] paragraph 4 reads,</P>
+
+<PRE>
+  /*<SPAN CLASS="cmnt"> Translation unit A. </SPAN>*/
+
+  struct foo { int* a; int* b; };
+  std::atomic&lt;struct foo *&gt; foo_head[10];
+  int foo_array[10][10];
+
+  [[carries_dependency]] struct foo* f(int i) {
+    return foo_head[i].load(memory_order_consume);
+  }
+
+  [[carries_dependency]] int g(int* x, int* y) {
+    return kill_dependency(foo_array[*x][*y]);
+  }
+
+  /*<SPAN CLASS="cmnt"> Translation unit B. </SPAN>*/
+
+  [[carries_dependency]] struct foo* f(int i);
+  [[carries_dependency]] int* g(int* x, int* y);
+
+  int c = 3;
+
+  void h(int i) {
+    struct foo* p;
+
+    p = f(i);
+    do_something_with(g(&amp;c, p-&gt;a));
+    do_something_with(g(p-&gt;a, &amp;c));
+  }
+</PRE>
+
+<P>There appear to be two errors in this example.  First, <TT>g</TT>
+is declared as returning <TT>int</TT> in TU A but <TT>int*</TT> in
+TU B.  Second, paragraph 6 says,</P>
+
+<BLOCKQUOTE>
+
+Function <TT>g</TT>'s second argument has a
+<TT>carries_dependency</TT> attribute
+
+</BLOCKQUOTE>
+
+<P>but that is not reflected in the example.</P>
+
+<P><B>Proposed resolution (August, 2012):</B></P>
+
+<OL>
+<LI><P>Change the example in 9.12.4 [<A href="https://wg21.link/dcl.attr.depend">dcl.attr.depend</A>] paragraph
+4 as follows:</P></LI>
+
+<PRE>
+  /*<SPAN CLASS="cmnt"> Translation unit A. </SPAN>*/
+
+  struct foo { int* a; int* b; };
+  std::atomic&lt;struct foo *&gt; foo_head[10];
+  int foo_array[10][10];
+
+  [[carries_dependency]] struct foo* f(int i) {
+    return foo_head[i].load(memory_order_consume);
+  }
+
+  <DEL>[[carries_dependency]]</DEL> int g(int* x, int* y <INS>[[carries_dependency]]</INS>) {
+    return kill_dependency(foo_array[*x][*y]);
+  }
+
+  /*<SPAN CLASS="cmnt"> Translation unit B. </SPAN>*/
+
+  [[carries_dependency]] struct foo* f(int i);
+  <DEL>[[carries_dependency]] int*</DEL> <INS>int</INS> g(int* x, int* y <INS>[[carries_dependency]]</INS>);
+
+  int c = 3;
+
+  void h(int i) {
+    struct foo* p;
+    p = f(i);
+    do_something_with(g(&amp;c, p-&gt;a));
+    do_something_with(g(p-&gt;a, &amp;c));
+  }
+</PRE>
+
+<LI><P>Change 9.12.4 [<A href="https://wg21.link/dcl.attr.depend#6">dcl.attr.depend</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Function <TT>g</TT>'s second <DEL>argument</DEL> <INS>parameter</INS>
+has a <TT>carries_dependency</TT> attribute, but its first
+<DEL>argument</DEL> <INS>parameter</INS> does not. Therefore, function
+<TT>h</TT>'s first call to <TT>g</TT> carries a dependency into
+<TT>g</TT>, but its second call does not. The implementation might
+need to insert a fence prior to the second call to <TT>g</TT>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

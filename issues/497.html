@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 497</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="497"></A><H4>497.
+  
+Missing required initialization in example
+</H4>
+<B>Section: </B>7.6.4&#160; [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Giovanni Bajo
+ &#160;&#160;&#160;
+
+ <B>Date: </B>03 Jan 2005<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>7.6.4 [<A href="https://wg21.link/expr.mptr.oper#5">expr.mptr.oper</A>] paragraph 5 contains the following
+example:</P>
+
+<PRE>
+    struct S {
+        mutable int i;
+    };
+    const S cs;
+    int S::* pm = &amp;S::i;   // pm<SPAN CLASS="cmnt"> refers to mutable member </SPAN>S::i
+    cs.*pm = 88;           // <SPAN CLASS="cmnt">ill-formed: </SPAN>cs<SPAN CLASS="cmnt"> is a const object</SPAN>
+</PRE>
+
+<P>The const object <TT>cs</TT> is not explicitly initialized,
+and class <TT>S</TT> does not have a user-declared default
+constructor.  This makes the code ill-formed as per
+9.4 [<A href="https://wg21.link/dcl.init#9">dcl.init</A>] paragraph 9.</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>Change the example in 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#5">expr.mptr.oper</A>] paragraph 5 to read
+as follows:</P>
+
+<PRE>
+    struct S {
+        <INS>S() : i(0) { }</INS>
+        mutable int i;
+    };
+    <INS>void f()
+    {</INS>
+        const S cs;
+        int S::* pm = &amp;S::i;   // pm<SPAN CLASS="cmnt"> refers to mutable member </SPAN>S::i
+        cs.*pm = 88;           // <SPAN CLASS="cmnt">ill-formed: </SPAN>cs<SPAN CLASS="cmnt"> is a const object</SPAN>
+    <INS>}</INS>
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

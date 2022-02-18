@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2061</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2061"></A><H4>2061.
+  
+Inline namespace after simplifications
+</H4>
+<B>Section: </B>9.8.2&#160; [<A href="https://wg21.link/namespace.def">namespace.def</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-12-18<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+<P>After the resolution of <A HREF="1795.html">issue 1795</A>,
+9.8.2 [<A href="https://wg21.link/namespace.def#3">namespace.def</A>] paragraph 3 now says:</P>
+
+<BLOCKQUOTE>
+
+In a <I>named-namespace-definition</I>, the <I>identifier</I> is
+the name of the namespace. If the <I>identifier</I>, when looked up
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]), refers to
+a <I>namespace-name</I> (but not a <I>namespace-alias</I>)
+introduced in the declarative region in which
+the <I>named-namespace-definition</I> appears,
+the <I>namespace-definition</I> <I>extends</I> the
+previously-declared namespace. Otherwise, the <I>identifier</I> is
+introduced as a <I>namespace-name</I> into the declarative
+region in which the <I>named-namespace-definition</I>
+appears.
+
+</BLOCKQUOTE>
+
+<P>This appears to break code like the following:</P>
+
+<PRE>
+  namespace A {
+    inline namespace b {
+      namespace C {
+        template&lt;typename T&gt; void f();
+      }
+    }
+  }
+
+  namespace A {
+    namespace C {
+      template&lt;&gt; void f&lt;int&gt;() { }
+    }
+  }
+</PRE>
+
+<P>because (by definition of &#8220;declarative region&#8221;)
+<TT>C</TT> cannot be used as an unqualified name to refer to
+<TT>A::b::C</TT> within <TT>A</TT> if its declarative region is
+<TT>A::b</TT>.</P>
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<P>Change 9.8.2 [<A href="https://wg21.link/namespace.def#3">namespace.def</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a <I>named-namespace-definition</I>, the <I>identifier</I> is the name
+of the namespace. If the <I>identifier</I>, when looked up
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]), refers to a <I>namespace-name</I> (but not
+a <I>namespace-alias</I>) <INS>that was</INS> introduced in
+the <DEL>declarative region</DEL> <INS>namespace</INS> in which
+the <I>named-namespace-definition</I> appears <INS>or that was introduced
+in a member of the inline namespace set of that namespace</INS>,
+the <I>namespace-definition</I> extends the previously-declared
+namespace. Otherwise, the <I>identifier</I> is introduced as
+a <I>namespace-name</I> into the declarative region in which
+the <I>named-namespace-definition</I> appears.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

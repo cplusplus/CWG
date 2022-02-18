@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2004</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2004"></A><H4>2004.
+  
+Unions with mutable members in constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-09-16<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>In an example like</P>
+
+<PRE>
+  union U { int a; mutable int b; };
+  constexpr U u1 = {1};
+  int k = (u1.b = 2);
+  constexpr U u2 = u1; //<SPAN CLASS="cmnt"> ok!!</SPAN>
+</PRE>
+
+<P>The initialization of <TT>u2</TT> is not disqualified by
+the current wording of the Standard because the copy is done
+via the object representation, not formally involving an
+lvalue-to-rvalue conversion.  A restriction should be added
+to 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] forbidding the evaluation of a
+defaulted copy/move construction/assignment on a class type
+that has any variant mutable subobjects.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<OL>
+<LI><P>Add the following bullet after bullet 3.1 of
+9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The definition of a <TT>constexpr</TT> function shall satisfy the
+following constraints:</P>
+
+<UL>
+<LI><P>it shall not be virtual (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]);</P></LI>
+
+<LI><P><INS>for a defaulted copy/move assignment, the class of which
+it is a member shall not have a mutable subobject that is a
+variant member;</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following bullet after bullet 4.1 of
+9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The definition of a <TT>constexpr</TT> constructor shall
+satisfy the following constraints:</P>
+
+<UL>
+<LI><P>the class shall not have any virtual base
+classes;</P></LI>
+
+<LI><P><INS>for a defaulted copy/move constructor, the class
+shall not have a mutable subobject that is a variant
+member;</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

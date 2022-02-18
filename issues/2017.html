@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2017</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2017"></A><H4>2017.
+  
+Flowing off end is not equivalent to no-expression return
+</H4>
+<B>Section: </B>8.7.4&#160; [<A href="https://wg21.link/stmt.return">stmt.return</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-10-06<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+<P>According to 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Flowing off the end of a function is equivalent to a <TT>return</TT>
+with no value...
+
+</BLOCKQUOTE>
+
+<P>This is not correct, since a <TT>return</TT> with no value is
+ill-formed in a value-returning function but flowing off the end
+results in undefined behavior.</P>
+
+<P><B>Proposed resolution (May, 2015): [SUPERSEDED]</B></P>
+
+<P>Change 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...Flowing off the end of a <INS>value-returning</INS>
+function is <INS>undefined behavior.  Flowing off the end of
+any other function is</INS> equivalent to a return with no
+value<DEL>; this results in undefined behavior in a
+value-returning function</DEL>.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes, October, 2015:</B></P>
+
+<P>There is similar wording in 14.4 [<A href="https://wg21.link/except.handle#14">except.handle</A>] paragraph 14.
+  Also, it might be better to avoid the
+use of the word &#8220;value&#8221;, since it is currently
+not clearly defined.</P>
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<OL>
+<LI><P>Change 6.9.3.1 [<A href="https://wg21.link/basic.start.main#5">basic.start.main</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A return statement in <TT>main</TT> has the effect of
+leaving the main function (destroying any objects with
+automatic storage duration) and calling <TT>std::exit</TT>
+with the return value as the argument. If
+control <DEL>reaches</DEL> <INS>flows off</INS> the end
+of <INS>the <I>compound-statement</I>
+of</INS> <TT>main</TT><DEL> without encountering
+a <TT>return</TT> statement</DEL>, the effect is <DEL>that
+of executing</DEL> <INS>equivalent to a <TT>return</TT> with
+operand <TT>0</TT> (see also
+14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).</INS>
+</P>
+
+<PRE>
+<DEL>  return 0;</DEL>
+</PRE>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Flowing off the end of a function <INS>with a void return
+type</INS> is equivalent to a <TT>return</TT> with
+no <DEL>value; this results in undefined behavior in a
+value-returning
+function</DEL> <INS>operand</INS>. <INS>Otherwise, flowing
+off the end of a function other than <TT>main</TT>
+(6.9.3.1 [<A href="https://wg21.link/basic.start.main">basic.start.main</A>] results in undefined
+behavior.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.4 [<A href="https://wg21.link/except.handle#14">except.handle</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The currently handled exception is rethrown if control
+reaches the end of a handler of
+the <I>function-try-block</I> of a constructor or
+destructor. Otherwise, <DEL>a function returns when control
+reaches the end of a handler for
+the <I>function-try-block</I>
+(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]). Flowing off the end of
+a <I>function-try-block</I> is equivalent to
+a <TT>return</TT> with no value; this results in undefined
+behavior in a value-returning function
+(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</DEL> <INS>flowing off the
+end of the <I>compound-statement</I> of a <I>handler</I>
+of a <I>function-try-block</I> is equivalent to flowing
+off the end of the <I>compound-statement</I> of that
+function (see 8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</INS>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

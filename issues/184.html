@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 184</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="184"></A><H4>184.
+  
+Default arguments in template <I>template-parameter</I>s
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 Nov 1999<BR>
+
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+
+
+<P>
+<U>John Spicer</U>:
+Where can default values for the template parameters of
+template template parameters be specified and where so they apply?</P>
+
+<P>For normal template parameters, defaults can be specified only in
+class template declarations and definitions, and they accumulate
+across multiple declarations in the same way that function default
+arguments do.</P>
+
+<P>I think that defaults for parameters of template template parameters should
+be handled differently, though.  I see no reason why such a default should
+extend beyond the template declaration with which it is associated.
+In other words, such defaults are a property of a specific template
+declaration and are not part of the interface of the template.</P>
+
+<PRE>
+    template &lt;class T = float&gt; struct B {};
+
+    template &lt;template &lt;class _T = float&gt; class T&gt; struct A {
+        inline void f();
+        inline void g();
+    };
+
+    template &lt;template &lt;class _T&gt; class T&gt; void A&lt;T&gt;::f() {
+        T&lt;&gt; t;  // Okay? (proposed answer - no)
+    }
+
+    template &lt;template &lt;class _T = char&gt; class T&gt; // Okay? (proposed answer - yes)
+    void A&lt;T&gt;::g() {
+        T&lt;&gt; t;  // T&lt;char&gt; or T&lt;float&gt;?  (proposed answer - T&lt;char&gt;)
+    }
+
+    int main() {
+        A&lt;B&gt; ab;
+        ab.f();
+    }
+</PRE>
+
+<P>I don't think this is clear in the standard.</P>
+
+<P>
+<U>Gabriel Dos Reis</U>:
+On the other hand I fail to see the reasons why we should introduce
+yet another special rule to handle that situation differently.  I
+think we should try to keep rules as uniform as possible.
+For default values, it has been the case that one
+should look for any declaration specifying default values.  Breaking
+that rules doesn't buy us anything, at least as far as I can see.
+My feeling is that [allowing different defaults in different
+declarations] is very confusing.</P>
+
+<P>
+<U>Mike Miller</U>:
+I'm with John on this one.  Although we don't have the
+concept of "prototype scope" for template parameter lists,
+the analogy with function parameters would suggest that the
+two declarations of <TT>T</TT> (in the template class definition and
+the template member function definition) are separate
+declarations and completely unrelated.  While it's true that
+you accumulate default arguments on top-level declarations in
+the same scope, it seems to me a far leap to say that we ought
+also to accumulate default arguments in nested declarations.
+I would expect those to be treated as being in different
+scopes and thus <B>not</B> to share default argument information.</P>
+
+<P>When you look up the name <TT>T</TT> in the definition of
+<TT>A&lt;T&gt;::f()</TT>,
+the declaration you find has no default argument for the
+parameter of <TT>T</TT>, so <TT>T&lt;&gt;</TT> should not be allowed.</P>
+
+<P><B>Proposed Resolution (revised October 2002):</B></P>
+
+<P>
+In 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>], add the following as a new paragraph
+at the end of this section:</P>
+
+<BLOCKQUOTE>
+A <I>template-parameter</I> of a template <I>template-parameter</I>
+is permitted to have a default <I>template-argument</I>.  When such
+default arguments are specified, they apply to the template
+<I>template-parameter</I> in the scope of the template
+<I>template-parameter</I>.  [<I>Example:</I>
+<PRE>
+    template &lt;class T = float&gt; struct B {};
+
+    template &lt;template &lt;class TT = float&gt; class T&gt; struct A {
+        inline void f();
+        inline void g();
+    };
+
+    template &lt;template &lt;class TT&gt; class T&gt; void A&lt;T&gt;::f() {
+        T&lt;&gt; t;  // error - TT has no default template argument
+    }
+
+    template &lt;template &lt;class TT = char&gt; class T&gt;void A&lt;T&gt;::g() {
+        T&lt;&gt; t;  // OK - T&lt;char&gt;
+    }
+</PRE>
+<I>-- end example</I>]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

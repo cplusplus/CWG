@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 514</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="514"></A><H4>514.
+  
+Is the initializer for a namespace member in the scope of the namespace?
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Mar 2005<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>Is the following code well-formed?</P>
+
+<PRE>
+    namespace N {
+      int i;
+      extern int j;
+    }
+    int N::j = i;
+</PRE>
+
+<P>The question here is whether the lookup for <TT>i</TT> in the
+initializer of <TT>N::j</TT> finds the declaration in namespace
+<TT>N</TT> or not.  Implementations differ on this question.</P>
+
+<P>If <TT>N::j</TT> were a static data member of a class, the
+answer would be clear: both 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#12">basic.lookup.unqual</A>] paragraph 12
+and 9.4 [<A href="https://wg21.link/dcl.init#11">dcl.init</A>] paragraph 11 say that
+the initializer &#8220;is in the scope of the member's
+class.&#8221;  There is no such provision for namespace
+members defined outside the namespace, however.</P>
+
+<P>The reasoning given in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>] may be
+instructive:</P>
+
+<BLOCKQUOTE>
+
+A name used in the definition of a <TT>static</TT> data member of
+class <TT>X</TT> (11.4.9.3 [<A href="https://wg21.link/class.static.data">class.static.data</A>]) (after the
+<I>qualified-id</I> of the static member) is looked up as if the name
+was used in a member function of <TT>X</TT>.
+
+</BLOCKQUOTE>
+
+<P>It is certainly the case that a name used in a function that is
+a member of a namespace is looked up in that namespace
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#6">basic.lookup.unqual</A>] paragraph 6), regardless of whether
+the definition is inside or outside that namespace.  Initializers
+for namespace members should probably be looked up the same way.</P>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<P>Add a new paragraph following 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#12">basic.lookup.unqual</A>] paragraph 12:
+</P>
+
+<BLOCKQUOTE>
+
+<P>If a variable member of a namespace is defined outside of the scope
+of its namespace then any name used in the definition of the variable
+member (after the <I>declarator-id</I>) is looked up as if the
+definition of the variable member occurred in its
+namespace. [<I>Example:</I>
+</P>
+
+<PRE>
+    namespace N {
+      int i = 4;
+      extern int j;
+    }
+
+    int i = 2;
+
+    int N::j = i;	//<SPAN CLASS="cmnt"> </SPAN>N::j<SPAN CLASS="cmnt"> == 4</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2569</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2569"></A><H4>2569.
+  
+Use of <code>decltype(capture)</code> in a lambda's <I>parameter-declaration-clause</I>
+</H4>
+<B>Section: </B>7.5.5.2&#160; [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-16
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted at the July, 2022 meeting as part of paper P2579R0 (Mitigation strategies for P2036 "Changing scope for lambda trailing-return-type").]</P>
+
+
+
+<P>Paper <A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2036r3.html">P2036R3</A>
+disallowed using captures in the <I>parameter-declaration-clause</I>
+of a lambda, because it is not yet known at that point whether the
+lambda is going to be <TT>mutable</TT>, and thus the type of an
+expression referring to a <TT>capture</TT> may or may not be
+const. Such problematic uses of captures are now ill-formed.  The
+paper was approved as a Defect Report, recommending to implementers to
+apply the change to all language modes back to C++11.</P>
+
+<P>However, that broke legitimate uses in popular implementations of
+the standard library such as:</P>
+
+<PRE>
+  [local_end](decltype(local_end) it) { return it != local_end; };
+</PRE>
+
+<P>As specified in 9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype#1.3">dcl.type.decltype</A>] bullet 1.3,
+<TT>decltype(local_end)</TT> does not depend on whether the lambda
+ends up being <TT>mutable</TT> or not:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>otherwise, if E is an unparenthesized <I>id-expression</I> or an
+unparenthesized class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]),
+<TT>decltype(E)</TT> is the type of the entity named by E. If there is no such
+entity, the program is ill-formed;</LI>
+</UL>
+</BLOCKQUOTE>
+
+<P>Possible approaches (not necessarily exclusive):</P>
+
+<UL>
+
+<LI>Redesignate paper P2036R3 as a C++23 feature, not a Defect Report.</LI>
+
+<LI>Carve out an exception for such and similar uses of captures,
+e.g. <TT>decltype(x)</TT> or <TT>sizeof(x)</TT> are acceptable
+when <TT>x</TT> names a capture.
+</LI>
+
+<LI>Limit the lookup change effected by P2036R3 to
+the <I>trailing-return-type</I> (option 1 in the list
+presented in
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2036r3.html#parts-of-a-lambda">section 4.1 of P2036R3</A>).
+</LI>
+
+<LI>Accept as much existing code as possible by requiring to check
+for <TT>mutable</TT> before parsing the grammatical elements preceding
+the location where <TT>mutable</TT> can appear.  This approach might
+work for the <I>attribute-specifier-seq</I> and
+the <I>parameter-declaration-clause</I>, but is a serious
+implementation hardship for the <I>template-parameter-list</I> and the
+first <I>requires-clause</I>. For example,
+<TT>[=]&lt;X&lt;decltype((a))&gt;::a&lt;0&gt;</TT> may or may not be a
+complete <I>template-parameter-list</I>, depending on whether ...<TT>::a</TT>
+is a template. </LI>
+
+</UL>
+
+<P><U>Suggested resolution (carves out an exception for
+<TT>decltype</TT>, <TT>sizeof</TT>, <TT>noexcept</TT>):</U></P>
+
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>An <I>unqualified-id</I> is <I>mutable-agnostic</I> if it is the
+operand of a <TT>decltype</TT>
+(9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype">dcl.type.decltype</A>]), <TT>sizeof</TT>
+(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]), or <TT>noexcept</TT>
+(7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>]).</INS> If the <I>unqualified-id</I>
+appears in a <I>lambda-expression</I> at program point P and the
+entity is a local entity (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) or a variable
+declared by an <I>init-capture</I> (7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]),
+then let S be the <I>compound-statement</I> of the innermost
+enclosing <I>lambda-expression</I> of P. If naming the entity from
+outside of an unevaluated operand within S would refer to an entity
+captured by copy in some intervening <I>lambda-expression</I>, then
+let E be the innermost such <I>lambda-expression</I>, and:
+
+<UL>
+<LI>If <INS>the <I>unqualified-id</I> is mutable-agnostic or</INS> P
+is in E's function parameter scope but not
+its <I>parameter-declaration-clause</I>, then the type of the
+expression is the type of a class member access expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) naming the non-static data member that
+would be declared for such a capture in the object parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the function call operator of E.
+[<I>Note 3:</I> If E is not declared mutable, the type of such an
+identifier will typically be const qualified. &#8212;<I>end note</I>]
+</LI>
+
+<LI>Otherwise (if <INS>the <I>unqualified-id</I> is not
+mutable-agnostic and</INS> P either precedes E's function parameter
+scope or is in E's <I>parameter-declaration-clause</I>), the program
+is ill-formed.
+</LI>
+</UL>
+
+...
+
+<P>[Example:</P>
+
+<PRE>
+  <INS>[=]&lt;decltype(x) P&gt;{};    //<SPAN CLASS="cmnt"> ok: </SPAN>P<SPAN CLASS="cmnt"> has type </SPAN>float</INS>
+  [=]&lt;decltype(<INS>(</INS>x<INS>)</INS>) P&gt;{};  //<SPAN CLASS="cmnt"> error: </SPAN>x<SPAN CLASS="cmnt"> refers to local entity but precedes the</SPAN>
+                           // <SPAN CLASS="cmnt">lambda's function parameter scope</SPAN>
+  [=](decltype((x)) y){};  // <SPAN CLASS="cmnt">error: </SPAN>x<SPAN CLASS="cmnt"> refers to local entity but is in the lambda's</SPAN>
+                           // <SPAN CLASS="cmnt"><I>parameter-declaration-clause</I></SPAN>
+</PRE>
+
+<P>-- end example]</P>
+
+</BLOCKQUOTE>
+<P><U>Suggested resolution (carves out an exception for <TT>decltype</TT> only):</U></P>
+
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <I>unqualified-id</I> appears in a <I>lambda-expression</I> at
+program point P and the entity is a local entity
+(6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) or a variable declared by
+an <I>init-capture</I> (7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]), then let S be
+the <I>compound-statement</I> of the innermost
+enclosing <I>lambda-expression</I> of P. If naming the entity from
+outside of an unevaluated operand within S would refer to an entity
+captured by copy in some intervening <I>lambda-expression</I>, then
+let E be the innermost such <I>lambda-expression</I>, and:
+
+<UL>
+<LI>If <INS>the <I>unqualified-id</I> is the operand of
+a <TT>decltype</TT> (9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype">dcl.type.decltype</A>]) or</INS> P is in
+E's function parameter scope but not its
+<I>parameter-declaration-clause</I>, then the type of the
+expression is the type of a class member access expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) naming the non-static data member that
+would be declared for such a capture in the object parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the function call operator of E.
+[<I>Note 3:</I> If E is not declared mutable, the type of such an
+identifier will typically be const qualified. &#8212;<I>end note</I>]
+</LI>
+
+<LI>Otherwise (if <INS>the <I>unqualified-id</I> is not the operand of
+a <TT>decltype</TT> and</INS> P either precedes E's function parameter
+scope or is in E's <I>parameter-declaration-clause</I>), the program
+is ill-formed.
+</LI>
+</UL>
+
+...
+
+<P>[Example:</P>
+
+<PRE>
+  <INS>[=]&lt;decltype(x) P&gt;{};    //<SPAN CLASS="cmnt"> ok: </SPAN>P<SPAN CLASS="cmnt"> has type </SPAN>float</INS>
+  [=]&lt;decltype(<INS>(</INS>x<INS>)</INS>) P&gt;{};  //<SPAN CLASS="cmnt"> error: </SPAN>x<SPAN CLASS="cmnt"> refers to local entity but precedes the</SPAN>
+                           // <SPAN CLASS="cmnt">lambda's function parameter scope</SPAN>
+  [=](decltype((x)) y){};  // <SPAN CLASS="cmnt">error: </SPAN>x<SPAN CLASS="cmnt"> refers to local entity but is in the lambda's</SPAN>
+                           // <SPAN CLASS="cmnt"><I>parameter-declaration-clause</I></SPAN>
+</PRE>
+
+<P>-- end example]</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (April, 2022):</B></P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1227">paper issue 1227</A>,
+by decision of the CWG chair.
+</P>
+
+<P>See paper P2579R0 for a more detailed discussion of the issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

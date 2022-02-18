@@ -1,0 +1,263 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 391</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="391"></A><H4>391.
+  
+Require direct binding of short-lived references to rvalues
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Raoul Gough
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Nov 2002<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>After some email exchanges with Rani Sharoni, I've come up
+with the following proposal to allow reference binding to
+non-copyable rvalues in some cases. Rationale and some
+background appear afterwards.</P>
+
+<P><B>---- proposal ----</B></P>
+
+<P>Replace the section of 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5
+that begins "If the initializer expression is an rvalue" with the
+following:</P>
+<UL>
+<LI>
+If the initializer expression is an rvalue, with T2 a
+class type, and ``cv1 T1'' is reference-compatible with
+``cv2 T2,'' the reference is bound as follows:
+<UL>
+<LI>
+If the lifetime of the reference does not extend
+beyond the end of the full expression containing the
+initializer expression, the reference is bound to
+the object represented by the rvalue (see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or
+to a sub-object within that object.
+</LI>
+<LI>
+otherwise, the reference is bound in one of the
+following ways (the choice is implementation-defined):
+<UL>
+<LI>
+[... continues as before - the original wording applies
+unchanged to longer-lived references]
+</LI>
+</UL>
+</LI>
+</UL>
+</LI>
+</UL>
+
+<P><B>---- rationale ----</B></P>
+
+<OL>
+<LI>
+The intention of the current wording is to provide the
+   implementation freedom to construct an rvalue of class
+   type at an arbitrary location and copy it zero <U>or more</U>
+   times before binding any reference to it.
+</LI>
+<LI>
+The standard allows code to call a member function on an
+   rvalue of class type (in 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], I guess).
+This means that
+   the implementation can be forced to bind the reference
+   directly, with no freedom to create any temporary
+   copies. e.g.
+<PRE>
+   class nc {
+     nc (nc const &amp;);  // private, nowhere defined
+   public:
+     nc ();
+     nc const &amp;by_ref () const { return *this; }
+   };
+
+   void f () {
+     void g (nc const &amp;);
+
+     g (nc());          // Ill-formed
+     g (nc().by_ref()); // Ok - binds directly to rvalue
+   }
+</PRE>
+
+   Forcing a direct binding in this way is possible wherever
+   the lifetime of the reference does not extend beyond the
+   containing full expression, since the reference returned
+   by the member function remains valid for this long.
+</LI>
+<LI>
+As demonstrated above, existing implementations must
+   already be capable of constructing an rvalue of class
+   type in the "right" place the first time. Some compilers
+   already silently allow the direct binding of references
+   to non-copyable rvalues.
+</LI>
+<LI>
+The change will not break any portable user code. It
+   would break any platform-specific user code that relies
+   on copies being performed by the particular
+   implementation.
+</LI>
+</OL>
+
+<P><B>---- background ----</B></P>
+
+<P>The proposal is based on a recent discussion in this
+group. I originally wanted to leave the implementation free
+to copy the rvalue if there was a callable copy constructor,
+and only <B>have</B> to bind directly if none was callable.
+Unfortunately, a traditional compiler can't always tell
+whether a function is callable or not, e.g. if the copy
+constructor is declared but not defined. Rani pointed this
+out in an example, and suggested that maybe trivial copy
+constructors should still be allowed (by extension, maybe
+wherever the compiler can determine callability). I've gone
+with this version because it's simpler, and I also figure
+the "as if" rule gives the compiler some freedom with POD
+types anyway.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>We agreed generally with the proposal.  We were unsure about the
+need for the restriction regarding long-lived references.
+We will check with the proposer about that.</P>
+
+<P>Jason Merrill points out that the test case in
+<A HREF="86.html">issue 86</A> may be a case where we
+do not want to require direct binding.</P>
+
+<P><B>Further information from Rani Sharoni (April 2003):</B></P>
+
+<P>I wasn't aware about the latest suggestion of Raoul as it appears in
+core issue 391. In our discussions we tried to formulate a different
+proposal.</P>
+<P>The rational, as we understood, behind the implementation freedom to
+make an extra copying (8.5.3/5/2/12) of the rvalue is to allow return
+values in registers which on some architectures are not addressable.
+The example that Raoul and I presented shows that this implementation
+freedom is not always possible since we can "force" the rvalue to be
+addressable using additional member function (by_ref). The example
+only works for short lived rvalues and this is probably why Raoul
+narrow the suggestion.</P>
+<P>I had different rational which was related to the implementation of
+conditional operator in VC. It seems that when conditional operator is
+involved VC does use an extra copying when the lifetime of the
+temporary is extended:</P>
+<PRE>
+  struct A { /* ctor with side effect */};
+
+  void f(A&amp; x) {
+    A const&amp; r = cond ? A(1) : x; // VC actually make an extra copy of
+                                  // the rvalue A(1)
+  }
+</PRE>
+<P>I don't know what the consideration behind the VC implementation was
+(I saw open bug on this issue) but it convinced me to narrow the
+suggestion.</P>
+
+<P>IMHO such limitation seems to be too strict because it might limit the
+optimizer since returning class rvalues in registers might be useful
+(although I'm not aware about any implementation that actually does
+it). My suggestion was to forbid the extra copying if the ctor is not
+viable (e.g. A::A(A&amp;) ). In this case the implementation "freedom"
+doesn't exist (since the code might not compile) and only limits the
+programmer freedom (e.g. Move Constructors -
+http://www.cuj.com/experts/2102/alexandr.htm [<I>Note:
+URL is now defunct; observed March,2019.</I>]).</P>
+
+<P>
+<A HREF="291.html">Core issue 291</A> is strongly related to
+the above issue and I personally
+prefer to see it resolved first. It seems that VC already supports the
+resolution I prefer.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We ended up feeling that this is just one of a number of cases
+of optimizations that are widely done by compilers
+and allowed but not required by the standard.  We don't see any
+strong reason to require compilers to do this particular
+optimization.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>After discussing <A HREF="450.html">issue 450</A>, we
+found ourselves reconsidering this, and we are now inclined to
+make a change to require the direct binding in all cases,
+with no restriction on long-lived references.  Note that such
+a change would eliminate the need for a change for
+<A HREF="291.html">issue 291</A>.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.2">dcl.init.ref</A>] bullet 5.2
+sub-bullet 1 as follows:</P>
+
+<BLOCKQUOTE>
+If the initializer expression is an rvalue, with <TT>T2</TT> a class type,
+and "<I>cv1</I> <TT>T1</TT>" is reference-compatible with
+"<I>cv2</I> <TT>T2</TT>", the reference is bound <INS>to the
+object represented by the rvalue (see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or to a sub-object within that object.</INS>
+<DEL>in one of the following ways (the choice is
+implementation-defined):
+<UL>
+
+<LI>
+The reference is bound to the object represented by the
+rvalue (see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or to a sub-object
+within that object.  </LI>
+
+<LI>
+A temporary of type "<I>cv1</I> <TT>T2</TT>" [sic] is created, and a
+constructor is called to copy the entire rvalue object into the
+temporary. The reference is bound to the temporary or to a
+sub-object within the temporary.
+</LI>
+
+</UL>
+
+The constructor that would be used to make the copy shall be
+callable whether or not the copy is actually done.</DEL>
+[<I>Example:</I>
+
+<PRE>
+  struct A { };
+  struct B : public A { } b;
+  extern B f();
+  const A&amp; rca = f ();  // <INS>Bound</INS> <DEL>Either bound</DEL> to the A sub-object of the B rvalue<DEL>,
+                        // or the entire B object is copied and the reference
+                        // is bound to the A sub-object of the copy</DEL>
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+<P><I>[This resolution also resolves <A HREF="291.html">issue 291</A>.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

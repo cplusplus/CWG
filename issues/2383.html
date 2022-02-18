@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2383</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2383"></A><H4>2383.
+  
+Variadic member functions of variadic class templates
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-07-18<BR>
+
+
+<P>The intended treatment of an example like the following is not
+clear:</P>
+
+<PRE>
+  template&lt;class ...Types&gt; struct Tuple_ { //<SPAN CLASS="cmnt"> _VARIADIC_TEMPLATE</SPAN>
+    template&lt;Types ...T&gt; int f() {
+      return sizeof...(Types);
+    }
+  };
+
+  int main() {
+    Tuple_&lt;char,int&gt; a;
+    int b = a.f();
+  }
+</PRE>
+
+<P>According to 13.2 [<A href="https://wg21.link/temp.param#19">temp.param</A>] paragraph 19,</P>
+
+<BLOCKQUOTE>
+
+If a <I>template-parameter</I> is a <I>type-parameter</I> with an ellipsis
+prior to its optional <I>identifier</I> or is
+a <I>parameter-declaration</I> that declares a pack
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), then the <I>template-parameter</I> is a
+template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).  A template
+parameter pack that is a <I>parameter-declaration</I> whose type contains
+one or more unexpanded packs is a pack expansion. Similarly, a template
+parameter pack that is a <I>type-parameter</I> with
+a <I>template-parameter-list</I> containing one or more unexpanded packs is
+a pack expansion. A template parameter pack that is a pack expansion shall
+not expand a template parameter pack declared in the
+same <I>template-parameter-list</I>.
+
+</BLOCKQUOTE>
+
+<P>with the following example:</P>
+
+<PRE>
+  template &lt;class... T&gt;
+    struct value_holder {
+      template &lt;T... Values&gt; struct apply { }; //<SPAN CLASS="cmnt"> </SPAN>Values<SPAN CLASS="cmnt"> is a non-type template parameter pack</SPAN>
+  };                                           //<SPAN CLASS="cmnt"> and a pack expansion</SPAN>
+</PRE>
+
+<P>There is implementation divergence on the treatment of the example, with
+some rejecting it on the basis that the arguments for <TT>Tuple_::f</TT>
+cannot be deduced, while others accept it.</P>
+
+<P><B>Rationale (December, 2018):</B></P>
+
+<P>The example is ill-formed because the packs have different
+sizes: <TT>Types</TT> has 2, <TT>T</TT> has 0 (from the call).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

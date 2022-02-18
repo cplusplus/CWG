@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 596</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="596"></A><H4>596.
+  
+Replacing an exception object
+</H4>
+<B>Section: </B>_N4606_.15.5.2&#160; [<A href="https://wg21.link/except.unexpected">except.unexpected</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 September 2006<BR>
+
+
+<P>When a function throws an exception that is not in its
+<I>exception-specification</I>, <TT>std::unexpected()</TT> is called.
+According to _N4606_.15.5.2 [<A href="https://wg21.link/except.unexpected#2">except.unexpected</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+If [<TT>std::unexpected()</TT>] throws or rethrows an exception that
+the <I>exception-specification</I> does not allow then the following
+happens: If the <I>exception-specification</I> does not include the class
+<TT>std::bad_exception</TT> (17.9.4 [<A href="https://wg21.link/bad.exception">bad.exception</A>]) then
+the function <TT>std::terminate()</TT> is called, otherwise the thrown
+exception is replaced by an implementation-defined object of the type
+<TT>std::bad_exception,</TT> and the search for another handler will
+continue at the call of the function
+whose <I>exception-specification</I> was violated.
+
+</BLOCKQUOTE>
+
+<P>The &#8220;replaced by&#8221; wording is imprecise and undefined.
+For example, does this mean that the destructor is called for the
+existing exception object, or is it simply abandoned?  Is the
+replacement <I>in situ</I>, so that a pointer to the existing
+exception object will now point to the <TT>std::bad_exception</TT>
+object?</P>
+
+<P>
+<U>Mike Miller</U>: The call to <TT>std::unexpected()</TT> is
+not described as analogous to invoking a handler, but if it were,
+that would resolve this question; it is clearly specified what
+happens to the previous exception object when a new exception is
+thrown from a handler (14.2 [<A href="https://wg21.link/except.throw#4">except.throw</A>] paragraph 4).</P>
+
+<P>This approach would also clarify other questions that have been
+raised regarding the requirements for stack unwinding.  For
+example, 14.6.2 [<A href="https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2 says that</P>
+
+<BLOCKQUOTE>
+
+In the situation where no matching handler is found, it is
+implementation-defined whether or not the stack is unwound before
+<TT>std::terminate()</TT> is called.
+
+</BLOCKQUOTE>
+
+<P>This requirement could be viewed as in conflict with the statement
+in _N4606_.15.5.2 [<A href="https://wg21.link/except.unexpected#1">except.unexpected</A>] paragraph 1 that</P>
+
+<BLOCKQUOTE>
+
+If a function with an <I>exception-specification</I> throws an exception that
+is not listed in the <I>exception-specification</I>, the function
+<TT>std::unexpected()</TT> is called (_N4606_.D.6 [<A href="https://wg21.link/exception.unexpected">exception.unexpected</A>])
+immediately after completing the stack unwinding for the former
+function.
+
+</BLOCKQUOTE>
+
+<P>If it is implementation-defined whether stack unwinding occurs before
+calling <TT>std::terminate()</TT> and <TT>std::unexpected()</TT> is
+called only after doing stack unwinding, does that mean that it is
+implementation-defined whether <TT>std::unexpected()</TT> is called
+if there is ultimately no handler found?</P>
+
+<P>Again, if invoking <TT>std::unexpected()</TT> were viewed as
+essentially invoking a handler, the answer to this would be clear,
+because unwinding occurs before invoking a handler.</P>
+
+<P><B>Rationale (February, 2017):</B></P>
+
+<P>The issue is moot after the adoption of document P0003.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

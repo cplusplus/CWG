@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 108</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="108"></A><H4>108.
+  
+Are classes nested in templates dependent?
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Apr 1999<BR>
+
+
+
+
+
+<P>
+<U>Mark Mitchell (via John Spicer):</U> Given:</P>
+<PRE>
+  template &lt;class T&gt; struct S {
+     struct I1 {
+       typedef int X;
+     };
+     struct I2 : public I1 {
+        X x;
+     };
+  };
+</PRE>
+<P>Is this legal?  The question really boils down to asking whether or
+not <TT>I1</TT> is a dependent type.  On the one hand, it doesn't seem to fit
+any of the qualifications in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+.
+On the other, 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ allows
+explicit specialization of a member class of a class template, so something
+like:</P>
+<PRE>
+  template &lt;&gt;
+  struct S&lt;double&gt;::I1 {
+     int X;
+  };
+</PRE>
+<P>is apparently legal.  But, then, `X' no longer refers to a type name.
+So, it seems like `I1' should be classified as dependent.  What am I
+missing?</P>
+
+<P>
+<U>Erwin Unruh:</U> I wrote that particular piece of text and I just
+missed the problem above. It is intended to be a dependent type. The
+reasoning is that <TT>I1</TT> is just a shorthand for
+<TT>S&lt;T&gt;::I1</TT> which clearly is
+dependent.</P>
+
+<P>
+<B>Suggested Resolution:</B> (Erwin Unruh)</P>
+<P>I think the list of what is a dependent type should be extended to cover
+"a type declared and used within the same template" modulo of
+phrasing.</P>
+
+<P>(See also paper J16/00-0009 = WG21 N1231.  This issue is also
+somewhat related to <A HREF="205.html">issue 205</A>: classes
+nested inside template classes are, in some sense, "templates," just
+as non-template member functions of class templates and static data
+members of class templates are "templates.")</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Add after 13.8.2 [<A href="https://wg21.link/temp.local#2">temp.local</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+Within the scope of a class template, when the unqualified name of a
+nested class of the class template is referred to, it is equivalent to
+the name of the nested class qualified by the name of the enclosing
+class template. [<I>Example:</I>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+	class B {};
+	// B is equivalent to A::B, which is equivalent to A&lt;T&gt;::B,
+	// which is dependent.
+	class C : B { };
+    };
+</PRE>
+
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

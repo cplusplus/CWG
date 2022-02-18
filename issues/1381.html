@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1381</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1381"></A><H4>1381.
+  
+Implicitly-declared special member functions and default <TT>nothrow</TT>
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Svoboda
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-26<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+<P>According to 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14,</P>
+
+<BLOCKQUOTE>
+
+An implicitly declared special member function (11.4.4 [<A href="https://wg21.link/special">special</A>]) shall
+have an <I>exception-specification</I>.  If <TT>f</TT> is an implicitly declared
+default constructor, copy constructor, move constructor,
+destructor, copy assignment operator, or move assignment
+operator, its implicit <I>exception-specification</I> specifies the
+<I>type-id</I> <TT>T</TT> if and only if <TT>T</TT> is allowed by the
+<I>exception-specification</I> of a function directly invoked by
+<TT>f</TT>'s implicit definition; <TT>f</TT> shall allow all
+exceptions if any function it directly invokes allows all
+exceptions, and <TT>f</TT> shall allow no exceptions if every
+function it directly invokes allows no exceptions.
+
+</BLOCKQUOTE>
+
+<P>It would be clearer if this description made explicit the intent
+that special member functions that invoke no other functions are to
+allow no exceptions.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...and <TT>f</TT> has the <I>exception-specification</I>
+<TT>noexcept(true)</TT> if every function it directly invokes allows
+no exceptions. <INS>[<I>Note:</I> It follows that <TT>f</TT> has the
+<I>exception-specification</I> <TT>noexcept(true)</TT> if it invokes
+no other functions. &#8212;<I>end note</I>]</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    A();
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) <DEL>throw()</DEL> <INS>= default</INS>;  <INS>//<SPAN CLASS="cmnt"> Declaration of </SPAN>B::B(const B&amp;) noexcept(true)</INS>
+    B(B&amp;&amp;) throw(Y);
+    ~B() throw(Y);
+  };
+  ...
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

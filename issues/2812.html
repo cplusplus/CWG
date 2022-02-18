@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2812</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2812"></A><H4>2812.
+  
+Allocation with explicit alignment
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tim Song
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-18<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;new&gt;
+  auto p = new (std::align_val_t{64}) T;
+</PRE>
+
+<P>Is this example well-formed for <TT>T = int</TT>?  This invokes the
+allocation function</P>
+
+<PRE>
+  ::operator new(size_t, align_val_t);
+</PRE>
+
+<P>If this is considered a "placement allocation function", the code
+is ill-formed per 7.6.2.8 [<A href="https://wg21.link/expr.new#28">expr.new</A>] paragraph 28, because
+deallocation function lookup finds a usual deallocation function.  If
+this is considered a "usual allocation function", the rules
+find <TT>::operator delete(void*)</TT> as the corresponding
+deallocation function.</P>
+
+<P>There is implementation divergence: MSVC rejects; clang and gcc
+accept, but invoke <TT>::operator delete(void*, align_val_t)</TT> if
+the constructor exits via an exception.</P>
+
+<P>If <TT>T</TT> is a type with new-extended alignment, the preferred
+allocation function is
+<TT>operator new(std::size_t, std::align_val_t, std::align_val_t)</TT>
+or, as a fallback, <TT>operator new(std::size_t,
+std::align_val_t)</TT>, removing the alignment information
+of <TT>T</TT> (7.6.2.8 [<A href="https://wg21.link/expr.new#19">expr.new</A>] paragraph 19).</P>
+
+<P>As another concern, subclause 17.6.3.2 [<A href="https://wg21.link/new.delete.single#11">new.delete.single</A>] paragraph 11 disallows mixing aligned and unaligned
+allocation/deallocation functions, and implementations rely on that
+precondition.  Thus, it is impossible to deallocate the memory
+obtained in the example using a <I>delete-expression</I>; an explicit
+deallocation function call appears to be required.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Disallow invocation of one of the allocation functions specified in
+17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] and 17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>] if
+the <I>new-placement</I> syntax is used with anything but a
+single <I>expression</I> of type <TT>std::nothrow_t</TT>.</P>
+
+<P>Alternatively, make this conditionally-supported to offer a richer
+feature set on platforms where mixing aligned and unaligned
+allocation/deallocation works.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

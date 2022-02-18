@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 467</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="467"></A><H4>467.
+  
+Jump past initialization of local static variable
+</H4>
+<B>Section: </B>8.8&#160; [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Kerch Holt
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Mar 2004<BR>
+
+
+<P>When jumping past initialization of a local static variable the
+value of the static becomes indeterminate. Seems like this
+behavior should be illegal just as it is for local variables
+with automatic linkage.</P>
+
+<P>Here is an example:</P>
+<PRE>
+struct X {
+    X(int i) : x(i) {}
+    int x;
+};
+int f(int c) {
+    if (c)
+        goto ly;    // error here for jumping past next stmt.
+    static X a = 1;
+ly:
+    return a.x;  // either 1 or 0 depending on implementation.
+}
+</PRE>
+<P>8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>] P3 should be changed to:
+<BLOCKQUOTE>
+A program that jumps from a point where a local variable with automatic
+<INS>or static</INS> storage duration is not in scope to a point where it is in
+scope is
+ill-formed unless the variable has POD type (3.9) and is declared without
+an initializer  (8.5).
+</BLOCKQUOTE>
+This would imply "static X a = 1;" should be flagged as an error.
+Note that this behavior a may be a "quality of implementation issue"
+which may be covered in 6.7 P4.  Paragraph 4 seems to make the
+choice of static/dynamic initialization indeterminate.
+Making this an error and thus determinate seems the correct thing
+to do since that is what is already required of automatic variables.</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+Some version of this may be appropriate, but it's common to have code
+that is executed only the first time it is reached, and to have
+an initialization of a static variable inside such a piece of code.
+In such a case, on executions after the first there is indeed a
+jump over the declaration, but the static variable is correctly
+initialized -- it was initialized the first time the routine
+was called.</P>
+<PRE>
+  void f() {
+    static bool first_time = true;
+    if (!first_time) goto after_init;
+    static int i = g();
+    first_time = false;
+  after_init:
+    ...
+  }
+</PRE>
+
+<P><B>Rationale (October, 2004):</B></P>
+
+<P>The CWG sees no reason to change this specification.  Local
+static variables are different from automatic variables:
+automatic variables, if not explicitly initialized, can have
+indeterminate (&#8220;garbage&#8221;) values, including trap
+representations, while local static variables are subject to zero
+initialization and thus cannot have garbage values.</P>
+
+<P>The latitude granted to implementations regarding performing
+dynamic initialization of local static objects as if it were
+static initialization is exactly parallel to namespace scope
+objects (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]), as are the restrictions
+on programmer assumptions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

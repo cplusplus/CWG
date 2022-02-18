@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2804</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2804"></A><H4>2804.
+  
+Lookup for determining rewrite targets
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-13
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct X {
+    operator int();
+    friend bool operator==(X, int);
+    friend bool operator!=(X, int);  // <SPAN CLASS="cmnt">#1</SPAN>
+  } x;
+
+  bool bx = x == x;    // <SPAN CLASS="cmnt">error: lookup for rewrite target determination does not find hidden friend #1</SPAN>
+
+  struct Y {
+    operator int();
+    friend bool operator==(Y, int);   // <SPAN CLASS="cmnt">#2</SPAN>
+  } y;
+
+  bool operator!=(Y, int);            // <SPAN CLASS="cmnt">#3</SPAN>
+
+  bool by = y == y;                   // <SPAN CLASS="cmnt">OK, #2 is not a rewrite target because lookup finds #3</SPAN>
+</PRE>
+
+<P>A similar issue arises for function-scope declarations:</P>
+
+<PRE>
+  struct X { operator int(); };
+
+  bool f(X x) {
+    bool operator==(X, int);
+    return x == x;              // <SPAN CLASS="cmnt">error</SPAN>
+  }
+
+  bool g(X x) {
+    bool operator==(X, int);
+    bool operator!=(X, int);
+    return x == x;              // <SPAN CLASS="cmnt">error</SPAN>
+  }
+
+  bool operator!=(X, int);
+
+  bool h(X x) {
+    bool operator==(X, int);
+    return x == x;              // <SPAN CLASS="cmnt">OK</SPAN>
+  }
+
+  bool i(X x) {
+    bool operator==(X, int);
+    bool operator!=(X, int);
+    return x == x;              // <SPAN CLASS="cmnt">OK</SPAN>
+  }
+</PRE>
+
+<P>Are these outcomes as intended?  For the <TT>bx</TT> case at least,
+probably not.</P>
+
+<P><B>CWG 2023-10-20</B></P>
+
+<P>CWG seeks the advice of EWG whether fine-tuning of the "rewrite
+target" rules is desired, and what exactly those rules should be.
+See <A HREF="https://github.com/cplusplus/papers/issues/1688">paper issue #1688</A>.</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>The intent is to check for the existence of a declaration that
+differs only in the operator name (ie, <TT>bx</TT> should
+work, <TT>by</TT> should be ill-formed).</P>
+
+<P>This outcome also resolves <A HREF="2797.html">issue 2797</A>,
+but, more importantly, partially reverts
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2468r2.html">P2468R2</A>
+(The Equality Operator You Are Looking For), applied in July 2022.  In
+particular, the following example added thereby is no longer
+well-formed:</P>
+
+<PRE>
+  struct B {
+    bool operator==(const B&amp;); //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+  struct C : B {
+    C();
+    C(B);
+    bool operator!=(const B&amp;); //<SPAN CLASS="cmnt"> #3</SPAN>
+  };
+  bool c1 = B() == C(); //<SPAN CLASS="cmnt"> OK, calls #2; reversed #2 is not a candidate because search for operator!= in C finds #3</SPAN>
+</PRE>
+
+<P>Back to EWG for confirmation.</P>
+
+<P><B>Additional notes (November, 2023)</B></P>
+
+<P>P2468R2 also made the following example (derived from real-world
+code) ambiguous between the reversed built-in candicate and the
+user-provided <TT>operator==</TT>:</P>
+
+<PRE>
+  template&lt;class T&gt;
+  struct Ptr
+  {
+    bool operator==(T* p) const noexcept { return m_p == p; }
+    operator T*() const noexcept { return m_p; }
+
+    T* m_p;
+  };
+
+  void foo(Ptr&lt;int&gt; a, Ptr&lt;int&gt; b)
+  {
+    assert(a == b);
+  }
+</PRE>
+
+<P><B>EWG 2024-03-18</B></P>
+
+<P>EWG invites a paper to propose a change.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

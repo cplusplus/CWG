@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2962</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2962"></A><H4>2962.
+  
+Evaluation of destructor call for variable with constant destruction
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Cody Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-23<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;type_traits&gt;
+
+  extern "C" int puts(const char*);
+
+  struct S {
+    consteval S(int i) : buf{i} {}
+    constexpr ~S() {
+      if (!std::is_constant_evaluated())
+	puts("Destroyed\n");
+    }
+    int buf;
+  };
+
+  int main() {
+    constexpr S s{43};
+    return s.buf;
+  }
+</PRE>
+
+<P>The destruction should be manifestly constant-evaluated.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct A {
+    constexpr A() {
+      if !consteval { puts("constructed"); }
+    }
+    constexpr ~A() {
+      if !consteval { puts("destroyed"); }
+    }
+  };
+
+  void f() {
+    { A a; }
+    delete new A;
+    A();
+  }
+
+  void g() {
+    constexpr A a;      //<SPAN CLASS="cmnt"> Usable in constant expressions: destruction is manifestly constant evaluated.</SPAN>
+  }
+  A a;      //<SPAN CLASS="cmnt"> Constant-initialized, but destruction is not manifestly constant evaluated.</SPAN>
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#21">expr.const</A>] paragraph 21 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression or conversion is manifestly constant-evaluated if it is<DEL>:</DEL>
+
+<UL>
+<LI>...</LI>
+<LI>the initializer of a variable that is usable in constant
+expressions or has constant initialization
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>])<DEL>.</DEL> <INS>,</INS> [ Footnote:
+... ] <INS>or</INS> [ Example: ... ]</LI>
+
+<LI class="ins">the destruction of an object that is usable in
+constant expressions and has constant destruction.</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

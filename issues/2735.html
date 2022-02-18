@@ -1,0 +1,172 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2735</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2735"></A><H4>2735.
+  
+List-initialization and conversions in overload resolution
+</H4>
+<B>Section: </B>12.2.4&#160; [<A href="https://wg21.link/over.match.best">over.match.best</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-03-23<BR>
+
+
+
+
+<P>There is implementation divergence in handling the following example:</P>
+
+<PRE>
+  template &lt;typename _Tp&gt; struct optional {
+    template &lt;typename _Up&gt; explicit optional(_Up);
+    template &lt;typename _Up = _Tp&gt; void operator=(_Up);
+  };
+  struct SourceBrush {
+    struct Brush {
+     int brush;
+    };
+    void setPattern() { m_brush = {42}; }
+    optional&lt;Brush&gt; m_brush;
+  };
+</PRE>
+
+<P>The following example is ambiguous per <A HREF="1228.html">issue 1228</A>:</P>
+
+<PRE>
+  #include &lt;unordered_set&gt;
+  #include &lt;string&gt;
+
+  template&lt;typename T&gt; struct wrap {
+    template&lt;typename ...Ts&gt; explicit wrap(Ts &amp;&amp;...args) : v(std::forward&lt;Ts&gt;(args)...) {}
+    explicit wrap(const T &amp;v) : v(v) {}
+    explicit wrap(T &amp;&amp;v) : v(v) {}
+    wrap(const wrap&amp;) = delete;
+    T v;
+  };
+
+  void f() {
+    wrap&lt;std::unordered_set&lt;std::string&gt;&gt; wrapped_set({"foo", "bar", "baz"});
+  }
+</PRE>
+
+<P>The copy constructor of <TT>wrap&lt;...&gt;</TT> becomes viable, by
+way of constructing another <TT>wrap</TT> object from the given
+initializer list using the explicit constructor template.  It looks
+like a deleted copy constructor is used to remove a level of braces,
+and then picking an explicit constructor to construct the source of
+the copy.</P>
+
+<P>Another example:</P>
+
+<PRE>
+  #include &lt;string&gt;
+  #include &lt;map&gt;
+
+  struct X {
+    explicit X(const std::map&lt;std::string, std::string&gt; &amp;map);
+  };
+
+  struct Y {
+    Y() : x({{"foo", "bar"}}) {}
+    X x;
+  };
+</PRE>
+
+<P>The intent is to construct the map with a single key-value pair,
+but the list-initialization is ambiguous with invoking the copy
+constructor and creating a map from a pair of iterators given
+by <TT>{"foo", "bar"}</TT>.</P>
+
+<P>And another example:</P>
+
+<PRE>
+  struct Z {};
+
+  struct X {          
+    explicit X(const Z &amp;z = {});
+  };
+
+  struct Y {   
+    Y() : x({}) {}                                            
+    X x;
+  };
+</PRE>
+
+<P>The ambiguity is between
+<UL>
+<LI>calling the <TT>X(const Z&amp;)</TT> constructor with <TT>{}</TT> and</LI>
+<LI>calling the <TT>X(const X&amp;)</TT> constructor and using the explicit default constructor to construct a temporary <TT>X</TT>.</LI>
+</UL>
+
+</P>
+
+<P>Core <A HREF="2267.html">issue 2267</A> is also related.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Insert before 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.4">over.match.best.general</A>] bullet 2.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>...</LI>
+
+<LI class="ins">
+<TT>F2</TT> is a copy or move special member function where the
+implicit conversion sequence for its (non-object) argument is a
+user-defined conversion sequence specified by a non-converting
+constructor (considered under 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>])
+and <TT>F1</TT> is not, or, if not that, [ Example:
+
+<PRE>
+  struct Z {};
+
+  struct X {
+    explicit X();            //<SPAN CLASS="cmnt"> #1</SPAN>
+    explicit X(const Z &amp;z);  //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+
+  struct Y {
+    Y() : x({}) {}  //<SPAN CLASS="cmnt"> OK, calls #2, not ambiguous with the copy constructor of </SPAN>X<SPAN CLASS="cmnt"> using a temporary initialized by #1</SPAN>
+    X x;
+  };
+</PRE>
+-- end example ]
+</LI>
+
+<LI>F1 is not a function template specialization and F2 is a function
+template specialization, or, if not that,</LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

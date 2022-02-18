@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1157</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1157"></A><H4>1157.
+  
+Partial ordering of function templates is still underspecified
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CA
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-03<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#CA7">N3092 comment
+  CA&#160;7<BR></A>
+
+<P>13.7.7.3 [<A href="https://wg21.link/temp.func.order#3">temp.func.order</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+To produce the transformed template, for each type,
+non-type, or template template parameter (including template
+parameter packs (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) thereof)
+synthesize a unique type, value, or class template
+respectively and substitute it for each occurrence of that
+parameter in the function type of the template.
+
+</BLOCKQUOTE>
+
+<P>The characteristics of the synthesized entities and how they
+are determined is not specified.  For example, members of a dependent
+type referred to in non-deduced contexts are not specified to exist,
+even though the transformed function type would be invalid in their
+absence.</P>
+
+<P>Example 1:</P>
+
+<PRE>
+  template&lt;typename T, typename U&gt; struct A;
+  template&lt;typename T&gt; void foo(A&lt;T, typename T::u&gt; *) { } //<SPAN CLASS="cmnt"> #1</SPAN>
+    //<SPAN CLASS="cmnt"> synthetic </SPAN>T1<SPAN CLASS="cmnt"> has member </SPAN>T1::u
+  template &lt;typename T&gt; void foo(A&lt;T, typename T::u::v&gt; *) { } //<SPAN CLASS="cmnt"> #2</SPAN>
+    //<SPAN CLASS="cmnt"> synthetic </SPAN>T2<SPAN CLASS="cmnt"> has member </SPAN>T2::u<SPAN CLASS="cmnt"> and member </SPAN>T2::u::v
+    //<SPAN CLASS="cmnt"> </SPAN>T<SPAN CLASS="cmnt"> in #1 deduces to synthetic </SPAN>T2<SPAN CLASS="cmnt"> in partial ordering;</SPAN>
+    //<SPAN CLASS="cmnt"> deduced </SPAN>A<SPAN CLASS="cmnt"> for the parameter is </SPAN>A&lt;T2, T2::u&gt; *<SPAN CLASS="cmnt"> --this is not necessarily compatible</SPAN>
+    //<SPAN CLASS="cmnt"> with </SPAN>A&lt;T2, T2::u::v&gt; *<SPAN CLASS="cmnt"> and it does not need to be. See Note 1. The effect is that</SPAN>
+    //<SPAN CLASS="cmnt"> (in the call below) the compatibility of </SPAN>B::u<SPAN CLASS="cmnt"> and </SPAN>B::u::v<SPAN CLASS="cmnt"> is respected.</SPAN>
+    //<SPAN CLASS="cmnt"> </SPAN>T<SPAN CLASS="cmnt"> in #2 cannot be successfully deduced in partial ordering from </SPAN>A&lt;T1, T1::u&gt; *;
+    //<SPAN CLASS="cmnt"> invalid type </SPAN>T1::u::v<SPAN CLASS="cmnt"> will be formed when </SPAN>T1<SPAN CLASS="cmnt"> is substituted into non-deduced contexts.</SPAN>
+  struct B {
+    struct u { typedef u v; };
+  };
+  int main() {
+    foo((A&lt;B, B::u&gt; *)0); //<SPAN CLASS="cmnt"> calls #2</SPAN>
+  }
+</PRE>
+
+<P>Note 1: Template argument deduction is an attempt to
+match a <TT>P</TT> and a deduced <TT>A</TT>; however,
+template argument deduction is not specified to fail if the
+<TT>P</TT> and the deduced <TT>A</TT> are incompatible. This
+may occur in the presence of non-deduced contexts.
+Notwithstanding the parenthetical statement in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#9">temp.deduct.partial</A>] paragraph 9, template argument deduction
+may succeed in determining a template argument for every
+template parameter while producing a deduced <TT>A</TT> that
+is not compatible with the corresponding <TT>P</TT>.</P>
+
+<P>Example 2:</P>
+
+<PRE>
+  template &lt;typename T, typename U, typename V&gt; struct A;
+  template &lt;typename T&gt;
+    void foo(A&lt;T, struct T::u, struct T::u::u&gt; *); //<SPAN CLASS="cmnt"> #2.1</SPAN>
+      //<SPAN CLASS="cmnt"> synthetic </SPAN>T1<SPAN CLASS="cmnt"> has member non-union class </SPAN>T1::u
+  template &lt;typename T, typename U&gt;
+    void foo(A&lt;T, U , U&gt; *); //<SPAN CLASS="cmnt"> #2.2</SPAN>
+      //<SPAN CLASS="cmnt"> synthetic </SPAN>T2<SPAN CLASS="cmnt"> and </SPAN>U2<SPAN CLASS="cmnt"> has no required properties</SPAN>
+      //<SPAN CLASS="cmnt"> </SPAN>T<SPAN CLASS="cmnt"> in #2.1 cannot be deduced in partial ordering from </SPAN>A&lt;T2, U2, U2&gt; *;
+      //<SPAN CLASS="cmnt"> invalid types </SPAN>T2::u<SPAN CLASS="cmnt"> and </SPAN>T2::u::u<SPAN CLASS="cmnt"> will be formed when </SPAN>T2<SPAN CLASS="cmnt"> is substituted in nondeduced contexts.</SPAN>
+      //<SPAN CLASS="cmnt"> </SPAN>T<SPAN CLASS="cmnt"> and </SPAN>U<SPAN CLASS="cmnt"> in #2.2 deduces to, respectively, </SPAN>T1<SPAN CLASS="cmnt"> and </SPAN>T1::u<SPAN CLASS="cmnt"> from </SPAN>A&lt;T1, T1::u, struct
+T1::u::u&gt; *<SPAN CLASS="cmnt"> unless</SPAN>
+      //<SPAN CLASS="cmnt"> </SPAN>struct T1::u::u<SPAN CLASS="cmnt"> does not refer to the injected-class-name of the class </SPAN>T1::u<SPAN CLASS="cmnt"> (if that is possible).</SPAN>
+  struct B {
+    struct u { };
+  };
+  int main() {
+    foo((A&lt;B, B::u, struct B::u::u&gt; *)0); //<SPAN CLASS="cmnt"> calls #2.1</SPAN>
+  }
+</PRE>
+
+<P>It is, however, unclear to what extent an implementation
+will have to go to determine these minimal properties.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

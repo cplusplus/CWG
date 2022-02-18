@@ -1,0 +1,226 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 321</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="321"></A><H4>321.
+  
+Associated classes and namespaces for argument-dependent lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 Nov 2001<BR>
+
+
+<P>The last bullet of the second paragraph of section
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] says that:</P>
+<BLOCKQUOTE>
+If T is a template-id, its associated namespaces and classes are the
+namespace in which the template is defined; for member templates, the member
+template's class; the namespaces and classes associated with the types of
+the template arguments provided for template type parameters (excluding
+template template parameters); the namespaces in which any template template
+arguments are defined; and the classes in which any member templates used as
+template template arguments are defined.
+</BLOCKQUOTE>
+
+<P>The first problem with this wording is that it is misleading, since one
+cannot get such a function argument whose type would be a template-id. The
+bullet should be speaking about template specializations instead.</P>
+
+<P>The second problem is owing to the use of the word "defined" in the phrases
+"are the namespace in which the template is defined", "in which any template
+template arguments are defined", and "as template template arguments are
+defined". The bullet should use the word "declared" instead, since scenarios
+like the one below are possible:</P>
+<PRE>
+namespace  A  {
+
+   template&lt;class T&gt;
+   struct  test  {
+
+      template&lt;class U&gt;
+      struct  mem_templ  {   };
+
+   };
+
+   // declaration in namespace 'A'
+   template&lt;&gt; template&lt;&gt;
+   struct  test&lt;int&gt;::mem_templ&lt;int&gt;;
+
+   void  foo(test&lt;int&gt;::mem_templ&lt;int&gt;&amp;)
+   {   }
+
+}
+
+// definition in the global namespace
+template&lt;&gt; template&lt;&gt;
+struct  A::test&lt;int&gt;::mem_templ&lt;int&gt;  {
+};
+
+int  main()
+{
+   A::test&lt;int&gt;::mem_templ&lt;int&gt;   inst;
+   // According to the current definition of 3.4.2
+   // foo is not found.
+   foo(inst);
+}
+</PRE>
+
+<P>In addition, the bullet doesn't make it clear whether a T which is a class
+template specialization must also be treated as a class type, i.e. if the
+contents of the second bullet of the second paragraph of section
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>].
+<BLOCKQUOTE>
+<UL>
+<LI>
+If T is a class type (including unions), its associated classes are: the
+class itself; the class of which it is a member, if any; and its direct and
+indirect base classes. Its associated namespaces are the namespaces in which
+its associated classes are defined.
+[This wording is as updated by core issue 90.]
+</LI>
+</UL>
+</BLOCKQUOTE>
+must apply to it or not. The same stands for a T which is a function
+template specialization. This detail can make a difference in an example
+such as the one below:
+<PRE>
+template&lt;class T&gt;
+struct  slist_iterator  {
+   friend bool  operator==(const slist_iterator&amp; x, const slist_iterator&amp; y)
+   {   return  true;   }
+};
+
+template&lt;class T&gt;
+struct  slist  {
+   typedef slist_iterator&lt;T&gt;   iterator;
+   iterator  begin()
+   {   return  iterator();   }
+   iterator  end()
+   {   return  iterator();   }
+};
+
+int  main()
+{
+   slist&lt;int&gt;   my_list;
+   slist&lt;int&gt;::iterator   mi1 = my_list.begin(),  mi2 = my_list.end();
+   // Must the the friend function declaration
+   // bool  operator==(const slist_iterator&lt;int&gt;&amp;, const slist_iterator&lt;int&gt;&amp;);
+   // be found through argument dependent lookup? I.e. is the specialization
+   // 'slist&lt;int&gt;' the associated class of the arguments 'mi1' and 'mi2'. If we
+   // apply only the contents of the last bullet of 3.4.2/2, then the type
+   // 'slist_iterator&lt;int&gt;' has no associated classes and the friend declaration
+   // is not found.
+   mi1 == mi2;
+}
+</PRE>
+</P>
+
+<P>
+<B>Suggested resolution</B>:</P>
+
+<P>Replace the last bullet of the second paragraph of section
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+<BLOCKQUOTE>
+<UL>
+<LI>
+If <TT>T</TT> is a <I>template-id</I>,
+its associated namespaces and classes are the
+namespace in which the template is defined; for member templates, the member
+template's class; the namespaces and classes associated with the types of
+the template arguments provided for template type parameters (excluding
+template template parameters); the namespaces in which any template template
+arguments are defined; and the classes in which any member templates used as
+template template arguments are defined.
+</LI>
+</UL>
+</BLOCKQUOTE>
+with
+<BLOCKQUOTE>
+<UL>
+<LI>
+If <TT>T</TT> is a class template
+specialization, its associated namespaces and
+classes are those associated with <TT>T</TT> when
+<TT>T</TT> is regarded as a class type; the
+namespaces and classes associated with the types of the template arguments
+provided for template type parameters (excluding template template
+parameters); the namespaces in which the primary templates making template
+template arguments are declared; and the classes in which any primary member
+templates used as template template arguments are declared.
+</LI>
+<LI>
+If <TT>T</TT> is a function template specialization,
+its associated namespaces and
+classes are those associated with <TT>T</TT> when
+<TT>T</TT> is regarded as a function type;
+the namespaces and classes associated with the types of the template
+arguments provided for template type parameters (excluding template template
+parameters); the namespaces in which the primary templates making template
+template arguments are declared; and the classes in which any primary member
+templates used as template template arguments are declared.
+</LI>
+</UL>
+</BLOCKQUOTE>
+</P>
+<P>Replace the second bullet of the second paragraph of section
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+<BLOCKQUOTE>
+<UL>
+<LI>
+If <TT>T</TT> is a class type (including unions),
+its associated classes are: the
+class itself; the class of which it is a member, if any; and its direct and
+indirect base classes. Its associated namespaces are the namespaces in which
+its associated classes are defined.
+</LI>
+</UL>
+</BLOCKQUOTE>
+with
+<BLOCKQUOTE>
+<UL>
+<LI>
+If <TT>T</TT> is a class type (including unions),
+its associated classes are: the
+class itself; the class of which it is a member, if any; and its direct and
+indirect base classes. Its associated namespaces are the namespaces in which
+its associated classes are declared [Note: in case of any of the associated
+classes being a class template specialization, its associated namespace is
+acually the namespace containing the declaration of the primary class
+template of the class template specialization].
+</LI>
+</UL>
+</BLOCKQUOTE>
+</P>
+
+<P><B>Rationale (September, 2012):</B></P>
+
+<P>The concerns in this issue were addressed by the resolutions of issues
+<A HREF="403.html">403</A> and <A HREF="557.html">557</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

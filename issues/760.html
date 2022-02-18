@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 760</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="760"></A><H4>760.
+  
+<TT>this</TT> inside a nested class of a non-static member function
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 February, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>
+<TT>this</TT> is a keyword and thus not subject to ordinary name
+lookup.  That makes the interpretation of examples like the following
+somewhat unclear:</P>
+
+<PRE>
+    struct outer {
+      void f() {
+        struct inner {
+          int a[sizeof(*this)];  // #1
+        };
+      }
+    };
+</PRE>
+
+<P>According to _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#3">expr.prim.general</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+The keyword <TT>this</TT> shall be used only inside a non-static class
+member function body (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]) or in a
+<I>brace-or-equal-initializer</I> for a non-static data member.
+
+</BLOCKQUOTE>
+
+<P>Should the use of <TT>this</TT> at #1 be interepreted as a well-formed
+reference to <TT>outer::f()</TT>'s <TT>this</TT> or as an ill-formed
+attempt to refer to a <TT>this</TT> for <TT>outer::inner</TT>?</P>
+
+<P>One possible interpretation is that the intent is as if <TT>this</TT>
+were an ordinary identifier appearing as a parameter in each non-static
+member function.  (This view applies to the initializers of non-static
+data members as well if they are considered to be rewritten as
+<I>mem-initializer</I>s in the constructor body.)  Under this
+interpretation, the prohibition against using <TT>this</TT> in other
+contexts simply falls out of the fact that name lookup would fail to
+find <TT>this</TT> anywhere else, so the reference in the example is
+well-formed.  (Implementations vary in their treatment of this
+example, so clearer wording is needed, whichever way the
+interpretation goes.)</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#2">expr.prim.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...The keyword <TT>this</TT> shall be used only inside <INS>the
+body of</INS> a non-static <DEL>class</DEL> member function
+<DEL>body</DEL> (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]) <INS>of the nearest
+enclosing class</INS> or in a <I>brace-or-equal-initializer</I>
+for a non-static data member <INS>(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>])</INS>.  The type of the expression is a pointer to
+the class of the function or non-static data member, possibly
+with cv-qualifiers on the class type. The expression is an
+rvalue. <INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  class Outer {
+    int a[sizeof(*this)];            //<SPAN CLASS="cmnt"> error: not inside a member function</SPAN>
+    unsigned int sz = sizeof(*this); //<SPAN CLASS="cmnt"> OK, in brace-or-equal-initializer</SPAN>
+
+    void f() {
+      int b[sizeof(*this)];          //<SPAN CLASS="cmnt"> OK</SPAN>
+
+      struct Inner {
+        int c[sizeof(*this)];        //<SPAN CLASS="cmnt"> error: not inside a member function of </SPAN>Inner
+      };
+    }
+  };</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

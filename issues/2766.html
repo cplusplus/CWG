@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2766</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2766"></A><H4>2766.
+  
+Repeated evaluation of a <I>string-literal</I> may yield different
+objects
+</H4>
+<B>Section: </B>5.13.5&#160; [<A href="https://wg21.link/lex.string">lex.string</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Balog Pal
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-15<BR>
+
+
+
+
+<P>Prior to the resolution of <A HREF="1823.html">issue 1823</A>
+(incorporated into C++17), the specification required in
+9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+A string literal in the body of an <TT>extern</TT> <TT>inline</TT>
+function is the same object in different translation units.
+
+</BLOCKQUOTE>
+
+<P>That was changed to the following specification in
+5.13.5 [<A href="https://wg21.link/lex.string#9">lex.string</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+Evaluating a <I>string-literal</I> results in a string literal object
+with static storage duration (6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]).
+... whether successive evaluations of a <I>string-literal</I> yield
+the same or a different object is unspecified.
+
+</BLOCKQUOTE>
+
+<P>The treatment of string literal objects was harmonized with backing
+arrays in P2752R3 (approved in June, 2023) and
+<A HREF="2753.html">issue 2753</A>.</P>
+
+<P>The rationale for the change made by <A HREF="1823.html">issue 1823</A> was deviating implementation practice: Implementations do
+not unify string literal objects in inline functions or template
+instantiations across different translation units.</P>
+
+<P>However, that was a silent behavior change for examples such as:</P>
+
+<PRE>
+  const char *f() { return "abc"; }
+  bool b = f() == f();    //<SPAN CLASS="cmnt"> guaranteed </SPAN>true<SPAN CLASS="cmnt"> prior to CWG1823, now unspecified</SPAN>
+</PRE>
+
+<P>The matter should be revisited in light of this new information.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

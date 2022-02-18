@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2760</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2760"></A><H4>2760.
+  
+Defaulted constructor that is an immediate function
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-08<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  consteval int f(int);
+  struct S {
+   int x = f(0);
+   S() = default;
+  };
+
+  int main() {
+    S s;     //<SPAN CLASS="cmnt"> OK?</SPAN>
+  }
+</PRE>
+
+<P>Is <TT>S</TT> an immediate function?</P>
+
+<P>The relevant specification is in 7.7 [<A href="https://wg21.link/expr.const#18">expr.const</A>] paragraph 18:</P>
+
+<BLOCKQUOTE>
+
+An immediate function is a function or constructor that is
+<UL>
+<LI>declared with the <TT>consteval</TT> specifier, or</LI>
+<LI>an immediate-escalating function F whose function body contains an
+immediate-escalating expression E such that E's innermost enclosing
+non-block scope is F's function parameter scope.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#18">expr.const</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+An immediate function is a function or constructor that is
+<UL>
+<LI>declared with the <TT>consteval</TT> specifier, or</LI>
+<LI>an immediate-escalating function F whose function body contains an
+immediate-escalating expression E such that E's innermost enclosing
+non-block scope is F's function parameter scope<INS>, or</INS>
+</LI>
+<LI class="ins">an immediate-escalating default constructor of a class
+which has at least one non-static data member with an
+immediate-escalating default member initializer.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-08-25):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#18">expr.const</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+An immediate function is a function or constructor that is
+<UL>
+<LI>declared with the <TT>consteval</TT> specifier, or</LI>
+<LI>an immediate-escalating function F whose function body contains an
+immediate-escalating expression E such that E's innermost enclosing
+non-block scope is F's function parameter scope.
+<INS>[ Note: Default member initializers used to initialize a base or
+member subobject (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) are considered to be
+part of the function body (9.5.1 [<A href="https://wg21.link/dcl.fct.def.general">dcl.fct.def.general</A>]). -- end note
+]</INS>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.5.1 [<A href="https://wg21.link/dcl.fct.def.general#1">dcl.fct.def.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Any informal reference to the body of a function should be interpreted
+as a reference to the non-terminal <I>function-body</I><INS>,
+including, for a constructor, default member initializers or default
+initialization used to initialize a base or member subobject in the
+absence of a <I>mem-initializer-id</I>
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

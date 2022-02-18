@@ -1,0 +1,198 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2868</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2868"></A><H4>2868.
+  
+Self-references in trivially copyable objects as function return values
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-02-16<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    A *children;
+    long long arr[100];
+
+    A() : children() {}
+    A(int) : children(this) {}
+  };
+
+  __attribute__((noinline))
+  A Foo() {
+    return A(0);   // <SPAN CLASS="cmnt">#1</SPAN>
+  }
+
+  A x[3] = {};
+
+  void Bar(int n) {
+    A a = Foo();
+    for (int i = 0; i &lt; n; i++) {
+      a.children[i].children = x;     // <SPAN CLASS="cmnt">#2</SPAN>
+    }
+  }
+
+  int main() {
+    Bar(3);
+    return x[0].children || !x[1].children || !x[2].children;
+  }
+</PRE>
+
+<P>It ought to be valid to hoist the load of <TT>a.children</TT> out
+of the loop. However, guaranteed copy elision is required to apply to
+#1, making the <TT>A</TT> objects in <TT>Foo</TT> and <TT>Bar</TT> be
+the same object.  An additional temporary copy can be made per
+6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3, but that does not cause
+the <TT>children</TT> member of the <TT>a</TT> variable to become
+invalid.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type X is passed to or returned from a
+function, if X has at least one eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is trivial, and
+the destructor of X is either trivial or deleted, implementations are
+permitted to create a temporary object to hold the function parameter
+or result object. The temporary object is constructed from the
+function argument or return value, respectively, and the function's
+parameter or return object is initialized as if by using the eligible
+trivial constructor to copy the temporary (even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object).
+<INS>The temporary object may occupy the storage that the parameter or
+return object is going to occupy, but pointers that pointed to the
+temporary object become invalid pointer values
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) when the parameter or return object is
+constructed and do not point to the parameter or return object.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-05-03</B></P>
+
+<P>For return values, CWG favors replacing the exception in
+6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 with an amendment to the
+specification of guaranteed copy elision in 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6.1">dcl.init.general</A>] bullet 16.6.1.  It is unclear whether parameter values should be
+treated the same.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an object of <DEL>class</DEL> <INS>trivially returnable
+(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</INS> type X is passed to <DEL>or
+returned from</DEL> a function, <DEL>if X has at least one eligible
+copy or move constructor (11.4.4 [<A href="https://wg21.link/special">special</A>]), each such
+constructor is trivial, and the destructor of X is either trivial or
+deleted,</DEL> implementations are permitted to create a temporary
+object to hold the function parameter <DEL>or result object</DEL>. The
+temporary object is constructed from the function argument <DEL>or
+return value, respectively,</DEL> and the function's parameter <DEL>or
+return object</DEL> is initialized as if by using the eligible trivial
+constructor to copy the temporary (even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Split and change 8.7.4 [<A href="https://wg21.link/stmt.return#2">stmt.return</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>expr-or-braced-init-list</I> of a return statement is called
+its operand. A return statement with no operand shall be used only in
+a function whose return type is cv void, a constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), or a destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).  A return statement with an operand of
+type void shall be used only in a function that has a cv void return
+type. A return statement with any other operand shall be used only in
+a function that has a return type other than cv void<DEL>; the return
+statement initializes the returned reference or prvalue result object
+of the (explicit or implicit) function call
+by copy-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the
+operand</DEL>.  [<I>Note 1:</I> A constructor or destructor does not have a
+return type. &#8212;<I>end note</I>]
+</P>
+
+<P>
+<INS>A type <TT>T</TT> is <I>trivially returnable</I> if <TT>T</TT>
+is a class type that has at least one eligible copy or move
+constructor (11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is
+trivial, and the destructor of <TT>T</TT> is either trivial or
+deleted.  If a function has a return type <TT>R</TT> other than
+<I>cv</I> <TT>void</TT>:</INS>
+<UL class="ins">
+<LI>If <TT>R</TT> is trivially returnable, the return statement
+initializes a first temporary object from the operand
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]).  Then, a second temporary object is
+constructed from the first temporary object, using an eligible trivial
+constructor for the copy.  Then, the first temporary object is
+destroyed and the duration of its storage ends.  [ Note: A pointer
+value pointing to the first temporary object becomes an invalid
+pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]). -- end note ] Finally, the
+prvalue result object of the function call is initialized from the
+second temporary object, using an eligible trivial constructor for the
+copy, and the second temporary object is destroyed.  In both cases, an
+eligible trivial constructor is used even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object.</LI>
+<LI>Otherwise, the return statement initializes the
+returned reference or prvalue result object of the (explicit or
+implicit) function call by copy-initialization
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the operand.
+</LI>
+</UL>
+[ <I>Note 2:</I> A return statement can involve an invocation of a
+constructor to perform a copy or move of the operand <DEL>if it is not
+a prvalue or if its type differs from the return type of the
+function</DEL>. A copy operation associated with a return statement
+can be elided or converted to a move operation if an automatic storage
+duration variable is returned (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).
+&#8212;<I>end note</I>]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

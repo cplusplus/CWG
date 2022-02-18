@@ -1,0 +1,160 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 581</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="581"></A><H4>581.
+  
+Can a templated constructor be explicitly instantiated or specialized?
+</H4>
+<B>Section: </B>13.10.2&#160; [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 May 2006<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>Although it is not possible to specify a constructor's template
+arguments in a constructor invocation (because the constructor has
+no name but is invoked by use of the constructor's class's name), it
+is possible to &#8220;name&#8221; the constructor in declarative
+contexts: per 6.5.5.2 [<A href="https://wg21.link/class.qual#2">class.qual</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+In a lookup in which the constructor is an acceptable lookup result,
+if the <I>nested-name-specifier</I> nominates a class <TT>C</TT>, and
+the name specified after the <I>nested-name-specifier</I>, when looked
+up in <TT>C</TT>, is the injected-class-name of <TT>C</TT> (
+Clause 11 [<A href="https://wg21.link/class">class</A>]), the name is instead considered to name the
+constructor of class <TT>C</TT>... Such a constructor name shall be
+used only in the <I>declarator-id</I> of a declaration that names a
+constructor.
+
+</BLOCKQUOTE>
+
+<P>Should it therefore be possible to specify <I>template-argument</I>s
+for a templated constructor in an explicit instantiation or specialization?
+For example,</P>
+
+<PRE>
+    template &lt;int dim&gt; struct T {};
+    struct X {
+      template &lt;int dim&gt; X (T&lt;dim&gt; &amp;) {};
+    };
+
+    template X::X&lt;&gt; (T&lt;2&gt; &amp;);
+</PRE>
+
+<P>If so, that should be clarified in the text.  In
+particular, 11.4.5 [<A href="https://wg21.link/class.ctor#1">class.ctor</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+Constructors do not have names. A special declarator syntax using an
+optional sequence of <I>function-specifier</I>s (9.2.3 [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]) followed by the constructor's class name followed by
+a parameter list is used to declare or define the constructor.
+
+</BLOCKQUOTE>
+
+<P>This certainly sounds as if the parameter list must immediately
+follow the class name, with no allowance for a template argument
+list.</P>
+
+<P>It would be worthwhile in any event to revise this wording
+to utilize the &#8220;considered to name&#8221; approach of
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]; as it stands, this wording
+sounds as if the following would be acceptable:</P>
+
+<PRE>
+    struct S {
+        S();
+    };
+    S() { }    // <SPAN CLASS="cmnt">qualified-id</SPAN> not required?
+</PRE>
+
+<P><B>Notes from the October, 2006 meeting:</B></P>
+
+<P>It was observed that explicitly specifying the template arguments
+in a constructor declaration is never actually necessary because the
+arguments are, by definition, all deducible and can thus be omitted.</P>
+
+<P><B>Additional notes, October, 2018:</B></P>
+
+<P>The wording in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#1">temp.arg.explicit</A>] paragraph 1 refers to
+a &#8220;function name,&#8221; which constructors do not have, and so
+presumably the current wording does not permit an explicit specialization
+of a constructor template. Nevertheless, there is implementation
+divergence in the treatment of an example like:</P>
+
+<PRE>
+  class C {
+    template &lt;typename T&gt;
+    C(const T &amp;) {}
+  };
+  template C::C&lt;double&gt;(const double &amp;);
+</PRE>
+
+<P>with some accepting and some rejecting.</P>
+
+<P><B>Notes from the October, 2018 teleconference:</B></P>
+
+<P>The consensus was to allow template arguments on the constructor
+name but not something like <TT>C&lt;int&gt;::C&lt;float&gt;::f</TT>.</P>
+
+<P><B>Proposed resolution (February, 2019):</B></P>
+
+<OL>
+<LI><P>Cbange 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#1">temp.arg.explicit</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Template arguments can be specified when referring to a
+function template specialization <INS>that is not a
+specialization of a constructor template</INS> by qualifying
+the function template name with the list
+of <I>template-argument</I>s in the same way
+as <I>template-argument</I>s are specified in uses of a
+class template specialization. [<I>Example:</I>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+13.10.2 [<A href="https://wg21.link/temp.arg.explicit#1">temp.arg.explicit</A>] paragraph 1:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>Template arguments shall not be specified when
+referring to a specialization of a constructor template
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>],
+6.5.5.2 [<A href="https://wg21.link/class.qual">class.qual</A>]).</INS>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

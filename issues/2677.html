@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2677</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2677"></A><H4>2677.
+  
+Replacing union subobjects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-06<BR>
+
+
+<P>The resolution to NB comment US 041 (C++20 CD) does not seem to have fully
+addressed the original issue, allowing:</P>
+
+<PRE>
+  union U { int i, j; };
+  U u;
+  new (&amp;u) U{.i = 5};
+  int k = u.j;  //<SPAN CLASS="cmnt"> OK! New </SPAN>U::i<SPAN CLASS="cmnt"> transparently replaces existing </SPAN>u.j<SPAN CLASS="cmnt">!</SPAN>
+</PRE>
+
+<P>The suggestion is to allow a newly-created complete object to
+transparently replace any object of the same type in the same storage,
+except for a potentially-overlapping subobject or a const complete
+object, and to allow a newly-created subobject to transparently
+replace only a corresponding subobject of an existing object.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+... An object o1 is transparently replaceable by an object o2 if:
+<UL>
+
+<LI>
+<INS>o2 is a complete object and:</INS>
+
+<UL>
+
+<LI>the storage that o2 occupies exactly overlays the storage that o1
+occupied, and</LI>
+
+<LI>o1 and o2 are of the same type (ignoring the
+top-level cv-qualifiers), and</LI>
+
+<LI>o1 is not a const, complete object, and</LI>
+
+<LI>
+<DEL>neither</DEL> o1 <DEL>nor o2</DEL> is <INS>not</INS> a
+potentially-overlapping subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]),
+<DEL>and</DEL> <INS>or</INS>
+</LI>
+
+</UL>
+
+</LI>
+
+<LI>
+<DEL>either o1 and o2 are both complete objects, or</DEL> o1 and
+o2 are <INS>corresponding</INS> direct subobjects of objects p1 and
+p2, respectively, and p1 is transparently replaceable by p2.</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (February, 2023)</B></P>
+
+<P>The suggested resolution above does not handle the additional
+example in <A HREF="2676.html">issue 2676</A>.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 6.7.2 [<A href="https://wg21.link/intro.object#2">intro.object</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Objects can contain other objects, called subobjects. A subobject can
+be a member subobject (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), a base class
+subobject (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), or an array element. An object
+that is not a subobject of any other object is called a <I>complete
+object</I>. If an object is created in storage associated with
+a <DEL>member subobject or array element</DEL> <INS>subobject</INS> e
+(which may or may not be within its lifetime), the created object is a
+subobject of e's containing object if:
+<UL>
+<LI>the lifetime of e's containing object has begun and not
+ended, and</LI>
+<LI>the storage for the new object exactly overlays the
+storage location associated with e, and</LI>
+<LI>
+<INS>e is not a potentially-overlapping subobject, and</INS>
+</LI>
+<LI>the new object is of
+the same type as e (ignoring cv-qualification).</LI>
+</UL>
+<INS>In this case, e and the created object are <I>corresponding
+direct subobjects</I>.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+... An object o1 is transparently replaceable by an object o2
+if <INS>either</INS>
+<UL>
+<LI>
+<INS>o1 and o2 are complete objects for which:</INS>
+<UL>
+<LI>
+<INS>o1 is not const,</INS>
+</LI>
+<LI>the storage that o2 occupies exactly overlays the storage that o1
+occupied, and</LI>
+<LI>o1 and o2 are of the same type (ignoring the top-level
+cv-qualifiers), <DEL>and</DEL> <INS>or</INS>
+</LI>
+<LI><DEL>o1 is not a const, complete
+object, and</DEL></LI>
+<LI><DEL>neither o1 nor o2 is a potentially-overlapping
+subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]), and</DEL></LI>
+</UL>
+</LI>
+
+<LI>
+<DEL>either o1 and o2 are both complete objects, or</DEL>
+o1 and o2 are <INS>corresponding</INS> direct subobjects <DEL>of objects p1 and p2, respectively, and p1 is
+transparently replaceable by p2</DEL> <INS>(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+for which:</INS>
+<UL>
+<LI><INS>the complete object of o1 is not const or</INS></LI>
+<LI>
+<INS>o1 is a mutable member subobject or a subobject thereof</INS>.</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

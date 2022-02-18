@@ -1,0 +1,240 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2896</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2896"></A><H4>2896.
+  
+Template argument deduction involving exception specifications
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/537">#537</A>.)</P>
+
+<P>
+<A HREF="2355.html">Core issue 2355</A> added support for
+deducing the exception specification of a function template.  However,
+implementations uniformly reject the following example:</P>
+
+<PRE>
+  template&lt;bool B&gt;
+  void f() noexcept(B);   // <SPAN CLASS="cmnt">#1</SPAN>
+
+  template&lt;&gt;
+  void f() noexcept;      // <SPAN CLASS="cmnt">explicit specialization of #1?</SPAN>
+</PRE>
+
+<P>This is arguably the correct approach, because exception
+specifications are instantiated separately and do not cause
+substitution failure in the immediate context
+(13.10.3.1 [<A href="https://wg21.link/temp.deduct.general">temp.deduct.general</A>]).  For class-scope explicit
+specializations, the <I>noexcept-specifier</I> has not even been
+parsed, yet.  If we exclude such deduction from function declarations,
+we also need to avoid considering the exception specification for partial
+ordering, otherwise partial ordering would always fail.</P>
+
+<P>A similar consideration applies to the address-of-function-template case:</P>
+
+<PRE>
+  struct A { 
+    static constexpr bool x = true;
+  };
+
+  template&lt;typename T, typename U&gt;
+  void f(T, U*) noexcept(T::x);   //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template&lt;typename T, typename U&gt;
+  void f(T, U) noexcept(T::y);    //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  void(&amp;g)(A, int*) noexcept = f;  // <SPAN CLASS="cmnt">selects #1; not a hard error during deduction for #2</SPAN>
+</PRE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl#1">temp.deduct.decl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... In all these cases, P is the <INS>function</INS> type of the
+function template being considered as a potential match and A is
+either the function type from the declaration or the type of the
+deallocation function that would match the placement operator new as
+described in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>] <INS>, in all cases ignoring the <I>noexcept-specifier</I> (if any) of the function types</INS>.
+The deduction is done as described in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>].
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#3">temp.deduct.partial</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The types used to determine the ordering depend on the context in
+which the partial ordering is done:
+<UL>
+<LI>In the context of a
+function call, the types used are those function parameter types for
+which the function call has arguments. [ Footnote: ... ]</LI>
+<LI>In the context of a
+call to a conversion function, the return types of the conversion
+function templates are used.</LI>
+<LI>In other contexts (13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>])<INS>,</INS> the
+function template's function type <INS>outside of
+the <I>noexcept-specifier</I></INS> is used.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr#1">temp.deduct.funcaddr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Template arguments can be deduced from the type specified when taking
+the address of an overload set (12.3 [<A href="https://wg21.link/over.over">over.over</A>]).  If there
+is a target, the function template's function type and the target type
+are used as the types of P and A, <INS>ignoring the
+<I>noexcept-specifier</I> (if any) of both function types,</INS>
+and the deduction is done as described in
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>].  Otherwise, deduction is performed
+with empty sets of types P and A.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-06-14</B></P>
+
+<P>For the last case (address of overload set), the following example
+is currently well-formed, but is rendered ill-formed by the suggested
+resolution:</P>
+
+<PRE>
+  void f(T*);           //<SPAN CLASS="cmnt"> #1</SPAN>
+  void f(T) noexcept;   //<SPAN CLASS="cmnt"> #2</SPAN>
+  void (&amp;g)(int*) noexcept = f;   //<SPAN CLASS="cmnt"> status quo: selects #2; suggested resolution: selects #1 (more specialized) and fails the initialization</SPAN>
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+All functions with associated constraints that are not satisfied
+(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
+functions. <INS>Any function template specialization whose exception
+specification is originally non-dependent is eliminated from the set
+unless the function type of the specialization (after possibly
+applying the function pointer conversion (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]))
+is identical to the function type of the target type.</INS> If more
+than one function in the set remains, all function template
+specializations in the set are eliminated if the set also contains a
+function that is not a function template specialization. Any given
+non-template function F0 is eliminated if the set contains a second
+non-template function that is more constrained than F0 according to
+the partial ordering rules of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]. Any given
+function template specialization F1 is eliminated if the set contains
+a second function template specialization whose function template is
+more specialized than the function template of F1 according to the
+partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
+eliminations, if any, there shall remain exactly one selected
+function.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl#1">temp.deduct.decl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... In all these cases, P is the <INS>function</INS> type of the
+function template being considered as a potential match and A is
+either the function type from the declaration or the type of the
+deallocation function that would match the placement operator new as
+described in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>] <INS>, in all cases ignoring the <I>noexcept-specifier</I> (if any) of the function types</INS>.
+The deduction is done as described in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>].
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#3">temp.deduct.partial</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The types used to determine the ordering depend on the context in
+which the partial ordering is done:
+<UL>
+<LI>In the context of a
+function call, the types used are those function parameter types for
+which the function call has arguments. [ Footnote: ... ]</LI>
+<LI>In the context of a
+call to a conversion function, the return types of the conversion
+function templates are used.</LI>
+<LI>In other contexts (13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>])<INS>,</INS> the
+function template's function type <INS>outside of
+the <I>noexcept-specifier</I></INS> is used.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr#1">temp.deduct.funcaddr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Template arguments can be deduced from the type specified when taking
+the address of an overload set (12.3 [<A href="https://wg21.link/over.over">over.over</A>]).  If there
+is a target, the function template's function type and the target type
+are used as the types of P and A, <INS>ignoring the
+<I>noexcept-specifier</I> (if any) of both function types,</INS>
+and the deduction is done as described in
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>].  Otherwise, deduction is performed
+with empty sets of types P and A.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

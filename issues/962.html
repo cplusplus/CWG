@@ -1,0 +1,164 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 962</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="962"></A><H4>962.
+  
+Attributes appertaining to class and enum types
+</H4>
+<B>Section: </B>9.2.9.5&#160; [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 September, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>There is a lack of symmetry in the specification of attributes
+that apply to class and enum types.  For example:</P>
+
+<PRE>
+    class X [[attr]];               //<SPAN CLASS="cmnt"> #1</SPAN>
+    typedef class Y [[attr]] YT;    //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>According to 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#1">dcl.type.elab</A>] paragraph 1, #1
+associates the <TT>attr</TT> attribute with class <TT>X</TT>
+for all subsequent references.  On the other hand,
+9.3.4 [<A href="https://wg21.link/dcl.meaning#5">dcl.meaning</A>] paragraph 5 says that #2 associates
+the <TT>attr</TT> attribute with the type but not with class
+<TT>Y</TT>.</P>
+
+<P>Existing implementations (Microsoft, GNU, Sun) with attributes
+place an attribute that is intended to be associated with a class
+type between the <I>class-key</I> and the class name, and it
+would be preferable to adopt such an approach instead of the
+contextual approach in the current formulation.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<OL>
+<LI><P>Change 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#6.1">basic.scope.pdecl</A>] bullet 6.1 as
+follows:</P></LI>
+
+<UL>
+<LI><P>for a declaration of the form</P></LI>
+
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL></I> <TT>;</TT>
+</UL>
+
+<P>the <I>identifier</I> is declared...</P>
+
+</UL>
+
+<LI><P>Change 6.5.6 [<A href="https://wg21.link/basic.lookup.elab#2">basic.lookup.elab</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...unless the <I>elaborated-type-specifier</I> appears in a
+declaration with the following form:</P>
+
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL></I> <TT>;</TT>
+</UL>
+
+<P>the <I>identifier</I> is looked up... if the
+<I>elaborated-type-specifier</I> appears in a declaration with the
+form:</P>
+
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL></I> <TT>;</TT>
+</UL>
+
+<P>the <I>elaborated-type-specifier</I> is a declaration...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>In 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>], change the grammar and paragraph
+1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<UL>
+<I>elaborated-type-specifier:</I>
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS></I> <TT>::</TT><I><SUB>opr</SUB> nested-name-specifier<SUB>opt</SUB> identifier</I><BR>
+...
+</UL>
+</UL>
+
+<P>
+<INS>An <I>attribute-specifier</I> shall not appear in an
+<I>elaborated-type-specifier</I> unless the latter is the sole
+constituent of a declaration.</INS> If an
+<I>elaborated-type-specifier</I> is the sole constituent of a
+declaration, the declaration is ill-formed unless it is an explicit
+specialization (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), an explicit
+instantiation (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or it has one of the
+following forms:</P>
+
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL></I> <TT>;</TT><BR>
+...
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar in 9.7.1 [<A href="https://wg21.link/dcl.enum#1">dcl.enum</A>] paragraph 1 as
+follows:</P></LI>
+
+<UL>
+<I>enum-head:</I>
+<UL>
+<I>enum-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier<SUB>opt</SUB> <DEL>attribute-specifier<SUB>opt</SUB></DEL> enum-base<SUB>opt</SUB> attribute-specifier<SUB>opt</SUB></I><BR>
+<I>enum-key <INS>attribute-specifier<SUB>opt</SUB></INS> nested-name-specifier identifier</I>
+<UL><I><DEL>attribute-specifier<SUB>opt</SUB></DEL> enum-base<SUB>opt</SUB> attribute-specifier<SUB>opt</SUB></I></UL>
+</UL>
+<BR>
+<I>opaque-enum-declaration:</I>
+<UL><I>enum-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL> enum-base<SUB>opt</SUB> attribute-specifier<SUB>opt</SUB></I></UL>
+</UL>
+
+<LI><P>Change the grammar in Clause 11 [<A href="https://wg21.link/class#1">class</A>] paragraph 1 as
+follows:</P></LI>
+
+<UL>
+<I>class-head:</I>
+<UL>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> identifier<SUB>opt</SUB> <DEL>attribute-specifier<SUB>opt</SUB></DEL> base-clause<SUB>opt</SUB></I><BR>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> nested-name-specifier identifier <DEL>attribute-specifier<SUB>opt</SUB></DEL> base-clause<SUB>opt</SUB></I><BR>
+<I>class-key <INS>attribute-specifier<SUB>opt</SUB></INS> nested-name-specifier<SUB>opt</SUB> simple-template-id</I>
+<UL><I><DEL>attribute-specifier<SUB>opt</SUB></DEL> base-clause<SUB>opt</SUB></I></UL>
+</UL>
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1383</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1383"></A><H4>1383.
+  
+Clarifying discarded-value expressions
+</H4>
+<B>Section: </B>Clause 7&#160; [<A href="https://wg21.link/expr">expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lawrence Crowl
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-30<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+<P>There are some points in the description discarded-value expressions
+that need clarification:</P>
+
+<UL>
+<LI><P>Does this require the lvalue-to-rvalue conversion in
+the listed cases or only prohibit it in all other cases
+(&#8220;only if&#8221; vs &#8220;if and only if&#8221;)?</P></LI>
+
+<LI><P>Does this apply only to built-in operations or to overloaded
+operators?</P></LI>
+
+<LI><P>Does this apply to non-POD types?</P></LI>
+
+</UL>
+
+<P><U>Suggested resolution:</U></P>
+
+<BLOCKQUOTE>
+
+<P>In some contexts, an expression only appears for its side
+effects. Such an expression is called a <I>discarded-value
+expression</I>. The expression is evaluated and its value is
+discarded. The array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard
+conversions are not applied.  The lvalue-to-rvalue conversion
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is applied <INS>if and</INS> only if
+the expression is an lvalue of volatile-qualified type and it has
+one of the following forms:</P>
+
+<UL>
+<LI><P>
+<I>id-expression</I> (_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]),</P></LI>
+
+<LI><P>
+<DEL>subscripting</DEL> <INS>subscript operation</INS>
+(7.6.1.2 [<A href="https://wg21.link/expr.sub">expr.sub</A>]),</P></LI>
+
+<LI><P>class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]),</P></LI>
+
+<LI><P>indirection <INS>operation</INS> (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),</P></LI>
+
+<LI><P>pointer-to-member operation (7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</P></LI>
+
+<LI><P>conditional <DEL>expression</DEL> <INS>operation</INS>
+(7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]) where both the second and the third
+operands are one of <DEL>the above</DEL> <INS>these forms</INS>,
+or</P></LI>
+
+<LI><P>comma <DEL>expression</DEL> <INS>operation</INS>
+(7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]) where the right operand is one of <DEL>the
+above</DEL> <INS>these forms</INS>.</P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> Expressions invoking user-defined operators
+are not the operations above. Discarded-value expressions apply
+to class types, which will be ill-formed if there is no volatile
+copy constructor with which to initialize the
+temporary. &#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change Clause 7 [<A href="https://wg21.link/expr#10">expr</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...The lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is
+applied <INS>if and</INS> only if the expression is an lvalue of
+volatile-qualified type and it <DEL>has</DEL> <INS>is</INS> one of the
+following <DEL>forms</DEL>:</P>
+
+<UL>
+<LI><P><INS><TT>(</TT> <I>expression</I> <TT>)</TT>, where
+<I>expression</I> is one of these expressions,</INS></P></LI>
+
+<LI><P>
+<I>id-expression</I> (_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]),</P></LI>
+
+<LI><P>...</P></LI>
+
+<LI><P>conditional expression (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]) where both
+the second and the third operands are one of <DEL>the above</DEL>
+<INS>these expressions</INS>, or</P></LI>
+
+<LI><P>comma expression (7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]) where the right
+operand is one of <DEL>the above</DEL> <INS>these
+expressions</INS>.</P></LI>
+
+</UL>
+
+<P><INS>[<I>Note:</I> Using an overloaded operator causes a function
+call; the above covers only operators with built-in meaning. If the
+lvalue is of class type, it must have a volatile copy constructor to
+initialize the temporary that is the result of the lvalue-to-rvalue
+conversion. &#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (February, 2012):</B></P>
+
+<P>A problem was discovered that was not addressed by the proposed
+resolution that was reviewed at the February, 2012 meeting, so the
+issue has been moved back to "review" status with revised wording.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

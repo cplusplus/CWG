@@ -1,0 +1,205 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 213</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="213"></A><H4>213.
+  
+Lookup in dependent base classes
+</H4>
+<B>Section: </B>13.8.3&#160; [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 Mar 2000<BR>
+
+
+
+
+<P>Paragraphs 3-4 of 13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>] say, in part,</P>
+
+<BLOCKQUOTE>
+
+if a base class of [a class] template depends on a
+<I>template-parameter</I>, the base class scope is not examined during
+name lookup until the class template is instantiated...  If a base
+class is a dependent type, a member of that class cannot hide a name
+declared within a template, or a name from the template's enclosing
+scope.
+
+</BLOCKQUOTE>
+
+<P>
+<U>John Spicer</U>: The wording in paragraph 4 seems particularly
+odd to me.  It essentially changes the order in which scopes are
+considered.  If a scope outside of the template declares a given name,
+that declaration hides entities of the same name from template
+dependent base classes (but not from nondependent base classes).</P>
+
+<P>In the following example, the calls of <TT>f</TT> and <TT>g</TT>
+are handled differently because <TT>B::f</TT> cannot hide
+<TT>::f</TT>, but <TT>B::g</TT> doesn't try to hide anything, so it
+can be called.</P>
+
+<PRE>
+    extern "C" int printf(char *, ...);
+    template &lt;class T&gt; struct A : T {
+        void h(T t) {
+            f(t);  // calls ::f(B)
+            g(t);  // calls B::g
+        }
+    };
+
+    struct B {
+        void f(B){printf("%s", "in B::f\n");}
+        void g(B){printf("%s", "in B::g\n");}
+    };
+
+    void f(B){printf("%s", "in ::f\n");}
+
+    int main()
+    {
+        A&lt;B&gt; ab;
+        B b;
+        ab.h(b);
+    }
+</PRE>
+
+<P>I don't think the current wording in the standard provides a useful
+facility.  The author of class <TT>A</TT> can't be sure that a given
+call is going to call a base class function unless the base class is
+explicitly specified.  Adding a new global function could cause the
+program to suddenly change meaning.</P>
+
+<P>What I <I>thought</I> the rule was is, "If a base class is a
+dependent type a member of that class is not found by unqualified
+lookup".</P>
+
+<P>
+<U>Derek Inglis:</U> My understanding is the same except that I'd
+remove the word "qualified" from your sentence.</P>
+
+<P>
+<U>Erwin Unruh</U>: My interpretation is based on 13.8.4 [<A href="https://wg21.link/temp.dep.res">temp.dep.res</A>] and especially 13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>] (and
+largely on my memory of the discussions). For all unqualified names
+you do something like the following algorithm:</P>
+
+<OL>
+<LI>check whether it is a dependent function call</LI>
+<LI>Do a lookup in the definition context and remember what you found there</LI>
+<LI>Do a Koenig-Lookup at instantiation time</LI>
+<LI>perform overloading if necessary</LI>
+</OL>
+
+<P>Regarding names from base classes you cannot find them in 2) because you
+don't know what base class you have. You cannot find them in 3) because
+members of classes are not found by Koenig lookup (only namespaces are
+considered). So you don't find them at all (for unqualified names).</P>
+
+<P>For a qualified name, you start lookup for each 'part' of the qualification.
+Once you reach a dependent part, you stop and continue lookup at the
+instantiation point. For example:</P>
+
+<PRE>
+    namespace A {
+      namepace B {
+	template &lt;class T&gt; class C {
+	  template &lt;class U&gt; class D {
+	    typedef int E;
+	    // ...
+	  };
+	};
+      };
+    };
+
+    template &lt;class T&gt; class F : public T {
+      typename A::B::C&lt;int&gt;::D&lt;T&gt;::E var1;
+      typename A::B::C&lt;T&gt;::D&lt;int&gt;::E var2;
+      typename F::T::X var3;
+    }
+</PRE>
+
+<P>For <TT>var1</TT> you do lookup for <TT>A::B::C&lt;int&gt;::D</TT>
+at definition time, for <TT>var2</TT> you only do lookup for
+<TT>A::B::C</TT>. The rest of the lookup is done at instantiation time
+since specialisations could change part of the lookup. Similarly the
+lookup for <TT>var3</TT> stops after <TT>F::T</TT> at definition
+time.</P>
+
+<P>My impression was that an unqualified name never refers to a name
+in a dependent base class.</P>
+
+<P>(See also <A HREF="197.html">issue 197</A>.)</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<OL>
+
+<LI>
+
+<P>In 13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3, replace</P>
+
+<BLOCKQUOTE>
+
+In the definition of a class template or in the definition of a member
+of such a template that appears outside of the template definition, if
+a base class of this template depends on a <I>template-parameter</I>,
+the base class scope is not examined during name lookup until the
+class template is instantiated.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+In the definition of a class template or a member of a class template,
+if a base class of the class template depends on a
+<I>template-parameter</I>, the base class scope is not examined during
+unqualified name lookup either at the point of definition of the class
+template or member or during an instantiation of the class template or
+member.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Remove from 13.8.3 [<A href="https://wg21.link/temp.dep#4">temp.dep</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+If a base class is a dependent type, a member of that class cannot
+hide a name declared within a template, or a name from the template's
+enclosing scopes.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

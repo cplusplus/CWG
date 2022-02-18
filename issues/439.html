@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 439</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="439"></A><H4>439.
+  
+Guarantees on casting pointer back to cv-qualified version of original type
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 Oct 2003<BR>
+
+
+<P>[Voted into WP at April 2005 meeting.]</P>
+
+<P>Paragraph 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#10">expr.static.cast</A>] paragraph 10 says that:</P>
+
+<BLOCKQUOTE>
+A value of type pointer to object converted to
+"pointer to <I>cv</I> <TT>void</TT>" and back to the
+original pointer type will have its original value.
+</BLOCKQUOTE>
+
+<P>That guarantee should be stronger.  In particular, given:
+<PRE>
+  T* p1 = new T;
+  const T* p2 = static_cast&lt;const T*&gt;(static_cast&lt;void *&gt;(p1));
+  if (p1 != p2)
+    abort ();
+</PRE>
+there should be no call to "abort".  The last sentence of Paragraph
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast#10">expr.static.cast</A>] paragraph 10 should be changed to read:</P>
+
+<BLOCKQUOTE>
+ A value of type pointer to object converted to "pointer to
+<I>cv</I> <TT>void</TT>" and back to the original pointer type
+(or a variant of the original pointer type that differs only in the
+<I>cv</I>-qualifiers applied to the object type) will have its
+original value.
+[<I>Example:</I>
+<BLOCKQUOTE>
+<PRE>
+T* p1 = new T;
+const T* p2 = static_cast&lt;const T*&gt;(static_cast&lt;void *&gt;(p1));
+bool b = p1 == p2; // b <I>will have the value true.</I>
+</PRE>
+</BLOCKQUOTE>
+<I>---end example.</I>]
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#10">expr.static.cast</A>] paragraph 10 as indicated:</P>
+<BLOCKQUOTE>
+A value of type pointer to object converted to "pointer to
+<I>cv</I> <TT>void</TT>" and back to the original pointer
+type<INS>, possibly with different cv-qualification,</INS> will have
+its original value.  <INS>[<I>Example:</I></INS>
+<PRE>
+<INS>
+  T* p1 = new T;
+  const T* p2 = static_cast&lt;const T*&gt;(static_cast&lt;void *&gt;(p1));
+  bool b = p1 == p2; // b<I> will have the value </I>true.
+</INS>
+</PRE>
+<INS>---<I>end example</I>]</INS>
+</BLOCKQUOTE>
+
+<P>
+<B>Rationale:</B> The wording "possibly with different
+cv-qualification" was chosen over the suggested wording to
+allow for changes in cv-qualification at different levels in a
+multi-level pointer, rather than only at the object type level.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

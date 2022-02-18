@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1585</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1585"></A><H4>1585.
+  
+Value category of member access of rvalue reference member
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-11-13<BR>
+
+
+
+
+<P>According to 7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+If <TT>E2</TT> is declared to have type &#8220;reference to
+<TT>T</TT>,&#8221; then <TT>E1.E2</TT> is an lvalue...
+
+</BLOCKQUOTE>
+
+<P>This applies to rvalue reference types as well as to lvalue
+reference types, based on the rationale from Clause 7 [<A href="https://wg21.link/expr#7">expr</A>] paragraph 7
+that</P>
+
+<BLOCKQUOTE>
+
+In general... named rvalue references are treated as lvalues and
+unnamed rvalue references to objects are treated as xvalues...
+
+</BLOCKQUOTE>
+
+<P>Since a non-static data member has a name, it would appear most
+naturally to fall into the lvalue category.  This makes sense as well
+from the perspective that the target of such a reference does not bear
+any necessary correlation with the value category of the object
+expression; in particular, an xvalue object might have an rvalue
+reference member referring to a different object from which it would
+be an error to move.</P>
+
+<P>On the other hand, rvalue reference members have limited utility
+and are likely only to occur as the result of template argument
+deduction in the context of perfect forwarding, such as using a
+<TT>std::pair</TT> to forward values.  In such cases, a <TT>first</TT>
+or <TT>second</TT> member of rvalue reference type would be most
+naturally treated as having the same value category as that of the
+object expression.  The utility of this usage may outweigh the safety
+considerations that shaped the current policy.</P>
+
+<P><B>Rationale (April, 2013):</B></P>
+
+<P>The design of rvalue references in the language is complex, and CWG felt
+that an attempt to change the existing rules to accommodate this case ran the
+risk of breaking other cases.  Treating named rvalue reference members as
+lvalues, consistently with other named rvalue references, is also safer in that
+it prevents the inadvertent theft of resources from an object to which such
+a member refers.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

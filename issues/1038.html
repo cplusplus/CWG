@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1038</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1038"></A><H4>1038.
+  
+Overload resolution of <TT>&amp;x.static_func</TT>
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-02<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>The Standard is not clear whether the following example is
+well-formed or not:</P>
+
+<PRE>
+    struct S {
+        static void f(int);
+        static void f(double);
+    };
+    S s;
+    void (*pf)(int) = &amp;s.f;
+</PRE>
+
+<P>According to 7.6.1.5 [<A href="https://wg21.link/expr.ref#4.3">expr.ref</A>] bullet 4.3,
+you do function overload resolution to determine whether
+<TT>x.f</TT> is a static or non-static member function.
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op#6">expr.unary.op</A>] paragraph 6 says that you can only
+take the address of an overloaded function in a context that
+determines the overload to be chosen, and the initialization of a
+function pointer is such a context (12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1)
+.  The problem is that 12.3 [<A href="https://wg21.link/over.over">over.over</A>] is
+phrased in terms of &#8220;an overloaded function name,&#8221;
+and this is a member access expression, not a name.</P>
+
+<P>There is variability among implementations as to whether this
+example is accepted; some accept it as written, some only if the
+<TT>&amp;</TT> is omitted, and some reject it in both forms.</P>
+
+<P><B>Additional note (October, 2010):</B></P>
+
+<P>A related question concerns an example like</P>
+
+<PRE>
+    struct S {
+        static void g(int*) {}
+        static void g(long) {}
+    } s;
+
+    void foo() {
+        (&amp;s.g)(0L);
+    }
+</PRE>
+
+<P>Because the address occurs in a call context and not in one of
+the contexts mentioned in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1,
+the call expression in <TT>foo</TT> is presumably ill-formed.
+Contrast this with the similar example</P>
+
+<PRE>
+    void g1(int*) {}
+    void g1(long) {}
+
+    void foo1() {
+        (&amp;g1)(0L);
+    }
+</PRE>
+
+<P>This call presumably is well-formed because 12.2.2.2 [<A href="https://wg21.link/over.match.call">over.match.call</A>] applies to &#8220;the address of a set of overloaded
+functions.&#8221; (This was clearer in the wording prior to the
+resolution of <A HREF="704.html">issue 704</A>: &#8220;...in
+this context using <TT>&amp;F</TT> behaves the same as using the
+name <TT>F</TT> by itself.&#8221;) It's not clear that there's any
+reason to treat these two cases differently.</P>
+
+<P>This question also bears on the original question of this issue,
+since the original wording of 12.2.2.2 [<A href="https://wg21.link/over.match.call">over.match.call</A>] also
+described the case of an ordinary member function call like
+<TT>s.g(0L)</TT> as involving the &#8220;name&#8221; of the function,
+even though the <I>postfix-expression</I> is a member access
+expression and not a &#8220;name.&#8221; Perhaps the reference to
+&#8220;name&#8221; in 12.3 [<A href="https://wg21.link/over.over">over.over</A>] should be similarly
+understood as applying to member access expressions?</P>
+
+
+
+<P><B>Additional notes (February, 2023)</B></P>
+
+<P>This appears to be resolved, in part by P1787R6 (accepted November, 2020).</P>
+
+<P><B>CWG 2023-06-12</B></P>
+
+<P>The clarifications in P1787R6 did not address the core of this
+issue, so it is kept open.  In order to avoid confusion, a wording
+change to clarify the treatment (regardless of direction) seems
+advisable. CWG felt that the first and second examples should be
+treated consistently, and expressed a mild preferences towards making
+those ill-formed.  It was noted that the reference
+to <I>id-expression</I> in 12.3 [<A href="https://wg21.link/over.over">over.over</A>] can be understood
+to refer to the <I>id-expression</I> of a class member access.</P>
+
+<P>This issue is resolved by <A HREF="2725.html">issue 2725</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

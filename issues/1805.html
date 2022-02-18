@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1805</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1805"></A><H4>1805.
+  
+Conversions of array operands in <I>conditional-expression</I>s
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-11-02<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>The final bullet of 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3,
+describing the attempt to convert the operands of the conditional
+operator to the other operand's type as part of determining the
+type of the result, says,</P>
+
+<UL>
+<LI>
+
+<P>Otherwise (i.e., if <TT>E1</TT> or <TT>E2</TT> has a
+nonclass type, or if they both have class types but the
+underlying classes are not either the same or one a base
+class of the other): <TT>E1</TT> can be converted to
+match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted
+to the type that expression <TT>E2</TT> would have
+if <TT>E2</TT> were converted to a prvalue (or the type it
+has, if <TT>E2</TT> is a prvalue).</P>
+</LI>
+
+</UL>
+
+<P>The phrase &#8220;if <TT>E2</TT> were converted to a
+prvalue&#8221; is problematic if <TT>E2</TT> has an array
+type.  For example,</P>
+
+<PRE>
+  struct S {
+    S(const char *s);
+    operator const char *();
+  };
+
+  S s;
+  const char *f(bool b) {
+    return b ? s : "";   //<SPAN CLASS="cmnt"> #1</SPAN>
+  }
+</PRE>
+
+<P>One might expect that the expression in #1 would be
+ambiguous, since <TT>S</TT> can be converted both to and
+from <TT>const char*</TT>.  However, the target type for
+the conversion of <TT>s</TT> is <TT>const char[1]</TT>,
+not <TT>const char*</TT>, so that conversion fails and
+the result of the <I>conditional-expression</I> has type
+<TT>S</TT>.</P>
+
+<P>It might be better to specify the target type for this
+trial conversion to be the type after the usual
+lvalue-to-rvalue, array-to-pointer, and function-to-pointer
+conversions instead of simply the result of converting
+&#8220;to a prvalue.&#8221;</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change the final subbullet of 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3
+as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...The process for determining whether an operand expression <TT>E1</TT>
+of type <TT>T1</TT> can be converted to match an operand
+expression <TT>E2</TT> of type <TT>T2</TT> is defined as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>If <TT>E2</TT> is a prvalue or if neither of the conversions above
+can be done and at least one of the operands has (possibly cv-qualified)
+class type:</P></LI>
+
+<UL>
+<LI><P>if <TT>E1</TT> and <TT>E2</TT> have class type...</P></LI>
+
+<LI><P>Otherwise (i.e., if <TT>E1</TT> or <TT>E2</TT> has a nonclass type,
+or if they both have class types but <INS>neither are</INS> the underlying
+classes <DEL>are not either</DEL> the same <DEL>or</DEL> <INS>nor is</INS>
+one a base class of the other): <TT>E1</TT> can be converted to
+match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted to the type
+that <DEL>expression</DEL> <TT>E2</TT> would have <DEL>if <TT>E2</TT> were
+converted to a prvalue (or the type it has, if <TT>E2</TT> is a
+prvalue)</DEL> <INS>after applying the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),
+and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard
+conversions</INS>.</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<I>[Editorial note: this wording was approved by CWG, but I'd suggest
+an editorial change to &#8220;...or if both have class types but
+the underlying classes are not the same and neither is a base class of
+the other.&#8221; &#8212;wmm]</I>
+
+<BR><BR>
+</BODY>
+</HTML>

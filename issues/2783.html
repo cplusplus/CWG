@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2783</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2783"></A><H4>2783.
+  
+Handling of deduction guides in <I>global-module-fragment</I>
+</H4>
+<B>Section: </B>10.4&#160; [<A href="https://wg21.link/module.global.frag">module.global.frag</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniela Engert
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-21<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  // <SPAN CLASS="cmnt">header</SPAN> "S.h"
+  
+  template&lt;class T&gt;
+  struct S {
+    S(const T*);
+  };
+  template&lt;class T&gt;
+  S(T*) -&gt; S&lt;T&gt;
+
+  // <SPAN CLASS="cmnt">translation unit</SPAN>
+  module;
+  #include "S.h"
+
+  export module M;
+  export using ::S;
+</PRE>
+
+<P>Obviously, the <I>using-declaration</I> referring to the class
+template <TT>S</TT> is exported by <TT>M</TT>, but what about the
+deduction guide of <TT>S</TT>?</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-08-25) [SUPERSEDED]:</B></P>
+
+<P>Add a new bullet after 10.4 [<A href="https://wg21.link/module.global.frag#3.5.7">module.global.frag</A>] bullet 3.5.7 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+there exists a declaration M that is not a <I>namespace-definition</I>
+for which M is decl-reachable from S and either
+<UL>
+<LI>...</LI>
+<LI>one of M and D declares a template and the other declares a
+partial or explicit specialization or an implicit or explicit
+instantiation of that template, or</LI>
+<LI class="ins">one of M and D declares a class template and the other
+declares a deduction guide for that template, or</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-10-06):</B></P>
+
+<P>Add a new bullet after 10.4 [<A href="https://wg21.link/module.global.frag#3.5.7">module.global.frag</A>] bullet 3.5.7 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+there exists a declaration M that is not a <I>namespace-definition</I>
+for which M is decl-reachable from S and either
+<UL>
+<LI>...</LI>
+<LI>one of M and D declares a template and the other declares a
+partial or explicit specialization or an implicit or explicit
+instantiation of that template, or</LI>
+<LI class="ins">M declares a class template and D
+is a deduction guide for that template, or</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

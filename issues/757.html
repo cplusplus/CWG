@@ -1,0 +1,180 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 757</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="757"></A><H4>757.
+  
+Types without linkage in declarations
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 December, 2008<BR>
+
+
+<P>[Voted into WP at July, 2009 meeting.]</P>
+
+
+
+<P>Paper N2657, adopted at the June, 2008 meeting, removed the prohibition
+of local and unnamed types as template arguments.  As part of the change,
+6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 was modified to read,</P>
+
+<BLOCKQUOTE>
+
+<P>A type without linkage shall not be used as the type of a variable or function with linkage, unless</P>
+
+<UL>
+<LI><P>the variable or function has extern "C" linkage (9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]), or</P></LI>
+
+<LI><P>the type without linkage was named using a dependent type
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Because a type without linkage can only be named as a dependent type,
+there are still some potentially useful things that cannot be done:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A {
+      friend void g(A, T);  // this can't be defined later
+      void h(T);  // this cannot be explicitly specialized
+    };
+
+    template &lt;class T&gt; void f(T) {
+      A&lt;T&gt; at;
+      g(at, (T)0);
+    }
+
+    enum { e };
+
+    void g(A&lt;decltype(e)&gt;, decltype(e)){}  // not allowed
+
+    int main() {
+      f(e);
+    }
+</PRE>
+
+<P>These deficiencies could be addressed by allowing types without
+linkage to be used as the type of a variable or function, but with
+the requirement that any such entity that is used must also be
+defined in the same translation unit.  This would allow issuing a
+compile-time, instead of a link-time, diagnostic if the definition
+were not provided, for example.  It also seems to be easier to
+implement than the current rules.</P>
+
+<P><B>Proposed resolution (March, 2009):</B></P>
+
+<P>Change 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...A type without linkage shall not be used as the type of a variable
+or function with linkage, unless</P>
+
+<UL>
+<LI><P>the variable or function has extern "C" linkage (9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]), or</P></LI>
+
+<LI><P>
+<DEL>the type without linkage was named using a dependent type
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])</DEL> <INS>the variable or function is not
+used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) or is defined in the same translation
+unit</INS>.</P></LI>
+
+</UL>
+
+<P>[<I>Note:</I> in other words, a type without linkage contains a class or
+enumeration that cannot be named outside its translation unit. An
+entity with external linkage declared using such a type could not
+correspond to any other entity in another translation unit of the
+program and thus <DEL>is not permitted</DEL> <INS>must be defined in the
+translation unit if it is used</INS>.  Also note that classes with
+linkage may contain members whose types do not have linkage, and that
+typedef names are ignored in the determination of whether a type has
+linkage. &#8212;<I>end note</I>] [<I>Example:</I>
+</P>
+
+<PRE>
+<DEL>    void f() {
+      struct A { int x; };    //<SPAN CLASS="cmnt"> no linkage</SPAN>
+      extern A a;             //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+      typedef A B;
+      extern B b;             //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    }
+</DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+<P><DEL>[<I>Example:</I></DEL></P>
+
+<PRE>
+<DEL>    template &lt;class T&gt; struct A {
+      //<SPAN CLASS="cmnt"> in </SPAN>A&lt;X&gt;<SPAN CLASS="cmnt">, the following is allowed because the type with no linkage</SPAN>
+      //<SPAN CLASS="cmnt"> </SPAN>X<SPAN CLASS="cmnt"> is named using template parameter </SPAN>T.
+      friend void f(A, T){}
+    };
+
+    template &lt;class T&gt; void g(T t) {
+      A&lt;T&gt; at;
+      f(at, t);
+    }
+
+    int main() {
+      class X {} x;
+      g(x);
+    }
+</DEL>
+</PRE>
+
+<PRE><INS>
+    template &lt;typename T&gt; struct B {
+        void g(T){}
+        void h(T);
+        friend void i(B, T){}
+    };
+
+    void f() {
+        struct A { int x; };  //<SPAN CLASS="cmnt"> no linkage</SPAN>
+        A a = {1};
+        B&lt;A&gt; ba;              //<SPAN CLASS="cmnt"> declares </SPAN>B&lt;A&gt;::g(A)<SPAN CLASS="cmnt"> and </SPAN>B&lt;A&gt;::h(A)
+        ba.g(a);              //<SPAN CLASS="cmnt"> OK</SPAN>
+        ba.h(a);              //<SPAN CLASS="cmnt"> error: </SPAN>B&lt;A&gt;::h(A)<SPAN CLASS="cmnt"> not defined in the translation unit</SPAN>
+        i(ba, a);             //<SPAN CLASS="cmnt"> OK</SPAN>
+    }
+</INS></PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: <A HREF="527.html">issue 527</A> also
+changes part of the same text.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

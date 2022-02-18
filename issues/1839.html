@@ -1,0 +1,208 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1839</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1839"></A><H4>1839.
+  
+Lookup of block-scope <TT>extern</TT> declarations
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-18<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>According to 6.6 [<A href="https://wg21.link/basic.link#6">basic.link</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+The name of a function declared in block scope and the name of a variable
+declared by a block scope <TT>extern</TT> declaration have linkage. If
+there is a visible declaration of an entity with linkage having the same
+name and type, ignoring entities declared outside the innermost enclosing
+namespace scope, the block scope declaration declares that same entity and
+receives the linkage of the previous declaration. If there is more than one
+such matching entity, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>It is not clear how declarations that are in the lexical scope of
+the block-scope declaration but not members of the nearest enclosing
+namespace (see 9.8.2 [<A href="https://wg21.link/namespace.def#6">namespace.def</A>] paragraph 6) should be
+treated.  (For example, the definition of the function in which the
+block <TT>extern</TT> appears might be defined in an enclosing
+namespace, with a visible declaration of the name in that namespace,
+or it might be a member function of a class containing a member
+function of the name being declared.)  Should such declarations be
+produce an error or should the lexically-nearer declaration simply
+be ignored?  There is implementation divergence on this point.</P>
+
+<P><B>Proposed resolution, April, 2019:</B></P>
+
+<OL>
+<LI><P>Change 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The name of a</DEL> <INS>A</INS> function declared
+in block scope <DEL>and the name of</DEL> <INS>or</INS> a
+variable declared by a block scope <TT>extern</TT>
+declaration <DEL>have</DEL> <INS>is a member of the
+innermost enclosing namespace and its name has</INS>
+linkage. If such a declaration is attached to a named
+module, the program is ill-formed. If there is a <DEL>visible</DEL>
+<INS>prior</INS> declaration of <DEL>an entity with linkage,
+ignoring entities declared outside the innermost enclosing
+namespace scope</DEL> <INS>that name in that
+namespace</INS>, such that the block scope declaration would
+be a (possibly ill-formed) redeclaration if the two
+declarations appeared in the same declarative region, the
+block scope declaration declares that same entity
+and <INS>its name</INS> receives the linkage of the previous
+declaration. <DEL>If there is more than one such matching
+entity, the program is ill-formed.</DEL> Otherwise, <DEL>if no
+matching entity is found,</DEL> the block scope entity receives
+<DEL>external</DEL> <INS>the</INS> linkage <INS>of the
+innermost enclosing namespace</INS>. <DEL>If, within a
+translation unit, the same entity is declared with both
+internal and external linkage, the program is
+ill-formed.</DEL> [<I>Example:</I>
+</P>
+
+<PRE>
+  static void f();
+  extern "C" void h();
+  static int i = 0;    //<SPAN CLASS="cmnt"> #1</SPAN>
+  void g() {
+    extern void f();   //<SPAN CLASS="cmnt"> internal linkage</SPAN>
+    extern void h();   //<SPAN CLASS="cmnt"> C language linkage</SPAN>
+<INS>    extern void k();   //<SPAN CLASS="cmnt"> </SPAN>::k<SPAN CLASS="cmnt">, external linkage</SPAN></INS>
+    int i;             //<SPAN CLASS="cmnt"> #2: </SPAN>i<SPAN CLASS="cmnt"> has no linkage</SPAN>
+    {
+      extern void f(); //<SPAN CLASS="cmnt"> internal linkage</SPAN>
+      extern int i;    //<SPAN CLASS="cmnt"> #3: <DEL>external</DEL> <INS>internal</INS> linkage<DEL>, ill-formed</DEL></SPAN>
+    }
+  }
+</PRE>
+
+<P>
+<DEL>Without the declaration at line #2, the declaration at line
+#3 would link with the declaration at line #1.  Because the
+declaration with internal linkage is hidden, however, #3 is
+given external linkage, making the program
+ill-formed.</DEL> <INS>Even though the declaration at line #2 hides the declaration at line #1, the declaration at line #3 still redeclares #1 and receives internal linkage.</INS>
+&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>When a</DEL> <INS>A</INS> block scope declaration of
+an entity with linkage <DEL>is not found to refer to some other
+declaration, then that entity is a member of the innermost
+enclosing namespace. However such a declaration</DEL>
+does not <DEL>introduce</DEL> <INS>by itself make</INS>
+the member name <INS>visible to any form of name lookup</INS>
+in its namespace scope <INS>or eligible for declaration by
+<I>qualified-id</I></INS>. [<I>Example:</I>
+</P>
+
+<PRE>
+  namespace X {
+    void p() {
+      q();                   //<SPAN CLASS="cmnt"> error: </SPAN>q<SPAN CLASS="cmnt"> not yet declared</SPAN>
+      extern void q();       //<SPAN CLASS="cmnt"> </SPAN>q<SPAN CLASS="cmnt"> is a member of namespace </SPAN>X
+<INS>      extern void r();       //<SPAN CLASS="cmnt"> </SPAN>r<SPAN CLASS="cmnt"> is a member of namespace </SPAN>X</INS>
+    }
+
+    void middle() {
+      q();                   //<SPAN CLASS="cmnt"> error: </SPAN>q<SPAN CLASS="cmnt"> not <DEL>yet declared</DEL> <INS>visible to name lookup</INS></SPAN>
+    }
+
+    void q() { /* ... */ }   //<SPAN CLASS="cmnt"> definition of </SPAN>X::q
+  }
+
+  void q() { /* ... */ }     //<SPAN CLASS="cmnt"> some other, unrelated </SPAN>q
+<INS>  void X::r() { /* ... */ }  //<SPAN CLASS="cmnt"> error: </SPAN>r<SPAN CLASS="cmnt"> cannot be declared by <I>qualified-id</I></SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional note, July, 2019:</B></P>
+
+<P>The proposed resolution removes the sentence from the existing
+text reading:</P>
+
+<BLOCKQUOTE>
+
+If, within a translation unit, the same entity is declared
+with both internal and external linkage, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<P>Such a sitution can still arise, however:</P>
+
+<PRE>
+   void f() {
+     void g(); //<SPAN CLASS="cmnt"> external linkage</SPAN>
+   }
+   static void g(); //<SPAN CLASS="cmnt"> internal linkage</SPAN>
+</PRE>
+
+<P>The remaining wording dealing with linkage agreement,
+9.2.2 [<A href="https://wg21.link/dcl.stc#6">dcl.stc</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+The linkages implied by successive declarations for a given
+entity shall agree. That is, within a given scope, each
+declaration declaring the same variable name or the same
+overloading of a function name shall imply the same linkage.
+
+</BLOCKQUOTE>
+
+<P>does not apply to this example because the declarations
+are not within the same scope.</P>
+
+<P>The issue has been returned to "review" status to allow
+consideration of how best to address this problem.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

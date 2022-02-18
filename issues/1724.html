@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1724</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1724"></A><H4>1724.
+  
+Unclear rules for deduction failure
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-31<BR>
+
+
+<P>[Accepted as a DR at the October, 2021 meeting.]</P>
+
+
+
+<P>According to 13.10.3 [<A href="https://wg21.link/temp.deduct#8">temp.deduct</A>] paragraph 8,</P>
+
+<BLOCKQUOTE>
+
+If a substitution results in an invalid type or expression, type deduction
+fails. An invalid type or expression is one that would be ill-formed, with
+a diagnostic required, if written using the substituted arguments.
+
+</BLOCKQUOTE>
+
+<P>Presumably the phrase &#8220;if written&#8221; refers to rewriting the
+template declaration <I>in situ</I> with the substituted arguments, rather
+than writing that type or expression at some arbitrary location, e.g.,</P>
+
+<PRE>
+  void g(double) = delete;
+
+  template&lt;class T&gt; auto f(T t) -&gt; decltype(g(t));
+
+  void g(int);
+
+  void h() {
+    typedef int T;
+    T t = 42;
+    g(t);  //<SPAN CLASS="cmnt"> Ok (I &#8220;wrote the substituted arguments&#8221;, and it seems fine)</SPAN>
+    f(42); //<SPAN CLASS="cmnt"> Presumably substitution is meant to fail.</SPAN>
+  }
+</PRE>
+
+<P>Perhaps a clearer formulation could be used?</P>
+
+<P><B>Proposed resolution (August, 2021):</B></P>
+
+<P>Change 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#8">temp.deduct.general</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a substitution results in an invalid type or expression,
+type deduction fails. An invalid type or expression is one
+that would be ill-formed, with a diagnostic required, if
+written <INS>in the same context</INS> using the substituted
+arguments.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

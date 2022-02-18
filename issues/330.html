@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 330</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="330"></A><H4>330.
+  
+Qualification conversions and pointers to arrays of pointers
+</H4>
+<B>Section: </B>7.3.6&#160; [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Roger Orr
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Jan 2002<BR>
+
+
+<P>[Moved to DR as N4261 at the November, 2014 meeting.]</P>
+
+<P>Section 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+covers the case of multi-level pointers, but does not appear to cover the
+case of pointers to arrays of pointers.
+The effect is that arrays are treated differently from simple scalar
+values.</P>
+
+<P>Consider for example the following code:
+(from the thread "Pointer to array conversion question" begun in
+comp.lang.c++.moderated)
+<PRE>
+  int main()
+  {
+     double *array2D[2][3];
+
+     double       *       (*array2DPtr1)[3] = array2D;     // Legal
+     double       * const (*array2DPtr2)[3] = array2DPtr1; // Legal
+     double const * const (*array2DPtr3)[3] = array2DPtr2; // Illegal
+  }
+</PRE>
+and compare this code with:-
+<PRE>
+  int main()
+  {
+     double *array[2];
+
+     double       *       *ppd1 = array; // legal
+     double       * const *ppd2 = ppd1;  // legal
+     double const * const *ppd3 = ppd2;  // certainly legal (4.4/4)
+  }
+</PRE>
+</P>
+
+<P>The problem appears to be that the pointed to types in example 1 are
+unrelated since nothing in the
+relevant section of the standard covers it - 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+does not mention conversions of the form
+"cv array of N pointer to T"
+into
+"cv array of N pointer to cv T"</P>
+
+<P>It appears that reinterpret_cast is the only way to perform the
+conversion.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>Artem Livshits proposed a resolution :-</P>
+
+<P>"I suppose if the definition of "similar" pointer types in
+7.3.6 [<A href="https://wg21.link/conv.qual#4">conv.qual</A>] paragraph 4 was
+rewritten like this:
+<BLOCKQUOTE>
+<P>T1 is cv1,0 P0 cv1,1 P1 ... cv1,n-1 Pn-1 cv1,n T</P>
+<P>and</P>
+<P>T2 is cv1,0 P0 cv1,1 P1 ... cv1,n-1 Pn-1 cv1,n T</P>
+
+<P>where Pi is either a "pointer to" or a "pointer to an array of Ni"; besides
+P0 may be also a "reference to" or a "reference to an array of N0" (in the
+case of P0 of T2 being a reference, P0 of T1 may be nothing).</P>
+</BLOCKQUOTE>
+it would address the problem.</P>
+
+<P>In fact I guess Pi in this notation may be also a "pointer to member", so
+7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]/{4,5,6,7} would be nicely wrapped in one
+paragraph."</P>
+
+<P><B>Additional note, February, 2014:</B></P>
+
+<P>
+<U>Geoffrey Romer</U>: LWG plans to resolve US 16/LWG 2118, which concerns
+qualification-conversion of unique_ptr for array types, by effectively
+punting the issue to core: <TT>unique_ptr&lt;T[]&gt;</TT> will be specified
+to be convertible to <TT>unique_ptr&lt;U[]&gt;</TT> only if <TT>T(*)[]</TT>
+is convertible to <TT>U(*)[]</TT>. LWG and LEWG have jointly decided to
+adopt the same approach for <TT>shared_ptr&lt;T[]&gt;</TT> and
+<TT>shared_ptr&lt;T[N]&gt;</TT> in the Fundamentals TS. This will probably
+substantially raise the visibility of core issue 330, which concerns the
+fact that array types support only top-level qualification conversion of
+the element type, so it'd be nice if CWG could bump up the priority of that
+issue.</P>
+
+<P>See also <A HREF="1865.html">issue 1865</A>.</P>
+
+<P><B>Proposed resolution (October, 2014):</B></P>
+
+<P>The resolution is contained in paper N4261.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

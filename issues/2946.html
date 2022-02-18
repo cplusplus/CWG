@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2946</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2946"></A><H4>2946.
+  
+Dependent call equivalence in non-ADL cases
+</H4>
+<B>Section: </B>13.7.7.2&#160; [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-30<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/631">#631</A>.)
+</P>
+
+<P>It is unclear whether the resolution of <A HREF="1321.html">issue 1321</A> covers cases where argument-dependent lookup is not used,
+for example because a callable object or a block-scope extern
+declartion was found. There is implementation divergence (EDG accepts,
+others reject) for the following example:</P>
+
+<PRE>
+  template &lt;typename ...T&gt;
+  struct Blob : T ... {
+    using T::operator() ...;
+  };
+  template &lt;typename T&gt; constexpr bool IsInt = false;
+  template &lt;&gt; constexpr bool IsInt&lt;int&gt; = true;
+  template &lt;typename T&gt; concept C = IsInt&lt;T&gt;;
+  namespace N {
+    constexpr auto f() {
+      int f(int);
+      return [](auto x) requires C&lt;decltype(f(x))&gt; { return true; };
+    }
+  }
+  namespace M {
+    constexpr auto f() {
+      short f(int);
+      return [](auto x) requires C&lt;decltype(f(x))&gt; || (sizeof(x) == 4) {};
+    }
+  }
+  template &lt;typename ...T&gt;
+  constexpr Blob&lt;T ...&gt; blobber(T ...) { return {}; }
+  static_assert(blobber(N::f(), M::f())(0));
+</PRE>
+
+<P>The wording says the example is well-formed, because the use
+of <TT>C</TT> in <TT>N::f</TT> subsumes the use of <TT>C</TT>
+in <TT>M::f</TT>, despite the fact that the use of <TT>C</TT>
+in <TT>M::f</TT> can never be satisfied.</P>
+
+<P>Additionally, a call of the form <TT>(f)(x,y)</TT> (with a
+parenthesized <I>postfix-expression</I>) is not considered a dependent
+call per 13.8.3.1 [<A href="https://wg21.link/temp.dep.general#2">temp.dep.general</A>] paragraph 2, leaving the issue
+addressed by <A HREF="1321.html">issue 1321</A> open for such
+cases.</P>
+
+<P><U>Suggested resolution (incomplete):</U></P>
+
+<OL>
+<LI>
+<P>Change in 13.7.7.2 [<A href="https://wg21.link/temp.over.link#5">temp.over.link</A>] paragraph 5 as follows, adding bullets:</P>
+
+<BLOCKQUOTE>
+
+...  For determining whether two dependent names
+(13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]) are equivalent, <INS>the following rules
+apply:</INS>
+
+<UL>
+<LI class="ins">If name lookup finds a non-function, that entity is
+considered.</LI>
+<LI class="ins">Otherwise, if name lookup finds a set of block-scope
+declarations (including <I>using-declarations</I>), that set is
+considered.</LI>
+<LI class="ins">Otherwise, if the name appears in a class scope, the
+lookup set for the name, merged with any
+dependent <I>using-declaration</I>s, is considered.</LI>
+<LI class="ins">Otherwise, if the parenthesized name is
+the <I>postfix-expression</I> of a dependent call, the name itself and
+the namespace scope is considered, not the result of name lookup.</LI>
+<LI>
+<INS>Otherwise, if the name is the <I>postfix-expression</I> in a
+dependent call,</INS> only the name itself is considered, not the
+result of name lookup.</LI>
+</UL>
+[Note 5: If such a dependent name is unqualified, it is looked up from
+a first declaration of the function template
+(13.8.1 [<A href="https://wg21.link/temp.res.general">temp.res.general</A>]).  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 13.8.3.1 [<A href="https://wg21.link/temp.dep.general#2">temp.dep.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>dependent call</I> is an expression, possibly formed as a
+non-member candidate for an operator (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]),
+of the form:
+<PRE>
+  <I>postfix-expression</I> ( <I>expression-list<SUB>opt</SUB></I> )
+</PRE>
+where the <I>postfix-expression</I> is <DEL>an</DEL>
+<INS>a (possibly parenthesized)</INS> <I>unqualified-id</I> and
+<UL>
+<LI>any of the expressions in the <I>expression-list</I> is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), or</LI>
+<LI>any of the expressions or <I>braced-init-list</I>s in
+the <I>expression-list</I> is type-dependent
+(13.8.3.3 [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>]), or</LI>
+<LI>the <I>unqualified-id</I> is a <I>template-id</I> in which any of
+the template arguments depends on a template parameter.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

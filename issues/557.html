@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 557</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="557"></A><H4>557.
+  
+Does argument-dependent lookup cause template instantiation?
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 February 2006<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>One might assume from 13.9.2 [<A href="https://wg21.link/temp.inst#1">temp.inst</A>] paragraph 1
+that argument-dependent lookup would require instantiation of any
+class template specializations used in argument types:</P>
+
+<BLOCKQUOTE>
+
+Unless a class template specialization has been explicitly
+instantiated (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicitly specialized
+(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), the class template specialization is
+implicitly instantiated when the specialization is referenced in a
+context that requires a completely-defined object type or when the
+completeness of the class type affects the semantics of the program.
+
+</BLOCKQUOTE>
+
+<P>A complete class type is required to determine the associated
+classes and namespaces for the argument type (to determine the class's
+bases) and to determine the friend functions declared by the class, so
+the completeness of the class type certainly &#8220;affects the
+semantics of the program.&#8221;</P>
+
+<P>This conclusion is reinforced by the second bullet of
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2:</P>
+
+<UL><LI><P>If <TT>T</TT> is a class type (including unions), its associated
+classes are: the class itself; the class of which it is a member, if
+any; and its direct and indirect base classes. Its associated
+namespaces are the namespaces in which its associated classes are
+defined.</P></LI></UL>
+
+<P>A class template specialization is a class type, so the second
+bullet would appear to apply, requiring the specialization to be
+instantiated in order to determine its base classes.</P>
+
+<P>However, bullet 8 of that paragraph deals explicitly with class
+template specializations:</P>
+
+<UL><LI><P>If <TT>T</TT> is a class template specialization its
+associated namespaces and classes are the namespace in which the
+template is defined; for member templates, the member template's
+class; the namespaces and classes associated with the types of the
+template arguments provided for template type parameters (excluding
+template template parameters); the namespaces in which any template
+template arguments are defined; and the classes in which any member
+templates used as template template arguments are
+defined.</P></LI></UL>
+
+<P>Note that the class template specialization itself is <I>not</I>
+listed as an associated class, unlike other class types, and there is
+no mention of base classes.  If bullet 8 were intended as a supplement
+to the treatment of class types in bullet 2, one would expect phrasing
+along the lines of, &#8220;In addition to the associated namespaces
+and classes for all class types...&#8221; or some such; instead,
+bullet 8 reads like a self-contained and complete specification.</P>
+
+<P>If argument-dependent lookup does not cause implicit
+instantiation, however, examples like the following fail:</P>
+
+<PRE>
+    template &lt;typename T&gt; class C {
+        friend void f(C&lt;T&gt;*) { }
+    };
+    void g(C&lt;int&gt;* p) {
+        f(p);    // found by ADL??
+    }
+</PRE>
+
+<P>Implementations differ in whether this example works or not.</P>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<OL>
+
+<LI>
+<P>Change bullet 2 of 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2
+as indicated:</P>
+
+<UL><LI><P>
+
+If <TT>T</TT> is a class type (including unions), its associated
+classes are: the class itself; the class of which it is a member, if
+any; and its direct and indirect base classes. Its associated
+namespaces are the namespaces <DEL>in</DEL> <INS>of</INS> which its associated
+classes are <DEL>defined</DEL> <INS>members</INS>.  <INS>Furthermore,
+if <TT>T</TT> is a class template specialization, its associated
+namespaces and classes also include: the namespaces and classes
+associated with the types of the template arguments provided for
+template type parameters (excluding template template parameters); the
+namespaces of which any template template arguments are members; and
+the classes of which any member templates used as template template
+arguments are members. [<I>Note:</I> Non-type template arguments do not
+contribute to the set of associated namespaces.  &#8212;<I>end
+note</I>]</INS>
+
+</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Delete bullet 8 of 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2:</P>
+
+<UL><LI><P><DEL>
+
+If <TT>T</TT> is a class template specialization its associated
+namespaces and classes are the namespace in which the template is
+defined; for member templates, the member template's class; the
+namespaces and classes associated with the types of the template
+arguments provided for template type parameters (excluding template
+template parameters); the namespaces in which any template template
+arguments are defined; and the classes in which any member templates
+used as template template arguments are defined. [<I>Note:</I> non-type
+template arguments do not contribute to the set of associated
+namespaces. &#8212;<I>end note</I>]
+
+</DEL></P></LI></UL>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

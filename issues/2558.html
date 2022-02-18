@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2558</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2558"></A><H4>2558.
+  
+Uninitialized subobjects as a result of an immediate invocation
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aaron Ballman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-29
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    int n;
+    consteval A() {}
+  };
+  constexpr A a; //<SPAN CLASS="cmnt"> implementations reject</SPAN>
+</PRE>
+
+<P>Paper
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1331r2.pdf">P1331R2</A>
+(Permitting trivial default initialization in
+constexpr contexts) dropped the restriction that immediate invocations
+cannot yield results with some subobjects left uninitialized. It is
+unclear whether that change was intentional or accidental.
+</P>
+<P>
+Furthermore, indeterminate values of pointer type are currently not
+permitted as the result of a constant expression per
+7.7 [<A href="https://wg21.link/expr.const#12.2">expr.const</A>] bullet 12.2; indeterminate values of scalar
+types are permitted only due to the absence of a restriction.</P>
+
+<P>This issue is closely related to <A HREF="2536.html">issue 2536</A>.</P>
+
+<P><B>2022-12-03</B></P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1380">cplusplus/papers#1380</A>.</P>
+
+<P><B>EWG 2023-01-19</B></P>
+
+<P>Uninitialized non-variant direct subobjects should not be allowed
+to appear in the result of a constant expression.  There was no
+consensus in support of the statements "Union types shall be
+initialized such that they have an active member in the result of a
+constant expression" and "EWG confirms that padding bits and data
+belonging to non-active variant members are permitted to have
+indeterminate values in the static initialization of objects".</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-27):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#12">expr.const</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constant expression is either a glvalue core constant expression
+that refers to an entity that is a permitted result of a constant
+expression (as defined below), or a prvalue core constant expression
+whose value satisfies the following constraints:
+
+<UL>
+<LI>if the value is an object of class type, each non-static data
+member of reference type refers to an entity that is a permitted
+result of a constant expression,</LI>
+
+<LI><INS>if the value is an object of scalar type, it does not have
+indeterminate value (6.7.5 [<A href="https://wg21.link/basic.indet">basic.indet</A>]),</INS></LI>
+
+<LI>...</LI>
+
+<LI>if the value is an object of class or array type, each subobject
+satisfies these constraints for the value.</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2377</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2377"></A><H4>2377.
+  
+Explicit copy constructor vs function viability
+</H4>
+<B>Section: </B>12.2.3&#160; [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Xiang Fan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-06-05<BR>
+
+
+
+
+<P>According to 12.2.3 [<A href="https://wg21.link/over.match.viable#4">over.match.viable</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+Third, for <TT>F</TT> to be a viable function, there shall
+exist for each argument an implicit conversion sequence
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]) that converts that argument
+to the corresponding parameter of <TT>F</TT>. If the
+parameter has reference type, the implicit conversion
+sequence includes the operation of binding the reference,
+and the fact that an lvalue reference to non-<TT>const</TT>
+cannot be bound to an rvalue and that an rvalue reference
+cannot be bound to an lvalue can affect the viability of the
+function (see 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>]).
+
+</BLOCKQUOTE>
+
+<P>The description of an implicit conversion sequence in
+12.2.4.2 [<A href="https://wg21.link/over.best.ics#6">over.best.ics</A>] paragraph 6 only discusses the
+relationship of the types. For example, for a class type, it
+says,</P>
+
+<BLOCKQUOTE>
+
+When the parameter has a class type and the argument
+expression has the same type, the implicit conversion
+sequence is an identity conversion.
+
+</BLOCKQUOTE>
+
+<P>This ignores whether the conversion can actually be
+performed, considering <TT>explicit</TT> qualification of
+constructors and conversion functions. There is implementation
+divergence in the handling of an example like:</P>
+
+<PRE>
+  template&lt;typename T&gt; void f(T);
+  template&lt;typename T&gt; void f(const T &amp;);
+
+  struct Woof {
+    explicit Woof() = default;
+    explicit Woof(const Woof&amp;) = default;
+    explicit Woof(Woof&amp;&amp;) = default;
+    Woof&amp; operator=(const Woof&amp;) = default;
+    Woof&amp; operator=(Woof&amp;&amp;) = default;
+  };
+
+  int main() {
+    const Woof cw{};
+    f(cw);
+  }
+</PRE>
+
+<P>If <TT>f(Woof)</TT> is viable, the call is ambiguous, even
+though calling <TT>f(Woof)</TT> would be ill-formed because of
+the explicit copy constructor.</P>
+
+<P>This seems to be consistent with the general approach
+described in 12.2.4.2 [<A href="https://wg21.link/over.best.ics#2">over.best.ics</A>] paragraph 2, even
+though explicitness is not explicitly mentioned:</P>
+
+<BLOCKQUOTE>
+
+Implicit conversion sequences are concerned only with the
+type, cv-qualification, and value category of the argument
+and how these are converted to match the corresponding
+properties of the parameter. Other properties, such as the
+lifetime, storage class, alignment, accessibility of the
+argument, whether the argument is a bit-field, and whether a
+function is deleted (9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]), are
+ignored. So, although an implicit conversion sequence can be
+defined for a given argument-parameter pair, the conversion
+from the argument to the parameter might still be ill-formed
+in the final analysis.
+
+</BLOCKQUOTE>
+
+<P><B>Rationale (November, 2018):</B></P>
+
+<P>The intent is that the example should be ambiguous. As an
+editorial matter, the &#8220;such as&#8221; and &#8220;so&#8221;
+remarks should be turned into notes.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

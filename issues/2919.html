@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2919</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2919"></A><H4>2919.
+  
+Conversion function candidates for initialization of const lvalue reference
+</H4>
+<B>Section: </B>12.2.2.7&#160; [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-18<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>There is implementation divergence handling the following example:</P>
+
+<PRE>
+  struct A {
+    A(const A&amp;) = delete;
+  };
+  struct B {
+    operator A&amp;&amp;();
+  };
+  const A&amp; r = B();
+</PRE>
+
+<P>Conversion to an lvalue pursuant to 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.1">dcl.init.ref</A>] bullet 5.1 fails due to the attempt to invoke a deleted function,
+but conversion to an rvalue according to 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 would succeed, except that 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1.1">over.match.ref</A>] bullet 1.1 hinges on the target type of the initialization, not
+the target type of the conversion.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-08-16):</B></P>
+
+<P>Change in 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1.1">over.match.ref</A>] bullet 1.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Let R be a set of types including
+<UL>
+<LI>&#8220;lvalue reference to cv2 T2&#8221;
+(when <DEL>initializing</DEL> <INS>converting to</INS> an
+lvalue <DEL>reference or an rvalue reference to function</DEL>)
+and</LI>
+<LI>&#8220;cv2 T2&#8221; and &#8220;rvalue reference to cv2 T2&#8221;
+(when <DEL>initializing</DEL> <INS>converting to</INS> an
+rvalue <DEL>reference</DEL> or an lvalue <DEL>reference
+to</DEL> <INS>of</INS> function <INS>type</INS>)</LI>
+</UL>
+for any T2.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

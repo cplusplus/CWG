@@ -1,0 +1,276 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1391</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1391"></A><H4>1391.
+  
+Conversions to parameter types with non-deduced template arguments
+</H4>
+<B>Section: </B>13.10.2&#160; [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-09-08<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>According to 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#6">temp.arg.explicit</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+Implicit conversions (7.3 [<A href="https://wg21.link/conv">conv</A>]) will be
+performed on a function argument to convert it to the type of the
+corresponding function parameter if the parameter type contains
+no <I>template-parameter</I>s that participate in template argument
+deduction.  [<I>Note:</I> Template parameters do not participate in
+template argument deduction if they are explicitly specified...
+
+</BLOCKQUOTE>
+
+<P>But this isn't clear about when these conversions are done.
+Consider</P>
+
+<PRE>
+    template&lt;class T&gt; struct A {
+       typename T::N n;
+    };
+    template&lt;class T&gt; struct B { };
+
+    template&lt;class T, class T2&gt;
+    void foo(const A&lt;T&gt;&amp; r); // #1
+    template&lt;class T&gt;
+    void foo(const B&lt;T&gt;&amp; r); // #2
+
+    void baz() {
+       B&lt;char&gt; b;
+       foo(b); // OK
+       foo&lt;char&gt;(b); // error
+    }
+</PRE>
+
+<P>With the explicit template argument, the first parameter of #1
+no longer participates in template argument deduction, so
+implicit conversions are done.  If we check for the implicit
+conversion during the deduction process, we end up instantiating
+<TT>A&lt;char&gt;</TT>, resulting in a hard error.  If we wait
+until later to check the conversion, we can reject #1 because
+<TT>T2</TT> is not deduced and never need to consider the
+conversion.</P>
+
+<P>But if we just accept the parameter and leave it up to normal
+overload resolution to reject an unsuitable candidate, that
+breaks this testcase:</P>
+
+<PRE>
+    template&lt;class T&gt;
+    struct A {
+       typename T::N n;
+    };
+
+    template&lt;class T&gt;
+    struct B { };
+
+    template &lt;class T, class... U&gt;
+    typename A&lt;T&gt;::value_t bar(int, T, U...);
+
+    template &lt;class T&gt;
+    T bar(T, T);
+
+    void baz()
+    {
+       B&lt;char&gt; b;
+       bar(b, b);
+    }
+</PRE>
+
+<P>Here, if deduction succeeds, we substitute in the deduced
+arguments of <TT>T = B&lt;char&gt;, U = { }</TT>, and end up
+instantiating <TT>A&lt;B&lt;char&gt;&gt;</TT>, which fails.</P>
+
+<P>EDG and GCC currently reject the first testcase and accept the
+second; clang accepts both.</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>The position initially favored by CWG was that implicit conversions
+are not considered during deduction but are only applied afterwards,
+so the second example is ill-formed, and that the normative wording of
+the referenced paragraph should be moved into the note.  This approach
+does not handle some examples currently accepted by some implementations,
+however; for example:</P>
+
+<PRE>
+   template &lt;class T&gt; struct Z {
+    typedef T::x xx;
+   };
+   template &lt;class T&gt; Z&lt;T&gt;::xx f(void *, T);
+   template &lt;class T&gt; void f(int, T);
+   struct A {} a;
+   int main() {
+     f(1, a); //<SPAN CLASS="cmnt"> If the implementation rules out the first overload</SPAN>
+              //<SPAN CLASS="cmnt"> because of the invalid conversion from </SPAN>int<SPAN CLASS="cmnt"> to </SPAN>void*<SPAN CLASS="cmnt">,</SPAN>
+              //<SPAN CLASS="cmnt"> the error instantiating </SPAN>Z&lt;A&gt;<SPAN CLASS="cmnt"> will be avoided</SPAN>
+   }
+</PRE>
+
+<P>Additional discussion is required.</P>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>The approach needed to accept this code appears to be doing the
+convertibility check between deduction and substitution.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<OL>
+<LI><P>Change 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Template argument deduction is done by comparing each
+function template parameter type (call
+it <TT>P</TT>) <INS>that contains <I>template-parameter</I>s
+that participate in template argument deduction</INS> with
+the type of the corresponding argument of the call (call
+it <TT>A</TT>) as described below. If <DEL><TT>P</TT> is a
+dependent type,</DEL> removing references and cv-qualifiers
+from <TT>P</TT> gives
+<TT>std::initializer_list&lt;P'&gt;</TT> or <TT>P'[N]</TT>
+for some <TT>P'</TT> and <TT>N</TT> and the argument is a
+non-empty initializer list (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),
+then deduction is performed instead for each element of the
+initializer list, taking <TT>P'</TT> as a function template
+parameter type and the initializer element as its argument,
+and in the <TT>P'[N]</TT> case, if <TT>N</TT> is a non-type
+template parameter, <TT>N</TT> is deduced from the length of
+the initializer list. Otherwise, an initializer list
+argument causes the parameter to be considered a non-deduced
+context (13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]). [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the note in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#4">temp.deduct.call</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note:</I> as specified in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>],
+implicit conversions will be performed on a function
+argument to convert it to the type of the corresponding
+function parameter if the parameter contains
+no <I>template-parameter</I>s that participate in template
+argument deduction. Such conversions are also allowed, in
+addition to the ones described in the preceding
+list. &#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph at the end of
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>If deduction succeeds for all parameters that contain
+<I>template-parameter</I>s that participate in template
+argument deduction, and all template arguments are
+explicitly specified, deduced, or obtained from default
+template arguments, remaining parameters are then compared
+with the corresponding arguments.  For each remaining
+parameter <TT>P</TT> with a type that was non-dependent
+before substitution of any explicitly-specified template
+arguments, if the corresponding argument <TT>A</TT> cannot
+be implicitly converted to <TT>P</TT>, deduction fails.
+[<I>Note:</I> Parameters with dependent types in which no
+<I>template-parameter</I>s participate in template
+argument deduction, and parameters that became non-dependent
+due to substitution of explicitly-specified template
+arguments, will be checked during overload resolution.
+&#8212;<I>end note</I>] [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct Z {
+    typedef typename T::x xx;
+  };
+  template &lt;class T&gt; typename Z&lt;T&gt;::xx f(void *, T); //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;class T&gt; void f(int, T);                 //<SPAN CLASS="cmnt"> #2</SPAN>
+  struct A {} a;
+  int main() {
+    f(1, a);                                         //<SPAN CLASS="cmnt"> OK, deduction fails for #1 because there is no conversion from </SPAN>int<SPAN CLASS="cmnt"> to </SPAN>void*
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#4">temp.deduct.partial</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Each type nominated above from the parameter template and
+the corresponding type from the argument template are used
+as the types of <TT>P</TT> and <TT>A</TT>. <INS>If a particular
+<TT>P</TT> contains no <I>template-parameter</I>s that
+participate in template argument deduction, that <TT>P</TT>
+is not used to determine the ordering.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In most cases, the types, templates, and non-type values
+that are used to compose <TT>P</TT> participate in template
+argument deduction. That is, they may be used to determine
+the value of a template argument, and the value so
+determined must be consistent with the values determined
+elsewhere. In certain contexts, however, the value does not
+participate in type deduction, but instead uses the values
+of template arguments that were either deduced elsewhere or
+explicitly specified. If a template parameter is used only
+in non-deduced contexts and is not explicitly specified,
+template argument deduction fails. <INS>[<I>Note:</I> Under
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] and 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>],
+if <TT>P</TT> contains no <I>template-parameter</I>s that
+appear in deduced contexts, no deduction is done, and so
+<TT>P</TT> and <TT>A</TT> need not have the same form.
+&#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1847.html">issue 1847</A>.</P>
+
+<P><B>Additional note October, 2015:</B></P>
+
+<P>See also <A HREF="1939.html">issue 1939</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

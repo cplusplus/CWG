@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1647</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1647"></A><H4>1647.
+  
+Type agreement of non-type template arguments in partial specializations
+</H4>
+<B>Section: </B>13.7.6&#160; [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-04<BR>
+
+
+<P>The Standard appears to be silent on whether the types of
+non-type template arguments in a partial specialization must be
+the same as those of the primary template or whether conversions
+are permitted.  For example,</P>
+
+<PRE>
+  template&lt;char...&gt; struct char_values {};
+  template&lt;int C1, char C3&gt;
+  struct char_values&lt;C1, 12, C3&gt; {
+    static const unsigned value = 1;
+  };
+  int check0[char_values&lt;1, 12, 3&gt;::value == 1? 1 : -1];
+</PRE>
+
+<P>The closest the current wording comes to dealing with this
+question is 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#9.1">temp.spec.partial.general</A>] bullet 9.1:</P>
+
+<UL>
+<LI><P>A partially specialized non-type argument expression shall
+not involve a template parameter of the partial
+specialization except when the argument expression is a
+simple <I>identifier</I>.</P></LI>
+
+</UL>
+
+<P>In this example, one might think of the first template argument
+in the partial specialization as <TT>(char)C1</TT>, which would
+violate the requirement, but that reasoning is tenuous.</P>
+
+<P>It would be reasonable to require the types to match in
+cases like this.  If this kind of usage is allowed it could
+get messy if the primary template were <TT>int...</TT> and
+the partial specialization had a parameter that
+was <TT>char</TT> because not all of the possible values
+from the primary template could be represented in the
+parameter of the partial specialization.  A similar issue
+exists if the primary template takes <TT>signed char</TT>
+and the partial specialization takes <TT>unsigned
+int</TT>.</P>
+
+<P>There is implementation variance in the treatment of this
+example.</P>
+
+<P>(See also issues <A HREF="1315.html">1315</A>,
+<A HREF="2033.html">2033</A>, and
+<A HREF="2127.html">2127</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

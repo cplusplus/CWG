@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 316</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="316"></A><H4>316.
+  
+Injected-class-name of template used as template template parameter
+</H4>
+<B>Section: </B>13.8.2&#160; [<A href="https://wg21.link/temp.local">temp.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Oct 2001<BR>
+
+
+
+
+<P>A gcc hacker recently sent in a patch to make the compiler give an error on
+code like this:
+<PRE>
+  template &lt;template &lt;typename&gt; class T&gt; struct A { };
+
+  template &lt;typename U&gt; struct B
+  {
+    A&lt;B&gt; *p;
+  };
+</PRE>
+presumably because the DR from <A HREF="176.html">issue 176</A>
+says that we decide whether or not
+B is to be treated as a template depending on whether a
+template-argument-list is supplied.  I think this is a drafting oversight,
+and that B should also be treated as a template when passed as a template
+template parameter.  The discussion in the issue list only talks about
+making the name usable both as a class and as a template.</P>
+
+<P>
+<U>John Spicer</U>:
+This case was explicitly discussed and it was agreed that to use the injected
+name as a template template parameter you need to use the non-injected
+name.</P>
+
+<P>A (possibly unstated) rule that I've understood about template
+arguments is that
+the form of the argument (type/nontype/template) is based only on the
+argument and not on the kind of template parameter.  An example is that
+"<TT>int()</TT>" is always "function taking no arguments returning int"
+and never a convoluted way of saying zero.</P>
+
+<P>In a similar way, we now decide whether or not something is a template based
+only on the form of the argument.</P>
+
+<P>I think this rule is important for two kinds of cases.  The first case
+involves explicit arguments of function templates:</P>
+<PRE>
+  template &lt;template &lt;typename&gt; class T&gt; void f(){} // #1
+  template &lt;class T&gt; void f(){}  // #2
+
+  template &lt;typename U&gt; struct B {
+	void g() {
+		f&lt;B&gt;();
+	}
+  };
+
+  int main() {
+	B&lt;int&gt; b;
+	b.g();
+  }
+</PRE>
+<P>With the current rules, this uses B as a type argument to template #2.</P>
+
+<P>The second case involves the use of a class template for which the template
+parameter list is unknown at the point where the argument list is scanned:</P>
+<PRE>
+  template &lt;class T&gt; void f(){}
+
+  template &lt;typename U&gt; struct B {
+	void g() {
+		f&lt; U::template X&lt;B&gt; &gt;();  // what is B?
+	}
+  };
+
+  struct Z1 {
+	template &lt;class T&gt; struct X {};
+  };
+
+  struct Z2 {
+	template &lt;template &lt;class&gt; class T&gt; struct X {};
+  };
+
+  int main() {
+	B&lt;Z1&gt; b1;
+	b1.g();
+
+	B&lt;Z2&gt; b2;
+	b2.g();
+  }
+</PRE>
+<P>If B could be used as a template name we would be
+unable to decide how to treat
+B at the point that it was scanned in the template argument list.</P>
+
+<P>So, I think it is not an oversight and that it should be
+left the way it is.</P>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+It was agreed that this is Not a Defect.
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,176 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2046</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2046"></A><H4>2046.
+  
+Incomplete thread specifications
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dinka Ranns
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-11-17<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting as document P0250R3.]</P>
+
+<P>Given the example:</P>
+
+<PRE>
+    auto id1 = std::this_thread::get_id();
+    thread_local auto id2 = std::this_thread::get_id();
+    int main()
+    {
+
+      auto id3 = std::this_thread::get_id();
+      auto id4 = std::this_thread::get_id();
+      std::cout &lt;&lt; id1 &lt;&lt; std::endl &lt;&lt; id2 &lt;&lt; std::endl &lt;&lt; id3 &lt;&lt;
+          std::endl &lt;&lt; id4 &lt;&lt; std::endl;
+    }
+</PRE>
+
+<OL>
+<LI><P>What is the thread of execution that initializes
+<TT>id1</TT>? Is it the same as, different from, or unspecified in
+relation to <TT>id3</TT>?</P></LI>
+
+<P>I believe this is unspecified by omission. (I can find no
+wording in the standard saying otherwise.) It looks like the
+standard <I>attempts</I> to require that these happen in the
+same thread, but fails to do so. We say that in a program
+that does not start a thread, all ordered dynamic
+initializations are sequenced, which implies they happen in
+the same thread &#8212; because &#8220;sequenced
+before&#8221; is an intra-thread notion &#8212; but we do
+not say that these initializations are sequenced before
+entering <TT>main</TT> (we just say they may be &#8220;done
+before&#8221; entering <TT>main</TT>). This seems like a
+defect to me.</P>
+
+<LI><P>What is the thread of execution that
+initializes <TT>id2</TT>? Is it the same as, different from,
+or unspecified in relation to <TT>id1</TT>
+and <TT>id3</TT>?</P></LI>
+
+<P>This also seems to be unspecified; this seems like a
+defect. We say in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#5">basic.start.static</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+It is implementation-defined whether the dynamic
+initialization of a non-local variable with static or thread
+storage duration is done before the first statement of the
+initial function of the thread. If the initialization is
+deferred to some point in time after the first statement of
+the initial function of the thread, it shall occur before
+the first odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of any variable
+with thread storage duration defined in the same translation
+unit as the variable to be initialized.
+
+</BLOCKQUOTE>
+
+<P>but &#8220;done before&#8221; and &#8220;occurs
+before&#8221; are meaningless noise here. I think what is
+intended is that these are a &#8220;sequenced before&#8221;
+relation for initialization of thread storage duration
+entities (implying initialization in the same thread) and
+&#8220;happens before&#8221; for initialization of static storage
+duration entities (implying initialization in some thread
+but visible to this thread).</P>
+
+<LI><P>Am i guaranteed to have only one copy
+of <TT>id2</TT>, or could there be more?</P></LI>
+
+<P>You are guaranteed to have one per thread, per
+6.7.6.3 [<A href="https://wg21.link/basic.stc.thread#1">basic.stc.thread</A>] paragraph 1.</P>
+
+<P>I cannot find any explicit guarantee that the implementation
+will not create additional threads behind your back, so
+there appears to be no guarantee that you have only one <TT>id2</TT>
+variable. That may be a defect.</P>
+
+</OL>
+
+<P>I'm also concerned by 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+...Variables with ordered initialization defined within a
+single translation unit shall be initialized in the order of
+their definitions in the translation unit...
+
+</BLOCKQUOTE>
+
+<P>This is obviously wrong if a translation unit contains both
+static and thread storage duration variables.</P>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>A paper is required to address these issues fully.  A lot
+of the existing text talks about sequencing when it should
+refer to &#8220;the transitive subset of happens
+before,&#8221; which could be, but is not currently,
+defined.  &#8220;Happens before&#8221; would do if we didn't
+have <TT>memory_order_consume</TT>.  The SG1 consensus on what
+should be said includes the following:</P>
+
+<UL>
+<LI><P>
+<TT>main</TT> should have a proper thread id, which
+should not be the default-constructed thread id.</P></LI>
+
+<LI><P>
+<TT>atexit</TT> should use flows of control with valid
+thread ids.</P></LI>
+
+<LI><P>For non-thread-local objects, we should guarantee
+only happens-before relationships for ordered
+initializations, slightly strengthened if we
+have <TT>memory_order_consume</TT>.</P></LI>
+
+<LI><P>Thread-locals should be initialized by the thread
+that they correspond to (which simplifies initializations
+that rely on each other).</P></LI>
+
+<LI><P>A C++ program should be allowed to start a
+<TT>std::thread</TT> even if the user never starts
+one.</P></LI>
+
+<LI><P>The thread-id for global static initialization is
+unspecified, but it is not the default-constructed
+thread.</P></LI>
+
+</UL>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>SG1 is included to introduce the &#8220;strongly happens before&#8221;
+relation from P0250, although possibly in a differnt way. It seems to
+be needed to fix all sorts of wording that's currently imperfect because
+it doesn't work in the presence of <TT>memory_order_consume</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

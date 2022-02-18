@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 168</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="168"></A><H4>168.
+  
+C linkage for static member functions
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Darin Adler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Sep 1999<BR>
+
+
+
+<P>[Picked up by evolution group at October 2002 meeting.]</P>
+
+<P>9.11 [<A href="https://wg21.link/dcl.link#4">dcl.link</A>] paragraph 4
+says,</P>
+
+<BLOCKQUOTE>
+A C language linkage is
+ignored for the names of class members and the member function types of
+class member functions.
+</BLOCKQUOTE>
+
+This makes good sense, since C linkage names
+typically aren't compatible with the naming used for member functions at
+link time, nor is C language linkage function type necessarily compatible
+with the calling convention for passing <TT>this</TT> to a non-static member
+function.
+
+<P>But C language linkage type (not name) for a static member function is
+invaluable for a common programming idiom. When calling a C function that
+takes a pointer to a function, it's common to use a private static member
+function as a "trampoline" which retrieves an object reference (perhaps by
+casting) and then calls a non-static private member function. If a static
+member function can't have a type with C language linkage, then a global or
+friend function must be used instead. These alternatives expose more of a
+class's implementation than a static member function; either the friend
+function itself is visible at namespace scope alongside the class definition
+or the private member function must be made public so it can be called by a
+non-friend function.</P>
+
+<P>Suggested Resolution: Change the sentence cited above
+to:</P>
+
+<BLOCKQUOTE>
+A C language linkage is ignored for the names of class members and the
+member function types of <INS>non-static</INS> class member functions.
+</BLOCKQUOTE>
+
+The example
+need not be changed because it doesn't involve a static member function.
+
+<P>The following workaround accomplishes the goal of not exposing
+the class's implementation, but at the cost of significant
+superstructure and obfuscation:</P>
+
+<PRE>
+    // foo.h
+    extern "C" typedef int c_func(int);
+    typedef int cpp_func(int);
+    class foo
+    {
+    private:
+      c_func* GetCallback();
+      static int Callback(int);
+    };
+
+    // foo.cpp
+    #include "foo.h"
+
+    // A local pointer to the static member that will handle the callback.
+    static cpp_func* cpp_callback=0;
+
+    // The C function that will actually get registered.
+    extern "C" int CFunk(int i)
+    {
+      return cpp_callback(i);
+    }
+
+    c_func* foo::GetCallback()
+    {
+      cpp_callback = &amp;Callback;    // Only needs to be done once.
+      return &amp;CFunk;
+    }
+</PRE>
+
+<P>
+<B>Rationale (10/99):</B> The Standard correctly reflects the
+intent of the Committee.</P>
+
+<P><B>Note (March, 2008):</B></P>
+
+<P>The Evolution Working Group recommended closing this issue with no
+further consideration.  See paper J16/07-0033 = WG21 N2173.</P>
+<BR><BR>
+</BODY>
+</HTML>

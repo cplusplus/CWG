@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 431</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="431"></A><H4>431.
+  
+Defect in wording in 14.2
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mat Marcus
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 August 2003<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>Consider this example:</P>
+<PRE>
+   class Foo {
+   public:
+       template&lt; typename T &gt; T *get();
+   };
+
+   template&lt; typename U &gt;
+   U *testFoo( Foo &amp;foo ) {
+       return foo.get&lt; U &gt;(); //#1
+   }
+</PRE>
+<P>I am under the impression that this should compile without requiring
+the insertion of the template keyword before get in the expression at
+//#1. This notion is supported by this note excerpted from
+13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]/5:</P>
+<BLOCKQUOTE>
+   [Note: just as is the case with the typename prefix, the template
+   prefix is allowed in cases where it is not strictly necessary;
+   i.e.,  when the expression on the left of the -&gt; or ., or the
+   nested-name-specifier is not dependent on a template parameter.]
+</BLOCKQUOTE>
+
+<P>But 13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]/4 contains this text:</P>
+<BLOCKQUOTE>
+   When the name of a member template specialization appears after .
+   or -&gt; in a postfix-expression, or after nested-name-specifier in
+   a qualified-id, and the postfix-expression or qualified-id
+   explicitly depends on a template-parameter (14.6.2), the member
+   template name must be prefixed by the keyword template. Otherwise
+   the name is assumed to name a non-template.
+</BLOCKQUOTE>
+
+<P>The only way that I can read this to support my assumption above is if
+I assume that the phrase postfix-expression is used twice above with
+different meaning. That is I read the first use as referring to the
+full expression while the second use refers to the subexpression
+preceding the operator. Is this the correct determination of intent? I
+find this text confusing. Would it be an improvement if the second
+occurrence of "postfix-expression" should be replaced by "the
+subexpression preceding the operator". Of course that begs the
+question "where is subexpression actually defined in the standard?"</P>
+
+<P>
+<U>John Spicer:</U>
+I agree that the code should work, and that we should tweak
+the wording.</P>
+
+<P><B>Proposed resolution (March, 2010):</B></P>
+
+<P>Change 13.3 [<A href="https://wg21.link/temp.names#4">temp.names</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+When the name of a member template specialization appears after
+<TT>.</TT> or <TT>-&gt;</TT> in a <I>postfix-expression</I>, or
+after a <I>nested-name-specifier</I> in a <I>qualified-id</I>,
+and the <INS>object or pointer expression of the</INS>
+<I>postfix-expression</I> or <INS>the
+<I>nested-name-specifier</I> in the</INS> <I>qualified-id</I>
+<DEL>explicitly</DEL> depends on a
+<DEL><I>template-parameter</I></DEL> <INS>template
+parameter</INS> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]) but does not refer
+to a member of the current instantiation (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the member template name must be prefixed by
+the keyword <TT>template</TT>.  Otherwise the name is assumed to
+name a non-template. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

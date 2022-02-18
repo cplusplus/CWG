@@ -1,0 +1,247 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2601</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2601"></A><H4>2601.
+  
+Tracking of created and destroyed subobjects
+</H4>
+<B>Section: </B>14.3&#160; [<A href="https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-16<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Subclause 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 specifies:</P>
+
+<BLOCKQUOTE>
+
+If the initialization or destruction of an object other than by
+delegating constructor is terminated by an exception, the destructor
+is invoked for each of the object's direct subobjects and, for a
+complete object, virtual base class subobjects, whose initialization
+has completed (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) and whose destructor has not
+yet begun execution, except that in the case of destruction, the
+variant members of a union-like class are not destroyed.
+
+</BLOCKQUOTE>
+
+<P>A traditional implementation has no way of knowing which subobjects
+are in the state that their initialization has completed but their
+destructor has not yet begun execution.  For example, the program
+might call the destructor explicitly, and the implementation does not
+track whether that has happened. The intent here is that it only
+matters whether the implied destructor call generated implicitly as
+part of the class object's destructor has begun yet, but it does not
+say that, and the reference to variant members reinforces the
+interpretation that the set of subobjects that are destroyed is
+determined dynamically based on which objects are within their
+lifetimes. Also, combining construction and destruction rules here
+confuses the matter further -- in "whose initialization has completed
+and whose destructor has not yet begun" we care exclusively about the
+first part in constructors and exclusively about the second part in
+destructors.</P>
+
+<P>The set of things that we actually want to destroy here is the
+things that were initialized by the initialization (constructor or
+aggregate initializer) itself, not the things that have been
+constructed and not destroyed by evaluations that the initialization
+happens to perform. For example:</P>
+
+<PRE>
+  struct A {
+    union { T x; U y; };
+    A() { throw "does not destroy x"; }
+    A(int) : x() { throw "does destroy x"; }
+    A(float) : x() { x.~T(); throw "still destroys x, oops"; }
+    A(double) : x() {
+      x.~T();
+      new(&amp;y) U();
+      throw "destroys x, does not destroy y";
+    }
+  };
+</PRE>
+
+<P>and similarly for aggregate initialization:</P>
+
+<PRE>
+  struct B {
+    union { T x; U y; };
+    int a;
+  };
+  B b = { .x = {}, .a = (b.x.~T(), new (&amp;b.y) U(), throw "destroys x not y")};
+</PRE>
+
+<P>Destruction is completely different: we just want to destroy all
+the things that the destructor was going to destroy anyway and hasn't
+already started destroying.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If the initialization <DEL>or destruction</DEL> of an object other than by
+delegating constructor is terminated by an exception, the destructor
+is invoked for each of the object's <DEL>direct subobjects and, for a
+complete object, virtual base class</DEL> subobjects
+<INS>that were directly initialized by the object's initialization and</INS>
+<DEL>,</DEL> whose initialization has completed
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) <DEL>and whose destructor has not yet begun
+execution, except that in the case of destruction, the variant members
+of a union-like class are not destroyed</DEL>.
+<INS> A subobject is directly initialized if its initialization is
+specified in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] for initialization by
+constructor, in 11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>] for initialization by
+inherited constructor, in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] for aggregate
+initialization, or in 9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>] for
+default-initialization, value-initialization, or direct-initialization
+of an array. [<I>Note</I>: This includes virtual base class subobjects if the
+initialization is for a complete object, and can include variant
+members that were nominated explicitly by a <I>mem-initializer</I> or
+<I>designated-initializer-clause</I> or that have a default member
+initializer. -- end note]</INS>
+</P>
+
+<P><INS>If the destructor of an object is terminated by an exception,
+each destructor invocation that would be performed after executing the
+body of the destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) and that has not
+yet begun execution is performed. [<I>Note</I>: This includes virtual
+base class subobjects if the destructor was invoked for a complete
+object. -- end note ]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (CWG telecon 2022-08-12) [SUPERSEDED]:</B></P>
+
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If the initialization <DEL>or destruction</DEL> of an object other than by
+delegating constructor is terminated by an exception, the destructor
+is invoked for each of the object's <DEL>direct subobjects and, for a
+complete object, virtual base class</DEL> subobjects
+<INS>that were known to be initialized by the object's initialization and</INS>
+<DEL>,</DEL> whose initialization has completed
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) <DEL>and whose destructor has not yet begun
+execution, except that in the case of destruction, the variant members
+of a union-like class are not destroyed</DEL>.
+<INS>A subobject is <em>known to be initialized</em> if its initialization is
+specified in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] for initialization by
+constructor, in 11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>] for initialization by
+inherited constructor, in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] for aggregate
+initialization, or in 9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>] for
+default-initialization, value-initialization, or direct-initialization
+of an array. [<I>Note</I>: This includes virtual base class subobjects if the
+initialization is for a complete object, and can include variant
+members that were nominated explicitly by a <I>mem-initializer</I> or
+<I>designated-initializer-clause</I> or that have a default member
+initializer. -- end note]</INS>
+</P>
+
+<P><INS>If the destructor of an object is terminated by an exception,
+each destructor invocation that would be performed after executing the
+body of the destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) and that has not
+yet begun execution is performed. [<I>Note</I>: This includes virtual
+base class subobjects if the destructor was invoked for a complete
+object. -- end note ]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (August, 2022):</B></P>
+
+<P>The proposed resolution above does not handle the situation where
+the initialization of a closure object is terminated by an exception
+during the evaluation of a lambda expression.  It also does not handle
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#14.1">class.copy.ctor</A>] bullet 14.1 (array copies in defaulted
+constructors).</P>
+
+<P><B>Proposed resolution (approved by CWG telecon 2022-09-09):</B></P>
+
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If the initialization <DEL>or destruction</DEL> of an object other than by
+delegating constructor is terminated by an exception, the destructor
+is invoked for each of the object's <DEL>direct subobjects and, for a
+complete object, virtual base class</DEL> subobjects
+<INS>that were known to be initialized by the object's initialization and</INS>
+<DEL>,</DEL> whose initialization has completed
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) <DEL>and whose destructor has not yet begun
+execution, except that in the case of destruction, the variant members
+of a union-like class are not destroyed</DEL>.
+
+[<I>Note:</I> If such an object has a reference member that extends
+the lifetime of a temporary object, this ends the lifetime of the
+reference member, so the lifetime of the temporary object is
+effectively not extended. &#8212;<I>end note</I>]
+
+<INS>A subobject is <em>known to be initialized</em> if its initialization is
+specified</INS>
+<UL class="ins">
+<LI><INS>in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] for initialization by
+constructor,</INS></LI>
+<LI><INS>in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] for initialization by
+defaulted copy/move constructor,</INS></LI>
+<LI><INS>in 11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>] for initialization by
+inherited constructor,</INS></LI>
+<LI><INS>in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] for aggregate
+initialization,</INS></LI>
+<LI><INS>in 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>] for the initialization of the
+closure object when evaluating a <I>lambda-expression</I>,</INS></LI>
+<LI><INS>in 9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>] for
+default-initialization, value-initialization, or direct-initialization
+of an array.</INS></LI>
+</UL>
+<INS>[<I>Note</I>: This includes virtual base class subobjects if the
+initialization is for a complete object, and can include variant
+members that were nominated explicitly by a <I>mem-initializer</I> or
+<I>designated-initializer-clause</I> or that have a default member
+initializer. &#8212;<I>end note</I>]</INS>
+</P>
+
+<P><INS>If the destructor of an object is terminated by an exception,
+each destructor invocation that would be performed after executing the
+body of the destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) and that has not
+yet begun execution is performed. [<I>Note</I>: This includes virtual
+base class subobjects if the destructor was invoked for a complete
+object. &#8212;<I>end note</I>]</INS></P>
+
+<P>The subobjects are
+destroyed in the reverse order of the completion of their
+construction. Such destruction is sequenced before entering a handler
+of the <I>function-try-block</I> of the constructor or destructor, if
+any.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

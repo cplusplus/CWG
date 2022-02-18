@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 12</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="12"></A><H4>12.
+  
+Default arguments on different declarations for the same function and the Koenig lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<P>Given the following test case:</P>
+<PRE>
+    enum E { e1, e2, e3 };
+
+    void f(int, E e = e1);
+    void f(E, E e = e1);
+
+    void g() {
+        void f(long, E e = e2);
+        f(1); // calls ::f(int, E)
+        f(e1); // ?
+    }
+
+</PRE>
+First note that Koenig lookup breaks the concept of hiding functions through
+local extern declarations as illustrated by the call `<TT>f(1)</TT>'. Should
+the WP show this as an example?
+
+<P>Second, it appears the WP is silent as to what happens with the call
+`<TT>f(e1)</TT>': do the different default arguments create an ambiguity?
+is the local choice preferred? or the global?</P>
+
+<P>
+<B>Tentative Resolution (10/98)</B>
+In 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2,
+ change</P>
+<BLOCKQUOTE>If the ordinary unqualified lookup of the name finds the declaration
+of a class member function, the associated namespaces and classes are not
+considered.</BLOCKQUOTE>
+to
+<BLOCKQUOTE>If the ordinary unqualified lookup of the name finds the declaration
+of a class member function or the declaration of a function at block scope,
+the associated namespaces and classes are not considered.</BLOCKQUOTE>
+
+<P>
+<B>Rationale (04/99):</B> The proposal would also apply to local
+<I>using-declaration</I>s (per Mike Ball) and was therefore deemed
+undesirable.  The ambiguity issue is
+dealt with in <A HREF="1.html">Core issue 1</A>
+</P>
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 365</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="365"></A><H4>365.
+  
+Storage duration and temporaries
+</H4>
+<B>Section: </B>6.7.6&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Kanze
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 July 2002<BR>
+
+
+<P>There are several problems with 6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]:</P>
+<UL>
+<LI>
+<P>6.7.6 [<A href="https://wg21.link/basic.stc#2">basic.stc</A>] paragraph 2 says that "Static and automatic
+storage durations are associated with objects introduced by
+declarations (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]) and implicitly created
+by the implementation (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>])."</P>
+
+<P>In fact, objects "implicitly created by the implementation" are the
+temporaries described in (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]), and have neither
+static nor automatic storage duration, but a totally different duration,
+described in 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>].</P>
+</LI>
+<LI>
+<P>6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>] uses the expression "local object" in several
+places, without ever defining it.  Presumably, what is meant is "an
+object declared at block scope", but this should be said explicitly.</P>
+
+<P>In a recent discussion in comp.lang.c++.moderated, on poster
+interpreted "local objects" as including temporaries.  This would require them
+to live until the end of the block in which they are created, which
+contradicts 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]. If temporaries are covered by
+this section, and the statement in 6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+seems to suggest, and they aren't local objects, then they must have
+static storage duration, which isn't right either.</P>
+
+<P>I propose adding a fourth storage duration to the list after
+6.7.6 [<A href="https://wg21.link/basic.stc#1">basic.stc</A>] paragraph 1:</P>
+<UL>
+<LI>
+temporary storage duration
+</LI>
+</UL>
+<P>And rewriting the second paragraph of this section as follows:</P>
+<BLOCKQUOTE>
+Temporary storage duration is associated with objects implicitly
+created by the implementation, and is described in 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>].
+Static and automatic storage durations are associated with objects defined
+by declarations; in the following, an object defined by a declaration
+with block scope is a local object.  The dynamic storage duration is
+associated with objects created by the <TT>operator new</TT>.
+</BLOCKQUOTE>
+</LI>
+</UL>
+
+<P>
+<U>Steve Adamczyk</U>:
+There may well be an issue here, but one should bear in mind the
+difference between storage duration and object lifetime.  As far
+as I can see, there is no particular problem with temporaries having
+automatic or static storage duration, as appropriate.  The point
+of 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>] is that they have an unusual object
+lifetime.</P>
+
+<P><B>Notes from Ocrober 2002 meeting:</B></P>
+
+<P>It might be desirable to shorten the storage duration of temporaries
+to allow reuse of them.  The as-if rule allows some reuse, but such
+reuse requires analysis, including noting whether the addresses of
+such temporaries have been taken.</P>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<P>The CWG decided that further consideration of this issue would be
+deferred until someone produces a paper explaining the need for action
+and proposing specific changes.</P>
+
+<P>See also <A HREF="1634.html">issue 1634</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

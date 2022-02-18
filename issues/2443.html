@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2443</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2443"></A><H4>2443.
+  
+Meaningless template exports
+</H4>
+<B>Section: </B>10.2&#160; [<A href="https://wg21.link/module.interface">module.interface</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-11-09
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting, as part of paper P2615R1 (Meaningful exports).]</P>
+
+<P>According to 10.2 [<A href="https://wg21.link/module.interface">module.interface</A>] paragraph
+1, <TT>export</TT> does not interfere with other
+definitions; paragraph 3 merely requires that it appear in a
+declaration that declares at least one
+name. 13.1 [<A href="https://wg21.link/temp.pre#4">temp.pre</A>] paragraph 4 prevents using
+an <I>export-declaration</I> as the <I>declaration</I> of a
+<I>template-declaration</I>.</P>
+
+<P>With some interpretation, these rules appear to allow
+various useless constructs like:</P>
+
+<PRE>
+   template export void f();
+   export template void f();
+   export template&lt;&gt; void g(int);
+   template&lt;&gt; export void g(int);
+   export template&lt;class T&gt; struct trait&lt;T*&gt;;
+</PRE>
+
+<P>Simply forbidding them in 10.2 [<A href="https://wg21.link/module.interface#3">module.interface</A>] paragraph 3
+would also prohibit their appearance in export
+blocks:</P>
+
+<PRE>
+   export {
+     template&lt;class&gt; struct A;
+     template&lt;class T&gt; struct A&lt;T*&gt;;
+   }
+</PRE>
+
+<P>It is already the case that the closely-related
+example</P>
+
+<PRE>
+   export {
+     template&lt;class T&gt; struct A {A(non_deducible&lt;T&gt;);};
+     template&lt;class U&gt; A(U) -&gt; A&lt;find_param&lt;U&gt;&gt;;
+   }
+</PRE>
+
+<P>is disallowed, although a fix is pending in EWG.</P>
+
+<P>Suggested resolution: Forbid the direct use of the
+<TT>export</TT> keyword in these contexts but continue to
+allow them (and perhaps more) in <TT>export { }</TT>.</P>
+
+<P><B>Notes from the February, 2021 teleconference:</B></P>
+
+<P>CWG agreed with the suggested direction.</P>
+
+<P><B>Notes from the 2022-05-20 CWG telecon:</B></P>
+
+<P>CWG agreed with the wording suggested by Herring; forwarding to EWG
+for approval.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,178 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2848</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2848"></A><H4>2848.
+  
+Omitting an empty template argument list for explicit instantiation
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-15<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/489">#489</A>.)</P>
+
+<P>Subclause 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P>This paragraph is redundant with a more general provision on
+explicitly specifying template arguments in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#4">temp.arg.explicit</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+Trailing template arguments that can be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from
+default <I>template-argument</I>s may be omitted from the list of
+explicit <I>template-argument</I>s.  [<I>Note 1:</I> A trailing
+template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) not otherwise
+deduced will be deduced as an empty sequence of template
+arguments. &#8212;<I>end note</I>] If all of the template arguments
+can be deduced or obtained from default <I>template-argument</I>s,
+they may all be omitted; in this case, the empty template argument
+list &lt;&gt; itself may also be omitted. ...
+
+</BLOCKQUOTE>
+
+<P>A similar duplication is in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<PRE>
+  ...
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+  template void sort(Array&lt;char&gt;&amp;);  //<SPAN CLASS="cmnt"> argument is deduced here <INS>(13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</INS></SPAN>
+  ...
+</PRE>
+</LI>
+
+<LI>
+<P>Remove 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#1">temp.expl.spec</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+... [ Example:
+<PRE>
+  template&lt;class T&gt; class stream;
+  template&lt;&gt; class stream&lt;char&gt; { /* ... */ };<INS> // <SPAN CLASS="cmnt">#1</SPAN></INS>
+
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  <INS>template&lt;&gt; void sort&lt;int&gt;(Array&lt;int&gt;&amp;);   // <SPAN CLASS="cmnt">#2</SPAN></INS>
+  template&lt;&gt; void sort<DEL>&lt;char*&gt;</DEL>(Array&lt;char*&gt;&amp;);   <INS>// <SPAN CLASS="cmnt">#3 template argument is deduced (13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</SPAN></INS>
+  ...
+</PRE>
+
+Given these declarations, <DEL>stream&lt;char&gt;</DEL> <INS>#1</INS>
+will be used as the definition of streams of chars; other streams will
+be handled by class template specializations instantiated from the
+class template. Similarly, <INS>#2 will be used as the sort function
+for arguments of type <TT>Array&lt;int&gt;</TT> and
+#3</INS> <DEL>sort&lt;char*&gt;</DEL> will be used <DEL>as the sort
+function</DEL> for arguments of type <TT>Array&lt;char*&gt;</TT>; other Array
+types will be sorted by functions generated from
+the <INS>function</INS> template. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in
+the <I>template-id</I> naming an explicit function template
+specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]).  [<I>Example 6:</I>
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v);
+
+  //<SPAN CLASS="cmnt"> explicit specialization for sort(Array&lt;int&gt;&amp;)</SPAN>
+  //<SPAN CLASS="cmnt"> with deduced template-argument of type int</SPAN>
+  template&lt;&gt; void sort(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

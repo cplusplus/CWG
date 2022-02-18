@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2415</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2415"></A><H4>2415.
+  
+<I>using-declaration</I>s vs copy assignment operators
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-05-29<BR>
+
+
+<P>It is not clear whether a <I>using-declaration</I> naming an
+assignment operator from a base class can be considered to
+declare a copy assignment operator or not. For example:</P>
+
+<PRE>
+  struct A;
+
+  struct B {
+    constexpr A &amp; operator= (const A &amp;);
+  };
+
+  struct A : B {
+    using B::operator=;
+  } a { a = a };
+</PRE>
+
+<P>There is implementation divergence on the treatment of
+this code: should the <I>using-declaration</I> suppress or
+conflict with the implicit declaration
+of <TT>A::operator=</TT>?</P>
+
+<P><B>Rationale (June, 2019):</B></P>
+
+<P>This question is addressed explicitly by 9.9 [<A href="https://wg21.link/namespace.udecl#4">namespace.udecl</A>] paragraph 4:
+</P>
+
+<BLOCKQUOTE>
+
+If a constructor or assignment operator brought from a base class into a
+derived class has the signature of a copy/move constructor or assignment
+operator for the derived class (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>],
+11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]), the <I>using-declaration</I> does not by
+itself suppress the implicit declaration of the derived class member; the
+member from the base class is hidden or overridden by the
+implicitly-declared copy/move constructor or assignment operator of the
+derived class, as described below.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

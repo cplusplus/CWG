@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 207</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="207"></A><H4>207.
+  
+<I>using-declaration</I>s and protected access
+</H4>
+<B>Section: </B>11.8.3&#160; [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Feb 2000<BR>
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  class A {
+  protected:
+    static void f() {};
+  };
+
+  class B : A {
+  public:
+    using A::f;
+    void g() {
+      A::f();
+    }
+  };
+</PRE>
+
+<P>The standard says in 11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4 that
+the call to <TT>A::f</TT> is ill-formed:</P>
+
+<BLOCKQUOTE>
+A member <I>m</I> is accessible when named in class <I>N</I> if
+
+<UL>
+<LI>
+<I>m</I> as a member of <I>N</I> is public, or</LI>
+
+<LI>
+<I>m</I> as a member of <I>N</I> is private, and the reference
+occurs in a member or friend of class <I>N</I>, or</LI>
+
+<LI>
+<I>m</I> as a member of <I>N</I> is protected, and the reference
+occurs in a member or friend of class <I>N</I>, or in a member or
+friend of a class <I>P</I> derived from <I>N</I>, where <I>m</I> as a
+member of <I>P</I> is private or protected, or</LI>
+
+<LI>there exists a base class <I>B</I> of <I>N</I> that is accessible
+at the point of reference, and <I>m</I> is accessible when named in
+class <I>B</I>.</LI>
+
+</UL>
+</BLOCKQUOTE>
+
+<P>Here, <I>m</I> is <TT>A::f</TT> and <I>N</I> is <TT>A</TT>.</P>
+
+<UL>
+<LI>
+<TT>f</TT> as a member of <TT>A</TT> is public?  <B>No</B>.</LI>
+
+<LI>
+<TT>f</TT> as a member of <TT>A</TT> is private? <B>No</B>.</LI>
+
+<LI>
+<TT>f</TT> as a member of <TT>A</TT> is protected?
+<B>Yes</B>.</LI>
+
+<UL>
+<LI>reference in a member or friend of <TT>A</TT>? <B>No</B>.</LI>
+
+<LI>reference in a member or friend of a class derived from
+<TT>A</TT>? <B>Yes</B>, <TT>B</TT>.</LI>
+
+<UL>
+<LI>
+<TT>f</TT> as a member of <TT>B</TT> private or protected?
+<B>No</B>, public.</LI>
+
+</UL>
+</UL>
+
+<LI>base of <TT>A</TT> accessible at point of reference? <B>No</B>.</LI>
+</UL>
+
+<P>It seems clear to me that the third bullet should say "public,
+private or protected".</P>
+
+<P>
+<U>Steve Adamczyk</U>:The words were written before
+<I>using-declaration</I>s existed, and therefore didn't anticipate
+this case.
+</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>Modify  the third bullet of the third change ("A member <I>m</I>
+is accessible...") in the resolution
+of <A HREF="9.html">issue 9</A> to read "public, private,
+or protected" instead of "private or protected."</P>
+
+<BR><BR>
+</BODY>
+</HTML>

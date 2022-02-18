@@ -1,0 +1,190 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 608</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="608"></A><H4>608.
+  
+Determining the final overrider of a virtual function
+</H4>
+<B>Section: </B>11.7.3&#160; [<A href="https://wg21.link/class.virtual">class.virtual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 December 2006<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+<P>According to 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+Then in any well-formed class, for each virtual function declared
+in that class or any of its direct or indirect base classes there
+is a unique <I>final overrider</I> that overrides that function
+and every other overrider of that function. The rules for member
+lookup (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) are used to determine the
+final overrider for a virtual function in the scope of a derived
+class but ignoring names introduced by <I>using-declaration</I>s.
+
+</BLOCKQUOTE>
+
+<P>I think that description is wrong on at least a couple of
+counts.  First, consider the following example:</P>
+
+<PRE>
+    struct A { virtual void f(); };
+    struct B: A { };
+    struct C: A { void f(); };
+    struct D: B, C { };
+</PRE>
+
+<P>What is the &#8220;unique final overrider&#8221; of
+<TT>A::f()</TT> in <TT>D</TT>?  According to
+11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2, we determine that by
+looking up <TT>f</TT> in <TT>D</TT> using the lookup rules in
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>].  However, that lookup determines that
+<TT>f</TT> in <TT>D</TT> is ambiguous, so there is no
+&#8220;unique final overrider&#8221; of <TT>A::f()</TT> in
+<TT>D</TT>.  Consequently, because &#8220;any well-formed
+class&#8221; must have such an overrider, <TT>D</TT> must be
+ill-formed.</P>
+
+<P>Of course, we all know that <TT>D</TT> is <I>not</I>
+ill-formed.  In fact, 11.7.3 [<A href="https://wg21.link/class.virtual#10">class.virtual</A>] paragraph 10
+contains an example that illustrates exactly this point:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+struct A {
+    virtual void f();
+};
+struct B1 : A {     //<SPAN CLASS="cmnt"> note non-virtual derivation</SPAN>
+    void f();
+};
+struct B2 : A {
+    void f();
+};
+struct D : B1, B2 { //<SPAN CLASS="cmnt"> </SPAN>D<SPAN CLASS="cmnt"> has two separate </SPAN>A<SPAN CLASS="cmnt"> subobjects</SPAN>
+};
+</PRE>
+
+<P>In class <TT>D</TT> above there are two occurrences of
+class <TT>A</TT> and hence two occurrences of the virtual member
+function <TT>A::f</TT>.  The final overrider of <TT>B1::A::f</TT>
+is <TT>B1::f</TT> and the final overrider of <TT>B2::A::f</TT>
+is <TT>B2::f</TT>.</P>
+
+</BLOCKQUOTE>
+
+<P>It appears that the requirement for a &#8220;unique final
+overrider&#8221; in 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 needs
+to say something about sub-objects.  Whatever that
+&#8220;something&#8221; is, you can't just say &#8220;look up the
+name in the derived class using 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>].&#8221;</P>
+
+<P>There's another problem with using the 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]
+lookup to specify the final overrider: name lookup just looks up the
+name, while the overriding relationship is based not only on the name
+but on a matching parameter-type-list and cv-qualification.  To
+illustrate this point:</P>
+
+<PRE>
+    struct X {
+        virtual void f();
+    };
+    struct Y: X {
+        void f(int);
+    };
+    struct Z: Y { };
+</PRE>
+
+<P>What is the &#8220;unique final overrider&#8221; of
+<TT>X::f()</TT> in <TT>A</TT>?  Again, 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2
+says you're supposed to look up <TT>f</TT> in
+<TT>Z</TT> to find it; however, what you find is
+<TT>Y::f(int)</TT>, not <TT>X::f()</TT>, and that's clearly
+wrong.</P>
+
+<P><B>Proposed Resolution (December, 2006):</B></P>
+
+<P>Change 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Then in any well-formed class, for each virtual function declared in
+that class or any of its direct or indirect base classes there is a
+unique <I>final overrider</I> that overrides that function and every
+other overrider of that function. The rules for member lookup
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) are used to determine the final overrider
+for a virtual function in the scope of a derived class but ignoring
+names introduced by <I>using-declaration</I> s.</DEL> <INS>A virtual
+member function <TT>vf</TT> of a class <TT>C</TT> is a <I>final
+overrider</I> unless the most derived class (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+of which <TT>C</TT> is a base class (if any) declares or inherits
+another member function that overrides <TT>vf</TT>.  In a derived class,
+if a virtual member function of a base class subobject has more than
+one final overrider, the program is ill-formed.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<P> Change 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 as follows: </P>
+
+<BLOCKQUOTE>
+
+<P>...<DEL>Then in any well-formed class, for each virtual function
+declared in that class or any of its direct or indirect base classes
+there is a unique <I>final overrider</I> that overrides that function
+and every other overrider of that function. The rules for member
+lookup (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) are used to determine the final
+overrider for a virtual function in the scope of a derived class but
+ignoring names introduced by <I>using-declaration</I>s.</DEL> <INS>A
+virtual member function <TT>C::vf</TT> of a class object <TT>S</TT> is
+a <I>final overrider</I> unless the most derived class (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) of which <TT>S</TT> is a base class subobject (if any)
+declares or inherits another member function that overrides
+<TT>vf</TT>. In a derived class, if a virtual member function of a
+base class subobject has more than one final overrider, the program is
+ill-formed.</INS> [<I>Example:</I> ... &#8212;<I>end example</I>]
+<INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>    struct A { virtual void f(); };
+    struct B: A { };
+    struct C: A { void f(); };
+    struct D: B, C { };    //<SPAN CLASS="cmnt"> OK; </SPAN>A::f<SPAN CLASS="cmnt"> and </SPAN>C::f<SPAN CLASS="cmnt"> are the final overriders</SPAN>
+                           //<SPAN CLASS="cmnt"> for the </SPAN>B<SPAN CLASS="cmnt"> and </SPAN>C<SPAN CLASS="cmnt"> subobjects, respectively</SPAN>
+</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

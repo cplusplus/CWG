@@ -1,0 +1,399 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 214</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="214"></A><H4>214.
+  
+Partial ordering of function templates is underspecified
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin von Loewis/Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 Mar 2000<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>In 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>], partial ordering is explained in
+terms of template argument deduction. However, the exact procedure for
+doing so is not specified. A number of details are missing, they are
+explained as sub-issues below.</P>
+
+<OL>
+
+<LI>13.7.7.3 [<A href="https://wg21.link/temp.func.order#2">temp.func.order</A>] paragraph 2 refers to
+13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] for argument deduction. This is the
+wrong reference; it explains how explicit arguments are processed
+(paragraph 2) and how function parameter types are adjusted (paragraph
+3). Neither of these steps is meaningful in the context of partial
+ordering. Next in deduction follows one of the steps in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>], 13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr">temp.deduct.funcaddr</A>], 13.10.3.4 [<A href="https://wg21.link/temp.deduct.conv">temp.deduct.conv</A>], or 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]. The standard
+does not specify which of these contexts apply to partial
+ordering. </LI>
+
+<LI>Because 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] and 13.10.3.4 [<A href="https://wg21.link/temp.deduct.conv">temp.deduct.conv</A>] both start with actual function parameters, it is
+meaningful to assume that partial ordering uses 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>], which only requires types. With that assumption,
+the example in 13.7.7.3 [<A href="https://wg21.link/temp.func.order#5">temp.func.order</A>] paragraph 5 becomes
+incorrect, considering the two templates
+
+<PRE>
+    template&lt;class T&gt; void g(T);  // #1
+    template&lt;class T&gt; void g(T&amp;); // #2
+</PRE>
+
+Here, #2 is at least as specialized as #1: With a synthetic type
+<TT>U</TT>, #2 becomes <TT>g(U&amp;)</TT>; argument deduction against
+#1 succeeds with <TT>T=U&amp;</TT>. However, #1 is not at least as
+specialized as #2: Deducing <TT>g(U)</TT> against <TT>g(T&amp;)</TT>
+fails. Therefore, the second template is more specialized than the
+first, and the call <TT>g(x)</TT> is not ambiguous.</LI>
+
+<LI>According to John Spicer, the intent of the partial ordering was
+that it uses deduction as in a function call (13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]), which is indicated by the mentioning of "exact
+match" in 13.7.7.3 [<A href="https://wg21.link/temp.func.order#4">temp.func.order</A>] paragraph 4. If that is
+indeed the intent, it should be specified how values are obtained for
+the step in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1, where the
+types of the arguments are determined. Also, since 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#2">temp.deduct.call</A>] paragraph 2 drops references from the parameter
+type, symmetrically, references should be dropped from the argument
+type (which is done in Clause 7 [<A href="https://wg21.link/expr#2">expr</A>] paragraph 2, for a true
+function call).</LI>
+
+<LI>13.7.7.3 [<A href="https://wg21.link/temp.func.order#4">temp.func.order</A>] paragraph 4 requires an "exact
+match" for the "deduced parameter types". It is not clear whether this
+refers to the template parameters, or the parameters of the template
+function. Considering the example
+
+<PRE>
+    template&lt;class S&gt; void g(S);  // #1
+    template&lt;class T&gt; void g(T const &amp;); // #3
+</PRE>
+
+Here, #3 is clearly at least as specialized as #1. To determine
+whether #1 is at least as specialized as #3, a unique type <TT>U</TT>
+is synthesized, and deduction of <TT>g&lt;U&gt;(U)</TT> is performed
+against #3. Following the rules in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>],
+deduction succeeds with <TT>T=U</TT>.  Since the template argument is
+<TT>U</TT>, and the deduced template parameter is also <TT>U</TT>, we
+have an exact match between the template parameters. Even though the
+conversion from <TT>U</TT> to <TT>U const &amp;</TT> is an exact
+match, it is not clear whether the added qualification should be taken
+into account, as it is in other places.</LI>
+
+</OL>
+
+<P>
+<A HREF="200.html">Issue 200</A> covers a related issue,
+illustrated by the following example:</P>
+
+<PRE>
+    template &lt;class T&gt; T f(int);
+    template &lt;class T, class U&gt; T f(U);
+    void g() {
+        f&lt;int&gt;(1);
+    }
+</PRE>
+
+<P>Even though one template is "obviously" more specialized than the
+other, deduction fails in both directions because neither function
+parameter list allows template parameter <TT>T</TT> to be deduced.</P>
+
+<P>(See also <A HREF="250.html">issue 250</A>.)</P>
+
+
+
+<P>
+<U>Nathan Sidwell</U>:</P>
+
+<P>13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>] describes the partial ordering of function
+templates. Paragraph 5 states,
+<BLOCKQUOTE>
+A template is more specialized than another if, and
+only if, it is at least as specialized as the other
+template and that template is not at least as
+specialized as the first.
+</BLOCKQUOTE>
+To paraphrase, given two templates A &amp; B, if A's template
+parameters can be deduced by B, but B's cannot be deduced by
+A, then A is more specialized than B. Deduction is done as
+if for a function call. In particular, except for conversion
+operators, the return type is not involved in deduction.
+This leads to the following templates and use being
+unordered. (This example is culled from G++ bug report 4672
+http://gcc.gnu.org/cgi-bin/gnatsweb.pl?cmd=view&amp;pr=4672)
+<PRE>
+  template &lt;typename T, class U&gt; T checked_cast(U from); //#1
+  template &lt;typename T, class U&gt; T checked_cast(U * from); //#2
+  class C {};
+
+  void foo (int *arg)
+  {
+    checked_cast &lt;C const *&gt; (arg);
+  }
+</PRE>
+In the call,</P>
+<P>#1 can be deduced with T = 'C const *' and U = 'int *'</P>
+<P>#2 can be deduced with T = 'C const *' and U = 'int'</P>
+
+<P>It looks like #2 is more specialized that #1, but
+13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>] does not make it so, as neither template can
+deduce 'T' from the other template's function parameters.</P>
+
+<P>Possible Resolutions:</P>
+<P>There are several possible solutions, however through
+experimentation I have discounted two of them.</P>
+
+<P>Option 1:</P>
+<P>When deducing function ordering, if the return type of one of
+the templates uses a template parameter, then return types
+should be used for deduction.  This, unfortunately, makes
+existing well formed programs ill formed. For example
+<PRE>
+  template &lt;class T&gt; class X {};
+
+  template &lt;class T&gt; X&lt;T&gt; Foo (T *);	// #1
+  template &lt;class T&gt; int Foo (T const *); // #2
+
+  void Baz (int *p1, int const *p2)
+  {
+    int j = Foo (p2); //#3
+  }
+</PRE>
+Here, neither #1 nor #2 can deduce the other, as the return
+types fail to match. Considering only the function parameters
+gives #2 more specialized than #1, and hence makes the call
+#3 well formed.</P>
+
+<P>Option 2:</P>
+<P>As option 1, but only consider the return type when deducing
+the template whose return type involves template parameters.
+This has the same flaw as option 1, and that example is
+similarly ill formed, as #1's return type 'X&lt;T,0&gt;' fails to
+match 'int' so #1 cannot deduce #2. In the converse direction,
+return types are not considered, but the function parameters
+fail to deduce.</P>
+
+<P>Option 3:</P>
+<P>It is observed that the original example is only callable
+with a template-id-expr to supply a value for the first,
+undeducible, parameter.  If that parameter were deducible it
+would also appear within at least one of the function
+parameters.  We can alter paragraph 4 of [temp.func.order]
+to indicate that it is not necessary to deduce the parameters
+which are provided explicitly, when the call has the form
+of a template-id-expr.  This is a safe extension as it only
+serves to make ill formed programs well formed. It is also
+in line with the concept that deduction for function
+specialization order should proceed in a similar manner to
+function calling, in that explicitly provided parameter
+values are taken into consideration.</P>
+
+<P>
+<B>Suggested resolution</B>:</P>
+<P>Insert after the first sentence of paragraph 4 in
+13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]</P>
+<BLOCKQUOTE>
+Should any template parameters remain undeduced, and
+the function call be of the form of a <I>template-id-expr</I>,
+those template parameters provided in the
+<I>template-id-expr</I> may be arbitrarily synthesized prior
+to determining whether the deduced arguments generate
+a valid function type.
+</BLOCKQUOTE>
+
+<P>See also <A HREF="200.html">issue 200</A>.</P>
+
+<P>
+<B>(April 2002)</B> John Spicer and John Wiegley have written a
+paper on this.  See 02-0051/N1393.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>
+Change 13.7.7.3 [<A href="https://wg21.link/temp.func.order#2">temp.func.order</A>] paragraph 2 to read:</P>
+<BLOCKQUOTE>
+Partial ordering selects which of two function templates is more
+specialized than the other by transforming each template in turn
+(see next paragraph) and performing template argument deduction
+using the function parameter types, or in the case of a conversion
+function the return type.  The deduction process determines whether
+one of the templates is more specialized than the other.  If so, the
+more specialized template is the one chosen by the partial ordering
+process.
+</BLOCKQUOTE>
+<P>
+Change 13.7.7.3 [<A href="https://wg21.link/temp.func.order#3">temp.func.order</A>] paragraph 3 to read:</P>
+<BLOCKQUOTE>
+To produce the transformed template, for each type, non-type, or template
+template parameter synthesize a unique type, value, or class template
+respectively and substitute it for each occurrence of that parameter
+in the function type of the template.
+</BLOCKQUOTE>
+
+<P>
+Change 13.7.7.3 [<A href="https://wg21.link/temp.func.order#4">temp.func.order</A>] paragraph 4 to read
+(note: the section reference should refer to the section added to
+13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] below):</P>
+<BLOCKQUOTE>
+Using the transformed function template's function parameter list, or
+in the case of a conversion function its transformed return type,
+perform type deduction against the function parameter list (or return
+type) of the other function.  The mechanism for performing these
+deductions is given in 14.8.2.x.
+</BLOCKQUOTE>
+<P>
+Remove the text of 13.7.7.3 [<A href="https://wg21.link/temp.func.order#5">temp.func.order</A>] paragraph 5 but
+retain the example.  The removed text is:</P>
+<BLOCKQUOTE>
+A template is more specialized than another if, and only if, it is
+at least as specialized as the other template and that template is not
+at least as specialized as the first.
+</BLOCKQUOTE>
+<P>
+Insert the following section before 14.8.2.5
+(Note that this would either be a new 14.8.2.4, or would be given
+a number like 14.8.2.3a.  If neither of these is possible from
+a troff point of view, this could be made 14.8.2.5.
+
+)</P>
+<BLOCKQUOTE>
+<P><B>Deducing template arguments when determining the partial ordering
+of function templates (temp.deduct.partial)</B></P>
+
+<P>
+Template argument deduction is done by comparing certain types associated with
+the two function templates being compared.</P>
+<P>
+Two sets of types are used to determine the partial ordering.  For each of
+the templates involved there is the original function type and the
+transformed function type. [<I>Note:</I>
+The creation of the transformed type is
+described in 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>].]
+The deduction process uses the
+transformed type as the argument template and the original type of the
+other template as the parameter template.  This process is done twice
+for each type involved in the partial ordering comparison: once using
+the transformed template-1 as the argument template and template-2 as
+the parameter template and again using the transformed template-2 as
+the argument template and template-1 as the parameter template.</P>
+<P>
+The types used to determine the ordering depend on the context in which
+the partial ordering is
+<UL>
+<LI>
+In the context of a function call, the function parameter types
+are used.</LI>
+<LI>
+In the context of a call to a conversion operator, the return types of
+the conversion function templates are used.</LI>
+<LI>
+In other contexts (13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]),
+the function template's function type is used.</LI>
+</UL>
+</P>
+
+<P>
+Each type from the parameter template and the corresponding type from the
+argument template are used as the types of <TT>P</TT> and <TT>A</TT>.</P>
+<P>
+Before the partial ordering is done, certain transformations are performed
+on the types used for partial ordering:
+<UL>
+<LI>
+If <TT>P</TT> is a reference type, <TT>P</TT> is replaced by the type
+referred to.</LI>
+<LI>
+If <TT>A</TT> is a reference type, <TT>A</TT> is replaced by the type
+referred to.</LI>
+</UL>
+</P>
+
+<P>
+If both <TT>P</TT> and <TT>A</TT> were reference types (before being replaced
+with the type referred to above), determine which
+of the two types (if any) is more cv-qualified than the other; otherwise
+the types are considered to be equally cv-qualified for partial ordering
+purposes.  The result of this determination will be used below.</P>
+
+<P>
+Remove any top-level cv-qualifiers:
+<UL>
+<LI>
+If <TT>P</TT> is a cv-qualified type, <TT>P</TT> is replaced by the
+cv-unqualified version of <TT>P</TT>.</LI>
+<LI>
+If <TT>A</TT> is a cv-qualified type, <TT>A</TT> is replaced by the
+cv-unqualified version of <TT>A</TT>.</LI>
+</UL>
+</P>
+
+<P>
+Using the resulting types <TT>P</TT> and <TT>A</TT> the deduction is then
+done as described in (13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]).
+If deduction succeeds for a given type,
+the type from the argument template is considered to be at least as specialized
+as the type from the parameter template.</P>
+
+<P>
+If, for a given type, deduction succeeds in both directions (i.e., the
+types are identical after the transformations above) if the type from
+the argument template is more cv-qualified than the type from the
+parameter template (as described above) that type is considered to be
+more specialized than the other.  If neither type is more cv-qualified
+than the other then neither type is more specialized than the other.</P>
+
+<P>
+If for each type being considered a given template is at least as specialized
+for all types and more specialized for some set of types and the
+other template is not more specialized for any types or is not
+at least as specialized for any types, then
+the given template is more specialized than the other template.
+ Otherwise, neither template
+is more specialized than the other.</P>
+
+<P>
+In most cases, all template parameters must have values in order for
+deduction to succeed, but for partial ordering purposes a template
+parameter may remain without a value provided it is not used in the
+types being used for partial ordering.  [<I>Note:</I>
+A template parameter used
+in a non-deduced context is considered used.]</P>
+
+<P>
+[<I>Example:</I>
+<PRE>
+template &lt;class T&gt; T f(int);        // #1
+template &lt;class T, class U&gt; T f(U); // #2
+void g() {
+    f&lt;int&gt;(1);  // Calls #1
+}
+</PRE>
+--<I>end example</I>]
+</P>
+
+</BLOCKQUOTE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,204 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 641</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="641"></A><H4>641.
+  
+Overload resolution and conversion-to-same-type operators
+</H4>
+<B>Section: </B>12.2.3&#160; [<A href="https://wg21.link/over.match.viable">over.match.viable</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Aug 2007<BR>
+
+
+<P>[Voted into the WP at the March, 2009 meeting.]</P>
+
+
+
+<P>11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+A conversion function is never used to convert a (possibly
+cv-qualified) object to the (possibly cv-qualified) same object
+type (or a reference to it), to a (possibly cv-qualified) base
+class of that type (or a reference to it), or to (possibly
+cv-qualified) void.
+
+</BLOCKQUOTE>
+
+<P>At what point is this enforced, and how is it enforced?</P>
+
+<OL>
+
+<LI>Does such a user-declared conversion operator participate in
+overload resolution? Or is it never entered into the overload
+set?</LI>
+
+<LI>If it does participate in overload resolution, what happens
+if it is selected?  Is the program ill-formed (and diagnostic
+required), or is it silently ignored?  The above wording doesn't
+really make it clear.</LI>
+
+</OL>
+
+<P>Consider this test case:</P>
+
+<PRE>
+    struct abc;
+
+    struct xyz {
+       xyz();
+
+       xyz(xyz &amp;);
+
+       operator xyz&amp; (); // #1
+       operator abc&amp; (); // #2
+    };
+
+    struct abc : xyz {};
+
+    void foo(xyz &amp;);
+
+    void bar() {
+             foo (xyz ());
+    }
+</PRE>
+
+<P>If such conversion functions are part of the overload set, #1
+is a better conversion than #2 to convert the temporary xyz
+object to a non-const reference required for foo's operand.  If
+such conversion functions are not part of the overload set, then
+#2 would be selected, and AFAICT the program would be well
+formed.</P>
+
+<P>If the conversion functions are not part of the overload set,
+then it would seem one cannot take their address.  For instance,
+adding the following line to the above test case would find no
+suitable function:</P>
+
+<PRE>
+    xyz &amp;(xyz::*ptr) () = &amp;xyz::operator xyz &amp;;
+</PRE>
+
+<P><B>Notes from the October, 2007 meeting:</B></P>
+
+<P>The intent of 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 is that
+overload resolution not be attempted at all for the listed cases;
+that is, if the target type is <TT>void</TT>, the object's type, or a
+base of the object's type, the conversion is done directly without
+considering any conversion functions.  Consequently, the questions about
+whether the conversion function is part of the overload set or not
+are moot.  The wording will be changed to make this clearer.</P>
+
+<P><B>Proposed Resolution (October, 2007):</B></P>
+
+<P>Change the footnote in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+A conversion function is never used to convert a (possibly
+cv-qualified) object to the (possibly cv-qualified) same object type
+(or a reference to it), to a (possibly cv-qualified) base class of
+that type (or a reference to it), or to (possibly cv-qualified) void.
+[<I>Footnote:</I> <INS>These conversions are considered as standard
+conversions for the purposes of overload resolution
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>], 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>])
+and therefore initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) and
+explicit casts (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]).  A conversion to
+<TT>void</TT> does not invoke any conversion function (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]).</INS> Even though never directly called to perform a
+conversion, such conversion functions can be declared and can
+potentially be reached through a call to a virtual conversion function
+in a base class &#8212;<I>end footnote</I>]
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (March, 2008):</B></P>
+
+<P>A slight change to the example above indicates that there is a
+need for a normative change as well as the clarification of the
+rationale in the October, 2007 proposed resolution.  If the
+declaration of <TT>foo</TT> were changed to</P>
+
+<PRE>
+    void foo(const xyz&amp;);
+</PRE>
+
+<P>with the current wording, the call <TT>foo(xyz())</TT> would
+be interpreted as <TT>foo(xyz().operator&#160;abc&amp;())</TT> instead
+of binding the parameter directly to the rvalue, which is clearly
+wrong.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<OL>
+<LI><P>Change the footnote in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1
+as described in the October, 2007 proposed resolution.</P></LI>
+
+<LI><P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+initialized by an expression of type &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; as follows:</P>
+
+<UL>
+<LI><P>If the initializer expression</P></LI>
+
+<UL>
+<LI><P>is an lvalue (but is not a bit-field), and
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv2</I> <TT>T2</TT>,&#8221; or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type)<INS>,
+where <TT>T1</TT> is not reference-related to <TT>T2</TT>,</INS>
+and can be implicitly converted to an lvalue of type
+&#8220;<I>cv3</I> <TT>T3</TT>,&#8221; where &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is reference-compatible with &#8220;<I>cv3</I>
+<TT>T3</TT>&#8221; [<I>Footnote:</I> This requires a conversion
+function (11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>]) returning a reference
+type. &#8212;<I>end footnote</I>] (this conversion is selected by
+enumerating the applicable conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and choosing the best one through overload
+resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>])),</P></LI>
+
+</UL>
+
+<P>then...</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: this resolution makes the example in the
+issue description ill-formed.]</I></P>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

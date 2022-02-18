@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2467</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2467"></A><H4>2467.
+  
+CTAD for alias templates and the deducible check
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-12<BR>
+
+
+
+
+<P>Given the declarations</P>
+
+<PRE>
+  template&lt;typename T = int&gt; using X = vector&lt;int&gt;;
+  X x = {1, 2, 3};
+
+  template&lt;typename...&gt; using Y = vector&lt;int&gt;;
+  Y y = {1, 2, 3};
+</PRE>
+
+<P>CTAD deduces <TT>vector&lt;int&gt;</TT>. Then we are asked
+to perform a check that the arguments of <TT>X</TT> and
+<TT>Y</TT> are deducible from <TT>vector&lt;int&gt;</TT>.</P>
+
+
+
+<P>I think this check should succeed, deducing <TT>T =
+int</TT> in the first case
+and <TT>&lt;</TT><I>pack</I><TT>&gt; =
+&lt;</TT><I>empty</I><TT>&gt;</TT> in the second case, so
+both declarations should be valid.  That seems consistent
+with what would happen for a non-alias with template
+parameters that CTAD can't deduce, where there is either a
+default template argument or the parameter is a pack.  But
+what actually happens is that we're asked to form</P>
+
+<PRE>
+  template&lt;typename T&gt; struct AA;
+  template&lt;typename T = int&gt; struct AA&lt;X&lt;T&gt;&gt;;
+</PRE>
+
+<P>and</P>
+
+<PRE>
+  template&lt;typename T&gt; struct AA;
+  template&lt;typename ...Ts&gt; struct AA&lt;Y&lt;Ts...&gt;&gt;;
+</PRE>
+
+<P>However, both of those partial specializations are
+ill-formed: a partial specialization can't have default
+template arguments, and neither of these is more specialized
+than the primary template, because <TT>T</TT> / <TT>Ts</TT>
+are not used in deducible contexts.</P>
+
+<P>I think we have the wrong model here, and should instead be
+considering (effectively) whether function template argument
+deduction would succeed for</P>
+
+<PRE>
+  template&lt;typename T&gt; struct AA {};
+  template&lt;typename T = int&gt; void f(AA&lt;X&lt;T&gt;&gt;);
+</PRE>
+
+<P>and</P>
+
+<PRE>
+  template&lt;typename T&gt; struct AA {};
+  template&lt;typename ...Ts&gt; void f(AA&lt;Y&lt;Ts...&gt;&gt;);
+</PRE>
+
+<P>respectively, when given an argument of
+type <TT>AA&lt;</TT><I>deduced return type</I><TT>&gt;</TT>.
+That is, get rid of the weird class template partial
+specialization restrictions, and instead add in the rules
+from function templates to use default template arguments
+and to default non-deduced packs to empty packs.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

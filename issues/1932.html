@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1932</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1932"></A><H4>1932.
+  
+Bit-field results of conditional operators
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-02-21<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>According to 7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+<P>if the second and third operand have different types and either has
+(possibly cv-qualified) class type, or if both are glvalues of the same
+value category and the same type except for cv-qualification, an attempt is
+made to convert each of those operands to the type of the other. The
+process for determining whether an operand expression <TT>E1</TT> of
+type <TT>T1</TT> can be converted to match an operand
+expression <TT>E2</TT> of type <TT>T2</TT> is defined as follows:</P>
+
+<UL>
+<LI><P>If E2 is an lvalue: <TT>E1</TT> can be converted to
+match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted (
+7.3 [<A href="https://wg21.link/conv">conv</A>]) to the type &#8220;lvalue reference
+to <TT>T2</TT>&#8221;, subject to the constraint that in the conversion the
+reference must bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to an
+lvalue.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>If two bit-field glvalues have exactly the same scalar type, paragraph
+3 does not apply (two non-class operands must differ in at least
+cv-qualification).  For an example like</P>
+
+<PRE>
+  struct S {
+    int i:3;
+    const int j:4;
+  } s;
+  int k = true ? s.i : s.j;
+</PRE>
+
+<P>the condition is satisfied.  The intent is that <TT>S::i</TT> can be
+converted to <TT>const int</TT> but <TT>S::j</TT> cannot be converted
+to <TT>int</TT>, so the result should be a bit-field lvalue of
+type <TT>const int</TT>.  However, the test for convertibility is phrased
+in terms of direct reference binding, which is inapplicable to bit-fields,
+resulting in neither conversion succeeding, leading to categorizing the
+expression as ambiguous.</P>
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1895.html">issue 1895</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

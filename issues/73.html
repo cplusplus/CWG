@@ -1,0 +1,195 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 73</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="73"></A><H4>73.
+  
+Pointer equality
+</H4>
+<B>Section: </B>7.6.10&#160; [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Myers
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 Nov 1998<BR>
+
+
+
+
+
+<P>
+<U>Nathan Myers</U>: In
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+, we have:</P>
+<BLOCKQUOTE>Pointers to objects or functions of the same type (after pointer
+conversions) can be compared for equality. Two pointers of the same type
+compare equal if and only if they are both null, both point to the same
+object or function, or both point one past the end of the same array.</BLOCKQUOTE>
+What does this say, when we have
+<PRE>
+    int i[1];
+    int j[1];
+</PRE>
+about the expression <TT>(i+1 == j)</TT> ? It seems to require padding
+between <TT>i[0]</TT> and <TT>j[0]</TT> so that the comparison will come
+out false.
+<BR>
+<BR>I think this may be a defect, in that the quoted paragraph extends
+operator=='s domain too far beyond operator&lt;'s. It should permit
+(but not require) an off-the-end pointer to compare equal to another
+object, but not to any element of the same array.
+
+<P>
+<U>Mike Miller</U>: I think this is reading more into the statement
+in
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+
+paragraph 1 than is actually
+there. What does it mean for a pointer to "point to" an object?
+I can't find anything that definitively says that <TT>i+1</TT> cannot "point
+to" <TT>j[0]</TT> (although it's obviously not required to do so).
+If <TT>i+1</TT> is allowed to "point to" <TT>j[0]</TT>, then <TT>i+1==j</TT>
+is allowed to be true, and there's no defect. There are places where
+aliasing is forbidden, but the N+1th element of an array doesn't appear
+to be one of them.</P>
+
+<P>To put it another way, "points to" is undefined in the Standard. The
+only definition I can think of that encompasses the possible ways in which
+a pointer can get its value (e.g., the implementation-defined conversion
+of an arbitrary integer value to a pointer) is that it means "having the
+same value representation as would be produced by applying the (builtin)
+&amp; operator to an lvalue expression designating that object".
+In other words, if the bits are right, it doesn't matter how you produced
+the value, as long as you didn't perform any operations that have undefined
+results. The expression <TT>i+1</TT> is not undefined, so if the
+bits of <TT>i+1</TT> are the same as those of <TT>&amp;j[0]</TT>, then
+<TT>i+1</TT> "points to" <TT>j[0]</TT> and <TT>i+i==j</TT> is allowed to
+be true.</P>
+
+<P>
+<U>Tom MacDonald</U>: C9X contains the following words for the "=="
+operator:</P>
+<BLOCKQUOTE>Two pointers compare equal if both are null pointers, both
+are pointers to the same object (including a pointer to an object and a
+subobject at its beginning) or function, both are pointers to one
+past the last element of the same array object, or one is a pointer to
+one past the end of one array object and the other is a pointer to the
+start of a different array object that happens to immediately follow the
+first array object in the address space.</BLOCKQUOTE>
+<U>Matt Austern</U>: I don't think there's anything wrong with saying that
+the result of
+<PRE>
+    int x[1];
+    int y[1];
+    std::cout &lt;&lt; (y == x + 1) &lt;&lt; std::endl;
+</PRE>
+is implementation defined, or even that it's undefined.
+
+<P>
+<U>Mike Miller</U>: A similar question could be raised about different
+objects that (sequentially) share the same storage. Consider the following:</P>
+<PRE>
+    struct B {
+        virtual void f();
+    };
+    struct D1: B { };
+    struct D2: B { };
+    void g() {
+        B* bp1 = new D1;
+        B* bp2 = new (bp1) D2;
+        bp1 == bp2; // ???
+    }
+</PRE>
+Section
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]
+
+paragraph 5 does
+not list this kind of comparison among the pointer operations that cause
+undefined behavior, so presumably the comparison is allowed. However,
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+
+paragraph 1 describes pointer comparison in terms of "[pointing] to the
+same object," which <TT>bp1</TT> and <TT>bp2</TT> clearly do not do. How
+should we describe the result of this comparison?
+
+<P>
+<U>Jason Merrill</U>:
+When you consider comparing pointers to void, this seems to suggest that no
+two objects can have the same address, depending on your interpretation of
+"point to the same object."  This would cripple the empty base
+optimization.</P>
+
+<P>6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]
+ refers to 'pointers
+to void or objects or functions'.  In that case,
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+ does
+not allow you to compare them; it only allows comparing pointers to
+objects and functions.</P>
+
+<P><B>Proposed Resolution (10/00):</B></P>
+
+<UL>
+
+<LI>
+
+In 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3, add the following
+wording immediately preceding, "The value representation of pointer
+types is implementation-defined":
+
+<BLOCKQUOTE>
+
+A valid value of an object pointer type represents either the address
+of a byte in memory (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) or a null pointer
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]).  If an object of type <TT>T</TT> is
+located at an address <TT>A</TT>, a pointer of type <I>cv</I>
+<TT>T*</TT> whose value is the address <TT>A</TT> is said to <I>point
+to</I> that object, regardless of how the value was obtained.
+[<I>Note:</I> for instance, the address one past the end of an array
+(7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) would be considered to point to an
+unrelated object of the array's element type that might be located at
+that address.]
+
+</BLOCKQUOTE>
+
+</LI>
+<LI>
+
+In 7.6.10 [<A href="https://wg21.link/expr.eq#1">expr.eq</A>] paragraph 1, change the sentence
+beginning, "Two pointers of the same type..." to read:
+
+<BLOCKQUOTE>
+
+Two pointers of the same type compare equal if and only if they are
+both null, both point to the same function, or both represent the same
+address (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+</UL>
+
+<P>(See also paper J16/00-0011 = WG21 N1234.)</P>
+<BR><BR>
+</BODY>
+</HTML>

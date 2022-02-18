@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2705</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2705"></A><H4>2705.
+  
+Accessing ambiguous subobjects
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-02-11<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {int i;};
+  struct X : A {};
+  struct Y : A {};
+  struct S : X,Y {};
+
+  void f(S &amp;s) {++s.X::i;}
+</PRE>
+
+<P>There is a rule that <TT>&amp;s</TT> be able to "be implicitly
+converted to a pointer to the naming class of the right operand"
+(11.8.3 [<A href="https://wg21.link/class.access.base#6">class.access.base</A>] paragraph 6), which correctly
+selects <TT>X</TT> here, but 7.6.1.5 [<A href="https://wg21.link/expr.ref#6.2">expr.ref</A>] bullet 6.2
+merely says that</P>
+
+<BLOCKQUOTE>
+
+If E2 is a non-static data member [...], the expression designates the
+corresponding member subobject of the object designated by the first
+expression.
+
+</BLOCKQUOTE>
+
+<P>
+<TT>E2</TT> (i.e. <TT>X::i</TT>) and <TT>Y::i</TT> equally
+denote <TT>A::i</TT> (since name lookup produces declarations), but
+there is no rule that indicates which <TT>A::i</TT> is selected as the
+"corresponding member subobject". (Note that <TT>s.X::A::i</TT> means
+the same as <TT>s.A::i</TT> and is ambiguous.)</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 11.8.3 [<A href="https://wg21.link/class.access.base#6">class.access.base</A>] paragraph 6 to actually perform the
+conversion it requires, possibly moving it to
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>] since it is not about access control; the
+definition of "naming class" in 11.8.3 [<A href="https://wg21.link/class.access.base#5">class.access.base</A>] paragraph 5
+would then need to be italicized.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

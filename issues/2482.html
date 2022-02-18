@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2482</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2482"></A><H4>2482.
+  
+<TT>bit_cast</TT> and indeterminate values
+</H4>
+<B>Section: </B>22.11.3&#160; [<A href="https://wg21.link/bit.cast">bit.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-06-20<BR>
+
+
+<P>[Resolved by paper P1272R4, adopted at the October, 2021 plenary.]</P>
+
+
+
+<P>As currently specified, <TT>bit_cast</TT> from an
+indeterminate value produces an unspecified value rather
+than an indeterminate value. That means this can't be
+implemented by a simple load on some implementations, and
+instead will require some kind of
+removing-the-taint-of-an-uninitialized-value operation to be
+performed. (A similar concern applies to reading from
+padding bits.)</P>
+
+<P>The intent is as follows:</P>
+
+<UL>
+<LI><P>bits of the input that don't have defined values
+result in the corresponding bit of the output being
+&#8220;bad&#8221;</P></LI>
+
+<LI><P>if any part of a scalar object is &#8220;bad&#8221;,
+that object has an indeterminate value</P></LI>
+
+</UL>
+
+<P>Some examples:</P>
+
+<PRE>
+  struct A { char c; /* char padding : 8; */ short s; };
+  struct B { char x[4]; };
+
+  B one() {
+    A a = {1, 2};
+    return std::bit_cast&lt;B&gt;(a);
+  }
+</PRE>
+
+<P>In <TT>one()</TT>, the second byte of the object
+representation of a is bad. That means that the second byte
+of the produced <TT>B</TT> object is bad, so <TT>x[1]</TT>
+in the produced <TT>B</TT> object is an indeterminate
+value. The above function, if declared constexpr, would be
+usable in constant expressions so long as you don't look at
+<TT>one().x[1]</TT>.</P>
+
+<PRE>
+  A two() {
+    B b;
+    b.x[0] = 'a';
+    b.x[2] = 1;
+    b.x[3] = 2;
+    return std::bit_cast&lt;A&gt;(b);
+  }
+</PRE>
+
+<P>In <TT>two()</TT> , the second byte of the object
+representation of <TT>b</TT> is bad. But a <TT>bit_cast</TT>
+to <TT>A</TT> doesn't care because it never looks at that
+byte. The above function returns an <TT>A</TT> with a
+fully-defined value. If declared constexpr, it would produce
+a normal, fully-initialized value.</P>
+
+<PRE>
+  int three() {
+    int n;
+    return std::bit_cast&lt;int&gt;(n);
+  }
+</PRE>
+
+<P>In <TT>three()</TT>, the entirety of <TT>n</TT> is bad. A
+<TT>bit_cast</TT> from it produces an <TT>int</TT> whose
+value is indeterminate. And because we have an expression of
+non-byte-like type that produced an indeterminate value, the
+behavior is undefined.</P>
+
+<PRE>
+  B four() {
+    int n;
+    return std::bit_cast&lt;B&gt;(n);
+  }
+</PRE>
+
+<P>In <TT>four()</TT>, just like <TT>three()</TT>, the
+entirety of <TT>n</TT> is bad, so the scalar subobjects
+of <TT>B</TT> are bad too. But because they're of byte-like
+type, that's OK: we can copy them about and produce them
+from prvalue expressions.</P>
+
+<P>
+<B>Proposed resolution (May, 2021):</B>
+</P>
+
+<P>Change 22.11.3 [<A href="https://wg21.link/bit.cast#2">bit.cast</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Returns</I>: An object of type <TT>To</TT>. Implicitly
+creates objects nested within the result
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]). Each bit of the value
+representation of the result is equal to the corresponding
+bit in the object representation of <TT>from</TT>. Padding
+bits of the result are unspecified. For the result and each
+object created within it, if there is no value of the
+object's type corresponding to the value representation
+produced, the behavior is undefined. If there are multiple
+such values, which value is produced is unspecified.
+<INS>A bit in the value representation of the result is
+indeterminate if it does not correspond to a bit in the
+value representation of <TT>from</TT> or corresponds to a
+bit of an object that is not within its lifetime or has an
+indeterminate value (6.7.5 [<A href="https://wg21.link/basic.indet">basic.indet</A>]). For each
+bit in the value representation of the result that is
+indeterminate, the smallest object containing that bit has
+an indeterminate value; the behavior is undefined unless
+that object is of unsigned ordinary character type or
+<TT>std::byte</TT> type. The result does not otherwise
+contain any indeterminate values.</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 643</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="643"></A><H4>643.
+  
+Use of <TT>decltype</TT> in a class <I>member-specification</I>
+</H4>
+<B>Section: </B>9.2.9.3&#160; [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Aug 2007<BR>
+
+
+
+
+<P>11.4 [<A href="https://wg21.link/class.mem#2">class.mem</A>] paragraph 2 says,</P>
+
+<BLOCKQUOTE>
+
+A class is considered a completely-defined object type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) (or complete type) at the closing <TT>}</TT> of the
+<I>class-specifier</I>.  Within the class <I>member-specification</I>,
+the class is regarded as complete within function bodies, default
+arguments, and <I>exception-specification</I>s (including such things
+in nested classes). Otherwise it is regarded as incomplete within its
+own class <I>member-specification</I>.
+
+</BLOCKQUOTE>
+
+<P>In particular, the return type of a member function is not listed
+as a context in which the class type is considered complete; instead,
+that case is handled as an exception to the general rule in
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 requiring a complete type in
+the definition of a function:</P>
+
+<BLOCKQUOTE>
+
+The type of a parameter or the return type for a function definition
+shall not be an incomplete class type (possibly cv-qualified) unless
+the function definition is nested within
+the <I>member-specification</I> for that class (including definitions
+in nested classes defined within the class).
+
+</BLOCKQUOTE>
+
+<P>These rules have implications for the use of <TT>decltype</TT>.
+(The following examples use the not-yet-accepted syntax for specifying
+the return type of a function after its declarator, but the questions
+apply to the current syntax as well.) Consider:</P>
+
+<PRE>
+    struct deduced {
+      int test() { return 0; }
+      auto eval( deduced&amp; d )-&gt;decltype( d.test() ) {
+        return d.test();
+      }
+    };
+</PRE>
+
+<P>7.6.1.5 [<A href="https://wg21.link/expr.ref#1">expr.ref</A>] paragraph 1 requires that the class
+type of the object or pointer expression in a class member access
+expression be complete, so this usage is ill-formed.</P>
+
+<P>A related issue is the use of <TT>this</TT> in a <TT>decltype</TT>
+specifier:</P>
+
+<PRE>
+    struct last_one {
+      int test() { return 0; }
+      auto eval()-&gt;decltype( this-&gt;test() ) {
+        return test();
+      }
+    };
+</PRE>
+
+<P>_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this#1">class.this</A>] paragraph 1 allows use of <TT>this</TT>
+only in the body of a non-static member function, and the return type
+is not part of the <I>function-body</I>.</P>
+
+<P>Do we want to change the rules to allow these kinds of
+<TT>decltype</TT> expressions?</P>
+
+<P><B>Rationale (February, 2008):</B></P>
+
+<P>In the other cases where a class type is considered complete
+within the definition of the class, it is possible to defer handling
+the construct until the end of the definition.  That is not possible
+for types, as the type may be needed immediately in subsequent
+declarations.</P>
+
+<P>It was also noted that the primary utility of <TT>decltype</TT> is
+in generic contexts; within a single class definition, other
+mechanisms are possible (e.g., use of a member typedef in both the
+declaration of the operand of the <TT>decltype</TT> and to replace
+the <TT>decltype</TT> itself).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

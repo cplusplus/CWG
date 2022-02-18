@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1674</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1674"></A><H4>1674.
+  
+Return type deduction for address of function
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-05-02<BR>
+
+
+<P>[Applied to WP at the February, 2014 meeting.]</P>
+
+
+
+<P>The following example appears in 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>] paragraph
+12:</P>
+
+<PRE>
+  template &lt;class T&gt; auto f(T t) { return t; } //<SPAN CLASS="cmnt"> return type deduced at instantiation time</SPAN>
+  typedef decltype(f(1)) fint_t;               //<SPAN CLASS="cmnt"> instantiates </SPAN>f&lt;int&gt;<SPAN CLASS="cmnt"> to deduce return type</SPAN>
+  template&lt;class T&gt; auto f(T* t) { return *t; }
+  void g() { int (*p)(int*) = &amp;f; }            //<SPAN CLASS="cmnt"> instantiates both </SPAN>f<SPAN CLASS="cmnt">s to determine return types,</SPAN>
+                                               //<SPAN CLASS="cmnt"> chooses second</SPAN>
+</PRE>
+
+<P>This is the desired behavior, but the current wording does not achieve
+that effect.  One possible way this could work would be:</P>
+
+<UL>
+<LI><P>
+<TT>auto</TT> is treated as a non-deduced context</P></LI>
+
+<LI>
+
+<P>in 13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr">temp.deduct.funcaddr</A>], the deduced <TT>A</TT> is produced by
+substituting the deduced template arguments into the original function
+template, rather than substituting them into <TT>P</TT>, and the
+deduced <TT>A</TT> is the type of the produced function declaration
+(triggering instantiation of a definition as needed to complete the
+type)</P>
+</LI>
+
+</UL>
+
+<P><B>Proposed resolution (November, 2013):</B></P>
+
+<P>Add the following as a new paragraph at the end of
+13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr">temp.deduct.funcaddr</A>]:</P>
+
+<BLOCKQUOTE>
+
+<INS>A placeholder type (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]) in the return type
+of a function template is a non-deduced context.  If template
+argument deduction succeeds for such a function, the return type is
+determined from instantiation of the function body.</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 756</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="756"></A><H4>756.
+  
+Dropping cv-qualification on members of closure objects
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 December, 2008<BR>
+
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    void f() {
+      int const N = 10;
+      [=]() mutable { N = 30; }  // Okay: this-&gt;N has type int, not int const.
+      N = 20;  // Error.
+    }
+</PRE>
+
+<P>That is, the <TT>N</TT> that is a member of the closure object is not
+const, even though the captured variable is const.  This seems strange,
+as capturing is basically a means of capturing the local environment in a
+way that avoids lifetime issues.  More seriously, the change of type
+means that the results of <TT>decltype</TT>, overload resolution, and
+template argument deduction applied to a captured variable inside a
+lambda expression can be different from those in the scope containing
+the lambda expression, which could be a subtle source of bugs.</P>
+
+<P>On the other hand, the copying involved in capturing has uses beyond
+avoiding lifetime issues (taking snapshots of values, avoiding data
+races, etc.), and the value of a cv-qualified object is not cv-qualified.</P>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

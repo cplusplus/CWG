@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2794</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2794"></A><H4>2794.
+  
+Uniqueness of lambdas in alias templates
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ilya Biryukov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-04-19<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;class T&gt; using A = decltype([]{});
+
+  static_assert(std::same_as&lt;A&lt;int&gt;, A&lt;int&gt;&gt;);
+</PRE>
+
+<P>There is implementation divergence: GCC and MSVC accept, clang
+rejects. A similar question arises if token-identical alias templates
+appear in different translation units:</P>
+
+<PRE>
+  // <SPAN CLASS="cmnt">appearing in multiple translation units</SPAN>
+  template&lt;typename T&gt; using A = decltype([]{});
+  inline A&lt;int&gt; f() { return {}; }
+</PRE>
+
+<P>An alias template is a templated entity per 13.1 [<A href="https://wg21.link/temp.pre#8.1">temp.pre</A>] paragraph 8.1, thus it is a definable item (6.3 [<A href="https://wg21.link/basic.def.odr#1.5">basic.def.odr</A>] paragraph 1.5) and thus there is effectively only a single definition
+of it (6.3 [<A href="https://wg21.link/basic.def.odr#15">basic.def.odr</A>] paragraph 15).</P>
+
+<P>However, that reasoning does not address the question
+whether <TT>A&lt;int&gt;</TT> denotes the same type when it appears
+repeatedly in the same translation unit.  Consider
+13.7.7.2 [<A href="https://wg21.link/temp.over.link#5">temp.over.link</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+Two <I>lambda-expression</I>s are never considered equivalent.
+
+</BLOCKQUOTE>
+
+<P>and 13.7.8 [<A href="https://wg21.link/temp.alias#2">temp.alias</A>] paragraph 2</P>
+
+<BLOCKQUOTE>
+
+When a <I>template-id</I> refers to the specialization of an alias
+template, it is equivalent to the associated type obtained by
+substitution of its <I>template-argument</I>s for
+the <I>template-parameter</I> s in the <I>defining-type-id</I> of the
+alias template.
+
+</BLOCKQUOTE>
+
+<P>This means that a <I>template-id</I> referring to an alias template
+performs a fresh substitution each time it appears.  There is no
+concept of instantiating an alias template to produce an alias
+declaration.  Subclause 13.7.8 [<A href="https://wg21.link/temp.alias#5">temp.alias</A>] paragraph 5
+specifies:</P>
+
+<BLOCKQUOTE>
+
+The type of a <I>lambda-expression</I> appearing in an alias template
+declaration is different between instantiations of that template, even
+when the <I>lambda-expression</I> is not dependent.
+
+</BLOCKQUOTE>
+
+<P>The outcome seems unfortunate; the first example ought to be
+well-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

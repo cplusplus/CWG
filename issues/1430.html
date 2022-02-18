@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1430</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1430"></A><H4>1430.
+  
+Pack expansion into fixed alias template parameter list
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-12-13<BR>
+
+
+
+
+<P>Originally, a pack expansion could not expand into a
+fixed-length template parameter list, but this was changed in
+N2555.  This works fine for most templates, but causes issues
+with alias templates.</P>
+
+<P>In most cases, an alias template is transparent; when it's
+used in a template we can just substitute in the dependent
+template arguments.  But this doesn't work if the
+<I>template-id</I> uses a pack expansion for non-variadic
+parameters.  For example:</P>
+
+<PRE>
+    template&lt;class T, class U, class V&gt;
+    struct S {};
+
+    template&lt;class T, class V&gt;
+    using A = S&lt;T, int, V&gt;;
+
+    template&lt;class... Ts&gt;
+    void foo(A&lt;Ts...&gt;);
+</PRE>
+
+<P>There is no way to express <TT>A&lt;Ts...&gt;</TT> in terms of
+<TT>S</TT>, so we need to hold onto the <TT>A</TT> until we have
+the <TT>Ts</TT> to substitute in, and therefore it needs to be
+handled in mangling.</P>
+
+<P>Currently, EDG and Clang reject this testcase, complaining
+about too few template arguments for A.  G++ did as well, but I
+thought that was a bug.  However, on the ABI list John Spicer
+argued that it should be rejected.</P>
+
+<P>(See also <A HREF="1558.html">issue 1558</A>.)</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>The consensus of CWG was that this usage should be prohibited,
+disallowing use of an alias template when a dependent argument can't
+simply be substituted directly into the <I>type-id</I>.</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>For another example, consider:</P>
+
+<PRE>
+  template&lt;class... x&gt; class list{};
+  template&lt;class a, class... b&gt; using tail=list&lt;b...&gt;;
+  template &lt;class...T&gt; void f(tail&lt;T...&gt;);
+
+  int main() {
+    f&lt;int,int&gt;({});
+  }
+</PRE>
+
+<P>There is implementation variance in the handling of this
+example. </P>
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>There is no more implementation divergence; all known
+implementations reject the example.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

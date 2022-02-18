@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 544</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="544"></A><H4>544.
+  
+Base class lookup in explicit specialization
+</H4>
+<B>Section: </B>13.8.3&#160; [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>01 November 2005<BR>
+
+
+<P>There is some question as to whether 13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3
+applies to the definition of an explicitly-specialized
+member of a class template:</P>
+
+<BLOCKQUOTE>
+
+In the definition of a class template or a member of a class template,
+if a base class of the class template depends on
+a <I>template-parameter</I>, the base class scope is not examined
+during unqualified name lookup either at the point of definition of
+the class template or member or during an instantiation of the class
+template or member.
+
+</BLOCKQUOTE>
+
+<P>Consider an example like the following:</P>
+
+<PRE>
+    template &lt;class T&gt;
+    struct A {
+     void foo() {}
+    };
+
+    template &lt;class T&gt;
+    struct B: A&lt;T&gt; {
+     int bar();
+    };
+
+    int foo() { return 0; }
+
+    template &lt;&gt;
+    int B&lt;int&gt;::bar() { return foo(); }
+
+    int main() {
+     return B&lt;int&gt;().bar();
+    }
+</PRE>
+
+<P>Does <TT>foo</TT> in the definition of <TT>B&lt;int&gt;::bar()</TT>
+refer to <TT>::foo()</TT> or to <TT>A&lt;int&gt;::foo()</TT>?</P>
+
+<P><B>Rationale (April, 2006):</B></P>
+
+<P>An explicitly-specialized member of a class template is not, in
+fact, a member of a class template but a member of a particular
+specialization of that template.  The special treatment of lookup
+vis-a-vis dependent base classes in 13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+thus does not apply, and base class members are found by unqualified
+name lookup.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

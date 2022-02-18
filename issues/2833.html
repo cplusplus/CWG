@@ -1,0 +1,193 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2833</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2833"></A><H4>2833.
+  
+Evaluation of odr-use
+</H4>
+<B>Section: </B>6.9.3.3&#160; [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-01<BR>
+
+
+
+
+<P>The concept of odr-use is a static program property, independent of runtime control flow.  For example,</P>
+
+<PRE>
+void f() {
+  if (false)
+    g();          // <SPAN CLASS="cmnt">unconditionally odr-uses </SPAN>g
+}
+</PRE>
+
+<P>Yet, some parts of the standard talk about an odr-use participating
+in the happens-before relation, which is a category error.</P>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6 through 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A structured binding is odr-used <DEL>if it appears as</DEL>
+<INS>by</INS> a potentially-evaluated expression <INS><I>E</I> if it
+is named by <I>E</I></INS>.
+</P>
+
+<P>*this is odr-used if this appears
+as a potentially-evaluated expression (including as the result of the
+implicit transformation in the body of a non-static member function
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])).
+</P>
+
+<P>
+A virtual member function is odr-used if it is not pure. A function is
+odr-used <INS>by</INS> <DEL>if it is named by</DEL> a
+potentially-evaluated expression or conversion <INS><I>E</I> if it is
+named by <I>E</I></INS>. A non-placement allocation or deallocation
+function for a class is odr-used by the definition of a constructor of
+that class. A non-placement deallocation function for a class is
+odr-used by the definition of the destructor of that class, or by
+being selected by the lookup at the point of definition of a virtual
+destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). [ Footnote: ... ]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#4">basic.start.dynamic</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>non-initialization odr-use</I> <INS>of an entity</INS>
+is <INS>the evaluation of an expression that odr-uses</INS>
+<DEL>an odr-use</DEL> (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])
+<INS>the entity where the evaluation is</INS> not caused directly or
+indirectly by the initialization of a non-block static or thread
+storage duration variable.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-01-19</B></P>
+
+<P>Since "odr-use" is a category error here, use the term
+"non-initialization use" instead.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6 through 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A structured binding is odr-used <DEL>if it appears as</DEL>
+<INS>by</INS> a potentially-evaluated expression <INS><I>E</I> if it
+is named by <I>E</I></INS>.
+</P>
+
+<P>*this is odr-used if this appears
+as a potentially-evaluated expression (including as the result of the
+implicit transformation in the body of a non-static member function
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])).
+</P>
+
+<P>
+A virtual member function is odr-used if it is not pure. A function is
+odr-used <INS>by</INS> <DEL>if it is named by</DEL> a
+potentially-evaluated expression or conversion <INS><I>E</I> if it is
+named by <I>E</I></INS>. A non-placement allocation or deallocation
+function for a class is odr-used by the definition of a constructor of
+that class. A non-placement deallocation function for a class is
+odr-used by the definition of the destructor of that class, or by
+being selected by the lookup at the point of definition of a virtual
+destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). [ Footnote: ... ]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#4">basic.start.dynamic</A>] paragraph 4 through 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A <I>non-initialization <DEL>odr-use</DEL> <INS>use</INS></I> <INS>of an entity</INS>
+is <INS>the evaluation of an expression that odr-uses</INS>
+<DEL>an odr-use</DEL> (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])
+<INS>the entity where the evaluation is</INS> not caused directly or
+indirectly by the initialization of a non-block static or thread
+storage duration variable.
+</P>
+
+<P>...If it is deferred, it strongly happens before any
+non-initialization <DEL>odr-use</DEL> <INS>use</INS> of any non-inline
+function or non-inline variable defined in the same translation unit
+as the variable to be initialized. [ Footnote: ... ] ...  [ Example:
+...  It is implementation-defined whether either a or b is initialized
+before main is entered or whether the initializations are delayed
+until a is first <DEL>odr-used</DEL> <INS>used</INS> in main. In
+particular, if a is initialized before main is entered, it is not
+guaranteed that b will be initialized before it
+is <DEL>odr-used</DEL> <INS>used</INS> by the initialization of a,
+that is, before A::A is called. If, however, a is initialized at some
+point after the first statement of main, b will be initialized prior
+to its use in A::A. -- end example ]
+</P>
+
+<P>
+... If it is deferred, it strongly happens before any non-initialization
+<DEL>odr-use</DEL> <INS>use</INS> of that variable. ...
+</P>
+
+<P>
+... If it is deferred, the initialization associated with the entity for
+thread t is sequenced before the first
+non-initialization <DEL>odr-use</DEL> <INS>use</INS> by t of any
+non-inline variable with thread storage duration ...
+</P>
+
+<P>
+
+</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 398</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="398"></A><H4>398.
+  
+Ambiguous wording on naming a type in deduction
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Jan 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P>The following example (simplified from a posting to
+comp.lang.c++.moderated) is accepted by some
+compilers (e.g., EDG), but not by other (e.g., g++).</P>
+<PRE>
+  struct S {
+    static int const I = 42;
+  };
+
+  template&lt;int N&gt; struct X {};
+
+  template&lt;typename T&gt; void f(X&lt;T::I&gt;*) {}
+
+  template&lt;typename T&gt; void f(X&lt;T::J&gt;*) {}
+
+  int main() {
+    f&lt;S&gt;(0);
+  }
+</PRE>
+
+<P>The wording in the standard that normally would
+cover this (third sub-bullet in 13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2)
+ says:
+<BLOCKQUOTE>
+    Attempting to use a type in the qualifier portion of a
+    qualified name <B>that names a type</B> when that type does
+    not contain the specified member, or if the specified
+    member is not a type where a type is required.
+</BLOCKQUOTE>
+(emphasis mine).  If the phrase "that names a
+type" applies to "a qualified name," then the example
+is invalid.  If it applies to "the qualifier portion,"
+then it is valid (because the second candidate is simply
+discarded).</P>
+
+<P>I suspect we want this example to work.  Either way,
+I believe the sub-bullet deserves clarification.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>We agreed that the example should be valid.  The phrase "that
+names a type" applies to "the qualifier portion."</P>
+
+<P><B>Proposed resolution (October 2003):</B></P>
+
+<P>
+In 13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>], paragraph 2, bullet 3,
+sub-bullet 3, replace</P>
+
+<BLOCKQUOTE>
+Attempting to use a type in the qualifier portion of a qualified name
+that names a type when that type does not contain the
+specified member, or if the specified member is not a type
+where a type is required.
+</BLOCKQUOTE>
+
+<P>
+With</P>
+
+<BLOCKQUOTE>
+Attempting to use a type
+in a <I>nested-name-specifier</I> of a <I>qualified-id</I>
+when that type does not contain the specified member, or
+<UL>
+<LI>
+the specified member is not a type where a type is required, or
+</LI>
+<LI>
+the specified member is not a template where a template is required,
+or
+</LI>
+<LI>
+the specified member is not a nontype where a nontype is required.
+</LI>
+</UL>
+<P>
+[<I>Example:</I>
+</P>
+</BLOCKQUOTE>
+
+<P>
+Replace the example that follows the above text with</P>
+
+<BLOCKQUOTE>
+<PRE>
+template &lt;int I&gt; struct X { };
+template &lt;template &lt;class T&gt; class&gt; struct Z {};
+template &lt;class T&gt; void f(typename T::Y*){}
+template &lt;class T&gt; void g(X&lt;T::N&gt;*){}
+template &lt;class T&gt; void h(Z&lt;T::template TT&gt;*){}
+struct A {};
+struct B { int Y; };
+struct C {
+	typedef int N;
+};
+struct D {
+	typedef int TT;
+};
+
+int main()
+{
+	// Deduction fails in each of these cases:
+	f&lt;A&gt;(0); // A does not contain a member Y
+	f&lt;B&gt;(0); // The Y member of B is not a type
+	g&lt;C&gt;(0); // The N member of C is not a nontype
+	h&lt;D&gt;(0); // The TT member of D is not a template
+}
+</PRE>
+]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

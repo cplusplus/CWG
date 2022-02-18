@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1562</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1562"></A><H4>1562.
+  
+Non-static data member initializers and union <I>ctor-initializer</I>
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-01<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>The following example is ill-formed:</P>
+
+<PRE>
+  union U {
+    int a = 0;
+    float f;
+    U() {}               //<SPAN CLASS="cmnt"> ok, </SPAN>a<SPAN CLASS="cmnt"> initialized to </SPAN>0
+    U(float f) : f(f) {} //<SPAN CLASS="cmnt"> error, constructor initializes both </SPAN>a<SPAN CLASS="cmnt"> and </SPAN>f
+  };
+</PRE>
+
+<P>because of 11.9.3 [<A href="https://wg21.link/class.base.init#8">class.base.init</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+An attempt to initialize more than one non-static data member of a
+union renders the program ill-formed.
+
+</BLOCKQUOTE>
+
+<P>In non-union classes, a <I>mem-initializer</I> takes precedence over
+a non-static data member initializer, per paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+If a given non-static data member has both a
+<I>brace-or-equal-initializer</I> and a <I>mem-initializer</I>, the
+initialization specified by the <I>mem-initializer</I> is performed,
+and the non-static data member's <I>brace-or-equal-initializer</I> is
+ignored.
+
+</BLOCKQUOTE>
+
+<P>It would be reasonable to treat union <I>mem-initializer</I>s in
+an analogous fashion.</P>
+
+<P>(See also <A HREF="1460.html">issue 1460</A>.)</P>
+
+<P><B>Proposed resolution (March, 2013) [superseded]:</B></P>
+
+<P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#8">class.base.init</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>In a non-delegating constructor, if a given non-static data
+member or base class is not designated by
+a <I>mem-initializer-id</I> (including the case where there
+is no <I>mem-initializer-list</I> because the constructor
+has no <I>ctor-initializer</I>) and the entity is not a
+virtual base class of an abstract class
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), then</P>
+
+<UL>
+<LI>
+
+<P>if the entity is a non-static data member that has
+a <I>brace-or-equal-initializer</I> <INS>and, if the entity
+is a member of a union, no other non-static data member of
+that union is designated by
+a <I>mem-initializer-id</I></INS>, the entity is initialized
+as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>];</P>
+</LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<I>[Note: this wording was reviewed during the 2013-03-25
+teleconference.]</I>
+
+<P>See also issues <A HREF="1460.html">1460</A>,
+<A HREF="1587.html">1587</A>, <A HREF="1621.html">1621</A>, and
+<A HREF="1623.html">1623</A>.</P>
+
+<P><B>Proposed resolution (August, 2013):</B></P>
+
+<P>This issue is resolved by the resolution of <A HREF="1460.html">issue 1460</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

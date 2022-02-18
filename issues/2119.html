@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2119</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2119"></A><H4>2119.
+  
+Disambiguation of multi-level covariant return type
+</H4>
+<B>Section: </B>11.7.3&#160; [<A href="https://wg21.link/class.virtual">class.virtual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Majnemer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-05-05<BR>
+
+
+<P>In an example like</P>
+
+<PRE>
+  struct W {};
+  struct X : W {};
+  struct Y : W {};
+  struct Z : X, Y {}; //<SPAN CLASS="cmnt"> </SPAN>Z<SPAN CLASS="cmnt"> has two </SPAN>W<SPAN CLASS="cmnt"> subobjects</SPAN>
+
+  struct A {
+    virtual W *f();
+  };
+  struct B : A {
+    virtual X *f();
+  };
+  struct C : B {
+    virtual Z *f();   //<SPAN CLASS="cmnt"> </SPAN>C::f<SPAN CLASS="cmnt"> overrides </SPAN>A::f<SPAN CLASS="cmnt"> and </SPAN>B::f
+  };
+</PRE>
+
+<P>it is not clear whether the return type of <TT>C::f()</TT>
+satisfies the requirement of 11.7.3 [<A href="https://wg21.link/class.virtual#7.2">class.virtual</A>] bullet 7.2
+that the return type in the base class of the function be an
+unambiguous base of the return type in the derived class.  Should
+the conversion from <TT>Z*</TT> to <TT>X*</TT> in overriding
+<TT>B::f()</TT> be considered to disambiguate the conversion from
+<TT>Z*</TT> to <TT>W*</TT> in overriding <TT>A::f()</TT>?  There
+is implementation divergence on this question.</P>
+
+<P><B>Rationale (May, 2015):</B></P>
+
+<P>CWG determined that the current wording of the Standard is
+correct: <TT>C::f()</TT> overrides both <TT>B::f()</TT> and
+<TT>A::f()</TT>, and the latter overriding is ill-formed because
+of the ambiguity.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

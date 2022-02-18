@@ -1,0 +1,176 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1581</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1581"></A><H4>1581.
+  
+When are <TT>constexpr</TT> member functions defined?
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-29<BR>
+
+
+<P>[Accepted as a DR as paper P0859R0 at the October, 2017 meeting.]</P>
+
+
+
+<P>11.4.4 [<A href="https://wg21.link/special">special</A>] is perfectly clear that special
+member functions are only implicitly defined when they are
+odr-used. This creates a problem for constant expressions in
+unevaluated contexts:</P>
+
+<PRE>
+   struct duration {
+     constexpr duration() {}
+     constexpr operator int() const { return 0; }
+   };
+   // duration d = duration(); //<SPAN CLASS="cmnt"> #1</SPAN>
+   int n = sizeof(short{duration(duration())});
+</PRE>
+
+<P>The issue here is that we are not permitted to implicitly define
+<TT>constexpr duration::duration(duration&amp;&amp;)</TT> in this
+program, so the expression in the initializer list is not a constant
+expression (because it invokes a <TT>constexpr</TT> function which has
+not been defined), so the braced initializer contains a narrowing
+conversion, so the program is ill-formed.</P>
+
+<P>If we uncomment line #1, the move constructor is implicitly defined
+and the program is valid. This spooky action at a distance is
+extremely unfortunate. Implementations diverge on this point.</P>
+
+<P>There are also similar problems with implicit instantiation of
+<TT>constexpr</TT> functions.  It is not clear which contexts require
+their instantiation.  For example:</P>
+
+<PRE>
+  template&lt;int N&gt; struct U {};
+  int g(int);
+  template&lt;typename T&gt; constexpr int h(T) { return T::error; }
+  template&lt;typename T&gt; auto f(T t) -&gt; U&lt;g(T()) + h(T())&gt; {}
+  int f(...);
+  int k = f(0);
+</PRE>
+
+<P>There are at least two different ways of modeling the current rules:</P>
+
+<UL>
+<LI><P>
+<TT>constexpr</TT> function instantiation is triggered by
+constant expression evaluation. In that case, the validity of the
+above program depends on the order in which that evaluation
+proceeds:</P></LI>
+
+<UL>
+<LI><P>If the LHS of the <TT>+</TT> is evaluated first, the program might
+be valid, because the implementation might bail out evaluation before
+triggering the ill-formed instantiation of <TT>h&lt;int&gt;</TT>.</P></LI>
+
+<LI><P>If the RHS is evaluated first, the program is invalid, because
+the instantiation fails.</P></LI>
+
+</UL>
+
+<LI><P>
+<TT>constexpr</TT> function instantiation is triggered whenever
+a <TT>constexpr</TT> function is referenced from an expression which
+could be evaluated (note that this is not the same as being
+potentially-evaluated)</P></LI>
+
+</UL>
+
+<P>These two approaches can be distinguished by code like this:</P>
+
+<PRE>
+  int k = sizeof(U&lt;0 &amp;&amp; h(0)&gt;);
+</PRE>
+
+<P>Under the first approach, this code is valid; under the second, it
+is ill-formed.</P>
+
+<P>A possible approach to resolving this issue would be to change the
+definition of &#8220;potentially-evaluated&#8221; such that template
+arguments, array bounds, and braced-init-lists (and any other
+expressions which are constant evaluated) are always
+potentially-evaluated, even if they appear within an unevaluated
+context, and to change 13.9.2 [<A href="https://wg21.link/temp.inst#3">temp.inst</A>] paragraph 3 to say
+simply that function template specializations are implicitly
+instantiated when they are odr-used.</P>
+
+<P>A related question is whether putatively <TT>constexpr</TT>
+constructors must be instantiated in order to determine whether their
+class is a literal type or not.  See
+<A HREF="1358.html">issue 1358</A>.</P>
+
+<P><U>Jason Merrill:</U></P>
+
+<P>I'm concerned about unintended side-effects of such a large change
+to &#8220;potentially-evaluated;&#8221; I would prefer something that
+only affects <TT>constexpr</TT>.</P>
+
+<P>It occurs to me that this is parallel to <A HREF="1330.html">issue 1330</A>: just like we want to instantiate exception specifiers
+for calls in unevaluated context, we also want to instantiate
+<TT>constexpr</TT> functions.  I think we should define some other
+term to say when there's a reference to a declaration, and then say
+that the declaration is odr-used when that happens in
+potentially-evaluated context.</P>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>An additional question was raised about whether <TT>constexpr</TT>
+functions should be instantiated as a result of appearing within
+unevaluated subexpressions of constant expressions. For example:</P>
+
+<PRE>
+  #include &lt;type_traits&gt;
+
+  template &lt;class T&gt; constexpr T f(T t) { return +t; }
+
+  struct A { };
+
+  template &lt;class T&gt;
+  decltype(std::is_scalar&lt;T&gt;::value ? T::fail : f(T()))
+    g() { }
+
+  template &lt;class T&gt;
+  void g(...);
+
+  int main()
+  {
+    g&lt;A&gt;();
+  }
+
+</PRE>
+
+<P>If <TT>constexpr</TT> instantiation happens during constant expression
+evaluation, <TT>f&lt;A&gt;</TT> is never instantiated and the program is
+well-formed.  If <TT>constexpr</TT> instantiation happens during parsing,
+<TT>f&lt;A&gt;</TT> is instantiated and the program is ill-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

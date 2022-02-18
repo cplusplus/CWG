@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2736</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2736"></A><H4>2736.
+  
+Standard layout class with empty base class also in first member
+</H4>
+<B>Section: </B>11.2&#160; [<A href="https://wg21.link/class.prop">class.prop</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>L&#233;n&#225;rd Szolnoki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-10<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/317">#317</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {};
+  struct B : A { char c; };
+
+  struct C : A {
+    B b;
+  };
+</PRE>
+
+<P>Class C satisfies all the conditions to be considered
+standard-layout, including 11.2 [<A href="https://wg21.link/class.prop#3.7">class.prop</A>] bullet 3.7:
+<UL>
+<LI>M(C) is the union of {B} and M(B) per 11.2 [<A href="https://wg21.link/class.prop#3.7.2">class.prop</A>] bullet 3.7.2.</LI>
+<LI>M(B) is the union of {char} and M(char) per
+11.2 [<A href="https://wg21.link/class.prop#3.7.2">class.prop</A>] bullet 3.7.2.</LI>
+<LI>M(char) is an empty set per 11.2 [<A href="https://wg21.link/class.prop#3.7.5">class.prop</A>] bullet 3.7.5.</LI>
+</UL>
+
+</P>
+
+<P>Thus, M(C) is {char,B}, neither of which is a base class of C, and
+thus C is standard-layout, contrary to popular ABI rules that do not
+provide pointer interconvertibility between C::b and C.</P>
+
+<P><U>Suggested resolution (reviewed by CWG 2024-03-01, with no consensus):</U></P>
+
+<OL>
+<LI>
+<P>Change in 11.2 [<A href="https://wg21.link/class.prop#3.7">class.prop</A>] bullet 3.7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+has no element of the set M(S) of types as a base class, where for any
+type X, M(X) is defined as follows<INS>, where <TT>B(S)</TT> is a set
+of types consisting of <TT>S</TT> and each direct and indirect base
+class of <TT>S</TT></INS>. [Footnote: ...]  [<I>Note 2:</I> M(X) is
+the set of the types of all non-base-class subobjects that can be at a
+zero offset in X. &#8212;<I>end note</I>]
+<UL>
+<LI>If X is a non-union class type with no non-static data members,
+the set M(X) is empty.</LI>
+<LI>If X is a non-union class type with a non-static data member of
+type X0 that is either of zero size or is the first non-static data
+member of X (where said member may be an anonymous union), the set
+M(X) <DEL>consists of X0</DEL> <INS>is the union of B(X0)</INS>
+and <DEL>the elements of</DEL> M(X0).</LI>
+<LI>If X is a union type, the set M(X) is the union of all M(Ui) and
+<DEL>the set containing</DEL> all <DEL>Ui</DEL> <INS>B(Ui)</INS>,
+where each Ui is the type of the ith non-static data member of X.</LI>
+<LI>If X is an array type with element type Xe, the set M(X) <DEL>consists
+of Xe</DEL> <INS>is the union of B(Xe)</INS> and <DEL>the elements
+of</DEL> M(Xe).</LI>
+<LI>If X is a non-class, non-array type, the set M(X) is empty.</LI>
+</UL>
+
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add more examples in 11.2 [<A href="https://wg21.link/class.prop#4">class.prop</A>] paragraph 4:</P>
+
+<PRE class="ins">
+
+  struct X {};                     // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct Y : X { char c; };        // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct Z : X { Y y; };           // <SPAN CLASS="cmnt">not a standard-layout class</SPAN>
+
+  struct H {};                     // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct I : H {};                 // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct J { I i; };               // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct K : I { J j; };           // <SPAN CLASS="cmnt">not a standard-layout class</SPAN>
+</PRE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

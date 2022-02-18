@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 395</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="395"></A><H4>395.
+  
+Conversion operator template syntax
+</H4>
+<B>Section: </B>11.4.8.3&#160; [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Dec 2002<BR>
+
+
+
+
+<P>A posting in comp.lang.c++.moderated prompted me to
+try the following code:</P>
+<PRE>
+  struct S {
+    template&lt;typename T, int N&gt; (&amp;operator T())[N];
+  };
+</PRE>
+<P>The goal is to have a (deducible) conversion operator
+template to a reference-to-array type.</P>
+
+<P>This is accepted by several front ends (g++, EDG), but
+I now believe that 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1
+actually prohibits this.
+The issue here is that we do in fact specify (part of)
+a return type.</P>
+
+<P>OTOH, I think it is legitimate to expect that this is
+expressible in the language (preferably not using the
+syntax above ;-).  Maybe we should extend the syntax
+to allow the following alternative?</P>
+<PRE>
+  struct S {
+    template&lt;typename T, int N&gt; operator (T(&amp;)[N])();
+  };
+</PRE>
+
+<P>
+<U>Eric Niebler</U>:
+If the syntax is extended to support this, similar constructs should also be
+considered.  For instance, I can't for the life of me figure out how to
+write a conversion member function template to return a member function
+pointer.  It could be useful if you were defining a null_t type.  This is
+probably due to my own ignorance, but getting the syntax right is tricky.</P>
+
+<P>Eg.</P>
+<PRE>
+  struct null_t {
+    // null object pointer. works.
+    template&lt;typename T&gt; operator T*() const { return 0; }
+    // null member pointer. works.
+    template&lt;typename T,typename U&gt; operator T U::*() const { return 0; }
+    // null member fn ptr.  doesn't work (with Comeau online).  my error?
+    template&lt;typename T,typename U&gt; operator T (U::*)()() const { return 0; }
+  };
+</PRE>
+
+<P>
+<U>Martin Sebor</U>:
+Intriguing question. I have no idea how to do it in a single
+declaration but splitting it up into two steps seems to work:</P>
+<PRE>
+  struct null_t {
+    template &lt;class T, class U&gt;
+    struct ptr_mem_fun_t {
+      typedef T (U::*type)();
+    };
+
+    template &lt;class T, class U&gt;
+    operator typename ptr_mem_fun_t&lt;T, U&gt;::type () const {
+      return 0;
+    }
+  };
+</PRE>
+
+<P>
+<I>Note:</I> In the April 2003 meeting, the core working group
+noticed that the above doesn't actually work.</P>
+
+<P><B>Note (June, 2010):</B></P>
+
+<P>It has been suggested  that template aliases effectively
+address this issue.  In particular, an identity alias like</P>
+
+<PRE>
+    template&lt;typename T&gt; using id = T;
+</PRE>
+
+<P>provides the necessary syntactic sugar to be able to specify
+types with trailing declarator elements as a <I>conversion-type-id</I>.
+For example, the two cases discussed above could be written as:</P>
+
+<PRE>
+    struct S {
+        template&lt;typename T, int N&gt;
+          operator id&lt;T[N]&gt;&amp;();
+        template&lt;typename T, typename U&gt;
+          operator id&lt;T (U::*)()&gt;() const;
+    };
+</PRE>
+
+<P>This issue should thus be closed as now NAD.</P>
+
+<P><B>Rationale (August, 2011):</B></P>
+
+<P>As given in the preceding note.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

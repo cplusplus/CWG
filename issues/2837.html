@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2837</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2837"></A><H4>2837.
+  
+Instantiating and inheriting by-value copy constructors
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-29<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/474">#474</A>.)</P>
+
+<P>Subclause 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#5">class.copy.ctor</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+A declaration of a constructor for a class X is ill-formed if its
+first parameter is of type cv X and either there are no other
+parameters or else all other parameters have default arguments. A
+member function template is never instantiated to produce such a
+constructor signature.
+
+</BLOCKQUOTE>
+
+<P>It is unclear what happens when such a constructor signature is
+inherited from a base class.  Also, the wording "never instantiated"
+is not detailed enough.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Add a paragraph before 9.9 [<A href="https://wg21.link/namespace.udecl#13">namespace.udecl</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+The set of declarations named by a <I>using-declarator</I> that
+inhabits a class <TT>C</TT> does not include any constructor whose
+first parameter has type <I>cv</I> <TT>C</TT> and all of whose
+remaining parameters (if any) have default arguments.
+</P>
+
+<P>
+Constructors that are named by a <I>using-declaration</I> are
+treated as though they were constructors of the derived class ...
+</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#5">class.copy.ctor</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration of a constructor for a class X is ill-formed if its
+first parameter is of type cv X and either there are no other
+parameters or else all other parameters have default arguments. <DEL>A
+member function template is never instantiated to produce such a
+constructor signature.</DEL> <INS>During type deduction for a
+constructor template of <TT>X</TT> (13.10.3.1 [<A href="https://wg21.link/temp.deduct.general">temp.deduct.general</A>]),
+if substitution produces such a constructor signature, type deduction
+fails.</INS>
+[ Example 5:
+<PRE>
+  struct S {
+    template&lt;typename T&gt; S(T);
+    S();
+  };
+  S g;
+  void h() {
+    S a(g);  //<SPAN CLASS="cmnt"> <DEL>does not instantiate the member template to produce S::S&lt;S&gt;(S);</DEL> <INS>no candidate generated from the member template;</INS></SPAN>
+             //<SPAN CLASS="cmnt"> <DEL>uses</DEL> the implicitly declared copy constructor <INS>is used</INS></SPAN>
+  }
+</PRE>
+-- end example]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 842</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="842"></A><H4>842.
+  
+Casting to rvalue reference type
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 March, 2009<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+<P>Both <TT>const_cast</TT> (7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1) and
+<TT>reinterpret_cast</TT> (7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#1">expr.reinterpret.cast</A>] paragraph 1) say,</P>
+
+<BLOCKQUOTE>
+
+If <TT>T</TT> is an lvalue reference type, the result is an lvalue;
+otherwise, the result is an rvalue and the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>])
+standard conversions are performed on the expression <TT>v</TT>.
+
+</BLOCKQUOTE>
+
+<P>This introduces a contradiction in the text.  According to
+7.6.1.11 [<A href="https://wg21.link/expr.const.cast#4">expr.const.cast</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+The result of a reference <TT>const_cast</TT> refers to the original
+object.
+
+</BLOCKQUOTE>
+
+<P>However, the lvalue-to-rvalue conversion applied to the operand
+when the target is an rvalue reference type creates a temporary if
+the operand has class type (7.3.2 [<A href="https://wg21.link/conv.lval#2">conv.lval</A>] paragraph 2),
+meaning that the result will <B>not</B> refer to the original
+object but to the temporary.</P>
+
+<P>A similar problem exists for <TT>reinterpret_cast</TT>: according
+to 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#11">expr.reinterpret.cast</A>] paragraph 11,</P>
+
+<BLOCKQUOTE>
+
+a reference cast <TT>reinterpret_cast&lt;T&amp;&gt;(x)</TT> has the
+same effect as the conversion
+<TT>*reinterpret_cast&lt;T*&gt;(&amp;x)</TT> with the built-in
+<TT>&amp;</TT> and <TT>*</TT> operators (and similarly for
+<TT>reinterpret_cast&lt;T&amp;&amp;&gt;(x)</TT>).  The result refers
+to the same object as the source lvalue, but with a different type.
+
+</BLOCKQUOTE>
+
+<P>Here the issue is that the unary <TT>&amp;</TT> operator used
+in the description requires an lvalue, but the lvalue-to-rvalue
+conversion is applied to the operand when the target is an
+rvalue reference type.</P>
+
+<P>It would seem that the lvalue-to-rvalue conversion should not
+be applied when the target of the cast is an rvalue reference type.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<OL>
+<LI><P>Change 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#1">expr.reinterpret.cast</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The result of the expression <TT>reinterpret_cast&lt;T&gt;(v)</TT> is
+the result of converting the expression <TT>v</TT> to type
+<TT>T</TT>. If <TT>T</TT> is an lvalue reference type, the result is
+an lvalue; <INS>if <TT>T</TT> is an rvalue reference type, the result
+is an rvalue;</INS> otherwise, the result is an rvalue and the
+lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the <DEL>the</DEL>
+expression <TT>v</TT>.  Conversions that can be performed explicitly
+using <TT>reinterpret_cast</TT> are listed below.  No other conversion
+can be performed explicitly using <TT>reinterpret_cast</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The result of the expression <TT>const_cast&lt;T&gt;(v)</TT> is of
+type <TT>T</TT>. If <TT>T</TT> is an lvalue reference type, the result
+is an lvalue; <INS>if <TT>T</TT> is an rvalue reference type, the
+result is an rvalue;</INS> otherwise, the result is an rvalue and the
+lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the expression
+<TT>v</TT>.  Conversions that can be performed explicitly using
+<TT>const_cast</TT> are listed below.  No other conversion shall be
+performed explicitly using <TT>const_cast</TT>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

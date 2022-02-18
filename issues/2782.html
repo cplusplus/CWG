@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2782</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2782"></A><H4>2782.
+  
+Treatment of closure types in the one-definition rule
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-20<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  inline auto lambda = []{}; //<SPAN CLASS="cmnt"> same in different translation units or not?</SPAN>
+</PRE>
+
+<P>This can be observed, for example, through the following variable
+template:</P>
+
+<PRE>
+  template&lt;class T&gt; int v;
+</PRE>
+
+<P>Is <TT>&amp;v&lt;decltype(lambda)&gt;</TT> the same address in every
+translation unit?</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#14">basic.def.odr</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+For any definable item D with definitions in multiple translation
+units,
+<UL>
+<LI>if D is a non-inline non-templated function or variable, or</LI>
+<LI>if the definitions in different translation units do not satisfy
+the following requirements,</LI>
+</UL>
+the program is ill-formed; a diagnostic is required only if the
+definable item is attached to a named module and a prior definition is
+reachable at the point where a later definition occurs. Given such an
+item, for all definitions of D, or, if D is an unnamed enumeration,
+for all definitions of D that are reachable at any given program
+point, the following requirements shall be satisfied<INS>, where the
+definition of a closure type is considered to consist of the sequence
+of tokens of the corresponding <I>lambda-expression</I></INS>.
+
+<UL>
+<LI>...</LI>
+<LI>Each such definition shall consist of the same sequence of
+tokens<DEL>, where the definition of a closure type is considered to
+consist of the sequence of tokens of the
+corresponding <I>lambda-expression</I></DEL>.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add another example after example 6, immediately before
+6.3 [<A href="https://wg21.link/basic.def.odr#18">basic.def.odr</A>] paragraph 18:</P>
+
+<BLOCKQUOTE class="ins">
+
+[ Example:
+<PRE>
+  inline decltype([]{}) v1;
+  inline auto v2 = []{};
+</PRE>
+If the definition of <TT>v1</TT> appears in multiple translation
+units, the program is ill-formed, no diagnostic required, because each
+definition declares <TT>v1</TT> to have a different type. If the
+definition of <TT>v2</TT> appears in multiple translation units, the
+behavior of the program is as if there is only one definition, and
+only a definition can supply an initializer; therefore the behavior is
+as if there is only one initializer. Therefore, <TT>v2</TT> has the
+same type in every translation unit.  -- end example]
+
+</BLOCKQUOTE>
+<BLOCKQUOTE>
+
+<P>If, at any point in the program, there is more than one reachable
+unnamed enumeration definition in the same scope...</P>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

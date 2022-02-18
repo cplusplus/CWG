@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 492</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="492"></A><H4>492.
+  
+<TT>typeid</TT> constness inconsistent with example
+</H4>
+<B>Section: </B>7.6.1.8&#160; [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ron Natalie
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 Dec 2004<BR>
+
+
+<P>[Voted into WP at April, 2006 meeting.]</P>
+
+<P>There is an inconsistency between the normative text in
+section 7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>] and
+the example that follows.</P>
+
+<P>Here is the relevant passage (starting with paragraph 4):</P>
+
+<BLOCKQUOTE>
+
+<P>
+When <TT>typeid</TT> is applied to a <I>type-id</I>, the result
+refers to a <TT>std::type_info</TT> object representing the type of the
+<I>type-id</I>. If the type of the <I>type-id</I> is a reference
+type, the result of the <TT>typeid</TT> expression refers to a
+<TT>std::type_info</TT> object representing the referenced type.
+</P>
+
+<P>
+The top-level cv-qualifiers of the lvalue expression or the
+<I>type-id</I> that is the operand of <TT>typeid</TT> are always
+ignored.
+</P>
+
+</BLOCKQUOTE>
+
+<P>and the example:</P>
+
+<PRE>
+    typeid(D) == typeid(const D&amp;); // yields true
+</PRE>
+
+<P>
+The second paragraph above says the &#8220;<I>type-id</I> that is
+the operand&#8221;.  This would be <TT>const D&amp;</TT>.  In
+this case, the <TT>const</TT> is not at the top-level (i.e.,
+applied to the operand itself).
+</P>
+
+<P>By a strict reading, the above should yield <TT>false</TT>.</P>
+
+<P>
+My proposal is that the strict reading of the normative test is correct.
+The example is wrong.   Different compilers here give different
+answers.
+</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>Change the second sentence of 7.6.1.8 [<A href="https://wg21.link/expr.typeid#4">expr.typeid</A>] paragraph 4
+as follows:</P>
+
+<BLOCKQUOTE>
+
+If the type of the <I>type-id</I> is a reference <INS>to a possibly
+cv-qualified</INS> type, the result of the <TT>typeid</TT> expression
+refers to a <TT>std::type_info</TT> object representing the
+<INS>cv-unqualified</INS> referenced type.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

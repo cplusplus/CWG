@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2582</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2582"></A><H4>2582.
+  
+Differing member lookup from nested classes
+</H4>
+<B>Section: </B>6.5.2&#160; [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-02<BR>
+
+
+<P>[Accepted at the July, 2022 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  typedef int T;
+  struct A {
+   struct B {
+    static T t;
+   };
+   typedef float T; //<SPAN CLASS="cmnt"> IFNDR?</SPAN>
+  };
+</PRE>
+
+<P>Subclause 6.5.2 [<A href="https://wg21.link/class.member.lookup#6">class.member.lookup</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+The result of the search is the declaration set of S(N, T). If it is
+an invalid set, the program is ill-formed. If it differs from the
+result of a search in T for N from immediately after
+the <I>class-specifier</I> of T, the program is ill-formed, no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<P>It is unclear whether the lookup of <TT>T</TT> inside <TT>A::B</TT>
+is subject to the "if it differs" rule, given that
+the <I>class-specifier</I> of <TT>A::B</TT> ends before
+introducing <TT>A::T</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-05-06):</B></P>
+
+<P>Change in 6.5.2 [<A href="https://wg21.link/class.member.lookup#6">class.member.lookup</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If it differs from the result of a search in T for N <DEL>from
+immediately after the <I>class-specifier</I></DEL> <INS>in a
+complete-class context</INS> of T, the program is ill-formed, no
+diagnostic required.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

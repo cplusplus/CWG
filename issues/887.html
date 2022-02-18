@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 887</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="887"></A><H4>887.
+  
+Move construction of thrown object
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 May, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#16">class.copy.ctor</A>] paragraph 16 details the conditions
+under which a thrown object can be moved instead of copied.  However,
+the optimization as currently described is unsafe.  Consider the
+following example:</P>
+
+<PRE>
+    void f() {
+        X x;
+        try {
+            throw x;
+        } catch (...) {
+        }
+        // x may have been moved from but can still be accessed here
+    }
+</PRE>
+
+<P>When the operation is a throw, as opposed to a return, there
+must be a restriction that the object potentially being moved
+be defined within the innermost enclosing try block.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>It is not clear how important this optimization is in the context
+of <TT>throw</TT>: how often is a large object with substantial copying
+overhead thrown?  Also, throwing an exception is already a heavyweight
+operation, so presumably moving instead of copying an object would not
+make much difference.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#17">class.copy.ctor</A>] paragraph 17 second bullet as
+follows:</P>
+
+<UL><LI>in a <I>throw-expression</I>, when the operand is the name of
+a non-volatile automatic object <INS>whose scope does not extend
+beyond the end of the innermost enclosing <I>try-block</I> (if there
+is one)</INS>, the copy operation from the operand to the exception
+object (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) can be omitted by constructing the
+automatic object directly into the exception object</LI></UL>
+
+<BR><BR>
+</BODY>
+</HTML>

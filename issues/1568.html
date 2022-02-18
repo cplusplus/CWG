@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1568</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1568"></A><H4>1568.
+  
+Temporary lifetime extension with intervening cast
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-11<BR>
+
+
+<P>According to 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>] paragraphs 4-5,</P>
+
+<BLOCKQUOTE>
+
+<P>There are two contexts in which temporaries are destroyed at a
+different point than the end of the full-expression...</P>
+
+
+
+<P>The second context is when a reference is bound to a temporary.  The
+temporary to which the reference is bound or the temporary that is the
+complete object of a subobject to which the reference is bound
+persists for the lifetime of the reference...
+</P>
+
+</BLOCKQUOTE>
+
+<P>It is not clear whether this applies to an example like the
+following:</P>
+
+<PRE>
+  struct S { };
+  const S&amp; r = (const S&amp;)S();
+</PRE>
+
+<P>In one sense <TT>r</TT> is being bound to the temporary because
+the object to which <TT>r</TT> refers is the temporary object.  From
+another perspective, however, <TT>r</TT> is being bound not to a
+temporary but to the lvalue expression <TT>(const S&amp;)S()</TT>, or,
+more precisely, to the invented temporary variable described in
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast#4">expr.static.cast</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, an expression <TT>e</TT> can be explicitly converted to a
+type <TT>T</TT> using a <TT>static_cast</TT> of the form
+<TT>static_cast&lt;T&gt;(e)</TT> if the declaration <TT>T t(e);</TT>
+is well-formed, for some invented temporary variable <TT>t</TT>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).  The effect of such an explicit conversion
+is the same as performing the declaration and initialization and then
+using the temporary variable as the result of the conversion.
+
+</BLOCKQUOTE>
+
+<P>(Since the invented variable <TT>t</TT> is called a
+&#8220;temporary,&#8221; perhaps the intent is that its lifetime is
+extended to that of <TT>r</TT>, and then the lifetime of the
+<TT>S()</TT> temporary would be that of <TT>t</TT>.  However, this
+reasoning is tenuous, and it may be better to make the intent
+explicitly clear.)</P>
+
+<P>(See also <A HREF="1299.html">issue 1299</A>.)</P>
+
+<P><B>Rationale (April, 2013):</B></P>
+
+<P>This issue is a duplicate of <A HREF="1376.html">issue 1376</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

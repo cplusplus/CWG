@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2104</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2104"></A><H4>2104.
+  
+Internal-linkage <TT>constexpr</TT> references and ODR requirements
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-03-17<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>In an example like:</P>
+
+<PRE>
+  extern int i;
+  namespace {
+    constexpr int&amp; r = i;
+  }
+  inline int f() { return r; }
+</PRE>
+
+<P>use of <TT>f()</TT> in multiple translation units results in an
+ODR violation because of use of the internal-linkage reference
+<TT>r</TT>.  It would be helpful if 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6
+could be amended to &#8220;look through&#8221; a
+<TT>constexpr</TT> reference in determining whether an inline
+function violates the ODR or not.</P>
+
+<P><B>Proposed resolution (January, 2016):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#6.2">basic.def.odr</A>] bullet 6.2 as follows,
+dividing the running text into a bulleted list:</P>
+
+<BLOCKQUOTE>
+
+<P>...Given such an entity named <TT>D</TT> defined in more than one
+translation unit, then</P>
+
+<UL>
+<LI><P>each definition of <TT>D</TT> shall consist of
+the same sequence of tokens; and</P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, corresponding
+names, looked up according to 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>],
+shall refer to an entity defined within the definition
+of <TT>D</TT>, or shall refer to the same entity, after
+overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) and after
+matching of partial template specialization
+(13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]), except that a name can refer
+to</P></LI>
+
+<UL>
+<LI><P>a non-volatile const object with internal or no
+linkage if the object</P></LI>
+
+<UL>
+<LI><P>has the same literal type in all definitions of
+<TT>D</TT>, <DEL>and</DEL>
+</P></LI>
+
+<LI><P>
+<DEL>the object</DEL> is initialized with a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), <DEL>and</DEL>
+</P></LI>
+
+<LI><P>
+<DEL>the object</DEL> is not odr-used, and</P></LI>
+
+<LI><P>
+<DEL>the object</DEL> has the same value in all
+definitions of <TT>D</TT><INS>,</INS>
+</P></LI>
+
+</UL>
+
+<P><INS>or</INS></P>
+
+<LI><P>
+<INS>a reference with internal or no linkage
+initialized with a constant expression such that the reference
+refers to the same entity in all definitions of <TT>D</TT></INS>;</P></LI>
+
+</UL>
+
+<P>and</P>
+
+<LI><P>in each definition of <TT>D</TT>, corresponding
+entities...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

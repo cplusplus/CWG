@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 35</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="35"></A><H4>35.
+  
+Definition of default-initialization
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrew Koenig
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Jul 1998<BR>
+
+
+
+
+
+<P>Given:</P>
+<PRE>
+    struct S1 {
+        int x;
+    };
+
+    struct S2 {
+        int x;
+        double y;
+    };
+
+    struct S3 {
+        int x;
+        double y;
+        string s;
+    };
+</PRE>
+Once upon a time, we went through a fairly protracted discussion to ensure
+that <TT>S1().x</TT> would be guaranteed to be 0. Note that if we declare
+<PRE>
+    void f()
+    {
+        S1 s1;
+
+        // ...
+    }
+</PRE>
+there is no guarantee of the value of <TT>s1.x</TT>, and that is intentional.
+But <TT>S1().x</TT> is different, because <TT>S1()</TT> is an rvalue, and
+unless all of its members are defined, the effect of copying it is undefined.
+
+<P>Similarly, <TT>S2().x</TT> and <TT>S2().y</TT> are also defined to be
+equal to zero, and here it really matters for many implementations, because
+if <TT>S2().y</TT> is just a bunch of random bits, it is entirely possible
+that trying to copy <TT>S2().y</TT> will yield a floating-point trap.</P>
+
+<P>However, rather to my surprise, the standard does not define the value
+of <TT>S3().x</TT> or <TT>S3().y</TT>, because <TT>S3</TT> is not a POD.
+It does define <TT>S3().s</TT> (by running the string constructor), but
+once a structure is no longer a POD, the values of uninitialized members
+are no longer guaranteed in expressions of the form T().</P>
+
+<P>In my opinion, this definition is a mistake, and the committee's intention
+was to zero-initialize all members that do not have an explicitly defined
+constructor, whether or not the class is a POD.</P>
+
+<P> See also paper J16/99-0014 = WG21 N1191.</P>
+
+<P><I>[Note: this issue is resolved by the resolution of
+<A HREF="178.html">issue 178</A>.]</I></P>
+<BR><BR>
+</BODY>
+</HTML>

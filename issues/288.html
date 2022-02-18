@@ -1,0 +1,197 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 288</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="288"></A><H4>288.
+  
+Misuse of "static type" in describing pointers
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Kuyper
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 May 2001<BR>
+
+
+<P>[Voted into the WP at the June, 2008 meeting.]</P>
+
+<P>For delete expressions, 7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1
+says</P>
+
+<BLOCKQUOTE>
+The operand shall have a pointer type, or a class type having
+a single conversion function to a pointer type.
+</BLOCKQUOTE>
+
+<P>However,
+paragraph 3 of that same section says:</P>
+
+<BLOCKQUOTE>
+if the static type of the
+operand is different from its dynamic type, the static type shall be a
+base class of the operand's dynamic type and the static type shall
+have a virtual destructor or the behavior is undefined.
+</BLOCKQUOTE>
+
+<P>Since the operand must be of pointer type, its static type is
+necessarily the same as its dynamic type. That clause is clearly
+referring to the object being pointed at, and not to the pointer operand
+itself.</P>
+
+<P>Correcting the wording gets a little complicated, because dynamic
+and static types are attributes of expressions, not objects, and
+there's no sub-expression of a <I>delete-expression</I> which has the
+relevant types.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<BLOCKQUOTE>
+then there is a static type and a dynamic type that the hypothetical
+expression <TT>(*</TT> <I>const-expression</I><TT>)</TT> would
+have. If that static type is different from that dynamic type, then
+that static type shall be a base class of that dynamic type, and that
+static type shall have a virtual destructor, or the behavior is
+undefined.
+</BLOCKQUOTE>
+
+<P>There's precedent for such use of hypothetical constructs: see
+7.6.10 [<A href="https://wg21.link/expr.eq#2">expr.eq</A>] paragraph 2, and 9.3.2 [<A href="https://wg21.link/dcl.name#1">dcl.name</A>] paragraph 1.
+</P>
+
+<P>11.7.3 [<A href="https://wg21.link/class.virtual#3">class.virtual</A>] paragraph 3 has a similar problem. It
+refers to</P>
+
+<BLOCKQUOTE>
+ the type of the pointer or reference denoting the object
+(the static type).
+</BLOCKQUOTE>
+
+<P>The type of the pointer is different from the type of the
+reference, both of which are different from the static type of
+'*pointer', which is what I think was actually intended. Paragraph 6
+contains the exact same wording, in need of the same correction. In
+this case, perhaps replacing "pointer or reference" with "expression"
+would be the best fix. In order for this fix to be sufficient,
+<TT>pointer-&gt;member</TT> must be considered equivalent to
+<TT>(*pointer).member</TT>, in which case the "expression" referred to
+would be <TT>(*pointer)</TT>.</P>
+
+11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4 says that
+
+<BLOCKQUOTE>
+if a <I>delete-expression</I> is used to deallocate a class object
+whose static type has...
+</BLOCKQUOTE>
+
+<P>This should be changed to</P>
+
+<BLOCKQUOTE>
+if a <I>delete-expression</I> is used to deallocate a class object
+through a pointer expression whose dereferenced static type would
+have...
+</BLOCKQUOTE>
+
+<P>The same problem occurs later,
+when it says that the</P>
+
+<BLOCKQUOTE>
+static and dynamic types of the object shall be
+identical
+</BLOCKQUOTE>
+
+<P>In this case you could replace "object" with "dereferenced
+pointer expression".</P>
+
+<P>Footnote 104 says that</P>
+
+<BLOCKQUOTE>
+7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>] requires that ... the static type of the
+<I>delete-expression</I>'s operand be the same as its dynamic type.
+</BLOCKQUOTE>
+
+<P>This
+would need to be changed to</P>
+
+<BLOCKQUOTE>
+the <I>delete-expression</I>'s dereferenced
+operand
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (December, 2006):</B></P>
+
+<OL>
+
+<LI><P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#3">expr.delete</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In the first alternative (<I>delete object</I>), if the static type of
+the <DEL>operand</DEL> <INS>object to be deleted</INS> is different from its
+dynamic type, the static type shall be a base class of
+the <DEL>operand's</DEL> dynamic type <INS>of the object to be deleted</INS>
+and the static type shall have a virtual destructor or the behavior is
+undefined. In the second alternative (<I>delete array</I>) if the
+dynamic type of the object to be deleted differs from its static type,
+the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A similar provision is not needed for the array version
+of <TT>operator delete</TT> because 7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+requires that in this situation, the static type of the
+<DEL><I>delete-expression</I>'s operand</DEL> <INS>object to be deleted</INS>
+be the same as its dynamic type.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 11.4.11 [<A href="https://wg21.link/class.free#5">class.free</A>] paragraph 5 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the static type <DEL>in the <I>delete-expression</I></DEL> <INS>of the
+object to be deleted</INS> is different from the dynamic type and the
+destructor is not virtual the size might be incorrect, but that case
+is already undefined; see 7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>].
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>[<I>Drafting notes:</I> No change is required for
+11.7.3 [<A href="https://wg21.link/class.virtual#7">class.virtual</A>] paragraph 7 because &#8220;the type of
+the pointer&#8221; includes the pointed-to type.  No change is
+required for 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4 because
+&#8220;...used to deallocate a class object whose static
+type...&#8221; already refers to the object (and not the
+operand expression).]</P>
+
+<BR><BR>
+</BODY>
+</HTML>

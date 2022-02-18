@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 70</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="70"></A><H4>70.
+  
+Is an array bound a nondeduced context?
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jack Rouse
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Sep 1998<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+<P>Paragraph 4 lists contexts in which template formals are not deduced.
+Were template formals in an expression in the array bound of an array type
+specification intentionally left out of this list? Or was the intent
+that such formals always be explicitly specified? Otherwise I believe the
+following should be valid:</P>
+<PRE>
+    template &lt;int I&gt; class IntArr {};
+
+    template &lt;int I, int J&gt;
+    void concat( int (&amp;d)[I+J], const IntArr&lt;I&gt;&amp; a, const IntArr&lt;J&gt;&amp; b ) {}
+
+    int testing()
+    {
+        IntArr&lt;2&gt; a;
+        IntArr&lt;3&gt; b;
+        int d[5];
+
+        concat( d, a, b );
+    }
+</PRE>
+Can anybody shed some light on this?
+
+<P><U>From John Spicer:</U></P>
+
+<P>Expressions involving nontype template parameters are nondeduced
+contexts, even though they are omitted from the list in
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4.
+ See
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+paragraphs
+12-14:</P>
+
+<OL START="12">
+<LI>
+A template type argument cannot be deduced from the type of a non-type
+<I>template-argument</I>.
+<P>&#160;...</P>
+</LI>
+</OL>
+<OL START="14">
+<LI>
+If, in the declaration of a function template with
+a non-type <I>template-parameter</I>, the non-type <I>template-parameter</I>
+is used in an expression in the function parameter-list, the corresponding
+<I>template-argument</I> must always be explicitly specified or deduced
+elsewhere because type deduction would otherwise always
+fail for such a <I>template-argument</I>.</LI>
+</OL>
+
+<P>
+<B>Proposed resolution (04/01):</B> In
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#4">temp.deduct.type</A>] paragraph 4,
+ add a
+third bullet:</P>
+
+<UL>
+<LI>
+An array bound that is an expression that references a
+<I>template-parameter</I>
+</LI>
+</UL>
+<BR><BR>
+</BODY>
+</HTML>

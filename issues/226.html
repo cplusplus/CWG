@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 226</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="226"></A><H4>226.
+  
+Default template arguments for function templates
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bjarne Stroustrup
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Apr 2000<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+<P>The prohibition of default template arguments for function
+templates is a misbegotten remnant of the time where freestanding
+functions were treated as second class citizens and required all
+template arguments to be deduced from the function arguments
+rather than specified.
+</P>
+
+<P>The restriction seriously cramps programming style by unnecessarily making
+freestanding functions different from member functions, thus making it harder
+to write STL-style code.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>Replace</P>
+
+<BLOCKQUOTE>
+
+A default <I>template-argument</I> shall not be specified in a
+function template declaration or a function template definition, nor
+in the <I>template-parameter-list</I> of the definition of a member of
+a class template.
+
+</BLOCKQUOTE>
+
+<P>by</P>
+
+<BLOCKQUOTE>
+
+A default <I>template-argument</I> shall not be specified in the
+<I>template-parameter-list</I> of the definition of a member of a
+class template.
+
+</BLOCKQUOTE>
+
+<P>The actual rules are as stated for arguments to class templates.
+</P>
+
+<P><B>Notes from 10/00 meeting:</B></P>
+
+<P>The core language working group was amenable to this change.
+Questions arose, however, over the interaction between default
+template arguments and template argument deduction: should it be
+allowed or forbidden to specify a default argument for a deduced
+parameter?  If it is allowed, what is the meaning: should one or
+the other have priority, or is it an error if the default and
+deduced arguments are different?</P>
+
+<P><B>Notes from the 10/01 meeting:</B></P>
+
+<P>It was decided that default arguments should be allowed on friend
+declarations only when the declaration is a definition.  It was
+also noted that it is not necessary to insist that if there
+is a default argument for a given parameter all following parameters
+have default arguments, because (unlike in the class case)
+arguments can be deduced if they are not specified.</P>
+
+<P>Note that there is an interaction with
+<A HREF="115.html">issue 115</A>.</P>
+
+<P><B>Proposed resolution (revised October 2002):</B></P>
+
+<OL>
+<LI>
+<P>In 13.2 [<A href="https://wg21.link/temp.param#9">temp.param</A>] paragraph 9, replace</P>
+
+<BLOCKQUOTE>
+A default <I>template-argument</I> may be specified in a class
+template declaration or a class template definition.  A default
+<I>template-argument</I> shall not be specified in a function
+template declaration or a function template definition, nor in the
+<I>template-parameter-list</I> of the definition of a member of a
+class template.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+A default <I>template-argument</I> may be specified in a template
+declaration.  A default
+<I>template-argument</I> shall not be specified in the
+<I>template-parameter-list</I>s of the definition of a member
+of a class template that appears outside of the member's class.
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.2 [<A href="https://wg21.link/temp.param#9">temp.param</A>] paragraph 9, replace</P>
+
+<BLOCKQUOTE>
+A default <I>template-argument</I> shall not be specified in a friend template
+declaration.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+A default <I>template-argument</I> shall not be specified in a friend
+class template declaration.  If a friend function template declaration
+specifies a default <I>template-argument</I>, that declaration shall be
+a definition and shall be the only declaration of the function template
+in the translation unit.
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.2 [<A href="https://wg21.link/temp.param#11">temp.param</A>] paragraph 11, replace</P>
+
+<BLOCKQUOTE>
+If a <I>template-parameter</I> has a default <I>template-argument</I>,
+all subsequent <I>template-parameters</I> shall have a default
+<I>template-argument</I> supplied.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+If a <I>template-parameter</I> of a class template has a default
+<I>template-argument</I>, all subsequent <I>template-parameters</I>
+shall have a default <I>template-argument</I> supplied.
+[<I>Note:</I> This is not a requirement for function templates
+because template arguments might be deduced (13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]).]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>In 13.10 [<A href="https://wg21.link/temp.fct.spec#1">temp.fct.spec</A>] paragraph 1, replace</P>
+
+<BLOCKQUOTE>
+Template arguments can either be explicitly specified when
+naming the function template specialization or be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) from the context, e.g. from the
+function arguments in a call to the function template
+specialization.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+Template arguments can be explicitly specified when naming the
+function template specialization, deduced from the context
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]), e.g., deduced from the function
+arguments in a call to the function template specialization), or
+obtained from default template arguments.
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#2">temp.arg.explicit</A>] paragraph 2, replace</P>
+
+<BLOCKQUOTE>
+Trailing template arguments that can be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) may be omitted from the list
+of explicit <I>template-argument</I>s.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+Trailing template arguments that can be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from default
+<I>template-argument</I>s may be omitted from the list of
+explicit <I>template-argument</I>s.
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.10.3 [<A href="https://wg21.link/temp.deduct#1">temp.deduct</A>] paragraph 1, replace</P>
+
+<BLOCKQUOTE>
+The values can be either explicitly specified or, in some
+cases, deduced from the use.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+The values can be explicitly specified or, in some cases,
+be deduced from the use or obtained from default
+<I>template-argument</I>s.
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.10.3 [<A href="https://wg21.link/temp.deduct#4">temp.deduct</A>] paragraph 4, replace</P>
+
+<BLOCKQUOTE>
+The resulting substituted and adjusted function type is used as
+the type of the function template for template argument
+deduction.  When all template arguments have been deduced, all
+uses of template parameters in nondeduced contexts are replaced
+with the corresponding deduced argument values.  If the
+substitution results in an invalid type, as described above,
+type deduction fails.
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+<P>The resulting substituted and adjusted function type is used as
+the type of the function template for template argument
+deduction.  If a template argument has not been deduced, its
+default template argument, if any, is used.  [<I>Example:</I>
+</P>
+
+<PRE>
+    template &lt;class T, class U = double&gt;
+    void f(T t = 0, U u = 0);
+
+    void g()
+    {
+        f(1, 'c');         // f&lt;int,char&gt;(1,'c')
+        f(1)               // f&lt;int,double&gt;(1,0)
+        f();               // error: T cannot be deduced
+        f&lt;int&gt;();          // f&lt;int,double&gt;(0,0)
+        f&lt;int,char&gt;();     // f&lt;int,char&gt;(0,0)
+    }
+</PRE>
+
+<P>---<I>end example</I>]</P>
+
+<P>When all template arguments have been deduced or obtained from
+default template arguments, all uses of template parameters in
+nondeduced contexts are replaced with the corresponding deduced
+or default argument values.  If the substitution results in an
+invalid type, as described above, type deduction fails.</P>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

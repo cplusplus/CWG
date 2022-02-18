@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1508</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1508"></A><H4>1508.
+  
+Template initializer-list constructors
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-06-06<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>Can a constructor template ever be an initializer-list constructor
+without <TT>std::initializer_list</TT> (or an alias template
+specialization for it) appearing in the template signature?  E.g., is
+there any way that the constructor in:</P>
+
+<PRE>
+  struct S {
+    template&lt;typename T&gt; S(T);
+  };
+</PRE>
+
+<P>can be an initializer-list constructor?</P>
+
+<P><B>Proposed resolution (October, 2012) [superseded]:</B></P>
+
+<P>Modify 9.4.5 [<A href="https://wg21.link/dcl.init.list#2">dcl.init.list</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constructor is an <I>initializer-list constructor</I> if its first
+parameter is of type <TT>std::initializer_list&lt;E&gt;</TT> or
+reference to possibly cv-qualified
+<TT>std::initializer_list&lt;E&gt;</TT> for some type <TT>E</TT>, and
+either there are no other parameters or else all other parameters have
+default arguments (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]).  [<I>Note:</I>
+Initializer-list constructors are favored over other constructors in
+list-initialization (12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]). <INS>Given a
+class <TT>C</TT>, a constructor template such as <TT>template&lt;class
+T&gt; C(T)</TT> is never instantiated to produce an initializer-list
+constructor, because an initializer list argument causes the
+corresponding parameter to be a non-deduced context (13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]).</INS> &#8212;<I>end note</I>] The template
+<TT>std::initializer_list</TT> is not predefined;...
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (January, 2013):</B></P>
+
+<P>The wording of the new note needs to be adjusted, because such
+a constructor template might have a default template argument that is
+a specialization of <TT>std::initializer_list</TT>.  For example:</P>
+
+<PRE>
+  struct D {
+    template&lt;typename T = std::initializer_list&lt;int&gt;&gt; D(T);
+  };
+  D d{{1, 2, 3}};
+</PRE>
+
+<P><B>Proposed resolution (June, 2013):</B></P>
+
+<P>Change the note in 9.4.5 [<A href="https://wg21.link/dcl.init.list#2">dcl.init.list</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Initializer-list constructors are favored over other
+constructors in list-initialization
+(12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]). <INS>Passing an initializer list as the
+argument to the constructor template <TT>template&lt;class T&gt; C(T)</TT>
+of a class <TT>C</TT> does not create an initializer-list constructor,
+because an initializer list argument causes the corresponding parameter to
+be a non-deduced context (13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]).</INS>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 708</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="708"></A><H4>708.
+  
+Partial specialization of member templates of class templates
+</H4>
+<B>Section: </B>13.7.6&#160; [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Aug, 2008<BR>
+
+
+
+
+<P>The Standard does not appear to specify clearly the effect of a
+partial specialization of a member template of a class template.
+For example:</P>
+
+<PRE>
+    template&lt;class T&gt; struct B {
+         template&lt;class U&gt; struct A { // #1
+             void h() {}
+         };
+         template&lt;class U&gt; struct A&lt;U*&gt; {  // #2
+             void f() {}
+         };
+    };
+
+    template&lt;&gt; template&lt;class U&gt; struct B&lt;int&gt;::A { // #3
+         void g() {}
+    };
+
+    void q(B&lt;int&gt;::A&lt;char*&gt;&amp; p) {
+         p.f();  // #4
+    }
+</PRE>
+
+<P>The explicit specialization at #3 replaces the primary member
+template #1 of <TT>B&lt;int&gt;</TT>; however, it is not clear
+whether the partial specialization #2 should be considered to
+apply to the explicitly-specialized member template of
+<TT>A&lt;int&gt;</TT> (thus allowing the call to <TT>p.f()</TT>
+at #4) or whether the partial specialization will be used only
+for specializations of <TT>B</TT> that are implicitly
+instantiated (meaning that #4 could call <TT>p.g()</TT> but not
+<TT>p.f()</TT>).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

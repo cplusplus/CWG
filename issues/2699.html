@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2699</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2699"></A><H4>2699.
+  
+Inconsistency of <I>throw-expression</I> specification
+</H4>
+<B>Section: </B>7.6.18&#160; [<A href="https://wg21.link/expr.throw">expr.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-04-06<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>Subclause 7.6.18 [<A href="https://wg21.link/expr.throw#2">expr.throw</A>] paragraph 2 and 3 specify:</P>
+
+<BLOCKQUOTE>
+
+<P>Evaluating a <I>throw-expression</I> with an operand throws an
+exception (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]); the type of the exception
+object is determined by removing any top-level cv-qualifier s from the
+static type of the operand and adjusting the type from &#8220;array of
+T&#8221; or function type T to &#8220;pointer to T&#8221;.</P>
+
+<P>A <I>throw-expression</I> with no operand rethrows the currently
+handled exception (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]). The exception is
+reactivated with the existing exception object; no new exception
+object is created. The exception is no longer considered to be caught.</P>
+
+</BLOCKQUOTE>
+
+<P>This means that throwing a value of type <TT>const char[3]</TT>
+would throw a <TT>char*</TT> rather than <TT>const char*</TT>, which
+is not intended.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-03-03):</B></P>
+
+<P>Change in 7.6.18 [<A href="https://wg21.link/expr.throw#2">expr.throw</A>] paragraph 2 through 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>Evaluating a</DEL> <INS>A</INS> <I>throw-expression</I> with
+an operand throws an exception (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>])<DEL>;
+the</DEL><INS>. The array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions
+are performed on the operand.  The</INS> type of the exception object
+is determined by removing any top-level cv-qualifiers from
+the <DEL>static</DEL> type of the <INS>(possibly converted)</INS>
+operand <DEL>and adjusting the type from &#8220;array of T&#8221; or
+function type T to &#8220;pointer to T&#8221;</DEL>.</P>
+
+<P>A <I>throw-expression</I> with no operand rethrows the currently
+handled exception (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).
+<INS>
+If no exception is presently being handled, the function <TT>std::
+terminate</TT> is invoked (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+</INS>
+
+<DEL>The</DEL> <INS>Otherwise, the</INS> exception is
+reactivated with the existing exception object; no new exception
+object is created. The exception is no longer considered to be caught.</P>
+
+<P><DEL>If no exception is presently being handled, evaluating
+a <I>throw-expression</I> with no operand calls std:: terminate()
+(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).</DEL></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

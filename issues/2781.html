@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2781</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2781"></A><H4>2781.
+  
+Unclear recursion in the one-definition rule
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-19<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/402">#402</A>.)</P>
+
+<P>Consider the following tokens appearing in multiple translation units:</P>
+
+<PRE>
+ inline void f() {
+   int a;
+   int b = a;
+ }
+</PRE>
+
+<P>Does <TT>f</TT> violate the one-definition rule?</P>
+
+<P>We have this check in 6.3 [<A href="https://wg21.link/basic.def.odr#14.5">basic.def.odr</A>] paragraph 14.5:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>In each such definition, corresponding names, looked up according to
+6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>], shall refer to the same entity, ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Does <TT>a</TT> refer to the same entity in the several definitions
+of <TT>f</TT>? Subclause 6.3 [<A href="https://wg21.link/basic.def.odr#16">basic.def.odr</A>] paragraph 16
+specifies:</P>
+
+<BLOCKQUOTE>
+
+These requirements also apply to corresponding entities defined within
+each definition of D (including the closure types
+of <I>lambda-expression</I>s, but excluding entities defined within
+default arguments or default template arguments of either D or an
+entity not defined within D). For each such entity and for D itself,
+the behavior is as if there is a single entity with a single
+definition, including in the application of these requirements to
+other entities.
+
+</BLOCKQUOTE>
+
+<P>Thus, the requirements apply recursively to the definitions
+of <TT>a</TT>, but it is unclear whether the conclusion "as if there
+is a single entity with a single definition" is reached at each level
+of the recursion separately.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#16">basic.def.odr</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>If these requirements are satisfied, the behavior for <TT>D</TT>
+is as if there is a single entity with a single definition, including
+in the application of these requirements to other entities.</INS>
+<DEL>These requirements</DEL> <INS>This behavior</INS>
+also <DEL>apply</DEL> <INS>applies</INS> to corresponding entities
+defined within each definition of D (including the closure types
+of <I>lambda-expression</I>s, but excluding entities defined within
+default arguments or default template arguments of either D or an
+entity not defined within D). <DEL>For each such entity and for D
+itself, the behavior is as if there is a single entity with a single
+definition, including in the application of these requirements to
+other entities.</DEL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

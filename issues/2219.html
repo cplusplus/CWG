@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2219</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2219"></A><H4>2219.
+  
+Dynamically-unreachable handlers
+</H4>
+<B>Section: </B>14.4&#160; [<A href="https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>2016-01-04
+ &#160;&#160;&#160;
+
+ <B>Date: </B>Richard Smith<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  #include &lt;cstdio&gt;
+  #include &lt;cstdlib&gt;
+
+  void f() {
+    struct X {
+     ~X() {
+       std::puts("unwound");
+       std::exit(0);
+     }
+    } x;
+    throw 0;
+  }
+
+  int main(int argc, char**) {
+    try {
+      f();
+    } catch (int) {
+      std::puts("caught");
+    }
+  }
+</PRE>
+
+<P>According to the Standard, this should print <TT>unwound</TT> and
+exit. Current optimizing implementations call <TT>terminate()</TT>,
+because:</P>
+
+<UL>
+<LI><P>
+<TT>f()</TT> obviously never unwinds (all paths out of it
+call <TT>exit</TT>)</P></LI>
+
+<LI><P>Therefore the <TT>catch(int)</TT> clause is unreachable</P></LI>
+
+<LI><P>Therefore the <TT>catch(int)</TT> clause is removed</P></LI>
+
+<LI><P>When countering the <TT>throw 0;</TT> statement, the search for a
+handler finds nothing, so <TT>terminate</TT> is called without unwinding
+the stack.</P></LI>
+
+</UL>
+
+<P>More abstractly, before calling <TT>terminate</TT>, we're required to
+check whether there is an active handler for an exception of type <TT>int</TT>,
+and in some sense there is not (because the handler in <TT>main</TT> is
+dynamically unreachable).</P>
+
+<P>There seem to be three possible solutions:</P>
+
+<OL>
+<LI><P>Change the standard to say that <TT>terminate()</TT> is a valid
+response to this situation [this seems problematic, as any non-returning
+destructor now risks program termination, but is in fact the status quo on
+multiple implementations and does not seem to have resulted in any bug
+reports]</P></LI>
+
+<LI><P>Always fully unwind before calling terminate() [this significantly
+harms debugability of exceptions]</P></LI>
+
+<LI><P>Teach the compilers to not optimize out unreachable exception handlers
+[for some implementations, this is &#8220;remove, redesign and reimplement
+middle-end support for EH&#8221;-level difficult, and harms the ability to
+optimize code involving catch handlers]</P></LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1412</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1412"></A><H4>1412.
+  
+Problems in specifying pointer conversions
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-11-01<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>The definedness of various pointer conversions (see
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7, 11.4 [<A href="https://wg21.link/class.mem#20">class.mem</A>] paragraph 20,
+ 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#13">expr.static.cast</A>] paragraph 13) relies on
+the properties of the types involved, such as whether they are
+standard-layout types and their intrinsic alignment.  This
+creates contradictions and unnecessary unspecified behavior when
+the actual values of the pointer involved would actually permit
+the operations.  Recasting the specification in terms of the
+memory model instead of the types of the objects provides a more
+coherent specification.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 7.3.12 [<A href="https://wg21.link/conv.ptr#2">conv.ptr</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to <I>cv</I> <TT>T</TT>,&#8221;
+where <TT>T</TT> is an object type, can be converted to a prvalue
+of type &#8220;pointer to <I>cv</I> <TT>void</TT>&#8221;.  The
+result of converting a <DEL>&#8220;pointer to <I>cv</I>
+<TT>T</TT>&#8221;</DEL> <INS>non-null pointer value of a pointer
+to object type</INS> to a &#8220;pointer to <I>cv</I> void&#8221;
+<DEL>points to the start of the storage location where the object
+of type <TT>T</TT> resides, as if the object is a most derived
+object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) of type <TT>T</TT> (that is,
+not a base class subobject)</DEL> <INS>represents the address of
+the same byte in memory as the original pointer value</INS>.
+The null pointer value is converted to the null pointer value of
+the destination type.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#13">expr.static.cast</A>] paragraph 13 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to <I>cv1</I>
+<TT>void</TT>&#8221; can be converted to a prvalue of type
+&#8220;pointer to <I>cv2</I> <TT>T</TT>,&#8221; where <TT>T</TT>
+is an object type and <I>cv2</I> is the same cv-qualification as,
+or greater cv-qualification than, <I>cv1</I>.  The null pointer
+value is converted to the null pointer value of the destination
+type. <INS>If the original pointer value represents the address
+<TT>A</TT> of a byte in memory and <TT>A</TT> satisfies the
+alignment requirement of <TT>T</TT>, then the resulting pointer
+value represents the same address as the original pointer value,
+that is, <TT>A</TT>.  The result of any other such pointer
+conversion is unspecified.</INS> A value of type pointer to
+object converted to &#8220;pointer to <I>cv</I>
+<TT>void</TT>&#8221; and back, possibly with different
+cv-qualification, shall have its original value...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An object pointer can be explicitly converted to an object
+pointer of a different type.<SUP>70</SUP> When a prvalue
+<TT>v</TT> of <INS>object pointer</INS> type <DEL>&#8220;pointer
+to <TT>T1</TT>&#8221;</DEL> is converted to the <INS>object
+pointer</INS> type &#8220;pointer to <I>cv</I>
+<TT>T<DEL>2</DEL></TT>&#8221;, the result is
+<TT>static_cast&lt;<I>cv</I>
+T<DEL>2</DEL>*&gt;(static_cast&lt;<I>cv</I> void*&gt;(v))</TT>
+<DEL>if both <TT>T1</TT> and <TT>T2</TT> are standard-layout
+types (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) and the alignment requirements
+of <TT>T2</TT> are no stricter than those of <TT>T1</TT>, or if
+either type is <TT>void</TT></DEL>.  Converting a prvalue of type
+&#8220;pointer to <TT>T1</TT>&#8221; to the type &#8220;pointer
+to <TT>T2</TT>&#8221; (where <TT>T1</TT> and <TT>T2</TT> are
+object types and where the alignment requirements of <TT>T2</TT>
+are no stricter than those of <TT>T1</TT>) and back to its
+original type yields the original pointer value. <DEL>The result
+of any other such pointer conversion is unspecified.</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

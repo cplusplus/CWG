@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 580</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="580"></A><H4>580.
+  
+Access in <I>template-parameter</I>s of member and friend definitions
+</H4>
+<B>Section: </B>11.8&#160; [<A href="https://wg21.link/class.access">class.access</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 May 2006<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+<P>The resolution of <A HREF="372.html">issue 372</A> leaves
+unclear whether the following are well-formed or not:</P>
+
+<PRE>
+    class C {
+        typedef int I;                // private
+        template &lt;int&gt; struct X;
+        template &lt;int&gt; friend struct Y;
+    }
+
+    template &lt;C::I&gt; struct C::X { };  // C::I accessible to member?
+
+    template &lt;C::I&gt; struct Y { };     // C::I accessible to friend?
+</PRE>
+
+<P>Presumably the answer to both questions is &#8220;yes,&#8221; but
+the new wording does not address <I>template-parameter</I>s.</P>
+
+<P><B>Proposed resolution (June, 2008) [SUPERSEDED]:</B></P>
+
+<P>Change 11.8 [<A href="https://wg21.link/class.access#6">class.access</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+...For purposes of access control, the <I>base-specifier</I>s of a class<INS>, the
+<I>template-parameter</I>s of a <I>template-declaration</I>,</INS> and
+the definitions of class members that appear outside of the class
+definition are considered to be within the scope of that class...
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The proposed resolution preserves the word &#8220;scope&#8221;
+as a holdover from the original specification prior to <A HREF="372.html">issue 372</A>, which intended to change access
+determination from a scope-based model to an entity-based model.
+The resolution should eliminate all references to scope and simply
+use the entity-based model.</P>
+
+<P>(See also <A HREF="718.html">issue 718</A>.)</P>
+
+<P><B>Proposed resolution (February, 2010) [SUPERSEDED]:</B></P>
+
+<P>Change 11.8 [<A href="https://wg21.link/class.access">class.access</A>] paragraphs 6-7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>All access controls in 11.8 [<A href="https://wg21.link/class.access">class.access</A>] affect
+the ability to access a class member name from <INS>a declaration
+of</INS> a particular <DEL>scope</DEL> <INS>entity, including
+references appearing in those parts of the declaration that
+precede the name of the entity being declared and implicit
+references to constructors, conversion functions, and destructors
+involved in the creation and destruction of a static data
+member</INS>.  <DEL>For purposes of access control, the
+<I>base-specifier</I>s of a class and the definitions of class
+members that appear outside of the class definition are
+considered to be within the scope of that class.  In particular,
+access controls apply as usual to member names accessed as part
+of a function return type, even though it is not possible to
+determine the access privileges of that use without first parsing
+the rest of the function declarator.  Similarly, access control
+for implicit calls to the constructors, the conversion functions,
+or the destructor called to create and destroy a static data
+member is performed as if these calls appeared in the scope of
+the member's class.</DEL> [<I>Example:</I>
+</P>
+
+<PRE>
+  class A {
+    typedef int I;    //<SPAN CLASS="cmnt"> private member</SPAN>
+    I f();
+    friend I g(I);
+    static I x;
+<INS>    template&lt;int&gt; struct X;
+    template&lt;int&gt; friend struct Y;</INS>
+  protected:
+    struct B { };
+  };
+
+  A::I A::f() { return 0; }
+  A::I g(A::I p = A::x);
+  A::I g(A::I p) { return 0; }
+  A::I A::x = 0;
+<INS>  template&lt;A::I&gt; struct A::X { };
+  template&lt;A::I&gt; struct Y { };
+</INS>
+  struct D: A::B, A { };
+</PRE>
+
+<P>Here, all the uses of <TT>A::I</TT> are well-formed because
+<TT>A::f</TT><DEL> and</DEL><INS>,</INS> <TT>A::x</TT><INS>, and
+<TT>A::X</TT></INS> are members of class <TT>A</TT> and
+<TT>g</TT> <DEL>is a friend</DEL> <INS>and <TT>Y</TT> are
+friends</INS> of class <TT>A</TT>. This implies, for example,
+that access checking on the first use of <TT>A::I</TT> must be
+deferred until it is determined that this use of <TT>A::I</TT> is
+as the return type of a member of class <TT>A</TT>. Similarly,
+the use of <TT>A::B</TT> as a <I>base-specifier</I> is
+well-formed because <TT>D</TT> is derived from <TT>A</TT>, so
+checking of <I>base-specifier</I>s must be deferred until the
+entire <I>base-specifier-list</I> has been seen.  &#8212;<I>end
+example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

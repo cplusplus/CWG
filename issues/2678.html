@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2678</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2678"></A><H4>2678.
+  
+<TT>std::source_location::current</TT> is unimplementable
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-07
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;source_location&gt;
+
+  inline char *f() {
+    static char array[std::source_location::current().line()];
+    return array;
+  }
+</PRE>
+
+<P>The sequence of tokens comprising the definition of <TT>f</TT> can
+appear in multiple translation units, on different lines. The
+one-definition rule is not violated.  Thus, there is a single
+function <TT>f</TT> in the program with a unique static local
+object <TT>array</TT>, but that object would have a different type in
+each translation unit.  It is unclear how to implement this, absent
+the conservative approach of always returning a value-initialized
+object from <TT>std::source_location::current</TT>, which would defeat
+its purpose.</P>
+
+<P>Possible approaches to resolve this issue might include:
+<UL>
+<LI>Do not mark the <TT>source_location</TT> accessors constexpr; they
+are not deterministic.</LI>
+<LI>Prohibit calls to <TT>source_location</TT> accessors during
+constant evaluation unless the <TT>current()</TT> call happened in a
+context that can only appear once in a program.</LI>
+<LI>Do not mark the <TT>current</TT> function constexpr / consteval.</LI>
+<LI>Change the ODR to prohibit calling the <TT>current</TT> function
+in an inline function or in a function template.</LI>
+</UL>
+
+</P>
+
+<P><B>2023-01-08</B></P>
+
+<P>Forwarded to LWG / LEWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1416">cplusplus/papers#1416</A>,
+by decision of the CWG chair.</P>
+
+<P><B>EWG 2023-02-07</B></P>
+
+<P>EWG approves of the approach for CWG2678 of changing the ODR to
+make use of <TT>source_location</TT> in a way that causes an inline
+function/function template/etc to 'be different' be an ODR
+violation.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-08):</B></P>
+
+<P>Add a new bullet after 6.3 [<A href="https://wg21.link/basic.def.odr#14.8">basic.def.odr</A>] bullet 14.8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+In each such definition, const objects with static or thread storage
+duration shall be constant-initialized if the object is
+constant-initialized in any such definition.</LI>
+<LI class="ins">
+In each such definition, corresponding manifestly constant-evaluated expressions that are not value-dependent shall have the same value
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>], 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]).
+</LI>
+<LI>In each such
+definition, the overloaded operators referred to, the implicit calls
+to conversion functions, constructors, operator new functions and
+operator delete functions, shall refer to the same function.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

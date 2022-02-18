@@ -1,0 +1,230 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1299</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1299"></A><H4>1299.
+  
+&#8220;Temporary objects&#8221; vs &#8220;temporary expressions&#8221;
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-04-16<BR>
+
+
+<P>[Voted into the WP at the July, 2017 meeting as document P0727R0.]</P>
+
+
+
+<P>The Standard is insufficiently precise in dealing with temporaries.
+It is not always clear when the term &#8220;temporary&#8221; is referring
+to an expression whose result is a prvalue and when it is referring to
+a temporary object.</P>
+
+<P>(See also <A HREF="1568.html">issue 1568</A>.)</P>
+
+<P><B>Proposed resolution (February, 2014) [SUPERSEDED]:</B></P>
+
+<P>The resolution is contained in document N3918.</P>
+
+<P>This resolution also resolves issues <A HREF="1651.html">1651</A>
+and <A HREF="1893.html">1893</A>.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>Concerns have been raised  that the meaning of
+&#8220;corresponding temporary object&#8221; is not clear enough
+in the proposed wording.  In addition, N3918 says that it
+resolves <A HREF="1300.html">issue 1300</A>, but that issue
+is 1) marked as a duplicate of <A HREF="914.html">issue 914</A>
+and 2) the subject of continuing deliberations in EWG.  This
+issue is being returned to "review" status to allow CWG to
+address these concerns.</P>
+
+<P><B>Proposed resolution (March, 2017):</B></P>
+
+<OL>
+<LI><P>Change Clause 7 [<A href="https://wg21.link/expr#12">expr</A>] paragraph 12 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...is applied. [<I>Note:</I> If the expression is an lvalue of
+class type, it must have a volatile copy constructor to
+initialize the temporary <INS>object</INS> that is the result
+object of the lvalue-to-rvalue conversion.  &#8212;<I>end
+note</I>] The glvalue expression...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The third context is when a reference is bound to a
+temporary <INS>object</INS>.<SUP>116</SUP> The
+temporary <INS>object</INS> to which the reference is bound or
+the temporary <INS>object</INS> that is the complete object of a
+subobject to which the reference is bound persists for the
+lifetime of the reference <INS>if the glvalue referring to the
+temporary object was obtained through one of the following:</INS>
+</P>
+
+<UL>
+<LI><P><INS>a temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]),</INS></P></LI>
+
+<LI><P><INS><TT>(</TT> <I>expression</I> <TT>)</TT>,
+where <I>expression</I> is one of these expressions,</INS></P></LI>
+
+<LI><P><INS>subscripting (7.6.1.2 [<A href="https://wg21.link/expr.sub">expr.sub</A>]) of an array
+operand, where that operand is one of these expressions,</INS></P></LI>
+
+<LI><P><INS>a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) using
+the <TT>.</TT> operator where the left operand is one of these
+expressions and the right operand designates a non-static data member
+of non-reference type,</INS></P></LI>
+
+<LI><P><INS>a pointer-to-member operation (7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>])
+using the <TT>.*</TT> operator where the left operand is one of these
+expressions and the right operand is a pointer to data member of
+non-reference type,</INS></P></LI>
+
+<LI><P><INS>a <TT>const_cast</TT> (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+<TT>static_cast</TT> (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]),
+<TT>dynamic_cast</TT> (7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]), or
+<TT>reinterpret_cast</TT> (7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]) converting
+a glvalue operand that is one of these expressions to a glvalue
+referring to that operand,</INS></P></LI>
+
+<LI><P><INS>a conditional expression (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]) that
+is a glvalue where the second or third operand is one of these
+expressions, or</INS></P></LI>
+
+<LI><P><INS>a comma expression (7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]) that
+is a glvalue where the right operand is one of these
+expressions.</INS></P></LI>
+
+</UL>
+
+<P><INS>[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;typename T&gt; using id = T;
+
+  int&amp;&amp; a = id&lt;int[3]&gt;{1, 2, 3}[i];          //<SPAN CLASS="cmnt"> temporary array has same lifetime as</SPAN> a
+  const int&amp; b = static_cast&lt;const int&amp;&gt;(0); //<SPAN CLASS="cmnt"> temporary </SPAN>int<SPAN CLASS="cmnt"> has same lifetime as</SPAN> b
+  int&amp;&amp; c = cond ? id&lt;int[3]&gt;{1, 2, 3}[i] : static_cast&lt;int&amp;&amp;&gt;(0);
+                                             //<SPAN CLASS="cmnt"> exactly one of the two temporaries is lifetime-extended</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>] [<I>Note:</I> If a temporary object
+has a reference member initialized by another temporary object,
+lifetime extension applies recursively to such a member's initializer.
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct S {
+    const int&amp; m;
+  };
+  const S&amp; s = S{1};  //<SPAN CLASS="cmnt"> both </SPAN>S<SPAN CLASS="cmnt"> and </SPAN>int<SPAN CLASS="cmnt"> temporaries have lifetime of</SPAN> s</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>] &#8212;<I>end note</I>]</INS></P>
+
+<P>
+<DEL>except</DEL> <INS>The exceptions to this lifetime rule
+are</INS>:</P>
+
+<UL>
+<LI><P>A temporary object bound to a reference parameter...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.2.5 [<A href="https://wg21.link/over.match.copy#1.2">over.match.copy</A>] bullet 1.2 as follows:</P></LI>
+
+<UL>
+<LI><P>When the type of the initializer expression is a class
+type &#8220;<I>cv</I> <TT>S</TT>&#8221;, the non-explicit
+conversion functions of <TT>S</TT> and its base classes are
+considered. When initializing a temporary <INS>object
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>])</INS> to be bound to the first
+parameter of a constructor...</P></LI>
+
+</UL>
+
+<LI><P>Change 16.4.5.9 [<A href="https://wg21.link/res.on.arguments#1.3">res.on.arguments</A>] bullet 1.3 as follows:</P></LI>
+
+<UL>
+<LI><P>...[<I>Note:</I> If a program casts an lvalue to an xvalue while
+passing that lvalue to a library function (e.g. by calling the
+function with the argument std::move(x)), the program is
+effectively asking that function to treat that lvalue as a
+temporary <INS>object</INS>.  The implementation is free...</P></LI>
+
+</UL>
+
+<LI><P>Change 20.3.2.3.4 [<A href="https://wg21.link/util.smartptr.weak.assign#2">util.smartptr.weak.assign</A>] paragraph 2 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<I>Remarks</I>: The implementation may meet the effects (and the
+implied guarantees) via different means, without creating a
+temporary <INS>object</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the footnote in 29.6.2.1 [<A href="https://wg21.link/template.valarray.overview#1">template.valarray.overview</A>] paragraph 1
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...generalized subscript operators. [<I>Footnote:</I> The intent is
+to specify an array template that hass the minimum functionality
+necessary to address aliasing ambiguities and the proliferation of
+<DEL>temporaries</DEL> <INS>temporary objects</INS>. Thus...
+&#8212;<I>end footnote</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change the last bullet of C.6.16 [<A href="https://wg21.link/diff.cpp03.input.output">diff.cpp03.input.output</A>] as
+follows:</P></LI>
+
+<UL>
+<LI><P>initializing a <TT>const bool &amp;</TT> which would bind
+to a temporary <INS>object</INS>.</P></LI>
+
+</UL>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="943.html">943</A>
+and <A HREF="1076.html">1076</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

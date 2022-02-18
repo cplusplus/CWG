@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 856</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="856"></A><H4>856.
+  
+Overlapping concept and requirements scopes
+</H4>
+<B>Section: </B>_N2960_.3.3.9&#160; [<A href="https://wg21.link/basic.scope.req">basic.scope.req</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 April, 2009<BR>
+
+
+
+
+<P>According to _N2960_.3.3.9 [<A href="https://wg21.link/basic.scope.req#2">basic.scope.req</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+In a constrained context (_N2914_.14.11 [<A href="https://wg21.link/temp.constrained">temp.constrained</A>]), the names of
+all associated functions inside the concepts named by the concept
+requirements in the template's requirements are declared in the
+same scope as the constrained template's template parameters.
+
+</BLOCKQUOTE>
+
+<P>This does not appear to cover the case when the requirement
+appears in a concept definition:</P>
+
+<PRE>
+    auto concept B&lt;class T&gt; {
+         void f( T );
+    }
+
+    auto concept C&lt;class T&gt; {
+         typename U = int;
+         requires B&lt;U&gt;;  // Is void f(U) placed in the scope of C?
+
+         void g(U x) {
+             f(x);   // Ok, finds the 'f(U)' implicitly declared as a
+                     // result of the associated requirement B&lt;U&gt;.
+         }
+    }
+
+    void f(int);
+
+    void g() {
+         C&lt;char&gt;::f(42); // Ok?
+    }
+</PRE>
+
+<P>This program should be well-formed, but the current wording does
+not make that clear.</P>
+
+<P>Another question that must be addressed is if <TT>C</TT> also
+contained an explicit declaration of <TT>f(U)</TT>, either before
+or after <TT>B&lt;U&gt;</TT>, and whether it would need a satisfier
+within a concept map to <TT>C</TT>.</P>
+
+<P>(See also <A HREF="866.html">issue 866</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

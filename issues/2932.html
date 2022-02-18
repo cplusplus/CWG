@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2932</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2932"></A><H4>2932.
+  
+Value range of empty enumeration
+</H4>
+<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Benjamin Sch.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-31
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/604">#604</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  enum E { };
+  constexpr auto x = static_cast&lt;E&gt;(-1);
+</PRE>
+
+<P>It is unclear whether the hypothetical integer type for <TT>E</TT>
+is a signed integer type of width 1 or an unsigned integer type of
+width 0, which does not have a signed counterpart and thus does not
+exist.  The former choice makes the example well-formed, the latter
+one ill-formed.  Before P1236, the specification was clear.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 9.7.1 [<A href="https://wg21.link/dcl.enum#8">dcl.enum</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+For an enumeration whose underlying type is fixed, the values of the
+enumeration are the values of the underlying type. Otherwise, the
+values of the enumeration are the values representable
+by a hypothetical integer type with minimal width M such that all
+enumerators can be represented<INS>; if <INS>if
+the <I>enumerator-list</I> is empty or</INS> all enumerators have
+value 0, the values of the enumeration consist of the single value 0
+and <I>M</I> is 0</INS>. The width of the smallest bit-field large
+enough to hold all the values of the enumeration type is <INS>the
+maximum of 1 and</INS> M.
+<INS>[ Note: </INS> It is possible to define an enumeration that has
+values not defined by any of its enumerators. <INS>-- end note ]</INS>
+<DEL>If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.</DEL> [Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-10-25</B></P>
+
+<P>A value needs at least one bit to be represented, which always
+allows to differentiate two values.  Thus, having the "values of an
+enumeration" be a single value makes no sense.</P>
+
+<P>The wording in C++17 [dcl.enum] p8 said:</P>
+
+<BLOCKQUOTE>
+
+For an enumeration whose underlying type is fixed, the values of the
+enumeration are the values of the underlying type. Otherwise, for an
+enumeration where e<SUB>min</SUB> is the smallest enumerator and
+e<SUB>max</SUB> is the largest, the values of the enumeration are the
+values in the range b<SUB>min</SUB> to b<SUB>max</SUB>, defined as
+follows: Let K be 1 for a two's complement representation and 0 for a
+ones' complement or sign-magnitude representation. b<SUB>max</SUB> is
+the smallest value greater than or equal to max(|e<SUB>min</SUB>| - K,
+|e<SUB>max</SUB>|) and equal to 2<SUP>M</SUP> - 1, where M is a
+non-negative integer. b<SUB>min</SUB> is zero if e<SUB>min</SUB> is
+non-negative and -(b<SUB>max</SUB> + K) otherwise. The size of the
+smallest bit-field large enough to hold all the values of the
+enumeration type is max(M, 1) if b<SUB>min</SUB> is zero and M + 1
+otherwise. It is possible to define an enumeration that has values not
+defined by any of its enumerators. If the enumerator-list is empty,
+the values of the enumeration are as if the enumeration had a single
+enumerator with value 0.
+
+</BLOCKQUOTE>
+
+<P>If there is a single enumerator with value 0, e<SUB>min</SUB> = 0
+and e<SUB>max</SUB> = 0. A two's complement representation is now
+required, thus K=1.  b<SUB>max</SUB> is 0 with M = 0.  b<SUB>min</SUB>
+is 0.
+</P>
+
+<P><B>CWG 2025-11-08</B></P>
+
+<P>The wording in the proposed resolution restores the C++17
+situation.  However, both clang and gcc agree that the values of an
+empty enumeration or one with all enumerators having value 0 are
+actually 0 and 1, reflecting the single bit of storage needed for the
+representation.  CWG observed that empty classes also occupy one byte
+of storage, even though they hold no values at all.</P>
+
+<P>
+EWG should decide whether to keep the C++17 rule or adjust the wording to reflect the implementation practice. Forwarded to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/2138">paper issue 2138</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

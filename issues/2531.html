@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2531</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2531"></A><H4>2531.
+  
+Static data members redeclared as constexpr
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-16<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>C++17 made constexpr static data members implicitly inline
+(9.2.6 [<A href="https://wg21.link/dcl.constexpr#1">dcl.constexpr</A>] paragraph 1):</P>
+
+<BLOCKQUOTE>
+
+A function or static data member declared with the <TT>constexpr</TT> or
+<TT>consteval</TT> specifier is implicitly an inline function or variable
+(9.2.8 [<A href="https://wg21.link/dcl.inline">dcl.inline</A>]).
+
+</BLOCKQUOTE>
+
+<P>However, that makes the following well-formed C++14 program ill-formed,
+no diagnostic required, per 9.2.8 [<A href="https://wg21.link/dcl.inline#5">dcl.inline</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+If a function or variable with external or module linkage is declared
+inline in one definition domain, an inline declaration of it shall be
+reachable from the end of every definition domain in which it is
+declared; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> x.hh</SPAN>
+  struct X {
+    static const int x;
+  };
+
+  //<SPAN CLASS="cmnt"> TU 1</SPAN>
+  #include "x.hh"
+  constexpr int X::x{};
+
+  //<SPAN CLASS="cmnt"> TU 2</SPAN>
+  #include "x.hh"
+  int main() { return !&amp;X::x; }
+</PRE>
+
+<P><B>Proposed resolution (reviewed by CWG 2023-02-07, approved by CWG 2023-11-07):</B></P>
+
+<P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#1">dcl.constexpr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A function or static data member declared with the <TT>constexpr</TT> or
+<TT>consteval</TT> specifier
+<INS>on its first declaration</INS>
+is implicitly an inline function or variable
+(9.2.8 [<A href="https://wg21.link/dcl.inline">dcl.inline</A>]).
+
+</BLOCKQUOTE>
+
+<P>
+<I>Drafting note:</I> Functions must be declared <TT>constexpr</TT> on
+every declaration if on any, so this isn't a change for them.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

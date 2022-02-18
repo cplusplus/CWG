@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 411</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="411"></A><H4>411.
+  
+Use of universal-character-name in character versus string literals
+</H4>
+<B>Section: </B>5.13.5&#160; [<A href="https://wg21.link/lex.string">lex.string</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Kanze
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Apr 2003<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P2029R4.]</P>
+
+<P>5.13.5 [<A href="https://wg21.link/lex.string#5">lex.string</A>] paragraph 5 reads</P>
+<BLOCKQUOTE>
+Escape sequences and
+universal-character-names in string literals have the same meaning as in
+character literals, except that the single quote ' is representable
+either by itself or by the escape sequence \', and the double quote "
+shall be preceded by a \. In a narrow string literal, a
+universal-character-name may map to more than one char element due to
+multibyte encoding.
+</BLOCKQUOTE>
+
+<P>The first sentence refers us to 5.13.3 [<A href="https://wg21.link/lex.ccon">lex.ccon</A>],
+where we read in the
+first paragraph that "An ordinary character literal that contains a
+single c-char has type char [...]."  Since the grammar shows that a
+universal-character-name is a c-char, something like '\u1234' must have
+type char (and thus be a single char element); in paragraph 5, we read
+that "A universal-character-name is translated to the encoding, in the
+execution character set, of the character named.  If there is no such
+encoding, the universal-character-name is translated to an
+implemenation-defined encoding."</P>
+
+<P>This is in obvious contradiction with the second sentence.  In addition,
+I'm not really clear what is supposed to happen in the case where the
+execution (narrow-)character set is UTF-8.  Consider the character
+\u0153 (the oe in the French word oeuvre).  Should '\u0153' be a char,
+with an "error" value, say '?' (in conformance with the requirement that
+it be a single char), or an int, with the two char values 0xC5, 0x93, in
+an implementation defined order (in conformance with the requirement
+that a character representable in the execution character set be
+represented).  Supposing the former, should "\u0153" be the equivalent of
+"?" (in conformance with the first sentence), or "\xC5\x93" (in
+conformance with the second).</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We decided we should forward this to the C committee and let them
+resolve it.  Sent via e-mail to John Benito on November 14, 2003.</P>
+
+<P><B>Reply from John Benito:</B></P>
+<BLOCKQUOTE>
+<P>I talked this over with the C project editor, we believe this was
+handled by the C committee before publication of the current standard.</P>
+
+<P>WG14 decided there needed to be a more restrictive rule
+for one-to-one mappings: rather than saying "a single c-char"
+as C++ does, the C standard says "a single character that
+maps to a single-byte execution character"; WG14 fully expect
+some (if not many or even most) UCNs to map to multiple characters.</P>
+
+<P>Because of the fundamental differences between C and C++ character
+types, I am not sure the C committee is qualified to answer this
+satisfactorily for WG21.  WG14 is willing to review any decision reached
+for compatibility.</P>
+
+<P>I hope this helps.</P>
+</BLOCKQUOTE>
+
+<P>(See also <A HREF="912.html">issue 912</A> for a related
+question.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2687</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2687"></A><H4>2687.
+  
+Calling an explicit object member function via an address-of-overload-set
+</H4>
+<B>Section: </B>12.2.2.2.1&#160; [<A href="https://wg21.link/over.match.call.general">over.match.call.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matthew House
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-16<BR>
+
+
+<P>[ Resolved by paper P2797R0, adopted in February 2023. ]</P>
+
+<P>Subclause 12.2.2.2.1 [<A href="https://wg21.link/over.match.call.general#2">over.match.call.general</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+If the <I>postfix-expression</I> is the address of an overload set,
+overload resolution is applied using that set as described above. If
+the function selected by overload resolution is a non-static member
+function, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>However, 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3 states that the
+address of an explicit object member function is a plain pointer to
+function, not a pointer to member.  The former can be invoked using
+the regular function call syntax (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>])
+without the need for a pointer-to-member expression
+(7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]).  For example, absent any overloading and
+given some function <TT>f</TT>, the
+expression <TT>(&amp;A::f)(A())</TT> could be valid if <TT>f</TT> is a
+static member function or an explicit object member function.
+However, that expression cannot possibly be valid if <TT>f</TT> is an
+implicit object member function.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-27):</B></P>
+
+<P>Change in 12.2.2.2.1 [<A href="https://wg21.link/over.match.call.general#2">over.match.call.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <I>postfix-expression</I> is the address of an overload set,
+overload resolution is applied using that set as described above. If
+the function selected by overload resolution is
+<DEL>a non-static</DEL> <INS>an implicit object</INS> member function,
+the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P><B>EWG 2023-02-06</B></P>
+
+<P>Subclause 12.3 [<A href="https://wg21.link/over.over#4">over.over</A>] paragraph 4 says that
+explicit-object member functions match both kinds of pointer type, and
+11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2 seems to try to
+transform <TT>(&amp;A::f)(A())</TT>
+into <TT>(&amp;(*this).A::f)(A())</TT> if <TT>f</TT> is an
+explicit-object member function.</P>
+
+
+<P>
+<B>Editor's observation:</B> 12.3 [<A href="https://wg21.link/over.over#4">over.over</A>] paragraph 4 was a
+missed edit applying P0847R7; it was rectified with commit
+<A HREF="https://github.com/cplusplus/draft/commit/0c9dd96bbfc421a0feabcbc2b6850cd369ed181f">0c9dd96bb</A>
+on 2023-01-17.</P>
+
+<P><B>Additional notes (March, 2023)</B></P>
+
+<P>The concern about incorrectly applying the <TT>this</TT>
+transformation was addressed by P2797R0 (Proposed resolution for
+<A HREF="2692.html">CWG2692</A> Static and explicit object member
+functions with the same parameter-type-lists).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

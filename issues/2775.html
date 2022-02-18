@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2775</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2775"></A><H4>2775.
+  
+Unclear argument type for copy of exception object
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-31<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Subclause 14.2 [<A href="https://wg21.link/except.throw#5">except.throw</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+When the thrown object is a class object, the constructor selected for
+the copy-initialization as well as the constructor selected for a
+copy-initialization considering the thrown object as an lvalue shall
+be non-deleted and accessible, even if the copy/move operation is
+elided (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]). The destructor is potentially
+invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+
+<P>This provision is for capturing a copy constructor for
+implementations not using reference-counted
+<TT>std::exception_ptr</TT>s, but that ought to be described
+separately from the "thrown object", which can be interpreted as the
+operand of the <I>throw-expression</I>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-09-15) [SUPERSEDED]:</B></P>
+
+<P>Change in 14.2 [<A href="https://wg21.link/except.throw#5">except.throw</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When the thrown object is a class object, the constructor selected for
+the copy-initialization as well as the constructor selected for a
+copy-initialization considering the thrown object as an lvalue shall
+be non-deleted and accessible, even if the copy/move operation is
+elided (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).</DEL>
+
+<INS>Let <TT>T</TT> denote the type of the exception
+object. Copy-initialization of an object of type <TT>T</TT> from an
+lvalue of type <TT>const T</TT> in a context unrelated to any class
+shall be well-formed.  If <TT>T</TT> is a class type,</INS>
+<DEL>The</DEL> <INS>the</INS> destructor <INS>of <TT>T</TT></INS> is
+potentially invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-11-09</B></P>
+
+<P>The drafting should also consider odr-use of the constructor
+potentially invoked for the copy-initialization.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-10) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#9">basic.def.odr</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+An assignment operator function in a class is odr-used by an
+implicitly-defined copy assignment or move assignment function for
+another class as specified in 11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]. A
+constructor for a class is odr-used as specified in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] <INS>and when selected for the potential
+copy-initialization as specified in 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]</INS>. A
+destructor for a class is odr-used if it is potentially invoked
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.2 [<A href="https://wg21.link/except.throw#5">except.throw</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When the thrown object is a class object, the constructor selected for
+the copy-initialization as well as the constructor selected for a
+copy-initialization considering the thrown object as an lvalue shall
+be non-deleted and accessible, even if the copy/move operation is
+elided (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).</DEL>
+
+<INS>Let <TT>T</TT> denote the type of the exception
+object. Copy-initialization of an object of type <TT>T</TT> from an
+lvalue of type <TT>const T</TT> in a context unrelated to <TT>T</TT>
+shall be well-formed.  If <TT>T</TT> is a class type,</INS>
+<DEL>The</DEL> <INS>the</INS> destructor <INS>of <TT>T</TT></INS> is
+potentially invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in 14.2 [<A href="https://wg21.link/except.throw#5">except.throw</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When the thrown object is a class object, the constructor selected for
+the copy-initialization as well as the constructor selected for a
+copy-initialization considering the thrown object as an lvalue shall
+be non-deleted and accessible, even if the copy/move operation is
+elided (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).</DEL>
+
+<INS>Let <TT>T</TT> denote the type of the exception
+object. Copy-initialization of an object of type <TT>T</TT> from an
+lvalue of type <TT>const T</TT> in a context unrelated to <TT>T</TT>
+shall be well-formed.  If <TT>T</TT> is a class type, the selected
+constructor is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) and</INS>
+<DEL>The</DEL> <INS>the</INS> destructor <INS>of <TT>T</TT></INS> is
+potentially invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

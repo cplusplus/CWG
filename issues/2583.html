@@ -1,0 +1,193 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2583</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2583"></A><H4>2583.
+  
+Common initial sequence should consider over-alignment
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-03<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    int i;
+    char c;
+  };
+
+  struct B {
+    int i;
+    alignas(8) char c;
+  };
+
+  union U { A a; B b; };
+</PRE>
+
+<P>On a lot of platforms, <TT>A</TT> and <TT>B</TT> do not have the
+same layout, yet 11.4.1 [<A href="https://wg21.link/class.mem.general#23">class.mem.general</A>] paragraph 23 does not
+consider differences in alignment in the rules for "common initial
+sequence":</P>
+
+<BLOCKQUOTE>
+
+The common initial sequence of two standard-layout struct
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types is the longest sequence of
+non-static data members and bit-fields in declaration order, starting
+with the first such entity in each of the structs, such that
+corresponding entities have layout-compatible types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), either both entities are declared with the
+<TT>no_unique_address</TT> attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]) or
+neither is, and either both entities are bit-fields with the same
+width or neither is a bit-field.
+
+</BLOCKQUOTE>
+
+<P>In the following example,</P>
+
+<PRE>
+  struct S0 {
+    alignas(16) char x[128];
+    int i;
+  };
+  struct alignas(16) S1 {
+    char x[128];
+    int i;
+  };
+</PRE>
+
+<P>
+<TT>S0</TT> and <TT>S1</TT> have the same alignment, yet per the
+suggested rules below, they will not be layout-compatible.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>] paragraphs 23-25 as follows (also
+add bullets):</P>
+
+<BLOCKQUOTE>
+
+The common initial sequence of two standard-layout struct
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types is the longest sequence of
+non-static data members and bit-fields in declaration order, starting
+with the first such entity in each of the structs, such that
+
+<UL>
+<LI>corresponding entities have layout-compatible types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]),
+</LI>
+
+<LI>
+<INS>either both entities have <I>alignment-specifier</I>s that
+specify equivalent alignment or neither entity has
+an <I>alignment-specifier</I> (9.12.2 [<A href="https://wg21.link/dcl.align">dcl.align</A>]),</INS>
+</LI>
+
+<LI>either both entities are declared with the
+<TT>no_unique_address</TT> attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]) or
+neither is, and
+</LI>
+
+<LI>either both entities are bit-fields with the same width or neither
+is a bit-field.
+</LI>
+
+</UL>
+
+<P>[...]</P>
+
+<P>Two standard-layout struct (11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types are
+layout-compatible classes if their common initial sequence comprises
+all members and bit-fields of both classes (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>])
+<INS>and either both types are declared with
+<I>alignment-specifier</I>s that specify equivalent alignment or
+neither type has an <I>alignment-specifier</I></INS>.</P>
+
+<P>Two standard-layout unions are layout-compatible if they have the
+same number of non-static data members and
+
+corresponding non-static
+data members (in any order)
+
+<UL>
+<LI>have layout-compatible types (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>])
+<INS>and</INS>
+</LI>
+
+<LI>
+<INS>either both
+have <I>alignment-specifier</I>s that specify equivalent alignment or
+neither has an <I>alignment-specifier</I></INS>.</LI>
+
+</UL>
+</P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG telecon 2022-08-26):</B></P>
+
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>] paragraphs 23-25 as follows (also
+add bullets):</P>
+
+<BLOCKQUOTE>
+
+The common initial sequence of two standard-layout struct
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types is the longest sequence of
+non-static data members and bit-fields in declaration order, starting
+with the first such entity in each of the structs, such that
+
+<UL>
+<LI>corresponding entities have layout-compatible types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]),
+</LI>
+
+<LI>
+<INS>corresponding entities have the same alignment requirements (6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]),</INS>
+</LI>
+
+<LI>either both entities are declared with the
+<TT>no_unique_address</TT> attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]) or
+neither is, and
+</LI>
+
+<LI>either both entities are bit-fields with the same width or neither
+is a bit-field.
+</LI>
+
+</UL>
+
+<P>[...]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

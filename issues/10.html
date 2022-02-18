@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 10</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="10"></A><H4>10.
+  
+Can a nested class access its own class name as a qualified name if it is a private member of the enclosing class?
+</H4>
+<B>Section: </B>11.8.8&#160; [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Josee Lajoie
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>Paragraph 1 says: "The members of a nested class have no special access
+to members of an enclosing class..."</P>
+
+<P>This prevents a member of a nested class from being defined outside
+of its class definition. i.e. Should the following be well-formed?</P>
+<PRE>
+    class D {
+        class E {
+            static E* m;
+        };
+    };
+
+    D::E* D::E::m = 1; // ill-formed
+</PRE>
+This is because the nested class does not have access to the member <TT>E</TT>
+in <TT>D</TT>. 11.8 [<A href="https://wg21.link/class.access">class.access</A>]
+
+paragraph 5 says that access to <TT>D::E</TT> is checked with
+member access to class <TT>E</TT>, but unfortunately that doesn't give
+access to <TT>D::E</TT>. 11.8 [<A href="https://wg21.link/class.access">class.access</A>]
+
+paragraph 6 covers the access for <TT>D::E::m</TT>,
+but it doesn't affect the <TT>D::E</TT> access. Are there any implementations
+that are standard compliant that support this?
+
+<P>Here is another example:</P>
+<PRE>
+    class C {
+        class B
+        {
+            C::B *t; //2 error, C::B is inaccessible
+        };
+    };
+</PRE>
+This causes trouble for member functions declared outside of the class
+member list. For example:
+<PRE>
+    class C {
+        class B
+        {
+            B&amp; operator= (const B&amp;);
+        };
+    };
+
+    C::B&amp; C::B::operator= (const B&amp;) { } //3
+</PRE>
+If the return type (i.e. <TT>C::B</TT>) is access checked in the scope
+of class <TT>B</TT> (as implied by
+11.8 [<A href="https://wg21.link/class.access#5">class.access</A>] paragraph 5)
+
+as a qualified name, then
+the return type is an error just like referring to <TT>C::B</TT> in the
+member list of class <TT>B</TT> above (i.e. //2) is ill-formed.
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>The resolution for this issue is incorporated into the
+resolution for <A HREF="45.html">issue 45</A>.</P>
+<BR><BR>
+</BODY>
+</HTML>

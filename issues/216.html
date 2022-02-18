@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 216</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="216"></A><H4>216.
+  
+Linkage of nameless class-scope enumeration types
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 Mar 2000<BR>
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4 says (among other things):
+
+<BLOCKQUOTE>
+A name having namespace scope has external linkage if it is the name of
+<UL>
+<LI>[...]</LI>
+
+<LI>a named enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an
+unnamed enumeration defined
+in a typedef declaration in which the enumeration has the typedef
+name for linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]) </LI>
+</UL>
+</BLOCKQUOTE>
+
+That prohibits for example:
+
+<PRE>
+    typedef enum { e1 } *PE;
+    void f(PE) {}  // Cannot declare a function (with linkage) using a
+		   // type with no linkage.
+</PRE>
+
+<P>However, the same prohibition was not made for class scope types.  Indeed,
+6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 says:</P>
+
+<BLOCKQUOTE>
+In addition, a member function, static data member, class or
+enumeration of class scope has external linkage if the name of the
+class has external linkage.
+</BLOCKQUOTE>
+
+<P>That allows for:</P>
+
+<PRE>
+    struct S {
+       typedef enum { e1 } *MPE;
+       void mf(MPE) {}
+    };
+</PRE>
+
+<P>My guess is that this is an unintentional consequence of
+6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5, but I would like confirmation
+on that.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change text in 6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 from:</P>
+
+<BLOCKQUOTE>
+
+In addition, a member function, static data member, class or
+enumeration of class scope has external linkage if the name of the
+class has external linkage.
+
+</BLOCKQUOTE>
+
+to:
+
+<BLOCKQUOTE>
+
+In addition, a member function, a static data member, a named class or
+enumeration of class scope, or an unnamed class or enumeration defined
+in a class-scope typedef declaration such that the class or
+enumeration has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]),
+has external linkage if the name of the class has external linkage.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

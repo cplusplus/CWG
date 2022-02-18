@@ -1,0 +1,163 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1207</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1207"></A><H4>1207.
+  
+Type of class member in <I>trailing-return-type</I>
+</H4>
+<B>Section: </B>11.4.3&#160; [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-10-06<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3282.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    struct vector {
+        struct iterator { };
+        struct const_iterator { };
+        iterator begin();
+        const_iterator begin() const;
+    };
+    class block {
+        vector v;
+        auto end() const -&gt; decltype(v.begin()) { return v.begin(); }
+    };
+</PRE>
+
+<P>Because the transformation of a member name into a class member
+access expression (11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3) only
+occurs inside the body of a non-static member function, the type
+of <TT>v</TT> in the <I>trailing-return-type</I> is non-const but
+is const in the return expression, resulting in a type mismatch
+between the return expression and the return type of the function.</P>
+
+<P>One possibility would be to include the <I>trailing-return-type</I>
+as being subject to the transformation in 11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>].
+Note, however, that <TT>this</TT> is currently not in scope at that
+point (see <A HREF="945.html">issue 945</A>).</P>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+<P>The CWG felt that, because <TT>this</TT> is effectively an
+implicit parameter, the best approach would be to model its usability
+on the visibility of parameters: it could be named wherever a
+parameter of the function is in scope.</P>
+
+<P><B>Proposed resolution (February, 2011):</B></P>
+
+<OL>
+<LI><P>Change _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#2">expr.prim.general</A>] paragraph 2 as follows,
+adding three new paragraphs:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The keyword <TT>this</TT> names a pointer to the object for which a
+non-static member function (_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>]) is invoked or
+a non-static data member's initializer (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) is
+evaluated. <DEL>The keyword <TT>this</TT> shall be used only inside the
+body of a non-static member function (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]) of the
+nearest enclosing class or in a <I>brace-or-equal-initializer</I> for
+a non-static data member (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]).  The type of the
+expression is a pointer to the class of the function or non-static
+data member, possibly with cv-qualifiers on the class type. The
+expression is a prvalue.</DEL>
+</P>
+
+<P><INS>If a <I>function-definition</I> or <I>member-declarator</I>
+declares a member function of a class <TT>X</TT>, the expression
+<TT>this</TT> is a prvalue of type &#8220;pointer to
+<I>cv-qualifier-seq</I> <TT>X</TT>&#8221; between the optional
+<I>cv-qualifier-seq</I> and the end of the <I>function-definition</I>
+or <I>member-declarator</I>. It shall not appear before the optional
+<I>cv-qualifier-seq</I> and it shall not appear within the declaration
+of a static member function (although its type and value category is
+defined within a static member function as it is within a non-static
+member function). [<I>Note:</I> the type and value category is defined
+even for the case of a static member function because declaration
+matching does not occur until the complete declarator is known, and
+<TT>this</TT> may be used in the <I>trailing-return-type</I> of the
+declarator. &#8212;<I>end note</I>]</INS></P>
+
+<P><INS>Otherwise, if a <I>member-declarator</I> declares a
+non-static data member (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) of a class <TT>X</TT>,
+the expression <TT>this</TT> is a prvalue of type &#8220;pointer to
+<TT>X</TT>&#8221; within the optional <I>brace-or-equal-initializer</I>.
+It shall not appear elsewhere in the <I>member-declarator</I>.</INS></P>
+
+<P><INS>The expression <TT>this</TT> shall not appear in any other
+context.</INS></P>
+
+<P>[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#10">expr.prim.general</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> that denotes a non-static data member or
+non-static member function of a class can only be used:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+<DEL>in the body of</DEL> <INS>beyond the optional
+<I>cv-qualifier-seq</I> in the <I>member-declarator</I> or
+<I>function-definition</I> that declares</INS> a non-static member
+function of that class or of a class derived from that class
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]), or</LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (7.5 [<A href="https://wg21.link/expr.prim">expr.prim</A>]) that is not
+part of a class member access syntax (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) and
+not used to form a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is
+used in the <DEL>body</DEL> <INS>declaration</INS> of a
+<DEL>non-static</DEL> member function of class <TT>X</TT>, if name
+lookup (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

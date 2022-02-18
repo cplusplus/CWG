@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2568</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2568"></A><H4>2568.
+  
+Access checking during synthesis of defaulted comparison operator
+</H4>
+<B>Section: </B>11.10.1&#160; [<A href="https://wg21.link/class.compare.default">class.compare.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nicolai Josuttis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-11<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Base {
+  protected:
+    bool operator==(const Base&amp; other) const = default;
+  };
+
+  struct Child : Base {
+    int i;
+    bool operator==(const Child&amp; other) const = default;
+  };
+</PRE>
+
+<P>Per 11.10.1 [<A href="https://wg21.link/class.compare.default#6">class.compare.default</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+Let x<sub>i</sub> be an lvalue denoting the i-th element in the
+expanded list of subobjects for an object x (of length n), where
+x<sub>i</sub> is formed by a sequence of derived-to-base conversions
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]), class member access expressions
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), and array subscript expressions
+(7.6.1.2 [<A href="https://wg21.link/expr.sub">expr.sub</A>]) applied to x.
+
+</BLOCKQUOTE>
+
+<P>The derived-to-base conversion for <TT>this</TT> loses the context
+of access to the protected <TT>Base::operator==</TT>, violating
+11.8.5 [<A href="https://wg21.link/class.protected#1">class.protected</A>] paragraph 1. The example is rejected by
+implementations, but ought to work.</P>
+
+<P>For this related example, there is implementation divergence:</P>
+
+<PRE>
+  struct B {
+  protected:
+    constexpr operator int() const { return 0; }
+  };
+  struct D : B {
+    constexpr bool operator==(const D&amp;) const = default;
+  };
+  template&lt;typename T&gt; constexpr auto comparable(T t) -&gt; decltype(t == t) { return t == t; }
+  constexpr bool comparable(...) { return false; }
+  static_assert(comparable(D{}));
+</PRE>
+
+<P>Is <TT>D::operator==</TT> deleted, because its defaulted definition
+violates the protected access rules?  Is <TT>D::operator==</TT> not
+deleted, but synthesis fails on use because of the proctected access
+rules?  Is the synthesis not in the immediate context, making the
+expression <TT>comparable(D{})</TT> ill-formed?</P>
+
+<P><B>CWG 2023-06-17</B></P>
+
+<P>There is no implementation divergence; the first example is
+intended to be well-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-12-01):</B></P>
+
+<P>Change in 11.10.1 [<A href="https://wg21.link/class.compare.default#1">class.compare.default</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Name lookups <INS>and access checks</INS> in the implicit
+definition (9.5.2 [<A href="https://wg21.link/dcl.fct.def.default">dcl.fct.def.default</A>]) of a comparison operator
+function are performed from a context equivalent to
+its <I>function-body</I> . A definition of a comparison operator as
+defaulted that appears in a class shall be the first declaration of
+that function.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 995</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="995"></A><H4>995.
+  
+Incorrect example for <I>using-declaration</I> and explicit instantiation
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Doug Gregor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Oct, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>13.9.3 [<A href="https://wg21.link/temp.explicit#5">temp.explicit</A>] paragraph 5 has an example that reads,
+in significant part,</P>
+
+<PRE>
+    namespace N {
+      template&lt;class T&gt; class Y {
+        void mf() { }
+      };
+    }
+
+    using N::Y;
+    template class Y&lt;int&gt;; // OK: explicit instantiation in namespace N
+</PRE>
+
+<P>In fact, paragraph 2 requires that an explicit instantiation with an
+unqualified name must appear in the same namespace in which the template
+was declared, so the example is ill-formed.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#5">temp.explicit</A>] paragraph 5 as
+follows:</P>
+
+<PRE>
+  namespace N {
+    template&lt;class T&gt; class Y { void mf() { } };
+  }
+
+  template class Y&lt;int&gt;;            //<SPAN CLASS="cmnt"> error: class template </SPAN>Y<SPAN CLASS="cmnt"> not visible</SPAN>
+                                    //<SPAN CLASS="cmnt"> in the global namespace</SPAN>
+
+  using N::Y;
+<DEL>  template class Y&lt;int&gt;;            //<SPAN CLASS="cmnt"> OK: explicit instantiation in namespace </SPAN>N</DEL>
+<INS>  template class Y&lt;int&gt;;            //<SPAN CLASS="cmnt"> error: explicit instantiation outside of the</SPAN>
+                                    //<SPAN CLASS="cmnt"> namespace of the template</SPAN></INS>
+
+  template class N::Y&lt;char*&gt;;       //<SPAN CLASS="cmnt"> OK: explicit instantiation in namespace </SPAN>N
+  template void N::Y&lt;double&gt;::mf(); //<SPAN CLASS="cmnt"> OK: explicit instantiation</SPAN>
+                                    //<SPAN CLASS="cmnt"> in namespace </SPAN>N
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

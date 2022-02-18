@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1596</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1596"></A><H4>1596.
+  
+Non-array objects as <TT>array[1]</TT>
+</H4>
+<B>Section: </B>7.6.9&#160; [<A href="https://wg21.link/expr.rel">expr.rel</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-12-20<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>The provision to treat non-array objects as if they were array
+objects with a bound of 1 is given only for pointer arithmetic in C++
+(7.6.6 [<A href="https://wg21.link/expr.add#4">expr.add</A>] paragraph 4).  C99 supplies similar wording
+for the relational and equality operators, explicitly allowing
+pointers resulting from such implicit-array treatment to be compared.
+C++ should follow suit.</P>
+
+<P><B>Proposed resolution (August, 2013):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...Otherwise, if the type of the expression is <TT>T</TT>, the result
+has type &#8220;pointer to <TT>T</TT>&#8221; and is a prvalue that is the
+address of the designated object (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) or a pointer to
+the designated function. [<I>Note:</I> In particular, the address of an
+object of type &#8220;<I>cv</I> <TT>T</TT>&#8221; is &#8220;pointer
+to <I>cv</I> <TT>T</TT>&#8221;, with the same cv-qualification.
+&#8212;<I>end note</I>] <INS>For purposes of pointer arithmetic
+(7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and comparison (7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>],
+7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]), an object that is not an array element whose
+address is taken in this way is considered to belong to an array with one
+element of type <TT>T</TT>.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A { int i; };
+  struct B : A { };
+  ... &amp;B::i ...        //<SPAN CLASS="cmnt"> has type </SPAN>int A::*
+<INS>  int a;
+  int* p1 = &amp;a;
+  int* p2 = p1 + 1;    //<SPAN CLASS="cmnt"> Defined behavior</SPAN>
+  bool b = p2 &gt; p1;    //<SPAN CLASS="cmnt"> Defined behavior, with value </SPAN>true</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>] [<I>Note:</I> a pointer to member...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 7.6.6 [<A href="https://wg21.link/expr.add#4">expr.add</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>For the purposes of these operators, a pointer to a nonarray object
+behaves the same as a pointer to the first element of an array of length
+one with the type of the object as its element type.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.6 [<A href="https://wg21.link/expr.add#5">expr.add</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When an expression that has integral type is added to or subtracted from a
+pointer, the result has the type of the pointer operand. If the pointer
+operand points to an element of an array object <INS>[<I>Footnote:</I> An
+object that is not an array element is considered to belong to a
+single-element array for this purpose; see 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+&#8212;<I>end footnote</I>]</INS>, and the array is large enough, the
+result points to an element...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.9 [<A href="https://wg21.link/expr.rel#3">expr.rel</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Comparing pointers to objects <INS>[<I>Footnote:</I> An object that is not
+an array element is considered to belong to a single-element array for this
+purpose; see 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>] &#8212;<I>end footnote</I>]</INS>
+is defined as follows:...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Drafting note: No change is proposed for 7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>],
+since the comparison is phrased in terms of &#8220;same address&#8221;, not
+in terms of array elements, so the handling of one-past-the-end addresses
+falls out of the specification of pointer arithmetic.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 963</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="963"></A><H4>963.
+  
+Comparing <TT>nullptr</TT> with 0
+</H4>
+<B>Section: </B>7.6.9&#160; [<A href="https://wg21.link/expr.rel">expr.rel</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 September, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+
+
+<P>The current wording of the draft does not indicate what is supposed
+to happen when an rvalue of type <TT>std::nullptr_t</TT> is compared
+with an integral null pointer constant.  (This could occur, for example,
+in template code like</P>
+
+<PRE>
+    template&lt;typename T&gt; void f(T t) {
+        if (t == 0) // ...
+    }
+</PRE>
+
+<P>in a call like <TT>f(nullptr)</TT> -- presumably the body of the
+template was written before <TT>nullptr</TT> became available and
+thus used an integral null pointer constant.)  Because an
+integral null pointer constant can be converted to <TT>std::nullptr_t</TT>
+(7.3.12 [<A href="https://wg21.link/conv.ptr#1">conv.ptr</A>] paragraph 1), one might expect that 0
+would be converted to <TT>std::nullptr_t</TT> and the two operands
+would compare equal, but 7.6.9 [<A href="https://wg21.link/expr.rel#2">expr.rel</A>] paragraph 2 does
+not handle this case at all, leaving it as undefined behavior.</P>
+
+<P>The current situation is more well-defined (but perhaps not
+better) with respect to the conditional operator.
+7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>] paragraphs 3-6 make it ill-formed to
+have <TT>std::nullptr_t</TT> and 0 as the second and third
+operands.  Again, it's not too hard to imagine a legacy function
+template like</P>
+
+<PRE>
+    template&lt;typename T&gt; void f(T t, bool b) {
+        T t = b ? t : 0;
+    }
+</PRE>
+
+<P>which would be ill-formed under the current wording of
+7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>].</P>
+
+<P>Either 7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>] and 7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+should be changed to make this combination of operands ill-formed,
+or those two sections should be changed to give the comparison
+defined semantics and 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>] should be changed
+to make those operands well-formed.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<OL>
+<LI><P>Change 7.6.9 [<A href="https://wg21.link/expr.rel#2">expr.rel</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The usual arithmetic conversions are performed on operands of
+arithmetic or enumeration type.  Pointer conversions (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) and qualification conversions (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])
+are performed on pointer operands (or on a pointer operand and a null
+pointer constant<INS>, or on two null pointer constants, at least one
+of which is non-integral</INS>) to bring them to their composite
+pointer type.  If one operand is a null pointer constant, the
+composite pointer type is <INS><TT>std::nullptr_t</TT> if the other
+operand is also a null pointer constant or, if the other operand is a
+pointer,</INS> the type of the other operand. Otherwise...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#6.3">expr.cond</A>] bullet 6.3 as
+follows:</P></LI>
+
+<UL>
+<LI>The second and third operands have pointer type, or one has
+pointer type and the other is a null pointer constant<INS>, or both
+are null pointer constants, at least one of which is
+non-integral</INS>; pointer conversions (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>])
+and qualification conversions (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) are performed
+to bring them to their composite pointer type (7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]). The result is of the composite pointer type.</LI>
+
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

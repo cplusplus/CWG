@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2086</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2086"></A><H4>2086.
+  
+Reference odr-use vs implicit capture
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-14<BR>
+
+
+
+
+<P>Whether a reference is odr-used or not has less to do with the
+context where it is named and more to do with its initializer.  In
+particular, 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#12.2">expr.prim.lambda</A>] bullet 12.2 leads to cases
+where references that can never be odr-used are implicitly
+captured:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>lambda-expression</I> with an
+associated <I>capture-default</I> that does not explicitly
+capture <TT>this</TT> or a variable with automatic storage duration
+(this excludes any <I>id-expression</I> that has been found
+to refer to an <I>init-capture</I>'s associated non-static
+data member), is said to implicitly capture the entity
+(i.e., this or a variable) if the <I>compound-statement</I>:</P>
+
+<UL>
+<LI><P>odr-uses (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) the entity, or</P></LI>
+
+<LI>
+
+<P>names the entity in a potentially-evaluated expression
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) where the enclosing
+full-expression depends on a generic lambda parameter
+declared within the reaching scope of
+the <I>lambda-expression</I>.</P>
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For example, <TT>ref</TT> should not be captured in the following:</P>
+
+<PRE>
+  struct A {
+    A() = default;
+    A(const A &amp;) = delete;
+  } globalA;
+
+  constexpr bool bar(int &amp;, const A &amp;a) { return &amp;a == &amp;globalA; }
+
+  int main() {
+    A &amp;ref = globalA;
+    [=](auto q) { static_assert(bar(q, ref), ""); }(0);
+  }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

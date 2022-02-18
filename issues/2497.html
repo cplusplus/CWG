@@ -1,0 +1,81 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2497</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2497"></A><H4>2497.
+  
+Points of instantiation for constexpr function templates
+</H4>
+<B>Section: </B>13.8.4.1&#160; [<A href="https://wg21.link/temp.point">temp.point</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-07-20<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt; constexpr T f();
+  constexpr int g() { return f&lt;int&gt;(); } //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename T&gt; constexpr T f() { return 123; }
+  int k[g()];
+  //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>There are two points of instantiation for <TT>f&lt;int&gt;</TT>.
+At #1, the template isn't defined, so it cannot be instantiated
+there. At #2, it's too late, as the definition was needed when
+parsing the type of <TT>k</TT>.</P>
+
+<P>Should we also treat the point of definition of (at
+least) a constexpr function template as a point of
+instantiation for all specializations that have a point of
+instantiation before that point? Note the possible
+interaction of such a resolution with
+13.8.4.1 [<A href="https://wg21.link/temp.point#7">temp.point</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+If two different points of instantiation give a template
+specialization different meanings according to the
+one-definition rule (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]), the program
+is ill-formed, no diagnostic required.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the November, 2021 teleconference:</B></P>
+
+<P>Another possibility for a point of instantiation, other
+than the definition of the template, would be the point at
+which the function is called. Similar questions have been
+raised regarding the points at which variables are
+initialized (<A HREF="2186.html">issue 2186</A>) and
+constexpr functions are defined (<A HREF="2166.html">issue 2166</A>).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1667</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1667"></A><H4>1667.
+  
+Function exiting via exception called by destructor during unwinding
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ryou Ezoe
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-25<BR>
+
+
+
+
+<P>According to 14.2 [<A href="https://wg21.link/except.throw#7">except.throw</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+If the exception handling mechanism, after completing the initialization of
+the exception object but before the activation of a handler for the
+exception, calls a function that exits via an
+exception, <TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+
+<P>This could be read as indicating that the following example results
+in calling <TT>std::terminate</TT>:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> function that exits via an exception</SPAN>
+  void f() {
+    //<SPAN CLASS="cmnt"> </SPAN>std::uncaught_exception()<SPAN CLASS="cmnt"> returns </SPAN>true<SPAN CLASS="cmnt"> here</SPAN>
+    throw 0;
+  }
+
+  struct X {
+    ~X() {
+  //<SPAN CLASS="cmnt"> calls a function that exits via an exception</SPAN>
+      try { f(); }
+      catch( ... ) { }
+    }
+  };
+
+  int main() {
+    try {
+      X x;
+      throw 0; //<SPAN CLASS="cmnt"> calls </SPAN>X<SPAN CLASS="cmnt">'s destructor while exception is still uncaught.</SPAN>
+    }
+    catch( ... ) { }
+  }
+</PRE>
+
+<P>This seems undesirable, and current implementations do not call
+<TT>std::terminate</TT>.  Presumably the intention is that the cited
+text only applies to functions that are called directly by the
+exception handling mechanism, which is not true of <TT>f()</TT> in
+this example, but this could be stated more clearly.</P>
+
+<P><B>Rationale (September, 2013):</B></P>
+
+<P>The intent of the wording in 14.2 [<A href="https://wg21.link/except.throw#7">except.throw</A>] paragraph 7
+is to call <TT>std::terminate</TT> if an exception is propagated into
+the exception-handling mechanism; &#8220;If the exception handling
+mechanism... calls a function that exits via an exception&#8221; is
+thus intended to refer to functions that are directly called by
+the exception handling mechanism.  In the given example, <TT>f()</TT>
+is not called by the exception handling mechanism, it is called by
+<TT>X::~X()</TT>.  The exception handling mechanism calls <TT>X::~X()</TT>,
+but it does not exit via an exception, so <TT>std::terminate</TT> should
+not be called.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 437</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="437"></A><H4>437.
+  
+Is type of class allowed in member function exception specification?
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Cary Coutant
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 Oct 2003<BR>
+
+
+<P>[Voted into WP at April 2005 meeting.]</P>
+
+<P>I've encountered a C++ program in which a member function wants to
+declare that it may throw an object of its own class, e.g.:</P>
+<PRE>
+  class Foo {
+  private:
+     int val;
+  public:
+     Foo( int &amp;initval ) { val = initval; };
+     void throwit() throw(Foo) { throw (*this); };
+  };
+</PRE>
+<P>The compiler is complaining that Foo is an incomplete type, and can't be
+used in the exception specification.</P>
+
+<P>My reading of the standard [basic.types] is inconclusive.  Although it
+does state that the class declaration is considered complete when the
+closing brace is read, I believe it also intends that the member
+function declarations should not be semantically validated until the
+class has been completely declared.</P>
+
+<P>If this isn't allowed, I don't know how else a member function could be
+declared to throw an object of its own class.</P>
+
+<P>
+<U>John Spicer</U>:
+The type is considered complete within function bodies, but not in their
+declaration (see 11.4 [<A href="https://wg21.link/class.mem#2">class.mem</A>] paragraph 2).</P>
+
+<P><B>Proposed Resolution:</B></P>
+
+<P>Change 11.4 [<A href="https://wg21.link/class.mem#2">class.mem</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+Within the class <I>member-specification</I>, the class is regarded
+as complete within function bodies, default arguments<B>,
+<I>exception-specification</I>s,</B> and constructor
+<I>ctor-initializer</I>s (including such things in nested classes).
+</BLOCKQUOTE>
+
+<P>
+<B>Rationale:</B> Taken with 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6, the
+<I>exception-specification</I> is the <I>only</I> part of a function
+declaration/definition in which the class name cannot be used because
+of its putative incompleteness.  There is no justification for
+singling out exception specifications this way; both in the function
+body and in a <TT>catch</TT> clause, the class type will be complete,
+so there is no harm in allowing the class name to be used in the
+<I>exception-specification</I>.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

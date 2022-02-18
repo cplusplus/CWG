@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2838</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2838"></A><H4>2838.
+  
+Declaration conflicts in <I>lambda-expression</I>s
+</H4>
+<B>Section: </B>6.4.3&#160; [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jel&#237;nek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-30<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/475">#475</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void foo () {
+    auto f = [i = 5] () { int i; return 0; };
+  }
+</PRE>
+
+<P>Before P2579R0 and P2036R3, this was ill-formed, because the
+capture inhabited the same scope as <TT>int i</TT>. Subclause
+6.4.3 [<A href="https://wg21.link/basic.scope.block#2">basic.scope.block</A>] paragraph 2 relies on the "parent" scope:</P>
+
+<BLOCKQUOTE>
+
+If a declaration that is not a name-independent declaration and whose
+target scope is the block scope S of a
+<UL>
+<LI>
+<I>compound-statement</I> of a <I>lambda-expression</I>,
+<I>function-body</I>, or <I>function-try-block</I>,</LI>
+<LI>substatement of a selection or iteration statement that is not
+itself a selection or iteration statement, or</LI>
+<LI>handler of a <I>function-try-block</I>
+</LI>
+</UL>
+potentially conflicts with a declaration whose target scope is the
+parent scope of S, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>However, after P2579R0, the <I>init-capture</I> inhabits the lambda
+scope (6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]), which is the parent of the
+parameter scope (6.4.4 [<A href="https://wg21.link/basic.scope.param">basic.scope.param</A>]), which is the parent of
+the <I>compound-statement</I> scope, thus the provision does not
+apply.</P>
+
+<P>As observed in <A HREF="2965.html">issue 2965</A>, there is no a
+template parameter scope (6.4.9 [<A href="https://wg21.link/basic.scope.temp">basic.scope.temp</A>]) for a generic
+lambda:</P>
+
+<PRE>
+  auto f = [i = 5] &lt;int N&gt; () { int i; return 0; };
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.4.3 [<A href="https://wg21.link/basic.scope.block#2">basic.scope.block</A>] paragraph 2 as follows, adding bullets:</P>
+
+<BLOCKQUOTE>
+
+If a declaration that is not a name-independent declaration and whose
+target scope is the block scope S of a
+<UL>
+<LI>
+<I>compound-statement</I> of a <I>lambda-expression</I>,
+<I>function-body</I>, or <I>function-try-block</I>,</LI>
+<LI>substatement of a selection or iteration statement that is not
+itself a selection or iteration statement, or</LI>
+<LI>handler of a <I>function-try-block</I>
+</LI>
+</UL>
+potentially conflicts with a declaration whose target scope is
+<UL>
+<LI>the parent scope of S <INS>or</INS>,</LI>
+<LI><INS>if S is the block scope of a <I>compound-statement</I> of
+a <I>lambda-expression</I>, the nearest enclosing lambda scope of
+S,</INS></LI>
+</UL>
+the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

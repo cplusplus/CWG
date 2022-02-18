@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1663</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1663"></A><H4>1663.
+  
+Capturing an empty pack expansion
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-15<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA19">N3690 comment
+  CA&#160;19<BR></A>
+
+
+
+<P>The conditions under which a closure class has a conversion function
+to a pointer-to-function type are given in 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#6">expr.prim.lambda</A>] paragraph 6:
+</P>
+
+<BLOCKQUOTE>
+
+The closure type for a non-generic <I>lambda-expression</I> with
+no <I>lambda-capture</I> has a public non-virtual non-explicit const
+conversion function to pointer to function...
+
+</BLOCKQUOTE>
+
+<P>Does this apply to a lambda whose <I>lambda-capture</I> is empty
+by virtue of being an empty pack expansion?  For example, is the
+following well-formed?</P>
+
+<PRE>
+  #include &lt;cstdlib&gt;
+
+  template &lt;typename ...Args&gt;
+  void foo(Args ...args) {
+    auto xf = [args ...] { };
+    std::atexit(xf);
+  }
+</PRE>
+
+<P>This is likely a violation of the rule in 13.8 [<A href="https://wg21.link/temp.res#8">temp.res</A>] paragraph 8,
+</P>
+
+<BLOCKQUOTE>
+
+If every valid specialization of a variadic template requires an empty
+template parameter pack, the template is ill-formed, no diagnostic
+required.
+
+</BLOCKQUOTE>
+
+<P>Does this need to be clarified?</P>
+
+<P><B>Rationale (September, 2013):</B></P>
+
+<P>The statement in 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#6">expr.prim.lambda</A>] paragraph 6 is a
+syntactic constraint, not a semantic one.  The example has a
+<I>lambda-capture</I>, regardless of its expansion in a given
+instantiation.  This is consistent with the intent expressed in
+13.7.4 [<A href="https://wg21.link/temp.variadic#6">temp.variadic</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+When <I>N</I> is zero, the instantiation of the expansion produces an empty
+list. Such an instantiation does not alter the syntactic interpretation of
+the enclosing construct...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1815</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1815"></A><H4>1815.
+  
+Lifetime extension in aggregate initialization
+</H4>
+<B>Section: </B>9.4.2&#160; [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dinka Ranns
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-11-22<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>With the recent addition of <I>brace-or-equal-initializer</I>s to
+aggregates and the presumed resolution for
+<A HREF="1696.html">issue 1696</A>, it is not clear how
+lifetime extension of temporaries should work in aggregate
+initialization.  For example:</P>
+
+<PRE>
+  struct A { };
+  struct B { A&amp;&amp; a { A{} } };
+  B b;         //<SPAN CLASS="cmnt"> #1</SPAN>
+  B b{ A{} };  //<SPAN CLASS="cmnt"> #2</SPAN>
+  B b{};       //<SPAN CLASS="cmnt"> #3</SPAN>
+</PRE>
+
+<P>#1 is default initialization, so (presumably) the lifetime of the
+temporary persists only until <TT>B</TT>'s default constructor
+exits.  #2 is aggregate initialization, which binds <TT>B::a</TT> to
+the temporary in the initializer for <TT>b</TT> and thus extends its
+lifetime to that of <TT>b</TT>.  #3 is aggregate initialization, but
+it is not clear whether the lifetime of the temporary in the
+non-static data member initializer for <TT>B::a</TT> should be
+lifetime-extended like #2 or not, like #1.</P>
+
+<P>One possibility might be to extend the lifetime in #3 but to give
+<TT>B</TT> a deleted default constructor since it would extend the
+lifetime of a temporary.</P>
+
+<P>See also <A HREF="1696.html">issue 1696</A>.</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>CWG agreed with the suggested direction, which would treat #3 in the
+example like #2 and make the default constructor deleted, resulting
+in #1 being ill-formed.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1696.html">issue 1696</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

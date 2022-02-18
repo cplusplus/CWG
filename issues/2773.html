@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2773</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2773"></A><H4>2773.
+  
+Naming anonymous union members as class members
+</H4>
+<B>Section: </B>11.5.2&#160; [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-16<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  int f(T *tp) { return tp-&gt;x; }
+
+  static union { int x = f(this); };
+</PRE>
+
+<P>According to 11.5.2 [<A href="https://wg21.link/class.union.anon#1">class.union.anon</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... The names of the members of an anonymous union are bound in the scope
+inhabited by the union declaration.
+
+</BLOCKQUOTE>
+
+<P>Thus, the example above is ill-formed, because the member names are
+not bound in the scope of the class of the anonymous union.  However,
+there is implementation divergence: clang and gcc accept the example
+(contrary to the wording), icc rejects.
+Notwithstanding, <TT>this</TT> refers to the anonymous union itself,
+not to an enclosing class, per 7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>].  This rule
+causes rejection of</P>
+
+<PRE>
+  struct A {
+    int foo();
+    union { int x = foo(); };  // <SPAN CLASS="cmnt">error</SPAN>
+  };
+  A a;
+</PRE>
+
+<P>Alternatively, <TT>this</TT> could be made to refer to the
+enclosing class object (already the status quo for some
+implementations).  However, that would cause inconsistent treatment
+for examples like the following:</P>
+
+<PRE>
+  struct A {
+    int n;
+    union {
+      void *p = this; //<SPAN CLASS="cmnt"> A*</SPAN>
+    };
+  };
+</PRE>
+vs.
+<PRE>
+  struct B {
+    int n;
+    union {
+      void *p = this; //<SPAN CLASS="cmnt"> decltype(u)*</SPAN>
+    } u;
+  };
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>tbd</P>
+
+<BR><BR>
+</BODY>
+</HTML>

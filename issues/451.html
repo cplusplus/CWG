@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 451</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="451"></A><H4>451.
+  
+Expressions with invalid results and ill-formedness
+</H4>
+<B>Section: </B>Clause 7&#160; [<A href="https://wg21.link/expr">expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gennaro Prota
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Jan 2004<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>Clause 7 [<A href="https://wg21.link/expr">expr</A>] par. 5 of the standard says:
+<BLOCKQUOTE>
+If during the evaluation
+of an expression, the result is not mathematically defined or not in
+the range of representable values for its type, the behavior is
+undefined, unless such an expression is a constant expression (5.19),
+in which case the program is ill-formed.
+</BLOCKQUOTE>
+
+<P>Well, we do know that except in some contexts (e.g. controlling
+expression of a #if, array bounds), a compiler is not required to
+evaluate constant-expressions in compile time, right?</P>
+
+<P>Now, let us consider, the following simple snippet:</P>
+<PRE>
+  if (a &amp;&amp; 1/0)
+      ...
+</PRE>
+with a, to fix our attention, being *not* a constant expression. The
+quote above seems to say that since 1/0 is a constant
+(sub-)expression, the program is ill-formed. So, is it the intent that
+such ill-formedness is diagnosable at run-time? Or is it the intent
+that the above gives undefined behavior (if 1/0 is evaluated) and is
+not ill-formed?</P>
+
+<P>I think the intent is actually the latter, so I propose the following
+rewording of the quoted section:</P>
+<BLOCKQUOTE>
+  If an expression is evaluated but its result is not mathematically
+   defined or not in the range of representable values
+   for its type the behavior is undefined, unless such an expression
+   is a constant expression (5.19) <INS>that shall be evaluated during
+   program translation</INS>, in which case the program is ill-formed.
+</BLOCKQUOTE>
+
+<P><B>Rationale (March, 2004):</B></P>
+
+<P>We feel the standard is clear enough.  The quoted sentence
+does begin "If during the evaluation of an expression, ..."
+so the rest of the sentence does not apply to an expression
+that is not evaluated.</P>
+
+<P><B>Note (September, 2004):</B></P>
+
+<P>Gennaro Prota feels that the CWG missed the point of his
+original comment: unless a constant expression appears in a
+context that <I>requires</I> a constant expression, an
+implementation is permitted to defer its evaluation to runtime.
+An evaluation that fails at runtime cannot affect the
+well-formedness of the program; only expressions that are
+evaluated at compile time can make a program ill-formed.</P>
+
+<P>The status has been reset to &#8220;open&#8221; to allow
+further discussion.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Change paragraph 5 of Clause 7 [<A href="https://wg21.link/expr">expr</A>] as
+indicated:</P>
+
+<BLOCKQUOTE>
+
+If during the evaluation of an expression, the result is not
+mathematically defined or not in the range of representable
+values for its type, the behavior is undefined, unless such an
+expression <DEL>is a constant expression</DEL> <INS>appears where an
+integral constant expression is required</INS> (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), in which case the program is ill-formed.
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

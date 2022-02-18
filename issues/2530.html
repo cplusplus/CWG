@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2530</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2530"></A><H4>2530.
+  
+Multiple definitions of enumerators
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Naiver Miigon
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-10<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>
+<A HREF="2494.html">Issue 2494</A> specified a list of
+definable items and required that no translation unit
+contain more than one definition of any of those
+items. However, the list omits enumeration constants,
+implicitly allowing an example like:</P>
+
+<PRE>
+  enum E { e, e };
+</PRE>
+
+<P>According to 6.1 [<A href="https://wg21.link/basic.pre#3">basic.pre</A>] paragraph 3, an
+enumerator is an entity. According to
+6.2 [<A href="https://wg21.link/basic.def#2">basic.def</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Each entity declared by a <I>declaration</I> is
+also <I>defined</I> by that declaration unless: ...
+
+</BLOCKQUOTE>
+
+<P>and enumerators are not on the list of excluded cases, so
+an <I>enumerator-definition</I> is a definition.
+Furthermore, 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 says,</P>
+
+<BLOCKQUOTE>
+
+<P>Two declarations of entities declare the same entity if,
+considering declarations of unnamed types to introduce their
+names for linkage purposes, if any
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>], 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]),
+they correspond (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]), have the same
+target scope that is not a function or template parameter
+scope, and either</P>
+
+<UL>
+<LI><P>they appear in the same translation unit, or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>In the example above, both enumerators thus define the
+same entity, so the one-definition rule is responsible for
+excluding the duplicate definitions but does not do so.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+Change 6.3 [<A href="https://wg21.link/basic.def.odr#1">basic.def.odr</A>] paragraph 1 as follows:
+
+<BLOCKQUOTE>
+
+Each of the following is termed a <I>definable item</I>:
+
+<UL>
+<LI>...</LI>
+
+<LI>an enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]),</LI>
+
+<LI><INS>an enumerator,</INS></LI>
+
+<LI>a function (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),</LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-12-02):</B></P>
+
+<P>Change in 9.7.1 [<A href="https://wg21.link/dcl.enum#2">dcl.enum</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The identifiers in an <I>enumerator-list</I> are declared as
+constants, and can appear wherever constants are required.
+<INS>The same identifier shall not appear as the name of multiple
+enumerators in an <I>enumerator-list</I>.</INS>
+An <I>enumerator-definition</I> with = gives the associated
+<I>enumerator</I> the value indicated by the <I>constant-expression</I>. If
+the first <I>enumerator</I> has no <I>initializer</I>, the value of the
+corresponding constant is zero. An <I>enumerator-definition</I>
+without an <I>initializer</I> gives the enumerator the value obtained by
+increasing the value of the previous enumerator by one.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

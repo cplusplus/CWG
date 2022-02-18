@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2861</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2861"></A><H4>2861.
+  
+<TT>dynamic_cast</TT> on bad pointer value
+</H4>
+<B>Section: </B>7.6.1.7&#160; [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-06<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/497">#497</A>.)</P>
+
+<P>Base-to-derived casts and cross-casts need to inspect the vtable of
+a polymorphic type.  However, this is not defined as an "access" and
+there is no provision for undefined behavior analoguous to
+7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-26):</B></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph after 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#6">expr.dynamic.cast</A>] paragraph 6 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If v is a null pointer value, the result is a null pointer value.</P>
+
+<P class="ins">
+If <TT>v</TT> has type "pointer to <I>cv</I> <TT>U</TT>"
+and <TT>v</TT> does not point to an object whose type is similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to <TT>U</TT> and that is within its
+lifetime or within its period of construction or destruction
+(11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]), the behavior is undefined.
+If <TT>v</TT> is a glvalue of type <TT>U</TT> and <TT>v</TT> does not
+refer to an object whose type is similar to <TT>U</TT> and that is
+within its lifetime or within its period of construction or
+destruction, the behavior is undefined.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.12 [<A href="https://wg21.link/conv.ptr#3">conv.ptr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue <INS><TT>v</TT></INS> of type &#8220;pointer to cv D&#8221;,
+where D is a complete class type, can be converted to a prvalue of
+type &#8220;pointer to cv B&#8221;, where B is a base class
+(11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) of D. If B is an inaccessible
+(11.8 [<A href="https://wg21.link/class.access">class.access</A>]) or ambiguous (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>])
+base class of D, a program that necessitates this conversion is
+ill-formed. <DEL>The result of the conversion is a pointer to the base
+class subobject of the derived class object. The null pointer value is
+converted to the null pointer value of the destination type.</DEL>
+<INS>If <TT>v</TT> is a null pointer value, the result is a null
+pointer value.  Otherwise, if <TT>B</TT> is a virtual base class
+of <TT>D</TT> and <TT>v</TT> does not point to an object whose type is
+similar (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to <TT>D</TT> and that is within
+its lifetime or within its period of construction or destruction
+(11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]), the behavior is undefined. Otherwise,
+the result is a pointer to the base class subobject of the derived
+class object.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

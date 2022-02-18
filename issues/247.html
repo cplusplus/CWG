@@ -1,0 +1,204 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 247</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="247"></A><H4>247.
+  
+Pointer-to-member casts and function overload resolution
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin Sebor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>22 Sep 2000<BR>
+
+
+
+
+<P>It is unclear whether the following code is well-formed or not:</P>
+
+<PRE>
+    class A { };
+
+    struct B : public A
+    {
+	void foo ();
+	void foo (int);
+    };
+
+    int main ()
+    {
+	void (A::*f)() = (void (A::*)())&amp;B::foo;
+    }
+</PRE>
+
+<P>12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 says,</P>
+
+<BLOCKQUOTE>
+
+The function selected is the one whose type matches the target
+type required in the context.  The target can be
+
+<UL>
+
+<LI><B>...</B></LI>
+
+<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This would appear to make the program ill-formed, since the
+type in the cast is different from that of either interpretation
+of the address-of-member expression (its class is <TT>A</TT>,
+while the class of the address-of-member expression is <TT>B</TT>)</P>
+
+<P>However, 12.3 [<A href="https://wg21.link/over.over#3">over.over</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+Nonstatic member functions match targets of type
+"pointer-to-member-function;" the function type of the pointer
+to member is used to select the member function from the set
+of overloaded member functions.
+
+</BLOCKQUOTE>
+
+<P>The class of which a function is a member is <B>not</B> part of the
+"function type" (9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4).
+Paragraph 4 is thus either a misuse of the phrase "function type," a
+contradiction of paragraph 1, or an explanation of what "matching
+the target type" means in the context of a pointer-to-member
+target.  By the latter interpretation, the example is well-formed
+and <TT>B::foo()</TT> is selected.</P>
+
+<P>
+<U>Bill Gibbons</U>: I think this is an accident due to vague
+wording.  I think the intent was</P>
+
+<BLOCKQUOTE>
+
+The function selected is the one which will make the effect of
+the cast be that of the identity conversion.
+
+</BLOCKQUOTE>
+
+<P>
+<U>Mike Miller</U>: The "identity conversion" reading seems
+to me to be overly restrictive.  It would lead to the following:</P>
+
+<PRE>
+    struct B {
+        void f();
+        void f(int);
+    };
+    struct D: B { };
+    void (D::* p1)() = &amp;D::f;                  // ill-formed
+    void (D::* p2)() = (void (B::*)()) &amp;D::f;  // okay
+</PRE>
+
+<P>I would find the need for an explicit cast here surprising, since
+the downcast is a standard conversion and since the declaration of
+<TT>p1</TT> certainly has enough information to disambiguate the
+overload set.  (See also <A HREF="203.html">issue 203</A>.)</P>
+
+<P>
+<U>Bill Gibbons</U>: There is an interesting situation with
+<I>using-declaration</I>s.  If a base class member function is present
+in the overload set in a derived class due to a
+<I>using-declaration</I>, it is treated as if it were a derived class
+member function for purposes of overload resolution in a call
+(12.2.2 [<A href="https://wg21.link/over.match.funcs#4">over.match.funcs</A>] paragraph 4):</P>
+
+<BLOCKQUOTE>
+
+For non-conversion functions introduced by a <I>using-declaration</I>
+into a derived class, the function is considered to be a member of the
+derived class for the purpose of defining the type of the implicit
+object parameter
+
+</BLOCKQUOTE>
+
+<P>There is no corresponding rule for casts. Such a rule would be
+practical, but if the base class member function were selected it
+would not have the same class as that specified in the cast.  Since
+base-to-derived pointer to member conversions are implicit
+conversions, it would seem reasonable to perform this conversion
+implicitly in this case, so that the result of the cast has the right
+type.  The usual ambiguity and access restrictions on the
+base-to-derived conversion would not apply since they do not apply to
+calling through the <I>using-declaration</I> either.</P>
+
+<P>On the other hand, if there is no special case for this, we end up with
+the bizarre case:</P>
+
+<PRE>
+    struct A {
+        void foo();
+    };
+    struct B : A {
+        using A::foo;
+        void foo(int);
+    }
+    int main() {
+        // Works because "B::foo" contains A::foo() in its overload set.
+        (void (A::*)())&amp;B::foo;
+        // Does not work because "B::foo(int)" does not match the cast.
+        (void (A::*)(int))&amp;B::foo;
+    }
+</PRE>
+
+<P>I think the standard should be clarified by either:</P>
+
+<UL>
+
+<LI><P>Adding a note to 12.3 [<A href="https://wg21.link/over.over">over.over</A>] saying that
+<I>using-declaration</I>s do not participate
+in this kind of overload resolution; or</P></LI>
+
+<LI><P>Modifying 12.3 [<A href="https://wg21.link/over.over">over.over</A>] saying that
+<I>using-declaration</I>s are treated as members of the derived class
+for matching purposes, and if selected, the resulting pointer to
+member is implicitly converted to the derived type with no access or
+ambiguity errors.  (The <I>using-declaration</I> itself has already
+addressed both of these areas.)</P></LI>
+
+</UL>
+
+<P>
+<B>Rationale (10/00):</B> The cited example is well-formed.
+The function type, ignoring the class specification, is used to
+select the matching function from the overload set as specified
+in 12.3 [<A href="https://wg21.link/over.over#3">over.over</A>] paragraph 3.  If the target
+type is supplied by an explicit cast, as here, the conversion is
+then performed on the selected pointer-to-member value, with the
+usual restrictions on what can and cannot be done with the
+converted value (7.6.1.9 [<A href="https://wg21.link/expr.static.cast#9">expr.static.cast</A>] paragraph 9,
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#9">expr.reinterpret.cast</A>] paragraph 9).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

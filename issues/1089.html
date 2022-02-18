@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1089</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1089"></A><H4>1089.
+  
+Template parameters in member selections
+</H4>
+<B>Section: </B>6.5.5.1&#160; [<A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-06-29<BR>
+
+
+
+
+<P>In an example like</P>
+
+<PRE>
+    template&lt;typename T&gt; void f(T p)-&gt;decltype(p.T::x);
+</PRE>
+
+<P>The <I>nested-name-specifier</I> <TT>T::</TT> looks like it refers
+to the template parameter.  However, if this is instantiated with a
+type like</P>
+
+<PRE>
+    struct T { int x; };
+    struct S: T { };
+</PRE>
+
+<P>the reference will be ambiguous, since it is looked up in both the
+context of the expression, finding the template parameter, and in the
+class, finding the base class injected-class-name, and this could be
+a deduction failure.  As a result, the same declaration with a
+different parameter name</P>
+
+<PRE>
+    template&lt;typename U&gt; void f(U p)-&gt;decltype(p.U::x);
+</PRE>
+
+<P>is, in fact, not a redeclaration because the two can be distinguished
+by SFINAE.</P>
+
+<P>It would be better to add a new lookup rule that says that if a
+name in a template definition resolves to a template parameter, that
+name is not subject to further lookup at instantiation time.</P>
+
+<P><B>Additional note (November, 2020):</B></P>
+
+<P>Paper P1787R6, adopted at the November, 2020 meeting, partially
+addresses this issue.</P>
+
+<P><B>CWG 2023-12-01</B></P>
+
+<P>Per the status quo rules, <TT>T::x</TT> is a dependent name and
+thus no lookup occurs at template definition time.  At template
+instantiation time, <TT>T</TT> is first looked up in the class
+of <TT>p</TT> and, if not found, the template parameter <TT>T</TT> is
+found.  This, in turn, implies that the two templates discussed above
+are not equivalent, because the first potentially references
+a <TT>T</TT> member, the other a <TT>U</TT> member of <TT>p</TT>.
+</P>
+
+<P>
+Subclause 13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>] paragraph 5 is not in conflict
+with this interpretation, because no lookup occurs for the <TT>T</TT>
+token inside the <TT>decltype</TT> at template definition time at all,
+thus (reliably) "name a template parameter" is not satisfied at that
+point.
+</P>
+
+<BLOCKQUOTE>
+
+Two expressions involving template parameters are considered
+equivalent if two function definitions containing the expressions
+would satisfy the one-definition rule (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]),
+except that the tokens used to name the template parameters may differ
+as long as a token used to name a template parameter in one expression
+is replaced by another token that names the same template parameter in
+the other expression. ...
+
+</BLOCKQUOTE>
+
+<P>In order to clarify this, suggestions for a note including the
+example from this issue are welcome.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

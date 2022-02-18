@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2789</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2789"></A><H4>2789.
+  
+Overload resolution with implicit and explicit object member functions
+</H4>
+<B>Section: </B>12.2.4.1&#160; [<A href="https://wg21.link/over.match.best.general">over.match.best.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-08<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T = int&gt;
+  struct S {
+    constexpr void f();                      //<SPAN CLASS="cmnt"> #1</SPAN>
+    constexpr void f(this S&amp;) requires true; //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+
+  void test() {
+    S&lt;&gt; s;
+    s.f();                 //<SPAN CLASS="cmnt"> #3</SPAN>
+  }
+</PRE>
+
+<P>With the current rules, the call at #3 is ambiguous, even though #2
+is more constrainted.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-07):</B></P>
+
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>F1 and F2 are non-template functions <DEL>with</DEL> <INS>and</INS>
+<UL>
+<LI>
+<INS>they have</INS> the same
+<DEL>parameter-type-lists</DEL> <INS>non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), </INS> and</LI>
+<LI class="ins">if they are member functions, both are direct members of the same
+class, and</LI>
+<LI class="ins">if both are non-static member
+functions, they have the same types for their object parameters, and</LI>
+<LI>F1 is more constrained than F2 according to the
+partial ordering of constraints described in
+13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],
+</LI>
+</UL>
+or if not that,
+
+<P class="ins">[ Example:</P>
+<PRE class="ins">
+  template &lt;typename T = int&gt;
+  struct S {
+    constexpr void f();                      // #1
+    constexpr void f(this S&amp;) requires true; // #2
+  };
+
+  void test() {
+    S&lt;&gt; s;
+    s.f();                 // calls #2
+  }
+</PRE>
+<P class="ins"> -- end example ]</P>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

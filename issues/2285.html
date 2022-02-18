@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2285</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2285"></A><H4>2285.
+  
+Issues with structured bindings
+</H4>
+<B>Section: </B>9.6&#160; [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-07-01<BR>
+
+
+<P>[Accepted as a DR at the June, 2018 (Rapperswil) meeting.]</P>
+
+
+
+<OL>
+<LI><P>What is the point of declaration of a name introduced by a
+structured binding? If it's the point at which it appears, we're missing a
+rule to make it ill-formed to reference the name before its type is deduced
+(similar to what we have for 'auto').  [Suggestion: point of declaration is
+after the <I>identifier-list</I>, program is ill-formed if the name is
+mentioned before the end of the initializer.]</P></LI>
+
+<LI><P>Are structured bindings permitted at namespace scope? There doesn't
+seem to be a rule against that. If so, what's their linkage? Is it
+intentional that <TT>static</TT> , <TT>extern</TT> are disallowed? Should
+we only allow automatic storage duration?  [Suggestion: only permit
+automatic storage duration, per the design paper.]</P></LI>
+
+<LI><P>(If the answer to 2 is yes...) is the declaration in a variable
+template permitted to use structured bindings? If so, how do you name the
+result?  (The bindings themselves aren't introduced
+as <I>template-name</I>s by the current wording.) If not, we're missing a
+restriction on that.  [Suggestion: no to question 2.]</P></LI>
+
+<LI><P>Did we intend to guarantee that the object whose members are denoted
+by bindings is kept "together":</P></LI>
+
+<PRE>
+   auto f() -&gt; int (&amp;)[2];
+   auto [x, y] = f();
+   assert(&amp;x + 1 == &amp;y); //<SPAN CLASS="cmnt"> ok? </SPAN>
+
+   struct S { int a, b, c; }; //<SPAN CLASS="cmnt"> standard-layout </SPAN>
+   auto [a,b,c] = S();
+   assert(&amp;((S*)&amp;a)-&gt;b == &amp;b); //<SPAN CLASS="cmnt"> ok? </SPAN>
+</PRE>
+
+<P>(If yes, this means we can't synthesize independent variables for each
+element of an array or struct that's bound in this way, and it's harder to
+remove dead components of a destructured object.) Obviously we may need to
+keep the object together if it has a non-trivial destructor.  [Suggestion:
+do not allow reaching the complete object from a binding.]</P>
+
+<LI><P>Should the copy-&gt;move promotion be permitted for a return of a
+structured binding?</P></LI>
+
+<PRE>
+   struct A { string s; int n; };
+   string f() {
+     auto [s,n] = A();
+     return s; //<SPAN CLASS="cmnt"> copy required here? </SPAN>
+   }
+</PRE>
+
+<P>[Suggestion: allow promotion to move -- as if the binding were a real local
+variable -- if the implicit underlying variable is not a reference. Maybe
+also allow NRVO, depending on answer to question 8.]</P>
+
+</OL>
+
+<P><B>Notes from the April, 2017 teleconference:</B></P>
+
+<P>Items 1 and 3 are core issues; item 4 is NAD - the bindings are kept
+together, which is implied by the existing rules about copying the object
+into a hidden temporary. The remaining items are questions for EWG and
+new items in "extension" status will be opened for them.</P>
+
+<P><B>Proposed resolution, February, 2018:</B></P>
+
+<OL>
+<LI><P>Change 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#9">basic.scope.pdecl</A>] paragraph 9 as follows and
+add the following new paragraph thereafter:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The point of declaration for a function-local predefined variable
+(<DEL>9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]</DEL> <INS>9.5.1 [<A href="https://wg21.link/dcl.fct.def.general">dcl.fct.def.general</A>]</INS>)
+is immediately before the <I>function-body</I> of a function definition.</P>
+
+<P><INS>The point of declaration of a structured binding
+(9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]) is immediately after the
+<I>identifier-list</I> of the structured binding declaration.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph following
+9.6 [<A href="https://wg21.link/dcl.struct.bind#1">dcl.struct.bind</A>] paragraph 1:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...taken from the corresponding structured binding declaration. The type
+of the <I>id-expression</I> <TT>e</TT> is called <TT>E</TT>. [<I>Note:</I>
+E is never a reference type (Clause 7 [<A href="https://wg21.link/expr">expr</A>]). &#8212;<I>end
+note</I>]</P>
+
+<P><INS>If the <I>initializer</I> refers to one of the names introduced
+by the structured binding declaration, the program is ill-formed.</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(Note: In response to item 3, the current wording of
+Clause 13 [<A href="https://wg21.link/temp#1">temp</A>] paragraph 1 does not allow templated structured
+binding declarations, and no change is being proposed.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

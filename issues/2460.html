@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2460</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2460"></A><H4>2460.
+  
+C language linkage and constrained non-template friends
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-03-23<BR>
+
+
+<P>[Accepted at the November, 2020 meeting.]</P>
+
+
+
+<P>According to 13.7.5 [<A href="https://wg21.link/temp.friend#9">temp.friend</A>] paragraph 9,</P>
+
+<BLOCKQUOTE>
+
+A non-template friend declaration with
+a <I>requires-clause</I> shall be a definition. A friend
+function template with a constraint that depends on a
+template parameter from an enclosing template shall be a
+definition.  Such a constrained friend function or function
+template declaration does not declare the same function or
+function template as a declaration in any other scope.
+
+</BLOCKQUOTE>
+
+<P>However, this specification conflicts with the treatment
+of functions with C language linkage in 9.11 [<A href="https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7:
+</P>
+
+<BLOCKQUOTE>
+
+At most one function with a particular name can have C
+language linkage. Two declarations for a function with C
+language linkage with the same function name (ignoring the
+namespace names that qualify it) that appear in different
+namespace scopes refer to the same function.
+
+</BLOCKQUOTE>
+
+<P>For example:</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A { struct B; };
+
+  extern "C" {
+  template &lt;typename T&gt;
+  struct A&lt;T&gt;::B {
+   friend void f(B *) requires true {} //<SPAN CLASS="cmnt"> C language linkage applies</SPAN>
+  };
+  }
+
+  namespace Q {
+   extern "C" void f(); //<SPAN CLASS="cmnt"> ill-formed redeclaration?</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (April, 2020):</B></P>
+
+<P>Change 9.11 [<A href="https://wg21.link/dcl.link#5">dcl.link</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+...A C language linkage is ignored in determining the
+language linkage of the names of class members<INS>, the
+names of friend functions with a
+trailing <I>requires-clause</I>,</INS> and the function type
+of class member functions...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

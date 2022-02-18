@@ -1,0 +1,429 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 4</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="4"></A><H4>4.
+  
+Does extern "C" affect the linkage of function names with internal linkage?
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Anderson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>9.11 [<A href="https://wg21.link/dcl.link#6">dcl.link</A>] paragraph 6
+says the following:</P>
+<UL>At most one of a set of overloaded functions with a particular name
+can have C linkage.</UL>
+Does this apply to static functions as well? For example, is the following
+well-formed?
+<PRE>
+        extern "C" {
+            static void f(int) {}
+            static void f(float) {}
+        };
+</PRE>
+Can a function with internal linkage "have C linkage" at all (assuming
+that phrase means "has extern "C" linkage"), for how can a function be
+extern "C" if it's not extern? The function <B>type</B> can have extern
+"C" linkage &#8212; but I think that's independent of the linkage of the function
+<B>name</B>. It should be perfectly reasonable to say, in the example above,
+that extern "C" applies only to the types of <TT>f(int)</TT> and <TT>f(float)</TT>,
+not to the function names, and that the rule in 9.11 [<A href="https://wg21.link/dcl.link#6">dcl.link</A>] paragraph 6
+doesn't apply.
+<P>
+<B>Suggested  resolution:</B> The extern "C" linkage specification applies
+only to the type of functions with internal linkage, and therefore some
+of the rules that have to do with name overloading don't apply.</P>
+
+<P><B>Proposed Resolution:</B></P>
+
+<P>The intent is to distingush <I>implicit</I> linkage from explicit linkage
+for both name linkage and language (function type) linkage. (It might
+be more clear to use the terms <I>name linkage</I> and <I>type linkage</I>
+to distinguish these concepts. A function can have a name with one
+kind of linkage and a type with a different kind of linkage. The
+function itself has no linkage: it has no name, only the declaration has
+a name. This becomes more obvious when you consider function pointers.)</P>
+
+<P>The tentatively agreed proposal is to apply implicit linkage to names
+declared in brace-enclosed linkage specifications and to non-top-level
+names declared in simple linkage specifications; and to apply explicit
+linkage to top-level names declared in simple linkage specifications.</P>
+
+<P>The language linkage of any function type formed through a function
+declarator is that of the nearest enclosing <I>linkage-specification</I>.
+For purposes of determining whether the declaration of a namespace-scope
+name matches a previous declaration, the language linkage portion of the
+type of a function declaration (that is, the language linkage of the function
+itself, not its parameters, return type or exception specification) is
+ignored.</P>
+
+<P>For a <I>linkage-specification</I> using braces, i.e.</P>
+<BLOCKQUOTE>
+<TT>extern</TT> <I>string-literal</I> <TT>{</TT> <I>declaration-seq</I><SUB>opt</SUB>
+<TT>}</TT>
+</BLOCKQUOTE>
+the linkage of any declaration of a namespace-scope name (including local
+externs) which is not contained in a nested <I>linkage-specification</I>,
+is not declared to have no linkage (static), and does not match a previous
+declaration is given the linkage specified in the <I>string-literal.</I>
+The language linkage of the type of any function declaration of a namespace-scope
+name (including local externs) which is not contained in a nested <I>linkage-specification</I>
+and which is declared with function declarator syntax is the same as that
+of a matching previous declaration, if any, else is specified by <I>string-literal</I>.
+
+<P>For a <I>linkage-specification</I> without braces, i.e.</P>
+<BLOCKQUOTE>
+<TT>extern</TT> <I>string-literal</I> <I>declaration</I>
+</BLOCKQUOTE>
+<P>the linkage of the names declared in the top-level declarators of <I>declaration</I>
+is specified by <I>string-literal</I>; if this conflicts with the linkage
+of any matching previous declarations, the program is ill-formed. The language
+linkage of the type of any top-level function declarator is specified by
+<I>string-literal</I>; if this conflicts with the language linkage of the
+type of any matching previous function declarations, the program is ill-formed.
+The effect of the <I>linkage-specification</I> on other (non top-level)
+names declared in <I>declaration</I> is the same as that of the brace-enclosed
+form.</P>
+
+
+
+<P>
+<U>Bill Gibbons</U>: In particular, these should be well-formed:</P>
+
+<PRE>
+    extern "C" void f(void (*fp)());   // parameter type is pointer to
+                                       // function with C language linkage
+    extern "C++" void g(void (*fp)()); // parameter type is pointer to
+                                       // function with C++ language linkage
+
+    extern "C++" {                     // well-formed: the linkage of "f"
+        void f(void(*fp)());           // and the function type used in the
+    }                                  // parameter still "C"
+
+    extern "C" {                       // well-formed: the linkage of "g"
+        void g(void(*fp)());           // and the function type used in the
+    }                                  // parameter still "C++"
+</PRE>
+
+<P>but these should not:</P>
+
+<PRE>
+    extern "C++" void f(void(*fp)());  // error - linkage of "f" does not
+                                       // match previous declaration
+                                       // (linkage of function type used in
+                                       // parameter is still "C" and is not
+                                       // by itself ill-formed)
+    extern "C" void g(void(*fp)());    // error - linkage of "g" does not
+                                       // match previous declaration
+                                       // (linkage of function type used in
+                                       // parameter is still "C++" and is not
+                                       // by itself ill-formed)
+</PRE>
+
+<P>That is, non-top-level declarators get their linkage from matching
+declarations, if any, else from the nearest enclosing linkage
+specification.  (As already described, top-level declarators in a
+brace-enclosed linkage specification get the linkage from matching
+declarations, if any, else from the linkage specifcation; while
+top-level declarators in direct linkage specifications get their
+linkage from that specification.)</P>
+
+<P>
+<U>Mike Miller</U>: This is a pretty significant change from the
+current specification, which treats the two forms of language linkage
+similarly for most purposes.  I don't understand why it's desirable to
+expand the differences.</P>
+
+<P>It seems very unintuitive to me that you could have a top-level
+declaration in an <TT>extern "C"</TT>  block that would <I>not</I>
+receive "C" linkage.</P>
+
+<P>In the current standard, the statement in
+9.11 [<A href="https://wg21.link/dcl.link#4">dcl.link</A>] paragraph 4 that</P>
+
+<BLOCKQUOTE>
+
+the specified language linkage applies to the function types of all
+function declarators, function names, and variable names introduced by
+the declaration(s)
+
+</BLOCKQUOTE>
+
+<P>applies to both forms.  I would thus expect that in</P>
+
+<PRE>
+    extern "C" void f(void(*)());
+    extern "C++" {
+        void f(void(*)());
+    }
+    extern "C++" f(void(*)());
+</PRE>
+
+<P>both "C++" declarations would be well-formed, declaring an
+overloaded version of <TT>f</TT> that takes a pointer to a "C++"
+function as a parameter.  I wouldn't expect that either declaration
+would be a redeclaration (valid or invalid) of the "C" version of
+<TT>f</TT>.</P>
+
+<P>
+<U>Bill Gibbons</U>: The potential difficulty is the matching
+process and the handling of deliberate overloading based on language
+linkage.  In the above examples, how are these two declarations
+matched:</P>
+
+<PRE>
+    extern "C" void f(void (*fp1)());
+
+    extern "C++" {
+        void f(void(*fp2)());
+    }
+</PRE>
+
+<P>given that the linkage that is part of fp1 is "C" while the linkage (prior
+to the matching process) that is part of fp2 is "C++"?</P>
+
+<P>The proposal is that the linkage which is part of the parameter type is not
+determined until after the match is attempted.  This almost always correct
+because you can't overload "C" and "C++" functions; so if the function names
+match, it is likely that the declarations are supposed to be the
+same.</P>
+
+<P>
+<U>Mike Miller</U>: This seems like more trouble than it's worth.
+This comparison of function types ignoring linkage specifications is,
+as far as I know, not found anywhere in the current standard.  Why do
+we need to invent it?</P>
+
+<P>
+<U>Bill Gibbons</U>: It is possible to construct pathological cases where this fails, e.g.</P>
+
+<PRE>
+    extern "C" typedef void (*PFC)();  // pointer to "C" linkage function
+    void f(PFC);         // parameter is pointer to "C" function
+    void f(void (*)());  // matching declaration or overload based on
+                         // difference in linkage type?
+</PRE>
+
+<P>It is reasonable to require explicit typedefs in this case so that
+in the above example the second function declaration gets its parameter type
+function linkage from the first function declaration.</P>
+
+<P>(In fact, I think you can't get into this situation without having already
+used typedefs to declare different language linkage for the top-level and
+parameter linkages.)</P>
+
+<P>For example, if the intent is to overload based on linkage a
+typedef is needed:</P>
+
+<PRE>
+    extern "C" typedef void (*PFC)();  // pointer to "C" linkage function
+    void f(PFC);              // parameter is pointer to "C" function
+    typedef void (*PFCPP)();  // pointer to "C++" linkage function
+    void f(PFCPP);            // parameter is pointer to "C++" function
+</PRE>
+
+<P>In this case the two function declarations refer to different
+functions.</P>
+
+<P>
+<U>Mike Miller</U>: This seems pretty strange to me.  I think it
+would be simpler to determine the type of the parameter based on the
+containing linkage specification (implicitly "C++") and require a
+typedef if the user wants to override the default behavior.  For
+example:</P>
+
+<PRE>
+    extern "C" {
+        typedef void (*PFC)();    // pointer to "C" function
+        void f(void(*)());        // takes pointer to "C" function
+    }
+
+    void f(void(*)());            // new overload of "f", taking
+                                  // pointer to "C++" function
+
+    void f(PFC);                  // redeclare extern "C" version
+</PRE>
+
+<P><B>Notes from 04/00 meeting:</B></P>
+
+<P>The following changes were tentatively approved, but because they
+do not completely implement the proposal above the issue is being kept
+for the moment in "drafting" status.</P>
+
+<P><B>Notes from 10/00 meeting:</B></P>
+
+<P>After further discussion, the core language working group
+determined that the more extensive proposal described above is
+not needed and that the following changes are sufficient.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<OL>
+<LI>
+<P>Change the first sentence of 9.11 [<A href="https://wg21.link/dcl.link#1">dcl.link</A>] paragraph 1
+from</P>
+
+<BLOCKQUOTE>
+All function types, function names, and variable names
+have a language linkage.
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+All function types, function names with external
+linkage, and variable names with external linkage have
+a language linkage.
+</BLOCKQUOTE>
+</LI>
+
+<LI>Change the following sentence of 9.11 [<A href="https://wg21.link/dcl.link#4">dcl.link</A>] paragraph 4:
+
+
+<BLOCKQUOTE>
+In a <I>linkage-specification</I>, the specified language
+linkage applies to the function types of all function
+declarators, function names, and variable names
+introduced by the declaration(s).
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+In a <I>linkage-specification</I>, the specified language
+linkage applies to the function types of all function
+declarators, function names with external linkage, and
+variable names with external linkage declared within
+the <I>linkage-specification</I>.
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add at the end of the final example on 9.11 [<A href="https://wg21.link/dcl.link#4">dcl.link</A>] paragraph 4:</P>
+
+<PRE>
+    extern "C" {
+      static void f4();    // <I>the name of the function</I> f4 <I>has</I>
+                           // <I>internal linkage (not C language</I>
+                           // <I>linkage) and the function's type</I>
+                           // <I>has C language linkage</I>
+    }
+    extern "C" void f5() {
+      extern void f4();    // <I>Okay -- name linkage (internal)</I>
+                           // <I>and function type linkage (C</I>
+                           // <I>language linkage) gotten from</I>
+                           // <I>previous declaration.</I>
+    }
+    extern void f4();      // <I>Okay -- name linkage (internal)</I>
+                           // <I>and function type linkage (C</I>
+                           // <I>language linkage) gotten from</I>
+                           // <I>previous declaration.</I>
+    void f6() {
+      extern void f4();    // <I>Okay -- name linkage (internal)</I>
+                           // <I>and function type linkage (C</I>
+                           // <I>language linkage) gotten from</I>
+                           // <I>previous declaration.</I>
+    }
+</PRE>
+</LI>
+
+<LI>
+<P>Change 9.11 [<A href="https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7 from</P>
+
+<BLOCKQUOTE>
+<P>Except for functions with internal linkage, a function
+first declared in a <I>linkage-specification</I> behaves as a
+function with external linkage.  [<I>Example:</I>
+</P>
+
+<PRE>
+    extern "C" double f();
+    static double f();     // <I>error</I>
+</PRE>
+
+<P>is ill-formed (9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]). ] The form of
+<I>linkage-specification</I> that contains a braced-enclosed
+<I>declaration-seq</I> does not affect whether the contained
+declarations are definitions or not (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]); the
+form of <I>linkage-specification</I> directly containing a
+single declaration is treated as an <TT>extern</TT> specifier
+(9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]) for the purpose of determining whether
+the contained declaration is a definition.  [<I>Example:</I>
+</P>
+
+<PRE>
+    extern "C" int i;      // <I>declaration</I>
+    extern "C" {
+	  int i;           // <I>definition</I>
+    }
+</PRE>
+
+<P>&#8212;<I>end example</I>] A <I>linkage-specification</I> directly
+containing a single declaration shall not specify a
+storage class.  [<I>Example:</I>
+</P>
+
+<PRE>
+    extern "C" static void f(); // <I>error</I>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+A declaration directly contained in a
+<I>linkage-specification</I> is treated as if it contains the
+<TT>extern</TT> specifier (9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]) for the purpose of
+determining the linkage of the declared name and
+whether it is a definition.  Such a declaration shall
+not specify a storage class.  [<I>Example:</I>
+
+<PRE>
+    extern "C" double f();
+    static double f();     // <I>error</I>
+    extern "C" int i;      // <I>declaration</I>
+    extern "C" {
+	    int i;         // <I>definition</I>
+    }
+    extern "C" static void g(); // <I>error</I>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+</BLOCKQUOTE>
+</LI>
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,501 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1467</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1467"></A><H4>1467.
+  
+List-initialization of aggregate from same-type object
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-06<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>The current list-initialization rules do not provide for
+list-initialization of an aggregate from an object of the same type:</P>
+
+<PRE>
+  struct X {
+    X() = default;
+    X(const X&amp;) = default;
+  #ifdef OK
+    X(int) { }
+  #endif
+  };
+
+  X x;
+  X x2{x}; //<SPAN CLASS="cmnt"> error, </SPAN>{x}<SPAN CLASS="cmnt"> is not a valid aggregate initializer for </SPAN>X<SPAN CLASS="cmnt"></SPAN>
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>List-initialization of an object or reference of type <TT>T</TT> is
+defined as follows:
+</P>
+
+<UL>
+<LI><P><INS>If <TT>T</TT> is a class type and the
+initializer list has a single element of type <I>cv</I> <TT>T</TT> or
+a class type derived from <TT>T</TT>, the object is initialized from
+that element.</INS></P></LI>
+
+<LI><P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> T is an aggregate...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (September, 2012):</B></P>
+
+<commmittee_only><P>(See messages <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=22368">22368</A>, <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=22371">22371</A>
+through <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=22373">22373</A>, <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=22388">22388</A>, and <A href="http://listarchives.isocpp.org/cgi-bin/wg21/message?wg=core&amp;msg=22494">22494</A>.)
+</P></commmittee_only>
+
+<P>It appears that 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>] will also need
+to be updated in parallel with this change.  Alternatively, it may be
+better to change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] instead of
+9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>] and 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>].</P>
+
+<P>In a related note, given</P>
+
+<PRE>
+  struct NonAggregate {
+    NonAggregate() {}
+  };
+
+  struct WantsIt {
+    WantsIt(NonAggregate);
+  };
+
+  void f(NonAggregate n);
+  void f(WantsIt);
+
+  int main() {
+    NonAggregate n;
+    //<SPAN CLASS="cmnt"> ambiguous!</SPAN>
+    f({n});
+  }
+</PRE>
+
+<P>12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#3">over.ics.list</A>] paragraph 3 says that the call to
+<TT>f(NonAggregate)</TT> is a user-defined conversion, the same as the
+call to <TT>f(WantsIt)</TT> and thus ambiguous.  Also,</P>
+
+<PRE>
+    NonAggregate n;
+    //<SPAN CLASS="cmnt"> #1 </SPAN>(n -&gt; NonAggregate<SPAN CLASS="cmnt"> = Identity conversion)</SPAN>
+    NonAggregate m{n};
+    //<SPAN CLASS="cmnt"> #2 </SPAN>({n} -&gt; NonAggregate<SPAN CLASS="cmnt"> = User-defined conversion}</SPAN>
+    //<SPAN CLASS="cmnt"> (copy-ctor not considered according to 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4)</SPAN>
+    NonAggregate m{{n}};
+</PRE>
+
+<P>Finally, the suggested resolution simply says &#8220;initialized
+from,&#8221; without specifying whether that means direct initialization
+or copy initialization.  It should be explicit about which is intended,
+e.g., if it reflects the kind of list-initialization being done.</P>
+
+<P><B>Proposed resolution (February, 2014) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>List-initialization of an object or reference of type <TT>T</TT> is
+defined as follows:</P>
+
+<UL>
+<LI><P><INS>If <TT>T</TT> is a class type and the initializer list
+has a single element of type <I>cv</I> <TT>U</TT>, where <TT>U</TT> is
+<TT>T</TT> or a class derived from <TT>T</TT>, the object is initialized
+from that element (by copy-initialization for copy-list-initialization, or
+by direct-initialization for direct-list-initialization).</INS></P></LI>
+
+<LI><P><INS>Otherwise, if <TT>T</TT> is a character array and the
+initializer list has a single element that is an appropriately typed
+string literal (9.4.3 [<A href="https://wg21.link/dcl.init.string">dcl.init.string</A>]), initialization is done as
+described in that section.</INS></P></LI>
+
+<LI><P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> <TT>T</TT> is an
+aggregate...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the final bullet of 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>] paragraph
+4, as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>However, if the target is</P>
+
+<UL>
+<LI><P>the first parameter of a constructor or</P></LI>
+
+<LI><P>the implicit object parameter of a user-defined conversion
+function</P></LI>
+
+</UL>
+
+<P>and the constructor or user-defined conversion function is a candidate
+by</P>
+
+<UL>
+<LI><P>12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], when the argument is the
+temporary in the second step of a class
+copy-initialization, <INS>or</INS>
+</P></LI>
+
+<LI><P>12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] (in all cases), <DEL>or</DEL>
+</P></LI>
+
+<LI><P><DEL>the second phase of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when the
+initializer list has exactly one element, and the target is the first
+parameter of a constructor of class <TT>X</TT>, and the conversion is
+to <TT>X</TT> or reference to (possibly
+cv-qualified) <TT>X</TT>,</DEL></P></LI>
+
+</UL>
+
+<P>user-defined conversion sequences are not considered. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following two paragraphs between
+12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>] paragraphs 1 and 2, moving the
+footnote from the current paragraph 3 to the second inserted
+paragraph:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>When an argument is an initializer list (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), it
+is not an expression and special rules apply for converting it to a
+parameter type.</P>
+
+<P><INS>If the parameter type is a class <TT>C</TT> and the initializer
+list has a single element of type <I>cv</I> <TT>U</TT>, where <TT>U</TT>
+is <TT>C</TT> or a class derived from <TT>C</TT>, the implicit conversion
+sequence is the one required to convert the element to the parameter
+type.</INS></P>
+
+<P><INS>Otherwise, if the parameter type is a character array
+[<I>Footnote:</I> Since there are no parameters of array type, this will
+only occur as the underlying type of a reference parameter. &#8212;<I>end
+footnote</I>] and the initializer list has a single element that is an
+appropriately typed string literal (9.4.3 [<A href="https://wg21.link/dcl.init.string">dcl.init.string</A>]), the
+implicit conversion is the identity conversion.</INS></P>
+
+<P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> the parameter type is
+<TT>std::initializer_list&lt;X&gt;</TT> and...</P>
+
+<P>Otherwise, if the parameter type is &#8220;array of <TT>N</TT>
+<TT>X</TT>&#8221; <DEL>[<I>Footnote:</I> ... &#8212;<I>end
+footnote</I>]</DEL>, if the initializer list has...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, if the parameter type is not a class:</P>
+
+<UL>
+<LI>
+
+<P>if the initializer list has one element <INS>that is not itself an
+initializer list</INS>, the implicit conversion sequence
+is the one required to convert the element to the parameter type;
+[<I>Example:</I>...</P>
+</LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Two implicit conversion sequences of the same form are indistinguishable
+conversion sequences unless one of the following rules applies:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>List-initialization sequence <TT>L1</TT> is a better conversion sequence than
+list-initialization sequence <TT>L2</TT> if</P></LI>
+
+<UL>
+<LI><P>
+<TT>L1</TT> converts to <TT>std::initializer_list&lt;X&gt;</TT>
+for some <TT>X</TT> and <TT>L2</TT> does not, or, if not that,</P></LI>
+
+<LI><P>
+<TT>L1</TT> converts to type &#8220;array
+of <TT>N1</TT> <TT>T</TT>&#8221;, <TT>L2</TT> converts to type &#8220;array
+of <TT>N2</TT> <TT>T</TT>&#8221;, and <TT>N1</TT> is smaller
+than <TT>N2</TT><DEL>.</DEL><INS>,</INS>
+</P></LI>
+
+</UL>
+
+<P><INS>even if one of the above rules would otherwise apply.
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  void f1(int);                                 //<SPAN CLASS="cmnt"> #1</SPAN>
+  void f1(std::initializer_list&lt;long&gt;);         //<SPAN CLASS="cmnt"> #2</SPAN>
+  void g1() { f1({42}); }                       //<SPAN CLASS="cmnt"> chooses #2</SPAN>
+
+  void f2(std::pair&lt;const char*, const char*&gt;); //<SPAN CLASS="cmnt"> #3</SPAN>
+  void f2(std::initializer_list&lt;std::string&gt;);  //<SPAN CLASS="cmnt"> #4</SPAN>
+  void g2() { f2({"foo","bar"}); }              //<SPAN CLASS="cmnt"> chooses #4</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1490.html">1490</A>,
+<A HREF="1589.html">1589</A>, and <A HREF="1631.html">1631</A>.</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>The resolution above does not adequately address the related
+<A HREF="1758.html">issue 1758</A>.  It appears that
+conversion functions and constructors must be handled separately.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>List-initialization of an object or reference of type <TT>T</TT> is
+defined as follows:</P>
+
+<UL>
+<LI><P><INS>If <TT>T</TT> is a class type and the initializer
+list has a single element of type <I>cv</I> <TT>U</TT>,
+where <TT>U</TT> is <TT>T</TT> or a class derived
+from <TT>T</TT>, the object is initialized from that element (by
+copy-initialization for copy-list-initialization, or by
+direct-initialization for
+direct-list-initialization).</INS></P></LI>
+
+<LI><P><INS>Otherwise, if <TT>T</TT> is a character array and the
+initializer list has a single element that is an appropriately-typed
+string literal (9.4.3 [<A href="https://wg21.link/dcl.init.string">dcl.init.string</A>]), initialization is
+performed as described in that section.</INS></P></LI>
+
+<LI><P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> <TT>T</TT> is an
+aggregate,</P></LI>
+
+<LI><P>Otherwise, if the initializer list has no elements...</P></LI>
+
+<LI><P>Otherwise, if <TT>T</TT> is a specialization of
+<TT>std::initializer_list&lt;E&gt;</TT>...</P></LI>
+
+<LI><P>Otherwise, if <TT>T</TT> is a class type...</P></LI>
+
+<LI><P>Otherwise, if the initializer list has a single element of
+type <TT>E</TT> and either <TT>T</TT> is not a reference type or
+its referenced type is reference-related to <TT>E</TT>, the
+object or reference is initialized from that element <INS>(by
+copy-initialization for copy-list-initialization, or by
+direct-initialization for direct-list-initialization)</INS>; if a
+narrowing conversion (see below) is required to convert the
+element to <TT>T</TT>, the program is ill-formed.
+[<I>Example:</I>...</P></LI>
+
+<LI><P>Otherwise...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When objects of non-aggregate class type <TT>T</TT> are list-initialized
+<DEL>(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>])</DEL> <INS>such that
+9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>] specifies that overload resolution is
+performed according to the rules in this section</INS>, overload
+resolution selects the constructor...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...and the constructor or user-defined conversion function is a
+candidate by</P>
+
+<UL>
+<LI><P>12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], when the argument is
+the temporary in the second step of a class
+copy-initialization, <INS>or</INS>
+</P></LI>
+
+<LI><P>12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]
+(in all cases), <DEL>or</DEL>
+</P></LI>
+
+<LI><P><DEL>the second phase of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when the
+initializer list has exactly one element, and the target is the
+first parameter of a constructor of class <TT>X</TT>, and the
+conversion is to <TT>X</TT> or reference to (possibly
+cv-qualified) <TT>X</TT>,</DEL></P></LI>
+
+</UL>
+
+<P>user-defined conversion sequences are not considered.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>] paragraphs 1-2 as
+follows, moving the footnote from paragraph 3:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>When an argument is an initializer list
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), it is not an expression and special
+rules apply for converting it to a parameter type.</P>
+
+<P><INS>If the parameter type is a class <TT>X</TT> and the
+initializer list has a single element of type <I>cv</I> <TT>U</TT>,
+where <TT>U</TT> is <TT>X</TT> or a class derived from
+<TT>X</TT>, the implicit conversion sequence is the one required
+to convert the element to the parameter type.</INS></P>
+
+<P><INS>Otherwise, if the parameter type is a character array
+[<I>Footnote:</I> Since there are no parameters of array type, this
+will only occur as the underlying type of a reference parameter.
+&#8212;<I>end footnote</I>] and the initializer list has a single
+element that is an appropriately-typed string literal
+(9.4.3 [<A href="https://wg21.link/dcl.init.string">dcl.init.string</A>]), the implicit conversion sequence is
+the identity conversion.</INS></P>
+
+<P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> the parameter type is
+<TT>std::initializer_list&lt;X&gt;</TT> and...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, if the parameter type is not a class:</P>
+
+<UL>
+<LI><P>if the initializer list has one element <INS>that is
+not itself an initializer list</INS>, the implicit conversion
+sequence is the one required to convert the element to the
+parameter type; [<I>Example:</I>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Move the final bullet of 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3
+to the beginning of the list and change it as
+follows:</P></LI>
+
+<UL>
+<LI><P>List-initialization sequence <TT>L1</TT> is a better
+conversion sequence than list-initialization sequence <TT>L2</TT>
+if</P></LI>
+
+<UL>
+<LI><P>
+<TT>L1</TT> converts
+to <TT>std::initializer_list&lt;X&gt;</TT> for some <TT>X</TT>
+and <TT>L2</TT> does not, or, if not that,</P></LI>
+
+<LI><P>
+<TT>L1</TT> converts to type &#8220;array of <TT>N1
+T</TT>&#8221;, <TT>L2</TT> converts to type &#8220;array
+of <TT>N2 T</TT>&#8221;, and <TT>N1</TT> is smaller
+than <TT>N2</TT><DEL>.</DEL><INS>,</INS>
+</P></LI>
+
+</UL>
+
+<P><INS>even if one of the other rules in this paragraph would otherwise
+apply. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  void f1(int);                                 //<SPAN CLASS="cmnt"> #1</SPAN>
+  void f1(std::initializer_list&lt;long&gt;);         //<SPAN CLASS="cmnt"> #2</SPAN>
+  void g1() { f1({42}); }                       //<SPAN CLASS="cmnt"> chooses #2</SPAN>
+
+  void f2(std::pair&lt;const char*, const char*&gt;); //<SPAN CLASS="cmnt"> #3</SPAN>
+  void f2(std::initializer_list&lt;std::string&gt;);  //<SPAN CLASS="cmnt"> #4</SPAN>
+  void g2() { f2({"foo","bar"}); }              //<SPAN CLASS="cmnt"> chooses #4</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</UL>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1490.html">1490</A>,
+<A HREF="1589.html">1589</A>, <A HREF="1631.html">1631</A>,
+<A HREF="1756.html">1756</A>, and <A HREF="1758.html">1758</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

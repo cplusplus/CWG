@@ -1,0 +1,169 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 427</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="427"></A><H4>427.
+  
+<TT>static_cast</TT> ambiguity: conversion versus cast to derived
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 July 2003<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+<P>Consider this code:</P>
+<PRE>
+  struct B {};
+
+  struct D : public B {
+    D(const B&amp;);
+  };
+
+  extern B&amp; b;
+
+  void f() {
+    static_cast&lt;const D&amp;&gt;(b);
+  }
+</PRE>
+<P>The rules for <TT>static_cast</TT> permit the conversion to
+"const D&amp;" in two ways: </P>
+<OL>
+<LI>
+D is derived from B, and b is an lvalue, so a cast to D&amp; is OK.
+</LI>
+<LI>
+const D&amp; t = b is valid, using the constructor for D. [Ed. note:
+actually, this should be parenthesized initialization.]
+</LI>
+</OL>
+<P>The first alternative is 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/5; the second is
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/2.</P>
+
+<P>Presumably the first alternative is better -- it's the "simpler"
+conversion.  The standard does not seem to make that clear.</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+I take the "Otherwise" at the beginning of
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/3 as meaning that
+the paragraph 2 interpretation is used if available, which means in
+your example above interpretation 2 would be used.  However, that's
+not what EDG's compiler does, and I agree that it's not the "simpler"
+conversion.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>Move paragraph 5.2.9/5:</P>
+
+<BLOCKQUOTE>
+<P>
+An lvalue of type
+``<I>cv1</I>
+<TT>B</TT>'',
+where
+<TT>B</TT>
+is a class type, can be cast to type ``reference to
+<I>cv2</I>
+<TT>D</TT>'',
+where
+<TT>D</TT>
+is a class derived (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) from
+<TT>B</TT>,
+if a valid standard conversion from ``pointer to
+<TT>D</TT>''
+to ``pointer to
+<TT>B</TT>''
+exists (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]),
+<I>cv2</I>
+is the same cv-qualification as, or greater cv-qualification than,
+<I>cv1</I>,
+and
+<TT>B</TT>
+is not a virtual base class of
+<TT>D</TT>.
+The result is an lvalue of type
+``<I>cv2</I> <TT>D</TT>.''
+If the lvalue of type
+``<I>cv1</I>
+<TT>B</TT>''
+is actually a sub-object of an object of type
+<TT>D</TT>,
+the lvalue refers to the enclosing object of type
+<TT>D</TT>.
+Otherwise, the result of the cast is undefined.
+[<I>Example:</I>
+<PRE>
+  struct B {};
+  struct D : public B {};
+  D d;
+  B &amp;br = d;
+
+  static_cast&lt;D&amp;&gt;(br);            //<I>  produces lvalue to the original  </I>d<I>  object</I>
+</PRE>
+--- end example]
+</P>
+</BLOCKQUOTE>
+
+<P>before paragraph 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/2.</P>
+
+<P>Insert <INS>Otherwise,</INS> before the text of paragraph
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/2
+(which will become 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]/3
+after the above insertion), so that it
+reads:</P>
+<BLOCKQUOTE>
+<P>
+<INS>Otherwise</INS>, an expression
+<TT>e</TT>
+can be explicitly converted to a type
+<TT>T</TT>
+using a
+<TT>static_cast</TT>
+of the form
+<TT>static_cast&lt;T&gt;(e)</TT>
+if the declaration
+<TT>"T t(e);"</TT>
+is well-formed, for some invented temporary variable
+<TT>t</TT>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+The effect of such an explicit conversion is the same as performing the
+declaration and initialization and then using the temporary variable
+as the result of the conversion.
+The result is an lvalue if
+<TT>T</TT>
+is a reference type (9.3.4.3 [<A href="https://wg21.link/dcl.ref">dcl.ref</A>]), and an rvalue otherwise.
+The expression
+<TT>e</TT>
+is used as an lvalue if and only if the initialization uses it as an lvalue.
+</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

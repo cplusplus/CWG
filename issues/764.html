@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 764</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="764"></A><H4>764.
+  
+Capturing unused variables in a lambda expression
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 February, 2009<BR>
+
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+<P>7.5.6 [<A href="https://wg21.link/expr.prim.lambda#5">expr.prim.lambda</A>] paragraph 5 says,</P>
+
+<BLOCKQUOTE>
+
+ The <I>compound-statement</I> of a lambda expression shall use
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) an automatic variable or reference from the
+context where the lambda expression appears only if the name of the
+variable or reference is a member of the effective capture set...
+
+</BLOCKQUOTE>
+
+<P>The reference to 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] makes clear that the
+technical meaning of &#8220;use&#8221; is in view here, and that the
+names of variables can appear without being captured if they are
+constants used as values or if they are unevaluated operands.</P>
+
+<P>There appears to be a disconnect with the preceding paragraph,
+however, in the description of which variables are implicitly
+captured by a <I>capture-default</I>:</P>
+
+<BLOCKQUOTE>
+
+for each name <TT>v</TT> that appears in the lambda expression and denotes a
+local variable or reference with automatic storage duration in the
+context where the lambda expression appears and that does not appear
+in the <I>capture-list</I> or as a parameter name in the
+<I>lambda-parameter-declaration-list</I>...
+
+</BLOCKQUOTE>
+
+<P>It would be more consistent if only variables that were required by
+paragraph 5 to be captured were implicitly captured, i.e., if
+&#8220;that appears in the lambda expression&#8221; were replaced by
+&#8220;that is used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) in the
+<I>compound-statement</I> of the lambda expression.&#8221;  For
+example,</P>
+
+<PRE>
+    struct A {
+      A();
+      A(const A&amp;);
+      ~A();
+    };
+    void f() {
+      A a;
+      int i = [=]() { return sizeof a; }();
+    }
+</PRE>
+
+<P>Here, <TT>a</TT> will be captured (and copied), even though it is
+not &#8220;used&#8221; in the lambda expression.</P>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

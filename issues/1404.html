@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1404</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1404"></A><H4>1404.
+  
+Object reallocation in unions
+</H4>
+<B>Section: </B>11.5&#160; [<A href="https://wg21.link/class.union">class.union</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nikolay Ivchenkov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-10-19<BR>
+
+
+
+
+<P>According to 11.5 [<A href="https://wg21.link/class.union#4">class.union</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+<P>[<I>Note:</I> In general, one must use explicit destructor
+calls and placement new operators to change the active member of
+a union.  &#8212;<I>end note</I>] [<I>Example:</I> Consider an
+object <TT>u</TT> of a union type <TT>U</TT> having non-static
+data members <TT>m</TT> of type <TT>M</TT> and <TT>n</TT> of type
+<TT>N</TT>. If <TT>M</TT> has a non-trivial destructor and
+<TT>N</TT> has a non-trivial constructor (for instance, if they
+declare or inherit virtual functions), the active member of
+<TT>u</TT> can be safely switched from <TT>m</TT> to <TT>n</TT>
+using the destructor and placement new operator as follows:</P>
+
+<PRE>
+  u.m.~M();
+  new (&amp;u.n)  N;
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>This pattern is only &#8220;safe&#8221; if the original object
+that is being destroyed does not involve any const-qualified or
+reference types, i.e., satisfies the requirements of 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7,
+ bullet 3:</P>
+
+<UL><LI><P>the type of the original object is not
+const-qualified, and, if a class type, does not contain any
+non-static data member whose type is const-qualified or a
+reference type</P></LI></UL>
+
+<P>Although paragraph 4 of 11.5 [<A href="https://wg21.link/class.union">class.union</A>] is a note and an
+example, it should at least refer to the lifetime issues described
+in 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>].</P>
+
+<P><B>Additional note (October, 2013):</B></P>
+
+<P>See also <A HREF="1776.html">issue 1776</A>, which suggests
+possibly changing the restriction in 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>].  If
+such a change is made, this issue may become moot.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

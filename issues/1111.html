@@ -1,0 +1,215 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1111</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1111"></A><H4>1111.
+  
+Remove dual-scope lookup of member template names
+</H4>
+<B>Section: </B>_N4868_.6.5.6&#160; [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US23">N3092 comment
+  US&#160;23<BR></A>
+
+<P>According to _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#1">basic.lookup.classref</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+<P>In a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), if the <TT>.</TT> or <TT>-&gt;</TT> token is
+immediately followed by an identifier followed by a
+<TT>&lt;</TT>, the identifier must be looked up to determine
+whether the <TT>&lt;</TT> is the beginning of a template
+argument list (13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]) or a less-than
+operator.  The identifier is first looked up in the class of
+the object expression.  If the identifier is not found, it
+is then looked up in the context of the entire
+<I>postfix-expression</I> and shall name a class template.
+If the lookup in the class of the object expression finds a
+template, the name is also looked up in the context of the
+entire <I>postfix-expression</I> and</P>
+
+<UL>
+<LI><P>if the name is not found, the name found in the
+class of the object expression is used, otherwise</P></LI>
+
+<LI><P>if the name is found in the context of the entire
+<I>postfix-expression</I> and does not name a class
+template, the name found in the class of the object
+expression is used, otherwise</P></LI>
+
+<LI><P>if the name found is a class template, it shall refer to
+the same entity as the one found in the class of the object
+expression, otherwise the program is ill-formed.</P></LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This makes the following ill-formed:</P>
+
+<PRE>
+    #include &lt;set&gt;
+    using std::set;
+    struct X {
+      template &lt;typename T&gt; void set(const T&amp; value);
+    };
+    void foo() {
+      X x;
+      x.set&lt;double&gt;(3.2);
+    }
+</PRE>
+
+<P>That's confusing and unnecessary.  The compiler has already done
+the lookup in <TT>X</TT>'s scope, and the obviously-correct
+resolution is that one, not the identifier from the
+<I>postfix-expression</I>'s scope.  <A HREF="305.html">Issue 305</A>
+fixed a similar issue for destructor names but missed member functions.</P>
+
+<P>
+<U>Suggested resolution</U>: Delete the end of paragraph 1, starting
+with &#8220;If the lookup in the class...&#8221; and including all
+three bullets.</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<OL>
+<LI><P>Change 6.5.5.2 [<A href="https://wg21.link/class.qual#1.2">class.qual</A>] bullet 1.2 as
+follows:</P></LI>
+
+<UL><LI><P>a <I>conversion-type-id</I> of a<DEL>n</DEL>
+<I>conversion-function-id</I> is looked up <DEL>both in the scope of
+the class and in the context in which the entire
+<I>postfix-expression</I> occurs and shall refer to the same type in
+both contexts</DEL> <INS>in the same manner as a
+<I>conversion-type-id</I> in a class member access (see _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>])</INS>;</P></LI></UL>
+
+<LI><P>Change _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#1">basic.lookup.classref</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>In a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]),
+if the <TT>.</TT> or <TT>-&gt;</TT> token is immediately followed by
+an <I>identifier</I> followed by a <TT>&lt;</TT>, the identifier must
+be looked up to determine whether the <TT>&lt;</TT> is the beginning
+of a template argument list (13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]) or a less-than
+operator.  The identifier is first looked up in the class of the
+object expression.  If the identifier is not found, it is then looked
+up in the context of the entire <I>postfix-expression</I> and shall
+name a class template.  <DEL>If the lookup in the class of the object
+expression finds a template, the name is also looked up in the context
+of the entire <I>postfix-expression</I> and</DEL>
+</P>
+
+<UL>
+<LI><P><DEL>if the name is not found, the name found in the class
+of the object expression is used, otherwise</DEL></P></LI>
+
+<LI><P><DEL>if the name is found in the context of the entire
+<I>postfix-expression</I> and does not name a class template, the name
+found in the class of the object expression is used,
+otherwise</DEL></P></LI>
+
+<LI><P><DEL>if the name found is a class template, it shall refer to
+the same entity as the one found in the class of the object
+expression, otherwise the program is ill-formed.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#4">basic.lookup.classref</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the <I>id-expression</I> in a class member access is a
+<I>qualified-id</I> of the form</P>
+
+<PRE>
+    class-name-or-namespace-name::...
+</PRE>
+
+<P>the <I>class-name-or-namespace-name</I> following the <TT>.</TT> or
+<TT>-&gt;</TT> operator is <DEL>looked up both in the context of the entire
+<I>postfix-expression</I> and in the scope of the class of the object
+expression. If the name is found only in the scope of the class of the
+object expression, the name shall refer to a <I>class-name</I>.  If
+the name is found only in the context of the entire
+<I>postfix-expression</I>, the name shall refer to a <I>class-name</I>
+or <I>namespace-name</I>.  If the name is found in both contexts, the
+<I>class-name-or-namespace-name</I> shall refer to the same
+entity.</DEL> <INS>first looked up in the class of the object
+expression and the name, if found, is used. Otherwise it is looked up
+in the context of the entire <I>postfix-expression</I>. [<I>Note:</I>
+See 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>], which describes the lookup of a name
+before <TT>::</TT>, which will only find a type or namespace
+name. &#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#7">basic.lookup.classref</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the <I>id-expression</I> is a <I>conversion-function-id</I>, its
+<I>conversion-type-id</I> <DEL>shall denote the same type in both the
+context in which the entire <I>postfix-expression</I> occurs and in
+the context of the class of the object expression (or the class
+pointed to by the pointer expression).</DEL> <INS>is first looked up in
+the class of the object expression and the name, if found and denotes
+a type, is used. Otherwise it is looked up in the context of the
+entire <I>postfix-expression</I> and the name shall denote a type.
+[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct A { };
+  namespace N {
+    struct A {
+      void g() { }
+      template &lt;class T&gt; operator T();
+    };
+  }
+
+  int main() {
+    N::A a;
+    a.operator A();    //<SPAN CLASS="cmnt"> calls </SPAN>N::A::operator N::A
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

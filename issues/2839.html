@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2839</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2839"></A><H4>2839.
+  
+Explicit destruction of base classes
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-07<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/478">#478</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct B {};
+  struct D1 : virtual B {};
+  struct D2 : virtual B {};
+  struct D : D1, D2 {};
+
+  void f() {
+    D *d = new D;
+    static_cast&lt;D2&amp;&gt;(*d).~D2();
+  }
+</PRE>
+
+<P>According to 11.4.7 [<A href="https://wg21.link/class.dtor#13">class.dtor</A>] paragraph 13, invoking a
+destructor for a most derived object is different from invoking it for
+a base class subobject:</P>
+
+<BLOCKQUOTE>
+
+After executing the body of the destructor and destroying any objects
+with automatic storage duration allocated within the body, a
+destructor for class X calls the destructors for X's direct
+non-variant non-static data members, the destructors for X's
+non-virtual direct base classes and, if X is the most derived class
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), its destructor calls the destructors
+for X's virtual base classes.
+
+</BLOCKQUOTE>
+
+<P>However, there is no means to convey the difference in an explicit
+destructor call.  As an aside, potentially-overlapping subobjects
+cannot be transparently replaced, thus any attempt at replacement
+would implicitly end the lifetime of the complete object due to
+storage reuse.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Split 7.6.1.3 [<A href="https://wg21.link/expr.call#4">expr.call</A>] paragraph 4 and amend, as follows:</P>
+
+<BLOCKQUOTE>
+<P>..., even if the type of the function actually called is
+different.</P>
+
+<P>
+<INS>If the <I>postfix-expression</I> <I>P</I> names a destructor or a
+pseudo-destructor, the <I>postfix-expression</I> is a
+possibly-parenthesized class member access.  If <I>P</I> names a
+destructor, the behavior is undefined if the object expression denotes
+a base class subobject and that base class is or has a virtual base
+class or a virtual function (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</INS>
+If <DEL>the <I>postfix-expression</I></DEL> <INS><I>P</I></INS> names
+a pseudo-destructor <DEL>(in which case the <I>postfix-expression</I>
+is a possibly-parenthesized class member access)</DEL>, the function
+call destroys the object of scalar type denoted by the object
+expression of the class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>],
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]).
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

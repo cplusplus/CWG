@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 14</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="14"></A><H4>14.
+  
+extern "C" functions and declarations in different namespaces
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Erwin Unruh
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<P><B><U>Issue 1</U></B></P>
+
+<P>9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+
+paragraph 6 says the following:</P>
+<UL>extern "C" functions in multiple namespaces refer to the same function.</UL>
+Is this only for linkage purposes or for both name look up and linkage
+purposes:
+<PRE>
+    extern "C" int f(void);
+    namespace A {
+         extern "C" int f(void);
+    };
+    using namespace A;
+
+    int i = f(); // Ok because only one function f() or
+                 // ill-formed
+</PRE>
+For name lookup, both declarations of f are visible and overloading cannot
+distinguish between them. Has the compiler to check that these functions
+are really the same function or is the program in error?
+
+<P>
+<B>Rationale:</B> These are the same function for all purposes.</P>
+
+<P><B><U>Issue 2</U></B></P>
+
+<P>A similar question may arise with typedefs:</P>
+<PRE>
+    // vendor A
+    typedef unsigned int size_t;
+    // vendor B
+    namespace std {
+            typedef unsigned int size_t;
+    }
+    using namespace std;
+    size_t something(); // error?
+</PRE>
+Is this valid because the typedef <TT>size_t</TT> refers to the same type in both
+namespaces?
+
+<P>
+<B>Rationale (04/99):</B>
+In
+9.8.4 [<A href="https://wg21.link/namespace.udir">namespace.udir</A>]
+
+paragraph 4:
+<BLOCKQUOTE>If name lookup finds a declaration for a name in two different
+namespaces, and the declarations do not declare the same entity and do
+not declare functions, the use of the name is ill-formed.</BLOCKQUOTE>
+The term <I>entity</I> applied to typedefs refers to the underlying type
+or class (6.1 [<A href="https://wg21.link/basic.pre#3">basic.pre</A>] paragraph 3); therefore
+both declarations of <TT>size_t</TT> declare the same entity and
+the above example is well-formed.</P>
+<BR><BR>
+</BODY>
+</HTML>

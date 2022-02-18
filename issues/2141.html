@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2141</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2141"></A><H4>2141.
+  
+Ambiguity in <I>new-expression</I> with <I>elaborated-type-specifier</I>
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-12<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct A { };
+
+  void foo() {
+    new struct A { };
+  }
+</PRE>
+
+<P>This could be either an <I>elaborated-type-specifier</I>
+followed by a <I>braced-init-list</I> or a <I>class-specifier</I>.
+There does not appear to be a disambiguation rule for this case.</P>
+
+<P>One possibility for addressing this could be to use
+<I>trailing-type-specifier-seq</I> instead of
+<I>type-specifier-seq</I> in <I>new-type-id</I>.  That could
+also be a purely syntactic alternative to the resolution of
+<A HREF="686.html">issue 686</A>: change all uses of
+<I>type-specifier-seq</I> to <I>trailing-type-specifier-seq</I>
+and provide a new grammar production for use in
+<I>alias-declaration</I>.</P>
+
+<P><B>Proposed resolution (February, 2016):</B></P>
+
+<OL>
+<LI><P>Change the grammar in 9.1 [<A href="https://wg21.link/dcl.pre#1">dcl.pre</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>alias-declaration:</I>
+<UL>
+<TT>using</TT> <I>identifier attribute-specifier-seq<SUB>opt</SUB> <TT>=</TT> <I><INS>defining-</INS>type-id</I></I>
+</UL>
+</UL>
+
+<LI><P>Change 9.1 [<A href="https://wg21.link/dcl.pre#8">dcl.pre</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Each <I>init-declarator</I> in
+the <I>init-declarator-list</I> contains exactly
+one <I>declarator-id</I>, which is the name declared by
+that <I>init-declarator</I> and hence one of the names
+declared by the
+declaration. The <I><INS>defining-</INS>type-specifier</I>s
+(9.2.9 [<A href="https://wg21.link/dcl.type">dcl.type</A>]) in
+the <I>decl-specifier-seq</I> and the recursive declarator
+structure of the <I>init-declarator</I> describe a type
+(9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]), which is then associated with
+the name being declared by the <I>init-declarator</I>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar in 9.2 [<A href="https://wg21.link/dcl.spec#1">dcl.spec</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>decl-specifier:</I>
+<UL>
+<I>storage-class-specifier</I><BR>
+<I><INS>defining-</INS>type-specifier</I><BR>
+<I>function-specifier</I><BR>
+<TT>friend</TT><BR>
+<TT>typedef</TT><BR>
+<TT>constexpr</TT><BR>
+</UL>
+</UL>
+
+<LI><P>Change 9.2 [<A href="https://wg21.link/dcl.spec#3">dcl.spec</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a <I>type-name</I> is encountered while parsing
+a <I>decl-specifier-seq</I>, it is interpreted as part of
+the <I>decl-specifier-seq</I> if and only if there is no
+previous <I><INS>defining-</INS>type-specifier</I> other than
+a <I>cv-qualifier</I> in the <I>decl-specifier-seq</I>. The
+sequence...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.4 [<A href="https://wg21.link/dcl.typedef#1">dcl.typedef</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Declarations containing
+the <I>decl-specifier</I> <TT>typedef</TT> declare
+identifiers that can be used later for naming fundamental
+(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) or compound
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) types. The <TT>typedef</TT>
+specifier shall not be combined in
+a <I>decl-specifier-seq</I> with any other kind of specifier
+except a <I><INS>defining-</INS>type-specifier</I>, and it
+shall not be used in the <I>decl-specifier-seq</I> of
+a <I>parameter-declaration</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])
+nor in the <I>decl-specifier-seq</I> of
+a <I>function-definition</I> (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.4 [<A href="https://wg21.link/dcl.typedef#2">dcl.typedef</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>typedef-name</I> can also be introduced by
+an <I>alias-declaration</I>. The identifier following the
+<TT>using</TT> keyword becomes a <I>typedef-name</I> and the
+optional <I>attribute-specifier-seq</I> following the
+identifier appertains to that <I>typedef-name</I>. <DEL>It</DEL>
+<INS>The <I>defining-type-specifier-seq</I> of the
+<I>defining-type-id</I> may define a class or enumeration
+only if the <I>alias-declaration</I> is not
+the <I>declaration</I> of a <I>template-declaration</I>.
+Such a <I>typedef-name</I></INS> has the same semantics as
+if it were introduced by the <TT>typedef</TT> specifier. In
+particular, it does not define a new type. [<I>Example:</I>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.9 [<A href="https://wg21.link/dcl.type#1">dcl.type</A>] paragraph 1 as follows:</P></LI>
+
+<UL>
+<I>type-specifier:</I>
+<UL>
+<DEL><I>trailing-type-specifier</I><BR>
+<I>class-specifier</I><BR>
+<I>enum-specifier</I></DEL>
+</UL>
+<DEL><I>trailing-type-specifier:</I></DEL>
+<UL>
+<I>simple-type-specifier</I><BR>
+<I>elaborated-type-specifier</I><BR>
+<I>typename-specifier</I><BR>
+<I>cv-qualifier</I>
+</UL>
+<I>type-specifier-seq:</I>
+<UL>
+<I>type-specifier attribute-specifier-seq<SUB>opt</SUB></I><BR>
+<I>type-specifier type-specifier-seq</I>
+</UL>
+<I><INS>defining-type-specifier:</INS></I>
+<UL>
+<INS><I>type-specifier</I><BR>
+<I>class-specifier</I><BR>
+<I>enum-specifier</I></INS>
+</UL>
+<I><DEL>trailing</DEL><INS>defining</INS>-type-specifier-seq:</I>
+<UL>
+<I><DEL>trailing</DEL><INS>defining</INS>-type-specifier attribute-specifier-seq<SUB>opt</SUB></I><BR>
+<I><DEL>trailing</DEL><INS>defining</INS>-type-specifier <DEL>trailing</DEL><INS>defining</INS>-type-specifier-seq</I>
+</UL>
+</UL>
+
+<BLOCKQUOTE><P>The optional <I>attribute-specifier-seq</I> in
+a <I>type-specifier-seq</I> or
+a <I><DEL>trailing</DEL><INS>defining</INS>-type-specifier-seq</I>
+appertains to the type denoted by the
+preceding <I>type-specifier</I>s <INS>or
+<I>defining-type-specifier</I>s</INS>
+(9.3.4 [<A href="https://wg21.link/dcl.meaning">dcl.meaning</A>]). The <I>attribute-specifier-seq</I>
+affects the type only for the declaration it appears in, not
+other declarations involving the same type.</P></BLOCKQUOTE>
+
+<LI><P>Change 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#2">dcl.type.simple</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+As a general rule, at most
+one <I><INS>defining-</INS>type-specifier</I> is allowed in
+the complete <I>decl-specifier-seq</I> of a declaration or
+in a <I>type-specifier-seq</I>
+or <I><DEL>trailing</DEL><INS>defining</INS>-type-specifier-seq</I>. The
+only exceptions to this rule are the following:...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.9 [<A href="https://wg21.link/dcl.type#3">dcl.type</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Except in a declaration of a constructor, destructor, or
+conversion function, at least
+one <I><INS>defining-</INS>type-specifier</I> that is not
+a <I>cv-qualifier</I> shall appear in a
+complete <I>type-specifier-seq</I> or a
+complete <I>decl-specifier-seq</I>.<SUP>95</SUP>
+<DEL>A <I>type-specifier-seq</I> shall not define a class or
+enumeration unless it appears in the <I>type-id</I> of
+an <I>alias-declaration</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>])
+that is not the declaration of
+a <I>template-declaration</I>.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar in 9.3 [<A href="https://wg21.link/dcl.decl#4">dcl.decl</A>] paragraph 4
+as follows:</P></LI>
+
+<UL>
+<I>trailing-return-type:</I>
+<UL>
+<TT>-&gt;</TT> <DEL><I>trailing-type-specifier-seq abstract-declarator<SUB>opt</SUB></I></DEL> <INS><I>type-id</I></INS>
+</UL>
+</UL>
+
+<LI><P>Change the grammar in 9.3.2 [<A href="https://wg21.link/dcl.name#1">dcl.name</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>type-id:</I>
+<UL>
+<I>type-specifier-seq abstract-declarator<SUB>opt</SUB></I>
+</UL>
+<INS><I>defining-type-id:</I></INS>
+<UL>
+<INS><I>defining-type-specifier-seq abstract-declarator<SUB>opt</SUB></I></INS>
+</UL>
+</UL>
+
+<LI><P>Change 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A <I>decl-specifier</I> in the <I>decl-specifier-seq</I>
+of a conversion function (if any) shall be neither
+a <I><INS>defining-</INS>type-specifier</I> nor static. Type
+of the conversion function
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

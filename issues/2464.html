@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2464</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2464"></A><H4>2464.
+  
+Constexpr launder and unions
+</H4>
+<B>Section: </B>17.6.5&#160; [<A href="https://wg21.link/ptr.launder">ptr.launder</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-11-07<BR>
+
+
+
+
+<P>According to 17.6.5 [<A href="https://wg21.link/ptr.launder">ptr.launder</A>], referring to
+<TT>std::launder</TT>,</P>
+
+<BLOCKQUOTE>
+
+An invocation of this function may be used in a core
+constant expression whenever the value of its argument may
+be used in a core constant expression.
+
+</BLOCKQUOTE>
+
+<P>It is not clear whether this wording is intended to
+permit an example like</P>
+
+<PRE>
+  #include &lt;new&gt;
+
+  struct A { char x; };
+
+  union U {
+    A a;
+    A a2;
+  };
+
+  constexpr A foo() {
+    U u = {{42}};
+    A *ap = &amp;u.a2;
+    return *std::launder(ap);
+  }
+
+  extern constexpr A globA = foo();
+</PRE>
+
+<P>In particular, is the wording intended to restrict use of
+<TT>std::launder</TT> in a constant expression to cases in
+which the function returns its argument unchanged? As a
+further example, consider</P>
+
+<PRE>
+  #include &lt;new&gt;
+
+  struct A { char x; };
+  struct B { A a; };
+  struct BytesAndMore {
+    unsigned char bytes[sizeof(A)];
+    unsigned char more;
+  };
+
+  union U {
+    BytesAndMore bytes;
+    A a;
+    B b;
+  };
+
+  constexpr B foo() {
+    U u;
+    A *ap = &amp;u.a;
+    B *bp = &amp;u.b;
+    u.bytes.more = 0;
+    std::launder(ap)-&gt;x = 42;
+    return *std::launder(bp);
+  }
+
+  extern constexpr B globB = foo();
+</PRE>
+
+<P><B>Notes from the December, 2020 teleconference:</B></P>
+
+<P>See also
+<A HREF="https://cplusplus.github.io/LWG/issue3495">LWG issue 3495</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

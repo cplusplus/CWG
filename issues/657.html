@@ -1,0 +1,146 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 657</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="657"></A><H4>657.
+  
+Abstract class parameter in synthesized declaration
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 October 2007<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+<P>A customer of ours recently brought the following example to
+our attention.  There's some question as to whether the
+Standard adequately addresses this example, and if it does,
+whether the outcome is what we'd like to see.  Here's the
+example:</P>
+
+<PRE>
+    struct Abs {
+      virtual void x() = 0;
+    };
+
+    struct Der: public Abs {
+      virtual void x();
+    };
+
+    struct Cnvt {
+      template &lt;typename F&gt; Cnvt(F);
+    };
+
+    void foo(Cnvt a);
+    void foo(Abs &amp;a);
+
+    void f() {
+      Der d;
+      Abs *a = &amp;d;
+      foo(*a);        //<SPAN CLASS="cmnt"> #1</SPAN>
+      return 0;
+    }
+</PRE>
+
+<P>The question is how to perform overload resolution for the call at
+#1.  To do that, we need to determine whether <TT>foo(Cnvt)</TT> is a
+viable function.  That entails deciding whether there is an implicit
+conversion sequence that converts <TT>Abs</TT> (the type
+of <TT>*a</TT> in the call) to <TT>Cnvt</TT> (12.2.3 [<A href="https://wg21.link/over.match.viable#3">over.match.viable</A>] paragraph 3), and that involves a recursive invocation
+of overload resolution.</P>
+
+<P>The initialization of the parameter of <TT>foo(Cnvt)</TT> is a case
+of copy-initialization of a class by user-defined conversion, so the
+candidate functions are the converting constructors of <TT>Cnvt</TT>
+(12.2.2.5 [<A href="https://wg21.link/over.match.copy#1">over.match.copy</A>] paragraph 1), of which there are two:
+the implicitly-declared copy constructor and the constructor
+template.</P>
+
+<P>According to 13.9.2 [<A href="https://wg21.link/temp.inst#8">temp.inst</A>] paragraph 8,</P>
+
+<BLOCKQUOTE>
+
+If a function template or a member function template specialization is
+used in a way that involves overload resolution, a declaration of the
+specialization is implicitly instantiated (13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]).
+
+</BLOCKQUOTE>
+
+<P>Template argument deduction results in &#8220;synthesizing&#8221;
+(13.10.4 [<A href="https://wg21.link/temp.over#1">temp.over</A>] paragraph 1) (or &#8220;instantiating,&#8221; 13.9.2 [<A href="https://wg21.link/temp.inst#8">temp.inst</A>] paragraph 8) the declaration</P>
+
+<PRE>
+    Cnvt::Cnvt(Abs)
+</PRE>
+
+<P>Because <TT>Abs</TT> is an abstract class, this declaration
+violates the restriction of 11.7.4 [<A href="https://wg21.link/class.abstract#3">class.abstract</A>] paragraph 3
+(&#8220;An abstract class shall not be used as a parameter
+type...&#8221;), and because a parameter of an abstract class type
+does not cause a deduction failure (it's not in the bulleted list in
+13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2), the program is ill-formed.
+This error is reported by both EDG and Microsoft compilers, but not by
+g++.</P>
+
+<P>It seems unfortunate that the program would be rendered
+ill-formed by a semantic violation in a declaration synthesized
+solely for the purpose of overload resolution analysis;
+<TT>foo(Cnvt)</TT> would not be selected by overload resolution, so
+<TT>Cnvt::Cnvt(Abs)</TT> would not be instantiated.</P>
+
+<P>There's at least some indication that a parameter with an
+abstract class type should be a deduction failure; an array
+element of abstract class type is a deduction failure, so one
+might expect that a parameter would be, also.</P>
+
+<P>(See also <A HREF="339.html">issue 339</A>; this question
+might be addressed as part of the direction described in the notes
+from the July, 2007 meeting.)</P>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>Paper N2634, adopted at the June, 2008 meeting, replaces the
+normative list of specific errors accepted as deduction failures
+by a general statement covering all &#8220;invalid types and
+expressions in the immediate context of the function type and its
+template parameter types,&#8221; so the code is now
+well-formed. However, the previous list is now a note, and the
+note should be updated to mention this case.
+</P>
+
+<P><B>Proposed resolution (August, 2008):</B></P>
+
+<P>Add a new bullet following the last bullet of the note in
+13.10.3 [<A href="https://wg21.link/temp.deduct#8">temp.deduct</A>] paragraph 8 as follows:</P>
+
+<UL><LI><P>Attempting to create a function type in which a
+parameter type or the return type is an abstract class type
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]).</P></LI></UL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,204 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1571</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1571"></A><H4>1571.
+  
+cv-qualification for indirect reference binding via conversion function
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-06<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>In the case of indirect reference binding, 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5
+only requires that the cv-qualification of the referred-to
+type be the same or greater than that of the initializer expression
+when the types are reference-related.  This leads to the following
+anomaly:</P>
+
+<PRE>
+  class A {
+  public:
+    operator volatile int &amp;();
+  };
+  A a;
+
+  const int &amp; ir1a = a.operator volatile int&amp;(); //<SPAN CLASS="cmnt"> error!</SPAN>
+  const int &amp; ir2a = a; //<SPAN CLASS="cmnt"> allowed! </SPAN>ir = a.operator volatile int&amp;();
+</PRE>
+
+<P>Is this intended?</P>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>CWG felt that the declaration of <TT>ir2a</TT> should also be an error.</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is initialized
+by an expression of type &#8220;<I>cv2</I> <TT>T2</TT>&#8221; as
+follows:</P>
+
+<UL>
+<LI><P>If the reference is an lvalue reference...</P></LI>
+
+<LI><P>Otherwise, the reference shall be an lvalue reference to a
+non-volatile const type...</P></LI>
+
+<UL>
+<LI><P>If the initializer expression</P></LI>
+
+<UL>
+<LI><P>is an xvalue (but not a bit-field), class prvalue, array prvalue
+or function lvalue and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>&#8221;, or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type),
+where <TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+converted to an xvalue, class prvalue, or function lvalue of type
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221;, where
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221; (see
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]),</P></LI>
+
+</UL>
+
+<P>then the reference is bound to the value of the initializer expression
+in the first case and to the result of the conversion in the second case
+(or, in either case, to an appropriate base class subobject). <DEL>In the
+second case, if the reference is an rvalue reference and the second
+standard conversion sequence of the user-defined conversion sequence
+includes an lvalue-to-rvalue conversion, the program is ill-formed.</DEL>
+[<I>Example:</I>
+</P>
+
+<PRE>
+  struct A { };
+  struct B : A { } b;
+  extern B f();
+  const A&amp; rca2 = f();                //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the </SPAN>B<SPAN CLASS="cmnt"> rvalue.</SPAN>
+  A&amp;&amp; rra = f();                      //<SPAN CLASS="cmnt"> same as above</SPAN>
+  struct X {
+    operator B();
+    operator int&amp;();
+  } x;
+  const A&amp; r = x;                     //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the result of the conversion</SPAN>
+  int i2 = 42;
+  int&amp;&amp; rri = static_cast&lt;int&amp;&amp;&gt;(i2); //<SPAN CLASS="cmnt"> bound directly to </SPAN>i2
+  B&amp;&amp; rrb = x;                        //<SPAN CLASS="cmnt"> bound directly to the result of </SPAN>operator B
+<DEL>  int&amp;&amp; rri2 = X();                   //<SPAN CLASS="cmnt"> error: lvalue-to-rvalue conversion applied to the</SPAN>
+                                      //<SPAN CLASS="cmnt"> result of </SPAN>operator int&amp;</DEL>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+<LI><P>Otherwise:</P></LI>
+
+<UL>
+<LI><P>If <TT>T1</TT> <INS>or <TT>T2</TT></INS> is a class
+type <INS>and <TT>T1</TT> is not reference-related to <TT>T2</TT></INS>,
+user-defined conversions are considered using the rules for
+copy-initialization of an object of type &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; by user-defined conversion (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>]<INS>, 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]</INS>);
+the program is ill-formed if the corresponding non-reference
+copy-initialization would be ill-formed. The result of the call to the
+conversion function, as described for the non-reference
+copy-initialization, is then used to direct-initialize the reference. <DEL>The
+program is ill-formed if the direct-initialization does not result in a
+direct binding or if it involves a user-defined conversion.</DEL>
+<INS>For this direct-initialization, user-defined conversions are not
+considered.</INS>
+</P></LI>
+
+<LI><P>
+<DEL>If <TT>T1</TT> is a non-class type</DEL> <INS>Otherwise</INS>,
+a temporary of type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is created and
+copy-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the initializer
+expression. The reference is then bound to the temporary.</P></LI>
+
+</UL>
+
+<P>If <TT>T1</TT> is reference-related to <TT>T2</TT>:</P>
+
+<UL>
+<LI><P>
+<I>cv1</I> shall be the same cv-qualification as, or greater
+cv-qualification than, <I>cv2</I>; and</P></LI>
+
+<LI><P>if the reference is an rvalue reference, the initializer expression
+shall not be an lvalue.</P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  struct Banana { };
+  struct Enigma { operator const Banana(); };
+<INS>  struct Alaska { operator Banana&amp;(); };</INS>
+  void enigmatic() {
+    typedef const Banana ConstBanana;
+    Banana &amp;&amp;banana1 = ConstBanana(); //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    Banana &amp;&amp;banana2 = Enigma();      //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+<INS>    Banana &amp;&amp;banana2 = Alaska();      //<SPAN CLASS="cmnt"> ill-formed</SPAN></INS>
+  }
+
+  const double&amp; rcd2 = 2;  //<SPAN CLASS="cmnt"> </SPAN>rcd2<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  double&amp;&amp; rrd = 2;        //<SPAN CLASS="cmnt"> </SPAN>rrd<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  const volatile int cvi = 1;
+  const int&amp; r2 = cvi;     //<SPAN CLASS="cmnt"> error: type qualifiers dropped</SPAN>
+<INS>  struct A { operator volatile int&amp;(); } a;
+  const int&amp; r3 = a;       //<SPAN CLASS="cmnt"> error: type qualifiers dropped from result of conversion function</SPAN></INS>
+  double d2 = 1.0;
+  double&amp;&amp; rrd2 = d2;      //<SPAN CLASS="cmnt"> error: <DEL>copying</DEL> <INS>initializer is</INS> lvalue of related type</SPAN>
+<INS>  struct X { operator int&amp;(); };
+  int &amp;&amp; rri2 = X();       //<SPAN CLASS="cmnt"> error: result of conversion function is lvalue of related type</SPAN></INS>
+  int i3 = 2;
+  double&amp;&amp; rrd3 = i3;      //<SPAN CLASS="cmnt"> </SPAN>rrd3<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="1572.html">issue 1572</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

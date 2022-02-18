@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1577</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1577"></A><H4>1577.
+  
+Unnecessary restrictions on partial specializations
+</H4>
+<B>Section: </B>13.7.6.1&#160; [<A href="https://wg21.link/temp.spec.partial.general">temp.spec.partial.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jeremiah Wilcox
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-10-19<BR>
+
+
+<P>One of the restrictions on partial specializations found in
+13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#9">temp.spec.partial.general</A>] paragraph 9 is:</P>
+
+<BLOCKQUOTE>
+
+The template parameter list of a specialization shall not contain
+default template argument values. [<I>Footnote:</I> There is no way in
+which they could be used. &#8212;<I>end footnote</I>]
+
+</BLOCKQUOTE>
+
+<P>The rationale for this restriction is incorrect, since default
+template argument values can be used to trigger SFINAE and thus
+control whether a particular partial specialization is used.  An
+example of this use is:</P>
+
+<PRE>
+    template &lt;typename T&gt; struct a;
+    template &lt;typename T,
+         typename = typename std::enable_if&lt;some property&gt;::type&gt;
+    struct a&lt;std::vector&lt;T&gt;&gt; { ... };
+</PRE>
+
+<P>which is forbidden by this point.  Note also that an example like</P>
+
+<PRE>
+    template &lt;typename T&gt; struct b;
+    template &lt;typename T,
+         typename = typename std::enable_if&lt;some property&gt;::type&gt;
+    struct b&lt;T&gt; { ... };
+</PRE>
+
+<P>is likely forbidden by the previous bullet:</P>
+
+<BLOCKQUOTE>
+
+The argument list of the specialization shall not be identical to the
+implicit argument list of the primary template.
+
+</BLOCKQUOTE>
+
+<P>This restriction may also need to be weakened.</P>
+
+<P><B>Rationale (April, 2013)</B></P>
+
+<P>CWG felt that consideration of these suggestions was more appropriately
+done by EWG.</P>
+
+<P><B>Additional note, April, 2015:</B></P>
+
+<P>EWG has decided not to make a change in this area.  See EWG issue
+110.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

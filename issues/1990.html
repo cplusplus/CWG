@@ -1,0 +1,209 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1990</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1990"></A><H4>1990.
+  
+Ambiguity due to optional <I>decl-specifier-seq</I>
+</H4>
+<B>Section: </B>9.1&#160; [<A href="https://wg21.link/dcl.pre">dcl.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-08-27<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>In an example like</P>
+
+<PRE>
+  void f() {
+    f();  //<SPAN CLASS="cmnt"> #1</SPAN>
+  }
+</PRE>
+
+<P>The statement at #1 is ambiguous and can be parsed as either
+an expression or as a declaration.  The problem is the fact
+that the <I>decl-specifier-seq</I> in a <I>simple-declaration</I>
+is optional.</P>
+
+
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<OL>
+<LI><P>Change the grammar in 9.1 [<A href="https://wg21.link/dcl.pre#1">dcl.pre</A>] paragraph 1
+as follows:</P></LI>
+
+<UL>
+<I>declaration:</I>
+<UL>
+<I>block-declaration</I><BR>
+<INS><I>nodeclspec-function-declaration</I></INS><BR>
+<I>function_definition</I>
+</UL>
+...
+</UL>
+<BR>
+
+<UL>
+<INS><I>nodeclspec-function-declaration:</I></INS>
+<UL>
+<INS><I>attribute-specifier-seq<SUB>opt</SUB> declarator</I> <TT>;</TT></INS>
+</UL>
+</UL>
+<BR>
+
+<UL>
+<I>alias-declaration:</I>
+<UL>
+<TT>using</TT> <I>identifier attribute-specifier-seq<SUB>opt</SUB></I> <TT>=</TT> <I>type-id</I> <TT>;</TT>
+</UL>
+</UL>
+<BR>
+
+<UL>
+<I>simple-declaration:</I>
+<UL>
+<I>decl-specifier-seq<DEL><SUB>opt</SUB></DEL> init-declarator-list</I> <TT>;</TT><BR>
+<I>attribute-specifier-seq decl-specifier-seq<DEL><SUB>opt</SUB></DEL> init-declarator-list</I> <TT>;</TT>
+</UL>
+...
+</UL>
+
+<LI><P>Change 9.1 [<A href="https://wg21.link/dcl.pre#2">dcl.pre</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The</DEL> <INS>A</INS> <I>simple-declaration</I> <INS>or
+<I>nodeclspec-function-declaration</I> of the form</INS>
+</P>
+
+<UL>
+<I>attribute-specifier-seq<SUB>opt</SUB> decl-specifier-seq<SUB>opt</SUB> init-declarator-list<SUB>opt</SUB></I> <TT>;</TT>
+</UL>
+
+<P>is divided into three parts. Attributes are described in
+9.12 [<A href="https://wg21.link/dcl.attr">dcl.attr</A>]. <I>decl-specifier</I>s, the
+principal components of a <I>decl-specifier-seq</I>, are
+described in 9.2 [<A href="https://wg21.link/dcl.spec">dcl.spec</A>]. declarators, the
+components of an <I>init-declarator-list</I>, are described
+in
+9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]. The <I>attribute-specifier-seq</I>
+<DEL>in a <I>simple-declaration</I></DEL> appertains to each
+of the entities declared by the declarators of
+the <I>init-declarator-list</I>. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.1 [<A href="https://wg21.link/dcl.pre#11">dcl.pre</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Only in function declarations for</DEL> <INS>A
+<I>nodeclspec-function-declaration</I> shall declare a</INS>
+constructor<DEL>s</DEL>, destructor<DEL>s</DEL>,
+<DEL>and type</DEL> <INS>or</INS> conversion<DEL>s</DEL>
+<INS>function</INS> <DEL>can the <I>decl-specifier-seq</I> be
+omitted</DEL>.<SUP>93</SUP> <INS>[<I>Note:</I> a
+<I>nodeclspec-function-declaration</I> can only be used in a
+<I>template-declaration</I> (Clause 13 [<A href="https://wg21.link/temp">temp</A>]),
+<I>explicit-instantiation</I> (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]),
+or <I>explicit-specialization</I> (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]).
+&#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.3.4 [<A href="https://wg21.link/dcl.meaning#1">dcl.meaning</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>A list of declarators appears after an optional (
+9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>]) <I>decl-specifier-seq</I>
+(9.2 [<A href="https://wg21.link/dcl.spec">dcl.spec</A>]). Each</DEL> <INS>A</INS>
+declarator contains exactly one <I>declarator-id</I>; it
+names the identifier...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#1">class.ctor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>In a constructor declaration,
+each</DEL> <INS>Each</INS> <I>decl-specifier</I> in
+the <DEL>optional</DEL> <I>decl-specifier-seq</I> <INS>of a
+constructor declaration (if any)</INS> shall
+be <TT>friend</TT>,
+<TT>inline</TT>, <TT>explicit</TT>,
+or <TT>constexpr</TT>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Such functions are called conversion functions. <DEL>No return
+type can be specified.</DEL> <INS>A <I>decl-specifier</I> in the
+<I>decl-specifier-seq</I> of a conversion function (if any) shall
+be neither a <I>type-specifier</I> nor <TT>static</TT>.</INS>
+<DEL>If a conversion function is a member function,
+the</DEL> <INS>The</INS> type of the conversion function
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#6">class.conv.fct</A>] paragraph 6:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Conversion functions cannot be declared <TT>static</TT>.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#1">class.dtor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>In a destructor declaration,
+each</DEL> <INS>Each</INS> <I>decl-specifier</I> of the
+<DEL>optional</DEL> <I>decl-specifier-seq</I> <INS>of a
+destructor declaration (if any)</INS> shall
+be <TT>friend</TT>,
+<TT>inline</TT>, or <TT>virtual</TT>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="2016.html">issue 2016</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

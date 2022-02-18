@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 336</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="336"></A><H4>336.
+  
+Explicit specialization examples are still incorrect
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Shirk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Jan 2002<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+
+
+<P>The examples corrected by <A HREF="24.html">issue 24</A> are still
+wrong in one case.</P>
+
+<P>In item #4 (a correction to the example in paragraph 18), the proposed
+resolution is:</P>
+<PRE>
+  template&lt;class T1&gt; class A {
+    template&lt;class T2&gt; class B {
+      template&lt;class T3&gt; void mf1(T3);
+        void mf2();
+      };
+  };
+  template&lt;&gt; template&lt;class X&gt;
+    class A&lt;int&gt;::B { };
+  template&lt;&gt; template&lt;&gt; template&lt;class T&gt;
+    void A&lt;int&gt;::B&lt;double&gt;::mf1(T t) { }
+  template&lt;class Y&gt; template&lt;&gt;
+    void A&lt;Y&gt;::B&lt;double&gt;::mf2() { } // ill-formed; B&lt;double&gt; is specialized but
+                                    // its enclosing class template A is not
+</PRE>
+
+<P>The explicit specialization of member <TT>A&lt;int&gt;::B&lt;double&gt;::mf1</TT>
+is ill-formed.  The class template <TT>A&lt;int&gt;::B</TT>
+is explicitly specialized and
+contains no members, so any implicit specialization (such as
+<TT>A&lt;int&gt;::B&lt;double&gt;</TT>) would also contain no members.</P>
+
+<P><B>Proposed Resolution (4/02):</B></P>
+
+<P>
+Fix the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#18">temp.expl.spec</A>] paragraph 18 to read:</P>
+<PRE>
+  template&lt;class T1&gt; class A {
+    template&lt;class T2&gt; class B {
+      template&lt;class T3&gt; void mf1(T3);
+      void mf2();
+    };
+  };
+  template&lt;&gt; template&lt;class X&gt;
+    class A&lt;int&gt;::B {
+      template&lt;class T&gt; void mf1(T);
+    };
+  template&lt;&gt; template&lt;&gt; template&lt;class T&gt;
+    void A&lt;int&gt;::B&lt;double&gt;::mf1(T t) { }
+  template&lt;class Y&gt; template&lt;&gt;
+    void A&lt;Y&gt;::B&lt;double&gt;::mf2() { } // ill-formed; B&lt;double&gt; is specialized but
+                                    // its enclosing class template A is not
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

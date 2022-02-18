@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2556</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2556"></A><H4>2556.
+  
+Unusable <TT>promise::return_void</TT>
+</H4>
+<B>Section: </B>8.7.5&#160; [<A href="https://wg21.link/stmt.return.coroutine">stmt.return.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-24<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Subclause 8.7.5 [<A href="https://wg21.link/stmt.return.coroutine#3">stmt.return.coroutine</A>] paragraph 3 specifies:</P>
+
+<BLOCKQUOTE>
+
+If <TT>p.return_void()</TT> is a valid expression, flowing off the end
+of a coroutine's <I>function-body</I> is equivalent to
+a <TT>co_return</TT> with no operand; otherwise flowing off the end of
+a coroutine's <I>function-body</I> results in undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>However, 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#6">dcl.fct.def.coroutine</A>] paragraph 6 suggests:</P>
+
+<BLOCKQUOTE>
+
+If searches for the names <TT>return_void</TT>
+and <TT>return_value</TT> in the scope of the promise type each find
+any declarations, the program is ill-formed.  [<I>Note</I>: If
+<TT>return_void</TT> is found, flowing off the end of a coroutine is
+equivalent to a <TT>co_return</TT> with no operand.  Otherwise,
+flowing off the end of a coroutine results in undefined behavior
+(8.7.5 [<A href="https://wg21.link/stmt.return.coroutine">stmt.return.coroutine</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>The difference is between the conditions "valid expression" and
+"found by name lookup".  Effectively, it means that undefined behavior
+might result where the implementation could instead diagnose an
+ill-formed use of <TT>return_void</TT> (for example, because it is
+inaccessible, deleted, or the function call requires arguments).</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-17):</B></P>
+
+<P>Change in 8.7.5 [<A href="https://wg21.link/stmt.return.coroutine#3">stmt.return.coroutine</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If <DEL><TT>p.return_void()</TT> is a valid expression</DEL>
+<INS>a search for the name <TT>return_void</TT> in the scope of the
+promise type finds any declarations</INS>, flowing off the end of a
+coroutine's <I>function-body</I> is equivalent to a <TT>co_return</TT>
+with no operand; otherwise flowing off the end of a
+coroutine's <I>function-body</I> results in undefined behavior.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

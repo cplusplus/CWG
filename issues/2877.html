@@ -1,0 +1,123 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2877</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2877"></A><H4>2877.
+  
+Type-only lookup for <I>using-enum-declarator</I>
+</H4>
+<B>Section: </B>9.7.2&#160; [<A href="https://wg21.link/enum.udecl">enum.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-07<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>
+<A HREF="2621.html">Issue 2621</A> claimed to ask the question
+whether lookup for <TT>using enum</TT> declarations was supposed to be
+type-only, but the example actually highlighted the difference between
+<I>elaborated-type-specifier</I> lookup (where finding nothing but
+<TT>typedef</TT> names is ill-formed) and ordinary lookup.</P>
+
+<P>However, consider:</P>
+
+<PRE>
+  enum A {
+    x, y
+  };
+  void f() {
+    int A;
+    using enum A;      //<SPAN CLASS="cmnt"> #1, error: names non-type </SPAN>int A
+    using T = enum A;  //<SPAN CLASS="cmnt"> #2, OK, names </SPAN>::A
+  }
+</PRE>
+
+<P>The two situations should both be type-only lookups for
+consistency, although #2 would not find <TT>typedef</TT>s.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-05-17) [SUPERSEDED]:</B></P>
+
+<P>Change in 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>using-enum-declarator</I> names the set of declarations found by
+<INS>type-only</INS> lookup (<INS>6.5.1 [<A href="https://wg21.link/basic.lookup.general">basic.lookup.general</A>]</INS>
+<DEL>6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>], 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]</DEL>) for
+the <I>using-enum-declarator</I> <INS>(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>],
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>])</INS>. The <I>using-enum-declarator</I>
+shall designate a non-dependent type with a
+reachable <I>enum-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (May, 2024)</B></P>
+
+<P>An example is desirable.  Also, the treatment of the following
+example is unclear:</P>
+
+<PRE>
+  template&lt;class T&gt; using AA = T;
+  enum AA&lt;E&gt; e; //<SPAN CLASS="cmnt"> ill-formed elaborated-type-specifier</SPAN>
+  using enum AA&lt;E&gt;; //<SPAN CLASS="cmnt"> Clang and MSVC reject, GCC and EDG accept</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-26):</B></P>
+
+<P>Change in 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>using-enum-declarator</I> names the set of declarations found by
+<INS>type-only</INS> lookup (<INS>6.5.1 [<A href="https://wg21.link/basic.lookup.general">basic.lookup.general</A>]</INS>
+<DEL>6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>], 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]</DEL>) for
+the <I>using-enum-declarator</I> <INS>(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>],
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>])</INS>. The <I>using-enum-declarator</I>
+shall designate a non-dependent type with a
+reachable <I>enum-specifier</I>. <INS>[ Example:</INS>
+<PRE class="ins">
+enum E { x };
+void f() {
+  int E;
+  using enum E;   // <SPAN CLASS="cmnt">OK</SPAN>
+}
+using F = E;
+using enum F;     // <SPAN CLASS="cmnt">OK</SPAN>
+template&lt;class T&gt; using EE = T;
+void g() {
+  using enum EE&lt;E&gt;;  // <SPAN CLASS="cmnt">OK</SPAN>
+}
+</PRE>
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

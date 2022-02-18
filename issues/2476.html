@@ -1,0 +1,627 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2476</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2476"></A><H4>2476.
+  
+<I>placeholder-type-specifier</I>s and function declarators
+</H4>
+<B>Section: </B>9.2.9.7.1&#160; [<A href="https://wg21.link/dcl.spec.auto.general">dcl.spec.auto.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-01-29<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>According to 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+The placeholder type can appear with a function declarator
+in the <I>decl-specifier-seq</I>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>,
+or <I>trailing-return-type</I>, in any context where such a
+declarator is valid. If the function declarator includes
+a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies the declared
+return type of the function. Otherwise, the function
+declarator shall declare a function.
+
+</BLOCKQUOTE>
+
+<P>This wording disallows a declaration like</P>
+
+<PRE>
+   int f();
+   auto (*fp)()=f;
+</PRE>
+
+<P>The requirement to declare a function was introduced by
+the resolution of <A HREF="1892.html">issue 1892</A>.</P>
+
+<P><B>Proposed resolution (April, 2021) [SUPERSEDED]:</B></P>
+
+<P>Change 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The placeholder type can appear with a function declarator
+in the <I>decl-specifier-seq</I>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>, or <I>trailing-return-type</I><DEL>,
+in any context where such a declarator is valid</DEL>
+<INS>if the function declarator includes a
+<I>trailing-return-type</I> <TT>T</TT>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) or declares a function</INS>.
+<DEL>If the function declarator includes
+a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies</DEL>
+<INS>In the former case, <TT>T</TT> is</INS> the declared
+return type of the function. <DEL>Otherwise, the function
+declarator shall declare a function.</DEL> If the declared
+return type of <DEL>the</DEL> <INS>a</INS> function contains
+a placeholder type, the return type of the function is
+deduced from non-discarded <TT>return</TT> statements, if
+any, in the body of the function (8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (May, 2021):</B></P>
+
+<P>It was observed  that the proposed resolution above does not
+address the example in the issue, since <TT>fp</TT> neither has
+a <I>trailing-return-type</I> nor declares a function. Presumably
+another case in which a function declarator with a placeholder
+return type should be permitted is in the declaration of a
+variable in which the type is deduced from its initializer.</P>
+
+<P>It was also noted in passing that the deduction in the
+example is only partial: the parameter-type-list is
+specified by the declarator and only the return type is
+deduced from the initializer.  Although this example is
+supported by current implementations, there is
+implementation divergence in the support of another case in
+which only part of the variable's type is deduced:</P>
+
+<PRE>
+    auto (&amp;ar)[2] = L"a";  //<SPAN CLASS="cmnt"> Array bound declared, element type deduced</SPAN>
+</PRE>
+
+<P>This issue is related to <A HREF="1892.html">issue 1892</A>,
+which prohibited cases like</P>
+
+<PRE>
+    std::vector&lt;auto(*)()&gt; v;
+</PRE>
+
+<P>The ultimate outcome of the two issues should be:</P>
+
+<PRE>
+    int f();
+    auto (*fp1)() = f;       //<SPAN CLASS="cmnt"> OK</SPAN>
+    auto (*fp2)()-&gt;int = f;  //<SPAN CLASS="cmnt"> OK</SPAN>
+    auto (*fp3)()-&gt;auto = f; //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;typename T&gt; struct C { };
+    C&lt;auto(*)()&gt; c1;         //<SPAN CLASS="cmnt"> Not OK</SPAN>
+    C&lt;auto(*)()-&gt;int&gt; c2;    //<SPAN CLASS="cmnt"> OK</SPAN>
+    C&lt;auto(*)()-&gt;auto&gt; c3;   //<SPAN CLASS="cmnt"> Not OK</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (January, 2023) [SUPERSEDED]:</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#1">dcl.spec.auto.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>placeholder-type-specifier</I> designates a placeholder type that
+will be replaced later<INS>, typically</INS> by deduction from an
+initializer.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change and split 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A placeholder type can appear <DEL>with a function declarator</DEL> in
+the <I>decl-specifier-seq</I><DEL>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>, or <I>trailing-return-type</I>, in any
+context where such</DEL> <INS>for</INS> a <INS>function</INS>
+declarator <DEL>is valid</DEL> <INS>that includes
+a <I>trailing-return-type</I>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])</INS>. <DEL>If the function declarator
+includes a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies the declared return type of
+the function.</DEL>
+</P>
+
+<P>
+<DEL>Otherwise, the</DEL> <INS>A placeholder type can appear in
+the <I>decl-specifier-seq</I> or <I>type-specifier-seq</I> in the
+declared return type of a</INS> function declarator <DEL>shall
+declare</DEL> <INS>that declares</INS> a function<DEL>. If the
+declared return type of the function contains a placeholder
+type,</DEL> <INS>;</INS> the return type of the function is deduced
+from non-discarded <TT>return</TT> statements, if any, in the body of
+the function (8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]).
+</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#4">dcl.spec.auto.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The type of a variable declared using a placeholder type is deduced
+from its initializer. This use is allowed in an initializing
+declaration (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of a variable. The placeholder
+type shall appear as one of the <I>decl-specifier</I>s in
+the <I>decl-specifier-seq</I> <DEL>and</DEL> <INS>or as one of
+the <I>type-specifier</I>s in a <I>trailing-return-type</I> that
+specifies the type that replaces such a <I>decl-specifier</I>;</INS>
+the <I>decl-specifier-seq</I> shall be followed by one or
+more <I>declarator</I>s, each of which shall be followed by a
+non-empty <I>initializer</I>. [ Example:
+
+<PRE>
+  ...
+  auto f() -&gt; int;                //<SPAN CLASS="cmnt"> OK, f returns int</SPAN>
+  <INS>auto (*fp)() -&gt; auto = f;       // <SPAN CLASS="cmnt">OK</SPAN></INS>
+  ...
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#1">dcl.fct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+In a declaration T D where D has the form
+<PRE>
+D1 ( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seq<sub>opt</sub>
+  ref-qualifier<sub>opt</sub> noexcept-specifier<sub>opt</sub> attribute-specifier-seq<sub>opt</sub> <INS>trailing-return-type<sub>opt</sub></INS></I>
+</PRE>
+
+and the type of the contained <I>declarator-id</I> in the
+declaration <TT>T D1</TT> is
+"<I>derived-declarator-type-list</I> <TT>T</TT>"<DEL>,</DEL><INS>:</INS>
+
+<UL class="ins">
+
+<LI>If the <I>trailing-return-type</I> is present, <TT>T</TT> shall be
+the single <I>type-specifier</I> <TT>auto</TT>, and the declared
+return type of the function type is the type specified by
+the <I>trailing-return-type</I>.</LI>
+
+<LI>Otherwise, the declared return type of the function type
+is <TT>T</TT>.</LI>
+
+</UL>
+
+<DEL>the</DEL><INS>The</INS> type of the <I>declarator-id</I> in <TT>D</TT> is
+"<I>derived-declarator-type-list</I> noexceptopt function of
+parameter-type-list <I>cv-qualifier-seqopt ref-qualifieropt</I> returning
+<DEL>T</DEL> <INS>U</INS>", where
+
+<UL>
+
+<LI>the parameter-type-list is derived from the <I>parameter-declaration-clause</I> as described below<INS>,</INS>
+</LI>
+
+<LI>
+<INS><TT>U</TT> is the declared return type,</INS> and</LI>
+
+<LI>the optional noexcept is present if and only if the exception
+specification (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]) is non-throwing.</LI>
+
+</UL>
+
+The optional <I>attribute-specifier-seq</I> appertains to the function type.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Remove 9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<DEL>
+In a declaration T D where D has the form
+<PRE>
+<DEL>D1 ( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seqopt
+  ref-qualifieropt noexcept-specifieropt attribute-specifier-seqopt trailing-return-type</I></DEL>
+</PRE>
+
+and the type ...  The optional attribute-specifier-seq appertains to the
+function type.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration whose <I>declarator-id</I> has an <I>unqualified-id</I>
+that is a <I>conversion-function-id</I> declares a conversion
+function; its declarator shall be a function declarator
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the form
+<PRE>
+<I><DEL>ptr-declarator</DEL> <INS>noptr-declarator</INS></I> <DEL>( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seqopt
+      ref-qualifier-seqopt noexcept-specifieropt attribute-specifier-seqopt</I></DEL> <INS>parameters-and-qualifiers</INS>
+</PRE>
+where the <I><DEL>ptr-declarator</DEL> <INS>noptr-declarator</INS></I>
+consists solely of an <I>id-expression</I>, an
+optional <I>attribute-specifier-seq</I>, and optional surrounding
+parentheses, and the <I>id-expression</I> has one of the following
+forms: ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#2">class.conv.fct</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A conversion function shall have no non-object parameters and shall be
+a non-static member function of a class or class template X;
+<INS>its declared return type is the <I>conversion-type-id</I>
+and</INS> it specifies a conversion from <TT>X</TT> to the type
+specified by the <I>conversion-type-id</I> interpreted as
+a <I>type-id</I> (9.3.2 [<A href="https://wg21.link/dcl.name">dcl.name</A>]). A <I>decl-specifier</I>
+in the <I>decl-specifier-seq</I> of a conversion function (if any)
+shall not be a <I>defining-type-specifier</I> .
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Remove 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#3">class.conv.fct</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The type of the conversion function is &#8220;noexceptopt function
+taking no parameter <I>cv-qualifier-seq</I> opt <I>ref-qualifier</I>
+opt returning <I>conversion-type-id</I>&#8221;.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-06</B></P>
+
+<P>This does not address <TT>void f2(auto (*)() -&gt; auto);</TT>
+</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-10):</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#1">dcl.spec.auto.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>placeholder-type-specifier</I> designates a placeholder type that
+will be replaced later<INS>, typically</INS> by deduction from an
+initializer.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#2">dcl.spec.auto.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>A</DEL> <INS>The type of a <I>parameter-declaration</I> of a
+function declaration
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), <I>lambda-expression</I>
+(7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>])<INS>, or <I>template-parameter</I>
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>])</INS> can be declared using
+a</INS> <I>placeholder-type-specifier</I> of the form
+<I>type-constraint</I><SUB>opt</SUB> <TT>auto</TT> <DEL>can be used as
+a <I>decl-specifier</I> of the <I>decl-specifier-seq</I> of
+a <I>parameter-declaration</I> of a function declaration
+or <I>lambda-expression</I> and, if it is not the
+auto <I>type-specifier</I> introducing</DEL><INS>. The placeholder type
+shall appear as one of the <I>decl-specifier</I>s in
+the <I>decl-specifier-seq</I> or as one of the <I>type-specifier</I>s
+in</INS> a <I>trailing-return-type</I> <DEL>,</DEL> <INS>that
+specifies the type that replaces such a <I>decl-specifier</I></INS>
+(see below)<INS>; the placeholder type</INS> is a <I>generic parameter
+type placeholder</I> of the function declaration
+<DEL>or</DEL><INS>,</INS> <I>lambda-expression</I><INS>,
+or <I>template-parameter</I>, respectively</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change and split 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#3">dcl.spec.auto.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A placeholder type can appear <DEL>with a function declarator</DEL> in
+the <I>decl-specifier-seq</I><DEL>, <I>type-specifier-seq</I>,
+<I>conversion-function-id</I>, or <I>trailing-return-type</I>, in any
+context where such</DEL> <INS>for</INS> a <INS>function</INS>
+declarator <DEL>is valid</DEL> <INS>that includes
+a <I>trailing-return-type</I>
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])</INS>. <DEL>If the function declarator
+includes a <I>trailing-return-type</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+that <I>trailing-return-type</I> specifies the declared return type of
+the function.</DEL>
+</P>
+
+<P>
+<DEL>Otherwise, the</DEL> <INS>A placeholder type can appear in
+the <I>decl-specifier-seq</I> or <I>type-specifier-seq</I> in the
+declared return type of a</INS> function declarator <DEL>shall
+declare</DEL> <INS>that declares</INS> a function<DEL>. If the
+declared return type of the function contains a placeholder
+type,</DEL> <INS>;</INS> the return type of the function is deduced
+from non-discarded <TT>return</TT> statements, if any, in the body of
+the function (8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]).
+</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#4">dcl.spec.auto.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The type of a variable declared using a placeholder type is deduced
+from its initializer. This use is allowed in an initializing
+declaration (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of a variable. The placeholder
+type shall appear as one of the <I>decl-specifier</I>s in
+the <I>decl-specifier-seq</I> <DEL>and</DEL> <INS>or as one of
+the <I>type-specifier</I>s in a <I>trailing-return-type</I> that
+specifies the type that replaces such a <I>decl-specifier</I>;</INS>
+the <I>decl-specifier-seq</I> shall be followed by one or
+more <I>declarator</I>s, each of which shall be followed by a
+non-empty <I>initializer</I>. [ Example:
+
+<PRE>
+  ...
+  auto f() -&gt; int;                //<SPAN CLASS="cmnt"> OK, f returns int</SPAN>
+  <INS>auto (*fp)() -&gt; auto = f;       // <SPAN CLASS="cmnt">OK</SPAN></INS>
+  ...
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change and split 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#5">dcl.spec.auto.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A placeholder type can also be used in the <I>type-specifier-seq</I>
+<DEL>in</DEL> <INS>of</INS> the <I>new-type-id</I> or <INS>in
+the</INS> <I>type-id</I> of a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) <DEL>and as a <I>decl-specifier</I> of
+the <I>parameter-declaration</I>'s <I>decl-specifier-seq</I> in
+a <I>template-parameter</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>])</DEL>.
+<INS>In such a <I>type-id</I>, the placeholder type shall appear as one of the <I>type-specifier</I>s in the <I>type-specifier-seq</I> or as one of the <I>type-specifier</I>s in a <I>trailing-return-type</I> that specifies the type that replaces such a <I>type-specifier</I>.</INS>
+</P>
+
+<P>The <TT>auto</TT> <I>type-specifier</I> can also be used as
+the <I>simple-type-specifier</I> in an explicit type conversion
+(functional notation) (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]).</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#1">dcl.fct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+In a declaration T D where <INS><TT>T</TT> may be empty and</INS> D has the form
+<PRE>
+D1 ( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seq<sub>opt</sub>
+  ref-qualifier<sub>opt</sub> noexcept-specifier<sub>opt</sub> attribute-specifier-seq<sub>opt</sub> <INS>trailing-return-type<sub>opt</sub></INS></I>
+</PRE>
+
+<INS>a <I>derived-declarator-type-list</I> is determined as follows:</INS>
+<DEL>and</DEL>
+
+<UL>
+<LI class="ins">If the <I>unqualified-id</I> of the <I>declarator-id</I> is
+a <I>conversion-function-id</I>,
+the <I>derived-declarator-type-list</I> is empty.</LI>
+<LI>
+<INS>Otherwise, the <I>derived-declarator-type-list</I> is as
+appears in</INS> the
+type <INS>"<I>derived-declarator-type-list</I> <TT>T</TT>"</INS> of
+the contained <I>declarator-id</I> in the declaration <TT>T
+D1</TT>
+<DEL>is "<I>derived-declarator-type-list</I> <TT>T</TT>"</DEL>.</LI>
+</UL>
+
+<INS>The declared return type <TT>U</TT> of the function type is
+determined as follows:</INS>
+
+<UL class="ins">
+
+<LI>If the <I>trailing-return-type</I> is present, <TT>T</TT> shall be
+the single <I>type-specifier</I> <TT>auto</TT>, and <TT>U</TT> is the
+type specified by the <I>trailing-return-type</I>.</LI>
+
+<LI>Otherwise, if the declaration declares a conversion
+function, see 11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>].</LI>
+
+<LI>Otherwise, <TT>U</TT> is <TT>T</TT>.</LI>
+
+</UL>
+
+<DEL>the</DEL><INS>The</INS> type of the <I>declarator-id</I> in <TT>D</TT> is
+"<I>derived-declarator-type-list</I> noexceptopt function of
+parameter-type-list <I>cv-qualifier-seqopt ref-qualifieropt</I> returning
+<DEL>T</DEL> <INS>U</INS>", where
+
+<UL>
+
+<LI>the parameter-type-list is derived from the <I>parameter-declaration-clause</I> as described below and</LI>
+
+<LI>the optional noexcept is present if and only if the exception
+specification (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]) is non-throwing.</LI>
+
+</UL>
+
+The optional <I>attribute-specifier-seq</I> appertains to the function type.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Remove 9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<DEL>
+In a declaration T D where D has the form
+<PRE>
+<DEL>D1 ( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seqopt
+  ref-qualifieropt noexcept-specifieropt attribute-specifier-seqopt trailing-return-type</I></DEL>
+</PRE>
+
+and the type ...  The optional attribute-specifier-seq appertains to the
+function type.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration whose <I>declarator-id</I> has an <I>unqualified-id</I>
+that is a <I>conversion-function-id</I> declares a conversion
+function; its declarator shall be a function declarator
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the form
+<PRE>
+<I><DEL>ptr-declarator</DEL> <INS>noptr-declarator</INS></I> <DEL>( <I>parameter-declaration-clause</I> ) <I>cv-qualifier-seqopt
+      ref-qualifier-seqopt noexcept-specifieropt attribute-specifier-seqopt</I></DEL> <INS>parameters-and-qualifiers</INS>
+</PRE>
+where the <I><DEL>ptr-declarator</DEL> <INS>noptr-declarator</INS></I>
+consists solely of an <I>id-expression</I>, an
+optional <I>attribute-specifier-seq</I>, and optional surrounding
+parentheses, and the <I>id-expression</I> has one of the following
+forms: ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#2">class.conv.fct</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A conversion function shall have no non-object parameters and shall be
+a non-static member function of a class or class template X;
+<INS>its declared return type is the <I>conversion-type-id</I>
+and</INS> it specifies a conversion from <TT>X</TT> to the type
+specified by the <I>conversion-type-id</I> interpreted as
+a <I>type-id</I> (9.3.2 [<A href="https://wg21.link/dcl.name">dcl.name</A>]). A <I>decl-specifier</I>
+in the <I>decl-specifier-seq</I> of a conversion function (if any)
+shall not be a <I>defining-type-specifier</I> .
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Remove 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#3">class.conv.fct</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The type of the conversion function is &#8220;noexceptopt function
+taking no parameter <I>cv-qualifier-seq</I> opt <I>ref-qualifier</I>
+opt returning <I>conversion-type-id</I>&#8221;.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 463</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="463"></A><H4>463.
+  
+<TT>reinterpret_cast&lt;T*&gt;(0)</TT>
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gennaro Prota
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Feb 2004<BR>
+
+
+<P>[Voted into WP at April, 2006 meeting.]</P>
+
+<P>Is <TT>reinterpret_cast&lt;T*&gt;(</TT><I>null_pointer_constant</I><TT>)</TT>
+guaranteed to yield the
+null pointer value of type T*?</P>
+
+<P>I think a committee clarification is needed. Here's why:
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+par. 8 talks of "null pointer value", not
+"null pointer constant", so it would seem that
+<PRE>
+  reinterpret_cast&lt;T*&gt;(0)
+</PRE>
+is a normal int-&gt;T* conversion, with an implementation-defined result.</P>
+
+<P>However a little note to
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>] par. 5 says:
+<BLOCKQUOTE>
+   Converting an integral constant expression (5.19) with value zero
+   always yields a null pointer (4.10), but converting other
+   expressions that happen to have value zero need not yield a null
+   pointer.
+</BLOCKQUOTE>
+Where is this supported in normative text? It seems that either the
+footnote or paragraph 8 doesn't reflect the intent.</P>
+
+<P>SUGGESTED RESOLUTION: I think it would be better to drop the footnote
+#64 (and thus the special case for ICEs), for two reasons:</P>
+
+<P>a) it's not normative anyway; so I doubt anyone is relying on the
+guarantee it hints at, unless that guarantee is given elsewhere in a
+normative part</P>
+
+<P>b) users expect reinterpret_casts to be almost always implementation
+dependent, so this special case is a surprise. After all, if one wants
+a null pointer there's static_cast. And if one wants reinterpret_cast
+semantics the special case requires doing some explicit cheat, such as
+using a non-const variable as intermediary:</P>
+<PRE>
+   int v = 0;
+   reinterpret_cast&lt;T*&gt;(v); // implementation defined
+
+   reinterpret_cast&lt;T*&gt;(0); // null pointer value of type T*
+   const int w = 0;
+   reinterpret_cast&lt;T*&gt;(w); // null pointer value of type T*
+</PRE>
+
+<P>It seems that not only that's providing a duplicate functionality, but
+also at the cost to hide what seems the more natural one.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>This footnote was added in 1996, after the invention of
+<TT>reinterpret_cast</TT>, so the presumption must be that it was
+intentional.  At this time, however, the CWG feels that there is
+no reason to require that <TT>reinterpret_cast&lt;T*&gt;(0)</TT>
+produce a null pointer value as its result.</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<OL>
+<LI>
+<P>Delete the footnote in 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#5">expr.reinterpret.cast</A>] paragraph 5
+reading,</P>
+
+<BLOCKQUOTE>
+
+Converting an integral constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) with value zero always yields a null
+pointer (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), but converting other expressions
+that happen to have value zero need not yield a null pointer.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add the indicated note to 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>] paragraph
+8:</P>
+
+<BLOCKQUOTE>
+
+The null pointer value (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) is converted to
+the null pointer value of the destination type.  <INS>[<I>Note:</I>
+A null pointer constant, which has integral type, is not necessarily
+converted to a null pointer value. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

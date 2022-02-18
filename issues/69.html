@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 69</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="69"></A><H4>69.
+  
+Storage class specifiers on template declarations
+</H4>
+<B>Section: </B>9.2.2&#160; [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Ball
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 Oct 1998<BR>
+
+
+
+<P>
+<U>Mike Ball:</U> I cannot find anything in the standard that tells me the meaning of
+a <I>storage-class-specifier</I> on a function template declaration. In
+particular, there is no indication what effect, if any, it has on the storage
+class of the instantiations.</P>
+
+<P>There is an explicit prohibition of <I>storage-class-specifier</I>s
+on explicit specializations.</P>
+
+<P>For example, if we have</P>
+<PRE>
+    template&lt;class T&gt; static int foo(T) { return sizeof(T); }
+</PRE>
+does this generate static functions for all instantiations? By
+9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]
+
+the storage class applies to the name declared in the declarator, which
+is the template <TT>foo</TT>, not an instantiation of <TT>foo</TT>, which
+is named with a <I>template-id</I>. There is a statement in clause
+14 that template names have linkage, which supports the contention that
+"<TT>static</TT>" applies to the template, not to instantiations.
+
+<P>So what does the specifier mean? Lacking a direct statement in
+the standard, I see the following posibilities, in my preference order.</P>
+<OL>
+<LI>
+<I>storage-class-specifier</I>s have no meaning on template declarations,
+their use being subsumed by "<TT>export</TT>" (for the template name) and
+the unnamed namespace (for instantiations)</LI>
+
+<LI>
+<I>storage-class-specifier</I>s have no effect on the template name, but
+do affect the linkage of the instantiations, though this now applies linkage
+to <I>template-id</I>s, which I can find no support for. I suspect
+this is what was intended, though I don't remember</LI>
+</OL>
+Of course, if anybody can find some concrete statement, that would settle
+it.
+
+<P><U>From John Spicer</U></P>
+
+<P>The standard does say that a namespace scope template has external linkage
+unless it is a function template declared "static". It doesn't explicitly
+say that the linkage of the template is also the linkage of the instantiations,
+but I believe that is the intent. For example, a storage class is
+prohibited on an explicit specialization to ensure that a specialization
+cannot be given a different storage class than the template on which it
+is based.</P>
+<BLOCKQUOTE>
+<U>Mike</U>: This makes sense, but I couldn't find much support
+in the document. Sounds like yet another interpretation to add to
+the list.
+
+<P>
+<U>John</U>: Agreed.</P>
+</BLOCKQUOTE>
+The standard does not talk about the linkage of instantiations, because
+only "names" are considered to have linkage, and instances are not really
+names. So, from an implementation point of view, instances have linkage,
+but from a language point of view, only the template from which the instances
+are generated has linkage.
+<BLOCKQUOTE>
+<U>Mike</U>: Which is why I think it would be cleaner to eliminate
+storage class specifiers entirely and rely on the unnamed namespace.
+There is a statement that specializations go into the namespace of the
+template. No big deal, it's not something it says, so we live with
+what's there.
+
+<P>
+<U>John</U>: That would mean prohibiting static function templates.
+I doubt those are common, but I don't really see much motivation for getting
+rid of them at this point.</P>
+</BLOCKQUOTE>
+"export" is an additional attribute that is separate from linkage, but
+that can only be applied to templates with external linkage.
+<BLOCKQUOTE>
+<U>Mike</U>: I can't find that restriction in the standard,
+though there is one that templates in an unnamed namespace can't be exported.
+I'm pretty sure that we intended it, though.
+
+<P>
+<U>John</U>: I can't find it either. The "inline" case seems to
+be addressed, but not static. Surely this is an error as, by definition,
+a static template can't be used from elsewhere.</P>
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (10/00):</B></P>
+Change the text in Clause 13 [<A href="https://wg21.link/temp#4">temp</A>] paragraph 4 from:
+<BLOCKQUOTE>
+A template name may have linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>
+A template name has linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+A non-member function template
+can have internal linkage; any other template name shall have external
+linkage. Entities generated from a template with internal linkage are distinct
+from all entities generated in other translation units.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

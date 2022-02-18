@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 102</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="102"></A><H4>102.
+  
+Operator lookup rules do not work well with parts of the library
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 Oct 1998<BR>
+
+
+
+
+
+<P>
+The following example does not work as one might expect:</P>
+<PRE>
+    namespace N { class C {}; }
+    int operator +(int i, N::C) { return i+1; }
+
+    #include &lt;numeric&gt;
+    int main() {
+        N::C a[10];
+        std::accumulate(a, a+10, 0);
+    }
+</PRE>
+According to
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+
+paragraph 6, I would expect that the "+" call inside
+<TT>std::accumulate</TT> would find the global <TT>operator+</TT>.
+Is this true, or am I
+missing a rule? Clearly, the <TT>operator+</TT> would be found by Koenig lookup
+if it were in namespace <TT>N</TT>.
+<P>
+<U>Daveed Vandevoorde</U>:
+
+But doesn't unqualified lookup of
+the <TT>operator+</TT> in the definition
+of <TT>std::accumulate</TT> proceed in the namespace where the implicit
+specialization is generated; i.e., in namespace <TT>std</TT>?</P>
+<P>
+In that case, you may find a non-empty overload set for <TT>operator+</TT>
+in namespace <TT>std</TT> and the surrounding (global) namespace is no longer
+considered?</P>
+<P>
+<U>Nathan Myers</U>:
+
+Indeed, <TT>&lt;string&gt;</TT> defines <TT>operator+</TT>,
+as do <TT>&lt;complex&gt;</TT>, <TT>&lt;valarray&gt;</TT>,
+and <TT>&lt;iterator&gt;</TT>.  Any of these might hide the global operator.</P>
+<P>
+<U>Herb Sutter</U>:
+
+These examples fail for the same reason:</P>
+<PRE>
+    struct Value { int i; };
+
+    typedef map&lt;int, Value &gt; CMap;
+    typedef CMap::value_type CPair;
+
+    ostream &amp; operator&lt;&lt; ( ostream &amp;os, const CPair &amp;cp )
+      { return os &lt;&lt; cp.first &lt;&lt; "/" &lt;&lt; cp.second.i; }
+
+    int main() {
+      CMap courseMap;
+      copy( courseMap.begin(), courseMap.end(),
+            ostream_iterator&lt;CPair&gt;( cout, "\n" ) );
+    }
+
+    template&lt;class T, class S&gt;
+    ostream&amp; operator&lt;&lt; (ostream&amp; out, pair&lt;T,S&gt; pr)
+      { return out &lt;&lt; pr.first &lt;&lt; " : " &lt;&lt; pr.second &lt;&lt; endl; }
+
+    int main() {
+      map &lt;int, string&gt; pl;
+      copy( pl.begin(), pl.end(),
+            ostream_iterator &lt;places_t::value_type&gt;( cout, "\n" ) );
+    }
+</PRE>
+This technique (copying from a map to another container or stream)
+should work. If it really cannot be made to work, that would seem broken
+to me. The reason is does not work is that <TT>copy</TT> and <TT>pair</TT> are in
+namespace <TT>std</TT> and the name lookup rules do not permit the global
+<TT>operator&lt;&lt;</TT> to be found because the other <TT>operator&lt;&lt;</TT>'s
+in namespace <TT>std</TT>
+hide the global operator. (Aside: FWIW, I think most programmers don't
+realize that a typedef like <TT>CPair</TT> is actually in namespace <TT>std</TT>, and not
+the global namespace.)
+<P>
+<U>Bill Gibbons</U>: It looks like part of this problem is that the library
+is referring to names which it requires the client to declare in the global namespace
+(the operator names) while also declaring those names in namespace <TT>std</TT>.
+This would be considered very poor design for plain function names; but the
+operator names are special.</P>
+<P>
+There is a related case in the lookup of operator conversion functions.  The
+declaration of a conversion function in a derived class does not hide any
+conversion functions in a base class unless they convert to the same type.
+Should the same thing be done for the lookup of operator function names,
+e.g. should an operator name in the global namespace be visible in namespace
+<TT>std</TT> unless there is a matching declaration in <TT>std</TT>?</P>
+<P>
+Because the operator function names are fixed, it it much more likely that
+a declaration in an inner namespace will accidentally hide a declaration
+in an outer namespace, and the two declarations are much less likely to
+interfere with each other if they are both visible.</P>
+<P>The lookup rules for operator names (when used implicitly) are already
+quite different from those for ordinary function names.  It might be worthwhile
+to add one more special case.</P>
+
+<P>
+<U>Mike Ball</U>
+
+:  The original SGI proposal said that non-transitive points of
+instantiation were also considered. Why, when, and by whom was it added?</P>
+
+<P>
+<B>Rationale (10/99):</B> This appears to be mainly a program
+design issue.  Furthermore, any attempt to address it in the core
+language would be beyond the scope of what can be done in a
+Technical Corrigendum.</P>
+<BR><BR>
+</BODY>
+</HTML>

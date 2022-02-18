@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1499</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1499"></A><H4>1499.
+  
+Missing case for deleted move assignment operator
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-04-27<BR>
+
+
+<P>[ Resolved by the changes for <A HREF="1353.html">issue 1353</A>,
+accepted as a DR at the June, 2023 meeting. ]</P>
+
+<P>Bullet 4 of 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#23">class.copy.ctor</A>] paragraph 23 says that a
+defaulted copy/move assignment operator is defined as deleted if the class
+has</P>
+
+<BLOCKQUOTE>
+
+a non-static data member of class type <TT>M</TT> (or array thereof) that
+cannot be copied/moved because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s corresponding assignment operator,
+results in an ambiguity or a function that is deleted or inaccessible
+from the defaulted assignment operator
+
+</BLOCKQUOTE>
+
+<P>The intent of this is that if overload resolution fails to find a
+corresponding copy/move assignment operator that can validly be called
+to copy/move a member, the class's assignment operator will be defined
+as deleted.  However, this wording does not cover an example like the
+following:</P>
+
+<PRE>
+  struct A {
+    A();
+  };
+
+  struct B {
+    B();
+    const A a;
+  };
+
+  typedef B&amp; (B::*pmf)(B&amp;&amp;);
+
+  pmf p =&amp;B::operator=;
+</PRE>
+
+<P>Here, the problem is simply that overload resolution failed to find
+a callable function, which is not one of the cases listed in the current
+wording.  A similar problem exists for base classes in the fifth bullet.</P>
+
+<P><B>Additional note (January, 2013):</B></P>
+
+<P>A similar omission exists in paragraph 11 for copy constructors.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 750</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="750"></A><H4>750.
+  
+Implementation constraints on reference-only closure objects
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 December, 2008<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#US73">N2800 comment
+  US&#160;73<BR></A>
+
+<P>[Voted into the WP at the July, 2009 meeting as part of N2927.]</P>
+
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+    void f(vector&lt;double&gt; vec) {
+      double x, y, z;
+      fancy_algorithm(vec, [&amp;]() { /* use x, y, and z in various ways */ });
+    }
+</PRE>
+
+<P>7.5.6 [<A href="https://wg21.link/expr.prim.lambda#8">expr.prim.lambda</A>] paragraph 8 requires that the closure
+class for this lambda will have three reference members, and paragraph
+12 requires that it be derived from <TT>std::reference_closure</TT>,
+implying two additional pointer members.  Although 9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4 allows a reference to be implemented without
+allocation of storage, current ABIs require that references be
+implemented as pointers.  The practical effect of these requirements
+is that the closure object for this lambda expression will contain
+five pointers.  If not for these requirements, however, it would be
+possible to implement the closure object as a single pointer to the
+stack frame, generating data accesses in the function-call operator as
+offsets relative to the frame pointer.  The current specification is
+too tightly constrained.</P>
+
+<P>
+<U>Lawrence Crowl</U>:</P>
+
+<P>The original intent was that the reference members could be omitted
+from the closure object by an implementation.  The problem we had was
+that we want the call to <TT>f</TT> in</P>
+
+<PRE>
+    extern f(std::reference_closure&lt;void()&gt;);
+    extern f(std::function&lt;void()&gt;);
+    f([&amp;](){});
+</PRE>
+
+<P>to unambiguously bind to the <TT>reference_closure</TT>; using
+<TT>reference_closure</TT> can be an order of magnitude faster
+than using <TT>function</TT>.</P>
+
+<P>(See also <A HREF="751.html">issue 751</A>.)</P>
+
+<P><B>Proposed resolution (July, 2009)</B></P>
+
+<P>See document PL22.16/09-0117 = WG21 N2927.  (See also document
+PL22.16/09-0035 = WG21 N2845, which partially addressed this issue
+by the removal of <TT>std::reference_clossure.)</TT>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

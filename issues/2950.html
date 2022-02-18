@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2950</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2950"></A><H4>2950.
+  
+Value preservation in enumeration vs. integer bit-fields
+</H4>
+<B>Section: </B>11.4.10&#160; [<A href="https://wg21.link/class.bit">class.bit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Geoffrey Romer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-05-13<BR>
+
+
+<P>Subclause 11.4.10 [<A href="https://wg21.link/class.bit#4">class.bit</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+If a value of integral type (other than bool) is stored into a
+bit-field of width N and the value would be representable in a
+hypothetical signed or unsigned integer type with width N and the same
+signedness as the bit-field's type, the original value and the value
+of the bit-field compare equal. If the value true or false is stored
+into a bit-field of type bool of any size (including a one bit
+bit-field), the original bool value and the value of the bit-field
+compare equal. If a value of an enumeration type is stored into a
+bit-field of the same type and the width is large enough to hold all
+the values of that enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), the
+original value and the value of the bit-field compare equal.
+
+</BLOCKQUOTE>
+
+<P>Thus, for bit-fields of integral type, it is sufficient for the
+actual value to fit into the bit-field.  In contrast, for bit-fields
+of enumeration type, all values of the enumeration type are required
+to fit even if the actual value being stored is small and would
+fit.  For example:</P>
+
+<PRE>
+  enum E : uint8_t { E0 = 0, E1 = 1 };
+  struct S {
+    int i : 1;
+    E e : 1;
+  };
+
+  void f() {
+    S s = { .i = 1, .e = 1 };
+    assert(s.i == 1);    // guaranteed to hold
+    assert(s.e == 1);    // may not hold
+  }
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 11.4.10 [<A href="https://wg21.link/class.bit#4">class.bit</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a value of integral type (other than bool) <INS>or of enumeration
+type</INS> is stored into a bit-field of width N and the value would
+be representable in a hypothetical signed or unsigned integer type
+with width N and the same signedness as the bit-field's type<INS> or,
+respectively, its underlying type</INS>, the original value and the
+value of the bit-field compare equal. If the value true or false is
+stored into a bit-field of type bool of any size (including a one bit
+bit-field), the original bool value and the value of the bit-field
+compare equal. <DEL>If a value of an enumeration type is stored into a
+bit-field of the same type and the width is large enough to hold all
+the values of that enumeration type (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), the
+original value and the value of the bit-field compare equal.</DEL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

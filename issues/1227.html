@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1227</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1227"></A><H4>1227.
+  
+Mixing immediate and non-immediate contexts in deduction failure
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-11-27<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    template &lt;int&gt; struct X {
+      typedef int type;
+    };
+    template &lt;class T&gt; struct Y { };
+    template &lt;class T&gt; struct Z {
+      static int const value = Y&lt;T&gt;::value;
+    };
+
+    template &lt;class T&gt; typename X&lt;Y&lt;T&gt;::value + Z&lt;T&gt;::value&gt;::type f(T);
+    int f(...);
+
+    int main() {
+      sizeof f(0);
+    }
+</PRE>
+
+<P>The problem here is that there is a combination of an invalid expression
+in the immediate context (<TT>Y&lt;T&gt;::value</TT>) and in the
+non-immediate context (within <TT>Z&lt;T&gt;</TT> when evaluating
+<TT>Z&lt;T&gt;::value</TT>).  The Standard does not appear to state
+clearly whether this program is well-formed (because the error in the
+immediate context causes deduction failure) or ill-formed (because of
+the error in the non-immediate context).</P>
+
+<P><B>Notes from the March, 2011 meeting:</B></P>
+
+<P>Some members expressed a desire to allow implementations latitude
+in whether examples like this should be deduction failure or a
+diagnosable error, just as the order of evaluation of arithmetic
+operands is largely unconstrained. Others felt that specifying something
+like a depth-first left-to-right traversal of the expression or
+declaration would be better.  Another possibility suggested was to
+enforce ordering only at comma operators.  No consensus was achieved.
+</P>
+
+<P>CWG agreed that the arguments should be processed in
+left-to-right order.  Some popular existing code (e.g., Boost) depends
+on this ordering.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change 13.10.3 [<A href="https://wg21.link/temp.deduct#7">temp.deduct</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The substitution occurs in all types and expressions that are used in
+the function type and in template parameter declarations. The
+expressions include not only constant expressions such as those that
+appear in array bounds or as nontype template arguments but also
+general expressions (i.e., non-constant expressions) inside
+<TT>sizeof</TT>, <TT>decltype</TT>, and other contexts that allow
+non-constant expressions. <INS>The substitution proceeds in lexical
+order and stops when a condition that causes deduction to fail is
+encountered.</INS>  [<I>Note:</I> The equivalent substitution
+in exception specifications is done only when the function is
+instantiated, at which point a program is ill-formed if the
+substitution results in an invalid type or expression.
+&#8212;<I>end note</I>] <INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct A { using X = typename T::X; };
+  template &lt;class T&gt; typename T::X f(typename A&lt;T&gt;::X);
+  template &lt;class T&gt; void f(...) { }
+  template &lt;class T&gt; auto g(typename A&lt;T&gt;::X) -&gt; typename T::X;
+  template &lt;class T&gt; void g(...) { }
+
+  void h() {
+    f&lt;int&gt;(0); //<SPAN CLASS="cmnt"> OK, substituting return type causes deduction to fail</SPAN>
+    g&lt;int&gt;(0); //<SPAN CLASS="cmnt"> error, substituting parameter type instantiates </SPAN>A&lt;int&gt;
+  }
+</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

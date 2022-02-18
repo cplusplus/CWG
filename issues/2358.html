@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2358</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2358"></A><H4>2358.
+  
+Explicit capture of value
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-09-20<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>The status of an example like the following is unclear:</P>
+
+<PRE>
+  int foo(int a = ([loc=1] { return loc; })()) { return a; }
+</PRE>
+
+<P>because of 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture#9">expr.prim.lambda.capture</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+A <I>lambda-expression</I> appearing in a default argument shall not
+implicitly or explicitly capture any entity.
+
+</BLOCKQUOTE>
+
+<P>However, there doesn't appear to be a good reason for prohibiting
+such a capture.</P>
+
+<P><B>Notes from the April, 2018 teleconference:</B></P>
+
+<P>CWG felt that the rule for capturing should be something like the
+prohibition for local classes odr-using a variable with automatic storage
+duration in 11.6 [<A href="https://wg21.link/class.local#1">class.local</A>] paragraph 1.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<P>Change 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture#9">expr.prim.lambda.capture</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>lambda-expression</I> appearing in a default
+argument shall not implicitly or explicitly capture any
+entity<INS>, except for an <I>init-capture</I> for which any
+full-expression in its <I>initializer</I> satisfies the
+constraints of an expression appearing in a default argument
+(9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>])</INS>.
+[<I>Example:</I>
+</P>
+
+<PRE>
+  void f2() {
+    int i = 1;
+    void g1(int = ([i]{ return i; })());       //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    void g2(int = ([i]{ return 0; })());       //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    void g3(int = ([=]{ return i; })());       //<SPAN CLASS="cmnt"> ill-formed</SPAN>
+    void g4(int = ([=]{ return 0; })());       //<SPAN CLASS="cmnt"> OK</SPAN>
+    void g5(int = ([]{ return sizeof i; })()); //<SPAN CLASS="cmnt"> OK</SPAN>
+<INS>    void g6(int = ([x=1] { return x; }))();    //<SPAN CLASS="cmnt"> OK</SPAN>
+    void g7(int = ([x=i] { return x; }))();    //<SPAN CLASS="cmnt"> ill-formed</SPAN></INS>
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,253 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 699</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="699"></A><H4>699.
+  
+Must constexpr member functions be defined in the class <I>member-specification</I>?
+</H4>
+<B>Section: </B>9.2.6&#160; [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 June, 2008<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#UK49">N2800 comment
+  UK&#160;49<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#JP12">N2800 comment
+  JP&#160;12<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#DE23">N2800 comment
+  DE&#160;23<BR></A>
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>According to 9.2.6 [<A href="https://wg21.link/dcl.constexpr#1">dcl.constexpr</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+The <TT>constexpr</TT> specifier shall be applied only to the
+definition of an object, function, or function template, or to the
+declaration of a static data member of a literal type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).
+
+</BLOCKQUOTE>
+
+<P>As a result, a constexpr member function cannot be simply declared
+in the class <I>member-specification</I> and defined later; it must
+be defined in its initial declaration.</P>
+
+<P>This restriction was not part of the initial proposal but was added
+during the CWG review.  However, the original intent is still visible
+in some of the wording in 9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>].  For example,
+paragraph 2 refers to applying the <TT>constexpr</TT> specifier to the
+&#8220;declaration&#8221; and not the &#8220;definition&#8221; of a
+function or constructor.  Although that is formally correct, as
+definitions are also declarations, it could be confusing.  Also, the
+example in paragraph 6 reads,</P>
+
+<PRE>
+    class debug_flag {
+    public:
+      explicit debug_flag(bool);
+      constexpr bool is_on();    //<SPAN CLASS="cmnt"> error: </SPAN>debug_flag<SPAN CLASS="cmnt"> not literal type</SPAN>
+      ...
+</PRE>
+
+<P>when the proximate error is that <TT>is_on</TT> is only declared,
+not defined.  There are also many occurrences of the <TT>constexpr</TT>
+specifier in the library clauses where the member function is only
+declared, not defined.</P>
+
+<P>It's not clear how much simplification is gained by this restriction.
+There are reasons for defining ordinary inline functions outside the
+class <I>member-specification</I> (reducing the size and complexity of
+the class definition, separating interface from implementation, making
+the editing task easier if program evolution results in an inline
+function being made non-inline, etc.) that would presumably apply to
+constexpr member functions as well.  It seems feasible to allow
+separate declaration and definition of a constexpr function; it would
+simply not be permitted to use it in a constant expression before the
+definition is seen (although it could presumably still be used in
+non-constant expressions in that region, like an ordinary inline
+function).</P>
+
+<P>If the prohibition were relaxed to allow separate declaration and
+definition of constexpr member functions, some questions would need to
+be answered, such as whether the <TT>constexpr</TT> specifier must
+appear on both declaration and definition (the <TT>inline</TT>
+specifier need not). If it can be omitted in one or the other, there's
+a usability issue regarding the fact that <TT>constexpr</TT> implies
+<TT>const</TT>; the <TT>const</TT> qualifier would need to be
+specified explicitly in the declaration in which <TT>constexpr</TT>
+was omitted.</P>
+
+<P>If the current restriction is kept, the library clauses should
+state in an introduction that a non-defining declaration of a
+constexpr member function should be considered &#8220;for exposition
+only&#8221; and not literal code.</P>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>In addition to the original issues described above, the
+question has arisen whether recursive constexpr functions
+are or should be permitted.  Although they were originally
+desired by the proposers of the feature, they were prohibited
+out of an abundance of caution.  However, the wording that
+specified the prohibition was changed during the review
+process, inadvertently permitting them.</P>
+
+<P>The CWG felt that there are sufficient use cases for
+recursion that it should not be forbidden (although a new
+minimum for recursion depth should be added to Annex
+Clause Annex B [<A href="https://wg21.link/implimits">implimits</A>]).  If mutual recursion is to be
+allowed, forward declaration of constexpr functions must
+also be permitted (answering the original question in this
+issue).  A call to an undefined constexpr function in the
+body of a constexpr function should be diagnosed when the
+outer constexpr function is invoked in a context requiring
+a constant expression; in all other contexts, a call to
+an undefined constexpr function should be treated as a
+normal runtime function call, just as if it had been invoked
+with non-constant arguments.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<OL>
+<LI><P>Change Clause 7 [<A href="https://wg21.link/expr#4">expr</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If during the evaluation of an expression, the result is not
+mathematically defined or not in the range of representable values for
+its type, the behavior is undefined<DEL>, unless such an expression
+appears where an integral constant expression is required
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), in which case the program is
+ill-formed</DEL>. [<I>Note:</I> most existing implementations of C++
+ignore integer overflows.  Treatment of division by zero, forming a
+remainder using a zero divisor, and all floating point exceptions vary
+among machines, and is usually adjustable by a library
+function. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Add the indicated text to 7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] paragraph
+2:</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>an invocation of a function other than a constexpr function or a
+constexpr constructor [<I>Note:</I> overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) is applied as usual &#8212;<I>end note</I>];</P></LI>
+
+<LI><P><INS>a direct or indirect invocation of an undefined constexpr
+function or an undefined constexpr constructor outside the definition
+of a constexpr function or a constexpr constructor;</INS></P></LI>
+
+<LI><P><INS>a result that is not mathematically defined or not in the
+range of representable values for its type;</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#1">dcl.constexpr</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <TT>constexpr</TT> specifier shall be applied only to the
+definition of an object, <INS>the declaration of a</INS>
+function<DEL>,</DEL> or function template, or <DEL>to</DEL> the
+declaration of a static data member of an effective literal type
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]). <INS>If any declaration of a function or
+function template has the <TT>constexpr</TT> specifier, then all its
+declarations shall contain the <TT>constexpr</TT>
+specifier. [<I>Note:</I> An explicit specialization can differ from
+the template declaration with respect to the <TT>constexpr</TT>
+specifier. &#8212;<I>end note</I>]</INS> [<I>Note:</I> function
+parameters cannot be declared <TT>constexpr</TT>. &#8212;<I>end
+note</I>] [<I>Example:</I>
+</P>
+
+<PRE>
+<INS>  constexpr int square(int x);       //<SPAN CLASS="cmnt">OK, declaration</SPAN></INS>
+<DEL>  constexpr int square(int x) {      //<SPAN CLASS="cmnt"> OK</SPAN>
+    return x * x;
+  }</DEL>
+  constexpr int bufsz = 1024;        //<SPAN CLASS="cmnt"> OK<INS>, definition</INS></SPAN>
+  constexpr struct pixel {           //<SPAN CLASS="cmnt"> error: </SPAN>pixel<SPAN CLASS="cmnt"> is a type</SPAN>
+    int x;
+    int y;
+<INS>    constexpr pixel(int);            //<SPAN CLASS="cmnt"> OK, declaration</SPAN></INS>
+  };
+<INS>  constexpr pixel::pixel(int a)
+    : x(square(a)), y(square(a)) { } //<SPAN CLASS="cmnt">OK, definition</SPAN>
+  constexpr pixel small(2);          //<SPAN CLASS="cmnt"> error: </SPAN>square<SPAN CLASS="cmnt"> not defined, so </SPAN>small(2)
+                                     //<SPAN CLASS="cmnt"> not constant (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), so </SPAN>constexpr<SPAN CLASS="cmnt"> not satisfied</SPAN>
+  constexpr int square(int x) {      //<SPAN CLASS="cmnt"> OK, definition</SPAN>
+    return x * x;
+  }
+  constexpr pixel large(4);          //<SPAN CLASS="cmnt"> OK, </SPAN>square<SPAN CLASS="cmnt"> defined</SPAN></INS>
+  int next(constexpr int x) {        //<SPAN CLASS="cmnt"> error<INS>, not for parameters</INS></SPAN>
+    return x + 1;
+  }
+  extern constexpr int memsz;        //<SPAN CLASS="cmnt"> error: not a definition</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new section following 16.4.6.5 [<A href="https://wg21.link/member.functions">member.functions</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>Implementations shall provide definitions for any non-defining
+declarations of <TT>constexpr</TT> functions and constructors within the
+associated header files.</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following bullet to the list in Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2:
+</P></LI>
+
+<UL>
+<LI><PL>...</PL></LI>
+
+<LI><P>Nested external specifications [1 024].</P></LI>
+
+<LI><P><INS>Recursive constexpr function invocations [512].</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</OL>
+
+<P>(This resolution also resolves <A HREF="695.html">issue 695</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

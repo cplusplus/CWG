@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2768</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2768"></A><H4>2768.
+  
+Assignment to enumeration variable with a <I>braced-init-list</I>
+</H4>
+<B>Section: </B>7.6.19&#160; [<A href="https://wg21.link/expr.ass">expr.ass</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Shafik Yaghmour
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-06<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+   enum class E {E1};
+
+   void f() {
+     E e;
+     e = E{0}; //<SPAN CLASS="cmnt"> #1</SPAN>
+     e = {0};  //<SPAN CLASS="cmnt"> #2</SPAN>
+   }
+</PRE>
+
+<P>#1 first initializes a temporary of type <TT>E</TT> and then
+assigns that to <TT>e</TT>.  For #2,
+7.6.19 [<A href="https://wg21.link/expr.ass#8.1">expr.ass</A>] bullet 8.1 specifies that #2 is
+equivalent to #1:</P>
+
+<BLOCKQUOTE>
+
+A <I>braced-init-list</I> may appear on the right-hand side of
+<UL>
+<LI>
+an assignment to a scalar, in which case the initializer list shall
+have at most a single element. The meaning of <TT>x = {v}</TT>, where T is the
+scalar type of the expression x, is that of <TT>x = T{v}</TT>. The meaning of
+<TT>x = {}</TT> is <TT>x = T{}</TT>.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, there is no syntactic hint that #2 would invoke
+direct-initialization, and in fact gcc, icc, and MSVC reject #2, but
+clang accepts.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-06):</B></P>
+
+<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#8">expr.ass</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>braced-init-list</I> <INS><I>B</I></INS> may appear on the
+right-hand side of
+<UL>
+<LI>
+an assignment to a scalar <INS>of type <TT>T</TT></INS>, in which
+case <DEL>the initializer list</DEL> <INS><I>B</I></INS> shall have at
+most a single element. The meaning of <TT>x
+= <DEL>{v}</DEL><INS><I>B</I></INS></TT> <INS> is <TT>x = t</TT>,
+where <TT>t</TT> is an invented temporary variable declared and
+initialized as <TT>T t = <I>B</I></TT></INS><DEL>, where T is the
+scalar type of the expression x, is that of <TT>x = T{v}</TT>. The
+meaning of <TT>x = {}</TT> is <TT>x = T{}</TT></DEL>.</LI>
+
+<LI>
+an assignment to an object of class type, in which case <DEL>the
+initializer list</DEL> <INS><I>B</I></INS> is passed as the argument
+to the assignment operator function selected by overload resolution
+(12.4.3.2 [<A href="https://wg21.link/over.ass">over.ass</A>], 12.2 [<A href="https://wg21.link/over.match">over.match</A>]).
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

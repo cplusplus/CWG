@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2591</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2591"></A><H4>2591.
+  
+Implicit change of active union member for anonymous union in union
+</H4>
+<B>Section: </B>11.5.1&#160; [<A href="https://wg21.link/class.union.general">class.union.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-29<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Subclause 11.5.1 [<A href="https://wg21.link/class.union.general#6">class.union.general</A>] paragraph 6 describes how union
+member subobjects are implicitly created by certain assignment
+operations that assign to union members. However, this description
+does not appear to properly handle the case of an anonymous union
+appearing within a union:</P>
+
+<PRE>
+  union A {
+    int x;
+    union {
+     int y;
+    };
+  };
+  void f() {
+    A a = {.x = 1};
+    a.y = 2;
+  }
+</PRE>
+
+<P>Here, the expectation is that the assignment to <TT>a.y</TT> starts
+the lifetime of the anonymous union member subobject within <TT>A</TT>
+and also the int member subobject of the anonymous union member
+subobject. But the algorithm for computing S(<TT>a.y</TT>) determines
+that it is {<TT>a.y</TT>} and does not include the anonymous union
+member subobject.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-17):</B></P>
+
+<P>Change in 11.5.1 [<A href="https://wg21.link/class.union.general#6">class.union.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+In an assignment expression of the form <TT>E1 = E2</TT> that uses
+either the built-in assignment operator (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>])
+or a trivial assignment operator (11.4.6 [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]), for
+each element X of S(E1) <INS>and each anonymous union member X
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) that is a member of a union and has such
+an element as an immediate subobject (recursively)</INS>, if
+modification of X would have undefined behavior under
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>], an object of the type of X is implicitly
+created in the nominated storage; no initialization is performed and
+the beginning of its lifetime is sequenced after the value computation
+of the left and right operands and before the assignment.
+
+</BLOCKQUOTE>
+
+<P>Editing note: Adding this rule into the definition of S would be more
+logical, but S(E) is a set of subexpressions of E and there is no form
+of expression that names an anonymous union member. Redefining S(E) to
+be a set of objects might be a better option.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

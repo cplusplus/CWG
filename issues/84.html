@@ -1,0 +1,244 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 84</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="84"></A><H4>84.
+  
+Overloading and conversion loophole used by <TT>auto_ptr</TT>
+</H4>
+<B>Section: </B>12.2.4.2&#160; [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 Dec 1998<BR>
+
+
+
+<P>By the letter of the standard, the conversions required to
+make <TT>auto_ptr</TT> work should be accepted.</P>
+
+<P>However, there's good reason to wonder if there isn't a bug in the standard
+here. Here's the issue: line 16 in the example below comes down to
+<BLOCKQUOTE>copy-initialize an <TT>auto_ptr&lt;Base&gt;</TT> from
+an <TT>auto_ptr&lt;Derived&gt;</TT> rvalue</BLOCKQUOTE>
+To do that, we first look to see whether we can convert
+an <TT>auto_ptr&lt;Derived&gt;</TT>
+to an <TT>auto_ptr&lt;Base&gt;</TT>, by enumerating the
+constructors of <TT>auto_ptr&lt;Base&gt;</TT>
+and the conversion functions of <TT>auto_ptr&lt;Derived&gt;</TT>.
+There's a single possible way to do the conversion, namely the conversion
+function</P>
+<PRE>
+    auto_ptr&lt;Derived&gt;::operator auto_ptr&lt;Base&gt;()
+</PRE>
+(generated from the template).  (The constructor
+<TT>auto_ptr&lt;Base&gt;(auto_ptr_ref&lt;Base&gt;)</TT>
+doesn't work because it requires a  user-defined conversion on the
+argument.)
+
+<P>So far, so good.  Now, we do the copy step:</P>
+<BLOCKQUOTE>direct-initialize an <TT>auto_ptr&lt;Base&gt;</TT>
+from an <TT>auto_ptr&lt;Base&gt;</TT>
+rvalue</BLOCKQUOTE>
+This, as we've gone to great lengths to set up, is done by calling
+the conversion function
+<PRE>
+    auto_ptr&lt;Base&gt;::operator auto_ptr_ref&lt;Base&gt;()
+</PRE>
+(generated from the template), and then the constructor
+<PRE>
+    auto_ptr&lt;Base&gt;(auto_ptr_ref&lt;Base&gt;)
+</PRE>
+(generated from the template).
+
+<P>The problem with this interpretation is that it violates the long-standing
+common-law rule that only a single user-defined conversion will be called
+to do an implicit conversion.  I find that pretty disturbing.
+(In fact, the full operation involves two conversion functions and two
+constructors, but "copy" constructors are generally considered not to be
+conversions.)</P>
+
+<P>The direct-initialization second step of a copy-initialization was intended
+to be a simple copy &#8212; you've made a temporary, and now you use a copy
+constructor to copy it.  Because it is defined in terms of direct
+initialization, however, it can exploit the loophole that auto_ptr
+is based on.</P>
+
+<P>To switch to personal opinion for a second, I think it's bad enough
+that auto_ptr has to exploit a really arcane loophole of overload resolution,
+but in this case it seems like it's exploiting a loophole on a loophole.</P>
+<PRE>
+    struct Base {                             //  2
+       static void sink(auto_ptr&lt;Base&gt;);      //  3
+    };                                        //  4
+
+    struct Derived : Base {                   //  5
+       static void sink(auto_ptr&lt;Derived&gt;);   //  6
+    };                                        //  7
+
+    auto_ptr&lt;Derived&gt; source() {              //  8
+       auto_ptr&lt;Derived&gt; p(source());         //  9
+       auto_ptr&lt;Derived&gt; pp(p);               // 10
+       Derived::sink(source());               // 11
+       p = pp;                                // 12
+       p = source();                          // 13
+       auto_ptr&lt;Base&gt; q(source());            // 14
+       auto_ptr&lt;Base&gt; qp(p);                  // 15
+       Base::sink(source());                  // 16
+       q = pp;                                // 17
+       q = source();                          // 18
+       return p;                              // 19
+       return source();
+    }
+</PRE>
+
+<U>Derek Inglis</U>:
+
+
+
+<P>It seems clear to me that the result of this direct initilization
+must be the second standard conversion sequence in a user defined
+conversion sequence.  Otherwise the resulting conversion sequence is
+not an implicit conversion sequence.  By the letter of the standard,
+the sequence of conversions making up a copy-initialization must be an
+implicit conversion sequence.</P>
+
+<P>Paragraph 3 of 7.3 [<A href="https://wg21.link/conv">conv</A>]:</P>
+
+<BLOCKQUOTE>
+
+An expression <TT>e</TT> can be <I>implicitly converted</I> to a type
+<TT>T</TT> if and only if the declaration "<TT>T t=e;</TT>" is
+well-formed, for some invented temporary variable <TT>t</TT>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+
+</BLOCKQUOTE>
+
+<P>Paragraph 1 of 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]:</P>
+
+<BLOCKQUOTE>
+
+An <I>implicit conversion sequence</I> is a sequence of conversions
+used to convert an argument in a function call to the type of the
+corresponding parameter of the function being called.  The sequence of
+conversions is an implicit conversion as defined in
+7.3 [<A href="https://wg21.link/conv">conv</A>], which means it is governed by the rules for
+initialization of an object or reference by a single expression
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]).
+
+</BLOCKQUOTE>
+
+Sentence 1 of paragraph 12 of 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]:
+
+<BLOCKQUOTE>
+
+The initialization that occurs in argument passing ...
+is  called <I>copy-initialization</I> and is equivalent to  the form
+
+<PRE>
+     T x = a;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>For me, these sentences imply that all sequences of conversions
+permitted on a function argument must be valid implicit conversion
+sequences.</P>
+
+<P>The 'loophole' can be closed by adding a sentence (or note) to the
+section describing the 'direct initialization second step of a copy
+initialization' stating that the copy initialization is ill-formed if
+the conversion sequence resulting from the direct initialization is
+not a standard conversion sequence.</P>
+
+<P>(See also <A HREF="177.html">issue 177</A> and paper
+J16/00-0009 = WG21 N1232.)</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Change 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>] paragraphs 3 and 4 from</P>
+
+<BLOCKQUOTE>
+
+<P>Except in the context of an initialization by user-defined
+conversion (12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]), a well-formed implicit conversion
+sequence is one of the following forms:</P>
+
+<UL>
+
+<LI>a <I>standard conversion sequence</I>
+(12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]),</LI>
+
+<LI>a <I>user-defined conversion sequence</I>
+(12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]), or</LI>
+
+<LI>an <I>ellipsis conversion sequence
+(12.2.4.2.4 [<A href="https://wg21.link/over.ics.ellipsis">over.ics.ellipsis</A>])</I>
+</LI>
+
+</UL>
+
+<P>In the context of an initialization by user-defined conversion (i.e.,
+when considering the argument of a user-defined conversion function;
+see 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]),
+only standard conversion sequences and
+ellipsis conversion sequences are allowed.</P>
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+<P>A well-formed implicit conversion
+sequence is one of the following forms:</P>
+
+<UL>
+
+<LI>a <I>standard conversion sequence</I>
+(12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]),</LI>
+
+<LI>a <I>user-defined conversion sequence</I>
+(12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]), or</LI>
+
+<LI>an <I>ellipsis conversion sequence</I>
+(12.2.4.2.4 [<A href="https://wg21.link/over.ics.ellipsis">over.ics.ellipsis</A>])</LI>
+
+</UL>
+
+<P>However, when considering the argument of a user-defined conversion
+function that is a candidate by 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]
+when invoked for the copying
+of the temporary in the second step of a class copy-initialization, or
+by 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>],
+or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] in all cases, only standard
+conversion sequences and ellipsis conversion sequences are
+allowed.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

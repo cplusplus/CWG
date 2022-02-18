@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2248</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2248"></A><H4>2248.
+  
+Problems with sized delete
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-03-14<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+   T *p = new (::operator new(sizeof(T) + 100)) T;
+   delete p;
+</PRE>
+
+<P>It is infeasible for the implementation to infer the size of the
+block of storage, yet the standard does not permit undefined behavior
+for this case.</P>
+
+<P>
+<B>Proposed resolution (December, 2016):</B>
+</P>
+
+<P>Change 7.6.2.9 [<A href="https://wg21.link/expr.delete#11">expr.delete</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a <I>delete-expression</I> is executed, the selected deallocation
+function shall be called with the address of the <DEL>block of storage to
+be reclaimed</DEL> <INS>most-derived object in the <I>delete object</I>
+case, or the address of the object suitably adjusted for the array
+allocation overhead (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) in the <I>delete array</I>
+case,</INS> as its first argument. If a deallocation function with a
+parameter of type <TT>std::align_val_t</TT> is used, the alignment of the
+type of the object to be deleted is passed as the corresponding
+argument. If a deallocation function with a parameter of
+type <TT>std::size_t</TT> is used, the size of the <DEL>block</DEL>
+<INS>most-derived type, or of the array plus allocation overhead,
+respectively,</INS> is passed as the corresponding argument.
+<INS>[<I>Note:</I> If this results in a call to a usual deallocation
+function, and either the first argument was not the result of a prior
+call to a usual allocation function or the second argument was not the
+corresponding argument in said call, the behavior is undefined
+(17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>], 17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>]).
+&#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

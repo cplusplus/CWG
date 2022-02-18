@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1598</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1598"></A><H4>1598.
+  
+Criterion for equality of pointers to members
+</H4>
+<B>Section: </B>7.6.10&#160; [<A href="https://wg21.link/expr.eq">expr.eq</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-12-21<BR>
+
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>According to 7.6.10 [<A href="https://wg21.link/expr.eq#2">expr.eq</A>] paragraph 2, pointers to
+data members compare equal</P>
+
+<BLOCKQUOTE>
+
+if and only if they would refer to the same member of the same most
+derived object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) or the same subobject if
+indirection with a hypothetical object of the associated class type
+were performed.
+
+</BLOCKQUOTE>
+
+<P>This specification is overly constrained. For data members, most
+implementations simply compare the offsets of the members involved,
+violating the &#8220;only if&#8221; part of the specification.  For
+example:</P>
+
+<PRE>
+  struct A {};
+  struct B : A { int x; };
+  struct C : A { int x; };
+
+  int A::*bx = (int(A::*))&amp;B::x;
+  int A::*cx = (int(A::*))&amp;C::x;
+
+  bool b1 = bx == cx;
+</PRE>
+
+<P>The existing wording requires <TT>b1</TT> to have the value
+<TT>false</TT>, even though the offsets of the members are the same.
+It would be better if the result of the comparison were unspecified
+unless the class containing the original member for the LHS is a base
+or derived class of the class containing the original member for the
+RHS.</P>
+
+<P><B>Proposed resolution (January, 2014):</B></P>
+
+<P>Change 7.6.10 [<A href="https://wg21.link/expr.eq#3">expr.eq</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...Comparing pointers to members is defined as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>If either is a pointer to a virtual member function, the
+result is unspecified.</P></LI>
+
+<LI><P><INS>If one refers to a member of class <TT>C1</TT> and the other
+refers to a member of a different class <TT>C2</TT>, where neither
+is a base class of the other, the result is unspecified.
+[<I>Example:</I></INS></P></LI>
+
+<PRE>
+<INS>  struct A {};
+    struct B : A { int x; };
+    struct C : A { int x; };
+
+    int A::*bx = (int(A::*))&amp;B::x;
+    int A::*cx = (int(A::*))&amp;C::x;
+
+    bool b1 = (bx == cx);   //<SPAN CLASS="cmnt"> unspecified</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<LI><P>
+<DEL>Two</DEL> <INS>Otherwise, two</INS> pointers to
+members compare equal if they would refer to the same member
+of the same most derived object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+or the same subobject if indirection with a hypothetical
+object of the associated class type were performed,
+otherwise they compare unequal. [<I>Example:</I>
+</P></LI>
+
+<PRE>
+  struct B {
+    int f();
+  };
+  struct L : B { };
+  struct R : B { };
+  struct D : L, R { };
+
+  int (B::*pb)() = &amp;B::f;
+  int (L::*pl)() = pb;
+  int (R::*pr)() = pb;
+  int (D::*pdl)() = pl;
+  int (D::*pdr)() = pr;
+  bool x = (pdl == pdr);   // false
+<INS>  bool y = (pb == pl);     // true</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,155 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1836</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1836"></A><H4>1836.
+  
+Use of class type being defined in <I>trailing-return-type</I>
+</H4>
+<B>Section: </B>_N4567_.5.1.1&#160; [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-17<BR>
+
+
+<P>[Voted into the WP at the July, 2017 meeting.]</P>
+
+<P>According to _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#3">expr.prim.general</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+Unlike the object expression in other
+contexts, <TT>*this</TT> is not required to be of complete
+type for purposes of class member access
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) outside the member function
+body.
+
+</BLOCKQUOTE>
+
+<P>Is this special treatment of member access expressions intended
+to apply only to <TT>*this</TT>, or does it apply to other ways of
+specifying the class being defined in the object expression?  For
+example,</P>
+
+<PRE>
+  struct S {
+    int i;
+    auto f1() -&gt; decltype((*this).i);      //<SPAN CLASS="cmnt"> okay</SPAN>
+    auto f2(S&amp; This) -&gt; decltype(This.i);  //<SPAN CLASS="cmnt"> okay?</SPAN>
+    auto f3() -&gt; decltype(((S*)0)-&gt;i);     //<SPAN CLASS="cmnt"> okay?</SPAN>
+  };
+</PRE>
+
+<P>There is implementation divergence on this question.</P>
+
+<P>If the intent is to allow object expressions other than
+<TT>*this</TT> to have the current class type, this specification
+should be moved from _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>] to
+7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2, which is where the general
+requirement for complete object expression types is found.</P>
+
+<P>On a related point, the note immediately following the above-cited
+passage is not quite correct:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> only class members declared prior to the
+declaration are visible. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>This does not apply when the member is a &#8220;member of an
+unknown specialization,&#8221; per 13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+bullet 5.3 sub-bullet 1; for example,</P>
+
+<PRE>
+  template&lt;typename T&gt; struct S : T {
+    auto f() -&gt; decltype(this-&gt;x);
+  };
+</PRE>
+
+<P>Here <TT>x</TT> is presumed to be a member of the dependent base
+<TT>T</TT> and is not &#8220;declared prior to the declaration&#8221;
+that refers to it.</P>
+
+<P><B>Proposed resolution (May, 2017):</B></P>
+
+<OL>
+<LI><P>Change 7.5.3 [<A href="https://wg21.link/expr.prim.this#2">expr.prim.this</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>Unlike the object expression in other contexts, <TT>*this</TT>
+is not required to be of complete type for purposes of class
+member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) outside the member
+function body. [<I>Note:</I> Only class members declared prior to
+the declaration are visible. &#8212;<I>end note</I>]</DEL> <INS>
+[<I>Note:</I> In a <I>trailing-return-type</I>, the class being
+defined is not required to be complete for purposes of class member
+access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]). Class members declared later
+are not visible.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    char g();
+    template&lt;class T&gt; auto f(T t) -&gt; decltype(t + g())
+    { return t + g(); }
+  };
+  template auto A::f(int t) -&gt; decltype(t + g());
+</PRE>
+
+<P>&#8212;<I>end example</I>] <INS>&#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows,
+splitting the paragraph into two paragraphs as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>For the first option (dot) the first expression shall be a
+glvalue having <DEL>complete</DEL> class type. For the second
+option (arrow) the first expression shall be a prvalue having
+pointer to <DEL>complete</DEL> class type. <INS>In both cases,
+the class type shall be complete unless the class member access
+appears in the definition of that class. [<I>Note:</I> If the
+class is incomplete, lookup in the complete class type is
+required to refer to the same declaration
+(6.4.7 [<A href="https://wg21.link/basic.scope.class">basic.scope.class</A>]). &#8212;<I>end note</I>]</INS>
+</P>
+
+<P>The expression <TT>E1-&gt;E2</TT> is converted to the
+equivalent form <TT>(*(E1)).E2</TT>; the remainder...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

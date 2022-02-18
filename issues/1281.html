@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1281</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1281"></A><H4>1281.
+  
+Virtual and dependent base classes
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-03-28<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct A {
+   virtual void f() { /* base */ }
+  };
+
+  struct B : virtual A {
+   virtual void f() { /* derived */ }
+  };
+
+  template&lt;typename T&gt;
+  struct C : virtual A, T {
+   void g() {
+    this-&gt;f();
+   }
+  };
+
+  int main() {
+   C&lt;B&gt; c;
+   c.g();
+  }
+
+</PRE>
+
+<P>This is reasonable C++03 code that is invalidated by the resolution
+of <A HREF="1043.html">issue 1043</A>. In the presence of virtual
+non-dependent base classes and other dependent base classes, one
+cannot rely on something being found for real when doing the lookup in
+the instantiation context (therefore, one cannot know whether a
+"typename" is actually valid or not, without knowing all dependent
+base classes).</P>
+
+<P><B>Rationale (August, 2011):</B></P>
+
+<P>This example is not sufficient motivation to revisit the outcome of
+<A HREF="1043.html">issue 1043</A>.  <TT>((T*)this)-&gt;f()</TT> can
+be used to allow lookup in a dependent base.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

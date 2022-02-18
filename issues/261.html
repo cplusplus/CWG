@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 261</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="261"></A><H4>261.
+  
+When is a deallocation function "used?"
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Nov 2000<BR>
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+
+
+<P>6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 says that a deallocation
+function is "used" by a <I>new-expression</I> or
+<I>delete-expression</I> appearing in a potentially-evaluated
+expression.  6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 requires only that
+"used" functions be defined.</P>
+
+<P>This wording runs afoul of the typical implementation technique for
+polymorphic <I>delete-expression</I>s in which the deallocation
+function is invoked from the virtual destructor of the most-derived
+class.  The problem is that the destructor must be defined, because
+it's virtual, and if it contains an implicit reference to the
+deallocation function, the deallocation function must also be defined,
+even if there are no relevant <I>new-expression</I>s or
+<I>delete-expression</I>s in the program.</P>
+
+<P>For example:</P>
+
+<PRE>
+        struct B { virtual ~B() { } };
+
+        struct D: B {
+            void operator delete(void*);
+            ~D() { }
+        };
+</PRE>
+
+<P>Is it required that <TT>D::operator delete(void*)</TT> be defined,
+even if no <TT>B</TT> or <TT>D</TT> objects are ever created or
+deleted?</P>
+
+<P>
+<B>Suggested resolution:</B> Add the words "or if it is found by
+the lookup at the point of definition of a virtual destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])" to the specification in 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2.</P>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>The consensus was in favor of requiring that any declared
+non-placement <TT>operator delete</TT> member function be
+defined if the destructor for the class is defined (whether
+virtual or not), and similarly for a non-placement
+<TT>operator new</TT> if a constructor is defined.</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P> In 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2, add the indicated text:
+<BLOCKQUOTE>
+An allocation or deallocation function for a class is
+used by a new expression appearing in a potentially-evaluated
+expression as specified in 7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]
+and 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>].
+A deallocation function for a class is used by a delete expression
+appearing in a potentially-evaluated expression as specified in
+7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>] and 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>].
+<INS> A non-placement allocation or deallocation function for a
+class is used by the definition of a constructor of that class.  A
+non-placement deallocation function for a class is used by the
+definition of the destructor of that class, or by being selected by
+the lookup at
+the point of definition of a virtual destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+[Footnote: An implementation is not required to call
+allocation and deallocation functions from constructors or
+destructors; however, this is a permissible implementation
+technique.]</INS>
+</BLOCKQUOTE>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

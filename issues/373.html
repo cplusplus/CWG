@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 373</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="373"></A><H4>373.
+  
+Lookup on namespace qualified name in using-directive
+</H4>
+<B>Section: </B>6.5.7&#160; [<A href="https://wg21.link/basic.lookup.udir">basic.lookup.udir</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Clark Nelson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 August 2002<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+<P>Is this case valid?  G++ compiles it.</P>
+<PRE>
+namespace X {
+  namespace Y {
+    struct X {
+      void f()
+      {
+        using namespace X::Y;
+        namespace Z = X::Y;
+      }
+    };
+  }
+}
+</PRE>
+<P>The relevant citation from the standard is
+6.5.7 [<A href="https://wg21.link/basic.lookup.udir">basic.lookup.udir</A>]: "When looking up a
+namespace-name in a using-directive or namespace-alias-definition, only
+namespace names are considered." This statement could reasonably be
+interpreted to apply only to the last element of a qualified name, and
+that's the way EDG and Microsoft seem to interpret it.</P>
+
+<P>However, since a class can't contain a namespace, it seems to me that this
+interpretation is, shall we say, sub optimal. If the X qualifiers in the
+above example are interpreted as referring to the struct X, an error of some
+sort is inevitable, since there can be no namespace for the qualified name
+to refer to. G++ apparently interprets 6.5.7 [<A href="https://wg21.link/basic.lookup.udir">basic.lookup.udir</A>]
+as applying to
+nested-name-specifiers in those contexts as well, which makes a valid
+interpretation of the test possible.</P>
+
+<P>I'm thinking it might be worth
+tweaking the words in 6.5.7 [<A href="https://wg21.link/basic.lookup.udir">basic.lookup.udir</A>]
+to basically mandate the more useful
+interpretation. Of course a person could argue that the difference would
+matter only to a perverse program. On the other hand, namespaces were
+invented specifically to enable the building of programs that would
+otherwise be considered perverse. Where name clashes are concerned, one
+man's perverse is another man's real world.</P>
+
+<P><B>Proposed Resolution (November, 2006):</B></P>
+
+<P>Change 6.5.7 [<A href="https://wg21.link/basic.lookup.udir#1">basic.lookup.udir</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When looking up a <I>namespace-name</I> in a <I>using-directive</I> or
+<I>namespace-alias-definition</I>,</DEL> <INS>In a <I>using-directive</I>
+or <I>namespace-alias-definition</I>, during the lookup for a
+<I>namespace-name</I> or for a name in a <I>nested-name-specifier</I>,</INS>
+only namespace names are considered.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 828</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="828"></A><H4>828.
+  
+Destruction of exception objects
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>UK
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 March, 2009<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#UK130">N2800 comment
+  UK&#160;130<BR></A>
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>14.2 [<A href="https://wg21.link/except.throw#4">except.throw</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+When the last remaining active handler for the exception exits by any
+means other than <TT>throw;</TT> the temporary object is destroyed and the
+implementation may deallocate the memory for the temporary object...
+
+</BLOCKQUOTE>
+
+<P>With <TT>std::current_exception()</TT> (17.9.7 [<A href="https://wg21.link/propagation#7">propagation</A>] paragraph 7)
+, it might be possible to refer to the exception object
+after its last handler exits (if the exception object is not copied).
+The text needs to be updated to allow for that possibility.</P>
+
+<P><B>Proposed resolution (September, 2009):</B></P>
+
+<P>Change 14.2 [<A href="https://wg21.link/except.throw#4">except.throw</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The memory for the <DEL>temporary copy of the exception being
+thrown</DEL> <INS>exception object</INS> is allocated in an
+unspecified way, except as noted in 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>]. <DEL>The temporary persists as long as there is a
+handler being executed for that exception. In particular, if</DEL>
+<INS>If</INS> a handler exits by <DEL>executing a <TT>throw;</TT>
+statement, that passes control</DEL> <INS>rethrowing, control is
+passed</INS> to another handler for the same exception<DEL>, so the
+temporary remains</DEL>. <INS>The exception object is destroyed after
+either</INS> <DEL>When</DEL> the last remaining active handler for the
+exception exits by any means other than <DEL><TT>throw;</TT></DEL>
+<INS>rethrowing, or the last object of type
+<TT>std::exception_ptr</TT> (17.9.7 [<A href="https://wg21.link/propagation">propagation</A>]) that refers
+to the exception object is destroyed, whichever is later. In the
+former case, the destruction occurs when the handler exits,
+immediately after the destruction of the object declared in the
+<I>exception-declaration</I> in the handler, if any. In the latter
+case, the destruction occurs before the destructor of
+<TT>std::exception_ptr</TT> returns.</INS> <DEL>the temporary object
+is destroyed and the</DEL> <INS>The</INS> implementation may
+<INS>then</INS> deallocate the memory for the <DEL>temporary</DEL>
+<INS>exception</INS> object; any such deallocation is done in an
+unspecified way. <DEL>The destruction occurs immediately after the
+destruction of the object declared in the
+<I>exception-declaration</I> in the handler.</DEL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

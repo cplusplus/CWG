@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2282</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2282"></A><H4>2282.
+  
+Consistency with mismatched aligned/non-over-aligned allocation/deallocation functions
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-27<BR>
+
+
+<P>[Adopted as a DR at the November, 2019 meeting.]</P>
+
+
+
+<P>The fallback treatment for alignment and non-alignment
+allocation and deallocation functions is asymmetric. While a
+deletion of a non-overaligned class object will match a
+class-specific alignment deallocation function if no
+class-specific non-alignment deallocation function is
+provided, the same is not true for allocation: a
+<I>new-expression</I> for a non-overaligned class type will
+fail if an alignment allocation function is provided with no
+non-alignment allocation function. The allocation behavior
+should be changed to match the deallocation behavior.</P>
+
+<P><B>Proposed resolution (September, 2019):</B></P>
+
+<P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#18">expr.new</A>] paragraph 18 as follows, splitting
+the running text into bullets:</P>
+
+<BLOCKQUOTE>
+
+<P>Overload resolution is performed on a function call created
+by assembling an argument list. The first argument is the
+amount of space requested, and has type <TT>std::size_t</TT>. If the
+type of the allocated object has new-extended alignment, the
+next argument is the type's alignment, and has type
+<TT>std::align_val_t</TT>. If the <I>new-placement</I> syntax is
+used, the <I>initializer-clause</I>s in
+its <I>expression-list</I> are the succeeding arguments.  If
+no matching function is found <INS>then</INS>
+</P>
+
+<UL>
+<LI><P>
+<DEL>and</DEL> <INS>if</INS> the allocated object
+type has new-extended alignment, the alignment argument is
+removed from the argument list<DEL>,</DEL><INS>;</INS>
+</P></LI>
+
+<LI><P><INS>otherwise, an argument list that is the type's alignment
+and has type <TT>std::align_val_t</TT> is added into the argument
+list immediately after the first argument;</INS></P></LI>
+
+</UL>
+
+<P>and <INS>then</INS> overload resolution is performed
+again.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

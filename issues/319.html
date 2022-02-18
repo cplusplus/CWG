@@ -1,0 +1,185 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 319</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="319"></A><H4>319.
+  
+Use of names without linkage in declaring entities with linkage
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Clark Nelson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Oct 2001<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+
+
+<P>According to 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8,
+"A name with no linkage ... shall not
+be used to declare an entity with linkage." This would appear to rule
+out code such as:
+<PRE>
+  typedef struct {
+    int i;
+  } *PT;
+  extern "C" void f(PT);
+</PRE>
+[likewise]
+<PRE>
+  static enum { a } e;
+</PRE>
+which seems rather harmless to me.</P>
+
+<P>See <A HREF="132.html">issue 132</A>, which dealt with a closely
+related issue.</P>
+
+<P>
+<U>Andrei Iltchenko</U> submitted the same issue via comp.std.c++ on
+17 Dec 2001:</P>
+
+<P>Paragraph 8 of Section 6.6 [<A href="https://wg21.link/basic.link">basic.link</A>] contains the following
+sentences: "A name with no linkage shall not be used to declare an
+entity with linkage. If a declaration uses a typedef name, it is the
+linkage of the type name to which the typedef refers that is
+considered."</P>
+
+<P>The problem with this wording is that it doesn't cover cases where the
+type to which a typedef-name refers has no name. As a result it's not
+clear whether, for example, the following program is well-formed:</P>
+<PRE>
+#include &lt;vector&gt;
+
+int  main()
+{
+   enum  {   sz = 6u   };
+   typedef int  (* aptr_type)[sz];
+   typedef struct  data  {
+      int   i,  j;
+   }  * elem_type;
+   std::vector&lt;aptr_type&gt;   vec1;
+   std::vector&lt;elem_type&gt;   vec2;
+}
+</PRE>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>My feeling is that the rules for whether or not a typedef-name used in
+a declaration shall be treated as having or not having linkage ought
+to be modelled after those for dependent types, which are explained in
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>].</P>
+
+<P>Add the following text at the end of Paragraph 8 of Section
+6.6 [<A href="https://wg21.link/basic.link">basic.link</A>] and replace the following example:</P>
+<BLOCKQUOTE>
+In case of the type referred to by a typedef declaration not having a name,
+the newly declared typedef-name has linkage if and only if its referred type
+comprises no names of no linkage excluding local names that are eligible for
+appearance in an integral constant-expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+[Note: if the referred
+type contains a typedef-name that does not denote an unnamed class, the
+linkage of that name is established by the recursive application of this
+rule for the purposes of using typedef names in declarations.] [Example:
+<PRE>
+  void f()
+  {
+     struct A { int x; };        // no linkage
+     extern A a;                 // ill-formed
+     typedef A Bl
+     extern B b;                 // ill-formed
+
+     enum  {   sz = 6u   };
+     typedef int  (* C)[sz];     // C has linkage because sz can
+                                 // appear in a constant expression
+  }
+</PRE>
+--end example.]
+</BLOCKQUOTE>
+
+<P><B>Additional issue (13 Jan 2002, from Andrei Iltchenko):</B></P>
+<P>Paragraph 2 of Section 13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>] is inaccurate and
+unnecessarily prohibits a few important cases; it says "A local type, a type
+with no linkage, an unnamed type or a type compounded from any of these
+types shall not be used as a template-argument for a template-parameter."
+The inaccuracy stems from the fact that it is not a type but its name that
+can have a linkage.</P>
+
+<P>For example based on the current wording of 13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>],
+the following example is ill-formed.</P>
+<PRE>
+  #include &lt;vector&gt;
+  struct  data  {
+    int   i,  j;
+  };
+  int  main()
+  {
+    enum  {   sz = 6u   };
+    std::vector&lt;int(*)[sz]&gt;   vec1; // The types 'int(*)[sz]' and 'data*'
+    std::vector&lt;data*&gt;        vec2; // have no names and are thus illegal
+                                    // as template type arguments.
+  }
+</PRE>
+
+<P><B>Suggested resolution:</B></P>
+<P>Replace the whole second paragraph of Section 13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>]
+with the following wording:</P>
+<BLOCKQUOTE>
+A type whose name does not have a linkage or a type compounded from any such
+type shall not be used as a template-argument for a template-parameter. In
+case of a type <TT>T</TT> used as a template type argument not having a name,
+<TT>T</TT>
+constitutes a valid template type argument if and only if the name of an
+invented typedef declaration referring to <TT>T</TT> would have linkage;
+see 3.5.
+[Example:
+<PRE>
+  template &lt;class T&gt; class X { /* ... */ };
+  void f()
+  {
+    struct S { /* ... */ };
+    enum  {   sz = 6u   };
+
+    X&lt;S&gt; x3;                     // error: a type name with no linkage
+                                 // used as template-argument
+    X&lt;S*&gt; x4;                    // error: pointer to a type name with
+                                 // no linkage used as template-argument
+    X&lt;int(*)[sz]&gt; x5;            // OK: since the name of typedef int
+                                 // (*pname)[sz] would have linkage
+  }
+</PRE>
+--end example] [Note: a template type argument may be an incomplete type
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).]
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>This is resolved by the changes for
+<A HREF="389.html">issue 389</A>.  The present issue was moved back to
+Review status in February 2004 because 389 was moved back to Review.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

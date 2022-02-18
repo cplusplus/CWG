@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2798</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2798"></A><H4>2798.
+  
+Manifestly constant evaluation of the <TT>static_assert</TT> message
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-12<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>The message of a <TT>static_assert</TT> declaration is
+a <I>conditional-expression</I> and thus is not manifestly constant
+evaluated. Consider this example:</P>
+
+<PRE>
+  struct X {
+    std::string s;
+    const char *p;
+  };
+  consteval X f() { return {.s = "some long string that requires a heap allocation", .p = "hello"}; }
+
+  static_assert(cond, f().p);
+</PRE>
+
+<P>The example is ill-formed, because the immediate
+invocation <TT>f()</TT> lets a pointer to the heap escape.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-10-06):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#19">expr.const</A>] paragraph 19 as follows:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 11:</I> <INS>Except for
+a <I>static_assert-message</I>, a</INS> <DEL>A</DEL> manifestly
+constant-evaluated expression is evaluated even in an unevaluated
+operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change the grammar in 9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>] as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+<I>static_assert-message:
+  unevaluated-string
+  <DEL>conditional-expression</DEL> <INS>constant-expression</INS></I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.1 [<A href="https://wg21.link/dcl.pre#11.2">dcl.pre</A>] bullet 11.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>if the <I>static_assert-message</I> is a <I><DEL>conditional-expression</DEL> <INS>constant-expression</INS></I>
+M, ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

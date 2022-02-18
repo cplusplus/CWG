@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2149</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2149"></A><H4>2149.
+  
+Brace elision and array length deduction
+</H4>
+<B>Section: </B>9.4.2&#160; [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-25<BR>
+
+
+<P>[Accepted as a DR as paper P3106R1 at the March, 2024 meeting.]</P>
+
+
+
+<P>According to 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#4">dcl.init.aggr</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+An array of unknown size initialized with a
+brace-enclosed <I>initializer-list</I> containing
+<TT>n</TT> <I>initializer-clause</I>s, where <TT>n</TT>
+shall be greater than zero, is defined as having <TT>n</TT>
+elements (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]).
+
+</BLOCKQUOTE>
+
+<P>However, the interaction of this with brace elision is not
+clear.  For instance, in the example in paragraph 7,</P>
+
+<PRE>
+  struct X { int i, j, k = 42; };
+  X a[] = { 1, 2, 3, 4, 5, 6 };
+  X b[2] = { { 1, 2, 3 }, { 4, 5, 6 } };
+</PRE>
+
+<P>
+<TT>a</TT> and <TT>b</TT> are said to have the same value,
+even though there are six <I>initializer-clause</I>s in the
+initializer list in <TT>a</TT>'s initializer and two in
+<TT>b</TT>'s initializer.</P>
+
+<P>Similarly, 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1
+says,</P>
+
+<BLOCKQUOTE>
+
+in the <TT>P'[N]</TT> case, if <TT>N</TT> is a non-type template parameter,
+<TT>N</TT> is deduced from the length of the initializer list
+
+</BLOCKQUOTE>
+
+<P>Should that take into account the underlying type of the array?
+For example,</P>
+
+<PRE>
+  template&lt;int N&gt; void f1(const X(&amp;)[N]);
+  f1({ 1, 2, 3, 4, 5, 6 }); //<SPAN CLASS="cmnt"> Is </SPAN>N<SPAN CLASS="cmnt"> deduced to </SPAN>2<SPAN CLASS="cmnt"> or </SPAN>6<SPAN CLASS="cmnt">?</SPAN>
+
+  template&lt;int N&gt; void f2(const X(&amp;)[N][2]);
+  f2({ 1, 2, 3, 4, 5, 6 }); //<SPAN CLASS="cmnt"> Is </SPAN>N<SPAN CLASS="cmnt"> deduced to </SPAN>1<SPAN CLASS="cmnt"> or </SPAN>6<SPAN CLASS="cmnt">?</SPAN>
+</PRE>
+
+<P><B>Additional notes (April, 2024)</B></P>
+
+<P>The situation with arrays of unknown bound was clarified by
+P3106R1.  The concern about template argument deduction was left
+untouched; the existing wording in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1 seems to be clear, rendering the two examples shown above
+ill-formed, because deduction of P' against the integer arguments
+fails.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

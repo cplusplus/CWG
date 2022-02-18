@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1958</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1958"></A><H4>1958.
+  
+<TT>decltype(auto)</TT> with parenthesized initializer
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-06-30<BR>
+
+
+<P>[Moved to DR at the May, 2015 meeting.]</P>
+
+
+
+<P>According to 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+If the placeholder is the
+<TT>decltype(auto)</TT> <I>type-specifier</I>, the declared type of
+the variable or return type of the function shall be the
+placeholder alone. The type deduced for the variable or
+return type is determined as described in
+9.2.9.3 [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>], as though the initializer had
+been the operand of the <TT>decltype</TT>.
+
+</BLOCKQUOTE>
+
+<P>This is problematic when the parenthesized form of <I>initializer</I>
+is used, e.g.,</P>
+
+<PRE>
+  int i;
+  decltype(auto) x(i);
+</PRE>
+
+<P>the specification would deduce the type as <TT>decltype((i))</TT>,
+or <TT>int&amp;</TT>.  The wording should be clarified that the
+<I>expression</I> and not the entire <I>initializer</I> is considered
+to be the operand of <TT>decltype</TT>.</P>
+
+<P><B>Proposed resolution (April, 2015):</B></P>
+
+<P>Change 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+...If the placeholder is
+the <TT>decltype(auto)</TT> <I>type-specifier</I>, the declared
+type of the variable or return type of the function shall be the
+placeholder alone. The type deduced for the variable or return
+type is determined as described in 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>],
+as though
+the <DEL>initializer</DEL> <INS><i>initializer-clause</i>
+or <I>expression-list</I> of the <I>initializer</I> or
+the <I>expression</I> of the <TT>return</TT> statement</INS> had
+been the operand of the decltype. [<I>Example:</I>
+
+<PRE>
+  int i;
+  int&amp;&amp; f();
+<INS>  auto           x2a(i);    //<SPAN CLASS="cmnt"> </SPAN>decltype(x2a)<SPAN CLASS="cmnt"> is </SPAN>int
+  decltype(auto) x2d(i);    //<SPAN CLASS="cmnt"> </SPAN>decltype(x2d)<SPAN CLASS="cmnt"> is </SPAN>int</INS>
+  auto           x3a = i;   //<SPAN CLASS="cmnt"> </SPAN>decltype(x3a)<SPAN CLASS="cmnt"> is </SPAN>int
+  decltype(auto) x3d = i;   //<SPAN CLASS="cmnt"> </SPAN>decltype(x3d)<SPAN CLASS="cmnt"> is </SPAN>int
+  ...
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

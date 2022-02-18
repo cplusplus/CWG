@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1554</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1554"></A><H4>1554.
+  
+Access and alias templates
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-09-17<BR>
+
+
+
+
+<P>The interaction of alias templates and access control is not clear
+from the current wording of 13.7.8 [<A href="https://wg21.link/temp.alias">temp.alias</A>].  For
+example:</P>
+
+<PRE>
+  template &lt;class T&gt; using foo = typename T::foo;
+
+  class B {
+    typedef int foo;
+    friend struct C;
+  };
+
+  struct C {
+    foo&lt;B&gt; f;    //<SPAN CLASS="cmnt"> Well-formed?</SPAN>
+  };
+</PRE>
+
+<P>Is the substitution of <TT>B::foo</TT> for <TT>foo&lt;B&gt;</TT>
+done in the context of the befriended class <TT>C</TT>, making the
+reference well-formed, or is the access determined independently of
+the context in which the alias template specialization appears?</P>
+
+<P>If the answer to this question is that the access is determined
+independently from the context, care must be taken to ensure that an
+access failure is still considered to be &#8220;in the immediate
+context of the function type&#8221; (13.10.3 [<A href="https://wg21.link/temp.deduct#8">temp.deduct</A>] paragraph 8)
+ so that it results in a deduction failure rather than
+a hard error.</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>The consensus of CWG was that instantiation (lookup and access)
+for alias templates should be as for other templates, in the definition
+context rather than in the context where they are used.  They should
+still be expanded immediately, however.</P>
+
+<P><B>Additional note (February, 2014):</B></P>
+
+<P>A related problem is raised by the definition of
+<TT>std::enable_if_t</TT> (21.3.3 [<A href="https://wg21.link/meta.type.synop">meta.type.synop</A>]):</P>
+
+<PRE>
+  template &lt;bool b, class T = void&gt;
+  using enable_if_t = typename enable_if&lt;b,T&gt;::type;
+</PRE>
+
+<P>If <TT>b</TT> is <TT>false</TT>, there will be no <TT>type</TT>
+member.  The intent is that such a substitution failure is to be
+considered as being &#8220;in the immediate context&#8221; where the
+alias template specialization is used, but the existing wording does
+not seem to accomplish that goal.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>Concern has been expressed  that the intent to analyze
+access in the context of the alias template definition is at odds
+with the fact that friendship cannot be granted to alias
+templates; if it could, the access violation in the original example
+could be avoided by making <TT>foo</TT> a friend of class <TT>B</TT>,
+but that is not possible.</P>
+
+<P><B>Additional node, February, 2016:</B></P>
+
+<P>The issue has been returned to "open" status to facilitate further
+discussion by CWG as to whether the direction in the October, 2012 note is
+still desirable.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>CWG reaffirmed the direction described in the October,
+2012 note above.  With regard to the November, 2014 note
+regarding granting of friendship, it was observed that the
+same problem occurs with enumerators, which might refer to
+inaccessible names in the enumerator volue.  The solution in
+both cases is to embed the declaration in a class and grant
+the class friendship.  See <A HREF="1844.html">issue 1844</A>, dealing with the definition of
+&#8220;immediate context.&#8221;</P>
+
+<P><B>CWG 2024-06-28</B></P>
+
+<P>See <A HREF="2296.html">issue 2296</A> for the definition of
+"immediate context".</P>
+
+<BR><BR>
+</BODY>
+</HTML>

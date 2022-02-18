@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 49</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="49"></A><H4>49.
+  
+Restriction on non-type, non-value template arguments
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Oct 1998<BR>
+
+
+
+<P>The example in
+13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]
+
+paragraph
+8 is:</P>
+<PRE>
+    template&lt;int* a&gt; struct R { /*...*/ };
+    int* p;
+    R&lt;p&gt; w;
+</PRE>
+There was a French comment was that this is an error, and there was general
+agreement with that.
+
+<P>I've been looking for the verbiage that specifies that this is an error
+and haven't found it. In particular, nothing in 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]
+ ("Template parameters")
+nor 13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ ("Template non-type arguments") appears to rule out this case.
+(13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1
+allows an argument to be "the name of an object or function with
+external linkage," with no limitation on the kinds of parameters such a
+name can match; "p" is, in fact, such a name.)</P>
+
+<P>Should the resolution of the French comment include beefing up one or
+both of these sections to cover the applicable rules explicitly?</P>
+
+<P>
+<B>Proposed Resolution (04/99):</B>
+Change the example in 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]
+
+paragraph 8 from:</P>
+<PRE>
+    template&lt;int *a&gt; struct R { /* ... */ };
+    template&lt;int b[5]&gt; struct S { /* ... */ };
+    int *p;
+    R&lt;p&gt; w; // <I>OK</I>
+    S&lt;p&gt; x; // <I>OK due to parameter adjustment</I>
+    int v[5];
+    R&lt;v&gt; y; // <I>OK due to implicit argument conversion</I>
+    S&lt;v&gt; z; // <I>OK due to both adjustment and conversion</I>
+</PRE>
+to:
+<PRE>
+    template&lt;int *a&gt; struct R { /* ... */ };
+    template&lt;int b[5]&gt; struct S { /* ... */ };
+    int p;
+    R&lt;&amp;p&gt; w; // <I>OK</I>
+    S&lt;&amp;p&gt; x; // <I>OK due to parameter adjustment</I>
+    int v[5];
+    R&lt;v&gt; y; // <I>OK due to implicit argument conversion</I>
+    S&lt;v&gt; z; // <I>OK due to both adjustment and conversion</I>
+</PRE>
+Furthermore, in 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1:
+
+<UL>
+<LI>the fourth bullet item should be changed from "...where the &amp; is optional
+if the name refers to a function or array;" to "...where the &amp; is optional
+if the name refers to a function or array, or if
+the corresponding <I>template-parameter</I> is a reference;"</LI>
+
+<LI>the third bullet item should be removed.</LI>
+</UL>
+<BR><BR>
+</BODY>
+</HTML>

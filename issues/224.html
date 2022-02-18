@@ -1,0 +1,358 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 224</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="224"></A><H4>224.
+  
+Definition of dependent names
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Derek Inglis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 Nov 1999<BR>
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>The definition of when a type is dependent, given in
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>], is essentially syntactic: if the
+reference is a <I>qualified-id</I> and one of the <I>class-name</I>s
+in the <I>nested-name-specifier</I> is dependent, the type is
+dependent.  This approach leads to surprising results:</P>
+
+<PRE>
+    template &lt;class T&gt; class X {
+        typedef int I;
+	I a;                 // non-dependent
+        typename X&lt;T&gt;::I b;  // dependent
+        typename X::I c;     // dependent (X is equivalent to X&lt;T&gt;)
+    };
+</PRE>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>The decision on whether a name is dependent or non-dependent should
+be based on lookup, not on the form of the name: if the name can be
+looked up in the definition context and cannot be anything else as the
+result of specialization, the name should be non-dependent.</P>
+
+<P>See papers J16/00-0028 = WG21 N1251 and
+J16/00-0056 = WG21 N1279.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<OL>
+
+<LI><P>Replace section 13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>] with the
+following:
+
+<BLOCKQUOTE>
+
+<P>In the definition of a class template, a nested class of a class
+template, a member of a class template, or a member of a nested class
+of a class template, a name refers to the <I>current
+instantiation</I> if it is</P>
+
+<UL>
+
+<LI>the injected-class-name (Clause 11 [<A href="https://wg21.link/class">class</A>]) of the
+class template or nested class,</LI>
+
+<LI>in the definition of a primary class template, the name of the
+class template followed by the template argument list of the
+primary template (as described below) enclosed in &lt;&gt;,</LI>
+
+<LI>in the definition of a nested class of a class template,
+the name of the nested class referenced as a member of the
+current instantiation, or</LI>
+
+<LI>in the definition of a partial specialization, the name of
+the class template followed by the template argument list of
+the partial specialization enclosed in &lt;&gt;.</LI>
+
+</UL>
+
+<P>The template argument list of a primary template is a
+template argument list in which the n<SUP>th</SUP> template
+argument has the value of the n<SUP>th</SUP> template
+parameter of the class template.</P>
+
+<P>A template argument that is equivalent to a template
+parameter (i.e., has the same constant value or the same type
+as the template parameter) can be used in place of that
+template parameter in a reference to the current
+instantiation.  In the case of a nontype template argument,
+the argument must have been given the value of the
+template parameter and not an expression involving the
+template parameter.</P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+template &lt;class T&gt; class A {
+    A* p1;      // A is the current instantiation
+    A&lt;T&gt;* p2;   // A&lt;T&gt; is the current instantiation
+    A&lt;T*&gt; p3;   // A&lt;T*&gt; is not the current instantiation
+    ::A&lt;T&gt;* p4; // ::A&lt;T&gt; is the current instantiation
+    class B {
+	B* p1;        // B is the current instantiation
+	A&lt;T&gt;::B* p2;  // A&lt;T&gt;::B is the current instantiation
+	typename A&lt;T*&gt;::B* p3; // A&lt;T*&gt;::B is not the
+			     // current instantiation
+    };
+};
+
+template &lt;class T&gt; class A&lt;T*&gt; {
+    A&lt;T*&gt;* p1;  // A&lt;T*&gt; is the current instantiation
+    A&lt;T&gt;* p2;   // A&lt;T&gt; is not the current instantiation
+};
+
+template &lt;class T1, class T2, int I&gt; struct B {
+    B&lt;T1, T2, I&gt;*	b1;        // refers to the current instantiation
+    B&lt;T2, T1, I&gt;*	b2;        // not the current instantiation
+    typedef T1 my_T1;
+    static const int my_I = I;
+    static const int my_I2 = I+0;
+    static const int my_I3 = my_I;
+    B&lt;my_T1, T2, my_I&gt;* b3;  // refers to the current instantiation
+    B&lt;my_T1, T2, my_I2&gt;* b4; // not the current instantiation
+    B&lt;my_T1, T2, my_I3&gt;* b5; // refers to the current instantiation
+};
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>A name is a <I>member of the current instantiation</I> if it is</P>
+
+<UL>
+
+<LI>An unqualified name that, when looked up, refers to a member
+of a class template.  [<I>Note:</I> This can only occur when
+looking up a name in a scope enclosed by the definition of a
+class template.]</LI>
+
+<LI>A <I>qualified-id</I> in which the <I>nested-name-specifier</I>
+refers to the current instantiation.</LI>
+
+</UL>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+template &lt;class T&gt; class A {
+    static const int i = 5;
+    int n1[i];        // i refers to a member of the current instantiation
+    int n2[A::i];     // A::i refers to a member of the current instantiation
+    int n3[A&lt;T&gt;::i];  // A&lt;T&gt;::i refers to a member of the current instantiation
+    int f();
+};
+
+template &lt;class T&gt; int A&lt;T&gt;::f()
+{
+    return i;  // i refers to a member of the current instantiation
+}
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>A name is a <I>member of an unknown specialization</I> if the
+name is a <I>qualified-id</I> in which the
+<I>nested-name-specifier</I> names a dependent type that is not
+the current instantiation.</P>
+
+<P>A type is dependent if it is</P>
+
+<UL>
+
+<LI>a template parameter,</LI>
+
+<LI>a member of an unknown specialization,</LI>
+
+<LI>a nested class that is a member of the current
+instantiation,</LI>
+
+<LI>a cv-qualified type where the cv-unqualified type is dependent,</LI>
+
+<LI>a compound type constructed from any dependent type,</LI>
+
+<LI>an array type constructed from any dependent type or whose
+size is specified by a constant expression that is value-dependent, or</LI>
+
+<LI>a <I>template-id</I> in which either the template name is a
+template parameter or any of the template arguments is a dependent
+type or an expression that is type-dependent or value-dependent.</LI>
+
+</UL>
+
+<P>[<I>Note:</I> Because typedefs to not introduce new types, but
+instead simply refer to other types, a name that refers to a
+typedef that is a member of the current instantiation is dependent
+only if the type referred to is dependent.]</P>
+
+</BLOCKQUOTE>
+
+</P></LI>
+
+<LI>
+<P>In 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3, replace</P>
+
+<BLOCKQUOTE>
+
+<UL><LI>a <I>nested-name-specifier</I> that contains a
+<I>class-name</I> that names a dependent type.</LI></UL>
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+<UL><LI>a <I>nested-name-specifier</I> or <I>qualified-id</I> that
+names a member of an unknown specialization.</LI></UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>], add the following
+paragraph:</P>
+
+<BLOCKQUOTE>
+
+A class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) is
+type-dependent if the type of the referenced member is dependent.
+[<I>Note:</I> In an expression of the form <TT>x.y</TT> or
+<TT>xp-&gt;y</TT> the type of the expression is usually the type
+of the member <TT>y</TT> of the class of <TT>x</TT> (or the class
+pointed to by <TT>xp</TT>).  However, if <TT>x</TT> or <TT>xp</TT>
+refers to a dependent type that is not the current instantiation,
+the type of <TT>y</TT> is always dependent.  If <TT>x</TT> or
+<TT>xp</TT> refers to a non-dependent type or refers to the
+current instantiation, the type of <TT>y</TT> is the type of the
+class member access expression.]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.8 [<A href="https://wg21.link/temp.res#3">temp.res</A>] paragraph 3, replace</P>
+
+<BLOCKQUOTE>
+
+A <I>qualified-name</I> that refers to a type and that depends
+on a <I>template-parameter</I> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]) shall
+be prefixed by the keyword <TT>typename</TT>.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+A <I>qualified-id</I> that refers to a type and that depends on
+a <I>template-parameter</I> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]) but
+does not refer to a member of the current instantiation shall be
+prefixed by the keyword <TT>typename</TT>.
+
+</BLOCKQUOTE>
+
+<P>Note: the wording for this paragraph was changed in TC1.  The
+words shown here are the pre-TC1 words.</P>
+
+</LI>
+
+<LI>
+<P>In 13.3 [<A href="https://wg21.link/temp.names#4">temp.names</A>] paragraph 4, replace</P>
+
+<BLOCKQUOTE>
+
+When the name of a member template specialization appears after
+<TT>.</TT> or <TT>-&gt;</TT> in a <I>postfix-expression</I>, or
+after a <I>nested-name-specifier</I> in a <I>qualified-id</I>,
+and the <I>postfix-expression</I> or <I>qualified-id</I> explicitly
+depends on a <I>template-parameter</I> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]),
+the member template name must be prefixed by the keyword
+<TT>template</TT>.  Otherwise the name is assumed to name a
+non-template.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+When the name of a member template specialization appears after
+<TT>.</TT> or <TT>-&gt;</TT> in a <I>postfix-expression</I>, or
+after a <I>nested-name-specifier</I> in a <I>qualified-id</I>,
+and the <I>postfix-expression</I> or <I>qualified-id</I> explicitly
+depends on a <I>template-parameter</I> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>])
+but does not refer to a member of the current instantiation
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the member template name must
+be prefixed by the keyword <TT>template</TT>.  Otherwise the name
+is assumed to name a non-template.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>In 13.8.2 [<A href="https://wg21.link/temp.local#2">temp.local</A>] paragraph 2, remove the
+following text, which was added for <A HREF="108.html">issue 108</A>.
+The updated definition of dependent name now addresses this case.</P>
+
+<BLOCKQUOTE>
+
+<P>Within the scope of a class template, when the unqualified name of
+a nested class of the class template is referred to, it is
+equivalent to the name of the nested class qualified by the name
+of the enclosing class template.  [<I>Example:</I>
+</P>
+
+<PRE>
+template &lt;class T&gt; struct A {
+	class B {};
+	// B is equivalent to A::B, which is equivalent to A&lt;T&gt;::B,
+	// which is dependent.
+	class C : B { };
+};
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1696</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1696"></A><H4>1696.
+  
+Temporary lifetime and non-static data member initializers
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-05-31<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>Presumably a temporary bound to a reference in a non-static data member
+initializer should be treated analogously with what happens in a
+<I>ctor-initializer</I>, but the current wording of
+6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5 is not clear on this point.</P>
+
+<P>See also <A HREF="1815.html">issue 1815</A> for similar questions
+regarding aggregate initialization.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Add the following after 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#7">dcl.init.aggr</A>] paragraph 7:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>If a reference member is initialized from its
+<I>brace-or-equal-initializer</I> and a potentially-evaluated
+subexpression thereof is an aggregate initialization that would
+use that <I>brace-or-equal-initializer</I>, the program is
+ill-formed. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct A;
+  extern A a;
+  struct A {
+    const A&amp; a1 { A{a,a} };   //<SPAN CLASS="cmnt"> OK</SPAN>
+    const A&amp; a2 { A{} };      //<SPAN CLASS="cmnt"> error</SPAN>
+  };
+  A a{a,a};                   //<SPAN CLASS="cmnt"> OK</SPAN></INS>
+</PRE>
+
+<P>If an aggregate class <TT>C</TT> contains a subaggregate...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the first bullet of 6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The second context is when a reference is bound to a
+temporary.<SUP>117</SUP> The temporary to which the reference is
+bound or the temporary that is the complete object of a subobject
+to which the reference is bound persists for the lifetime of the
+reference except:</P>
+
+<UL>
+<LI><P><DEL>A temporary bound to a reference member in a
+constructor's <I>ctor-initializer</I>
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) persists until the constructor
+exits.</DEL></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new paragraph after
+11.9.3 [<A href="https://wg21.link/class.base.init#7">class.base.init</A>] paragraph 7:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>A temporary expression bound to a reference member in
+a <I>mem-initializer</I> is ill-formed. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct A {
+    A() : v(42) { }  //<SPAN CLASS="cmnt"> error</SPAN>
+    const int&amp; v;
+  };</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<P>In a non-delegating constructor, if a given potentially
+constructed subobject...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new paragraph after
+11.9.3 [<A href="https://wg21.link/class.base.init#9">class.base.init</A>] paragraph 9:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>A temporary expression bound to a reference member from
+a <I>brace-or-equal-initializer</I> is
+ill-formed. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct A {
+    A() = default;          //<SPAN CLASS="cmnt"> OK</SPAN>
+    A(int v) : v(v) { }     //<SPAN CLASS="cmnt"> OK</SPAN>
+    const int&amp; v = 42;      //<SPAN CLASS="cmnt"> OK</SPAN>
+  };
+  A a1;                     //<SPAN CLASS="cmnt"> error: ill-formed binding of temporary to reference</SPAN>
+  A a2(1);                  //<SPAN CLASS="cmnt"> OK, unfortunately</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<P>In a non-delegating constructor, the destructor for each
+potentially constructed subobject...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1815.html">issue 1815</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2278</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2278"></A><H4>2278.
+  
+Copy elision in constant expressions reconsidered
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-27<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>The resolution of <A HREF="2022.html">issue 2022</A> does not work,
+as it is mathematically impossible to guarantee the named return value
+optimization in all cases. For example:</P>
+
+<PRE>
+  struct B { B *self = this; };
+  extern const B b;
+  constexpr B f() {
+    B b;
+    if (&amp;b == &amp;::b) return B();
+    else return b;
+  }
+  constexpr B b = f(); //<SPAN CLASS="cmnt"> is </SPAN>b.self == &amp;b<SPAN CLASS="cmnt">?</SPAN>
+</PRE>
+
+<P>Here an implementation is required to perform the optimization if
+and only if it does not perform the optimization.</P>
+
+<P>The resolution would appear to be to reverse the resolution of
+<A HREF="2022.html">issue 2022</A> and guarantee that named return
+value optimization is <B>not</B> performed in constant expression
+evaluation.</P>
+
+<P><B>Notes from the March, 2018 meeting:</B></P>
+
+<P>CWG concurred with the suggested direction.</P>
+
+<P><B>Proposed resolution (November, 2018)</B></P>
+
+<OL>
+<LI><P>Change 7.7 [<A href="https://wg21.link/expr.const#1">expr.const</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Expressions that satisfy these requirements, assuming that copy
+elision <INS>(11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>])</INS>
+is <INS>not</INS> performed, are called <I>constant
+expressions</I>. [Note: Constant expressions can be evaluated
+during translation. &#8212;end note]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#7">dcl.constexpr</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A call to a constexpr function produces the same result as a call
+to an equivalent non-constexpr function in all respects except
+that</P>
+
+<UL>
+<LI><P>a call to a constexpr function can appear in a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and</P></LI>
+
+<LI><P>copy elision is <DEL>mandatory</DEL> <INS>not
+performed</INS> in a constant expression
+(11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]).</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.6 [<A href="https://wg21.link/class.copy.elision#1">class.copy.elision</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Copy elision is <DEL>required</DEL> <INS>not permitted</INS>
+where an expression is evaluated in a context requiring a
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and in constant
+initialization (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]). [Note: Copy
+elision might <DEL>not</DEL> be performed if the same expression
+is evaluated in another context. &#8212;end note]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

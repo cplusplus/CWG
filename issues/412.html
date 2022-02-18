@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 412</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="412"></A><H4>412.
+  
+Can a replacement allocation function be inline?
+</H4>
+<B>Section: </B>9.2.3&#160; [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matt Austern
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Apr 2003<BR>
+
+
+
+
+<P>A customer reports that when he attempts to replace
+<TT>::operator new</TT> with
+a user-defined function, the standard library calls the default
+function by preference if the user-defined function is inline.  I
+believe that our compiler is correct, and that such a replacement
+function isn't allowed to be inline, but I'm not sure there's
+sufficiently explicit language in the standard.</P>
+
+<P>In general, of course, the definition of an inline function must be
+present in every translation unit where the function is called.
+(9.2.3 [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>],
+par 4)  It could be argued that this requirement doesn't quite address
+replacement functions: what we're dealing with is the odd case where
+we've already got one definition and the user is supplying a different
+one.  I'd like to see something specifically addressing the case of a
+replacement function.</P>
+
+<P>So what do we have?  I see discussion of requirement for a replacement
+<TT>::operator new</TT> in three places:
+16.4.5.6 [<A href="https://wg21.link/replacement.functions">replacement.functions</A>],
+17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] par 2, and
+6.7.6.5 [<A href="https://wg21.link/basic.stc.dynamic">basic.stc.dynamic</A>] par
+2-3.  I don't see anything explicitly saying that the replacement
+function may not be inline.  The closest I can find is
+17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] par 2,
+which says that "a C++ program may define a function with this function
+signature that displaces the default version defined by the C++
+Standard library".  One might argue that "with this function signature"
+rules out inline, but that strikes me as a slight stretch.</P>
+
+<P>Have I missed anything?</P>
+
+<P>
+<U>Andrew Koenig</U>:
+I think you've turned up a problem in
+9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4.  Consider:</P>
+<PRE>
+  // Translation unit 1
+  #include &lt;iostream&gt;
+
+  extern void foo(void (*)());
+
+  inline void bar() {
+    std::cout &lt;&lt; "Hello, world!" &lt;&lt; std::endl;
+  }
+
+  int main() {
+    foo(bar);
+  }
+
+  // Translation unit 2
+  void foo(void (*f)()) { (*f)(); }
+</PRE>
+
+<P>Are you really trying to tell me that this program is ill-formed because
+the definition of bar is not available in translation unit 2?</P>
+
+<P>I think not.  The actual words in
+9.2.3 [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>] par 4 are
+<BLOCKQUOTE>
+An inline function shall be defined in every translation unit in
+which it is used...
+</BLOCKQUOTE>
+and I think at in this context, ``used'' should be interpreted to mean
+that foo is used only in translation unit 1, where it is converted to
+a value of type void(*)().</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>We don't think Andy Koenig's comment requires any action;
+"used" is already defined appropriately.</P>
+
+<P>We agree that this replacement should not be allowed, but
+we think it's a library issue (in the rules for allowed
+replacements).  Forwarded to library group; it's issue 404
+on the library issues list.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

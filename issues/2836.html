@@ -1,0 +1,140 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2836</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2836"></A><H4>2836.
+  
+Conversion rank of <TT>long double</TT> and extended floating-point types
+</H4>
+<B>Section: </B>6.8.6&#160; [<A href="https://wg21.link/conv.rank">conv.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Cranmer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-20
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  auto f(long double x, std::float64_t y) {
+    return x + y;
+  }
+</PRE>
+
+<P>What is the return type of <TT>f</TT>?</P>
+
+<P>Suppose an implementation uses the same size and semantics for all
+of <TT>double</TT>, <TT>long double</TT>, and <TT>std::float64_t</TT>.
+C23 prefers the IEEE interchange type (i.e. <TT>std::float64_t</TT>)
+over <TT>long double</TT> and <TT>double</TT>.  In contrast, C++
+chooses <TT>long double</TT>, which has a higher rank than
+<TT>double</TT>, but <TT>std::float64_t</TT> is specified to have the
+same rank as <TT>double</TT>.
+</P>
+
+<P>This outcome conflicts with the documented goal of P1467 that C++
+and C conversion rules be aligned.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.8.6 [<A href="https://wg21.link/conv.rank#2.5">conv.rank</A>] bullet 2.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>An extended floating-point type with the same set of values as
+more than one cv-unqualified standard floating-point type has a rank
+equal to the <INS>highest</INS> rank <DEL>of double</DEL> <INS>among
+such types</INS>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (December, 2023)</B></P>
+
+<P>The suggested resolution would make a conversion from
+<TT>std::float64_t</TT> to <TT>double</TT> not implicit, which is not
+desirable.</P>
+
+<P>David Olsen, one of the authors of P1467, asserts that the
+deviation from C is intentional, and was discussed with the C
+floating-point study group.</P>
+
+<P>Forwarding to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/1699">paper issue 1699</A>
+to confirm that the deviation from C is intentional and thus an Annex C
+entry should be created.
+</P>
+
+<P><B>EWG 2024-03-18</B></P>
+
+<P>This issue should be closed as NAD.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Add a new paragraph in C.7.3 [<A href="https://wg21.link/diff.basic">diff.basic</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+<B>Affected subclause:</B> 6.8.6 [<A href="https://wg21.link/conv.rank">conv.rank</A>]<BR>
+<B>Change:</B> Conversion rank of same-sized <TT>long double</TT> vs. <TT>std::float64_t</TT><BR>
+<B>Rationale:</B> Provide implicit conversion from <TT>std::float64_t</TT> to <TT>double</TT>.<BR>
+<B>Effect on original feature:</B> Change of semantically well-defined feature.<BR>
+<B>Difficulty of converting:</B> Trivial: explicitly convert to the desired type.<BR>
+<B>How widely used:</B> Rarely.
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-04-19</B></P>
+
+<P>The name <TT>std::float64_t</TT> is not valid C.  CWG resolved to
+adding a note to 6.8.6 [<A href="https://wg21.link/conv.rank#2.5">conv.rank</A>] bullet 2.5 instead.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-26):</B></P>
+
+<P>Change in 6.8.6 [<A href="https://wg21.link/conv.rank#2.5">conv.rank</A>] bullet 2.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>An extended floating-point type with the same set of values as
+more than one cv-unqualified standard floating-point type has a rank
+equal to the rank of double.  <INS>[ Note: The treatment
+of <TT>std::float64_t</TT> differs from that of the
+analoguous <TT>_Float64</TT> in C, for example on platforms where all
+of <TT>long double</TT>, <TT>double</TT>, and <TT>std::float64_t</TT>
+have the same set of values (see ISO/IEC 9899:2024 H.4.2). -- end note
+]</INS>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

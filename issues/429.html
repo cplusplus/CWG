@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 429</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="429"></A><H4>429.
+  
+Matching deallocation function chosen based on syntax or signature?
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Wilkinson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18  July 2003<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+<P>What does this example do?</P>
+<PRE>
+  #include &lt;stdio.h&gt;
+  #include &lt;stdlib.h&gt;
+
+  struct A {
+        void* operator new(size_t alloc_size, size_t dummy=0) {
+                printf("A::operator new()\n");
+                return malloc(alloc_size);
+        };
+
+        void operator delete(void* p, size_t s) {
+                printf("A::delete %d\n", s);
+        };
+
+
+        A()  {printf("A constructing\n"); throw 2;};
+
+  };
+
+  int
+  main() {
+    try {
+        A* ap = new A;
+        delete ap;
+    }
+    catch(int) {printf("caught\n"); return 1;}
+  }
+</PRE>
+
+<P>The fundamental issue here is whether the deletion-on-throw
+is driven by the syntax of the new (placement or non-placement)
+or by signature matching.  If the former, the operator delete
+would be called with the second argument equal to the size of
+the class.  If the latter, it would be called with the second
+argument 0.</P>
+
+<P>
+<A HREF="127.html">Core issue 127</A> (in TC1) dealt with
+this topic.  It removed some wording
+in 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 that implied a
+syntax-based interpretation, leaving wording
+in 7.6.2.8 [<A href="https://wg21.link/expr.new#19">expr.new</A>] paragraph 19 that is
+signature-based.  But there is no accompanying
+rationale to confirm an explicit choice of the signature-based
+approach.</P>
+
+<P>EDG and g++ get 0 for the second argument, matching the presumed
+core issue 127 resolution.  But maybe this should be revisited.</P>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>There was widespread agreement that the compiler shouldn't
+just silently call the delete with either of the possible values.
+In the end, we decided it's smarter to issue an error on this
+case and force the programmer to say what he means.</P>
+
+<P>Mike Miller's analysis of the status quo:
+6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#2">basic.stc.dynamic.deallocation</A>] paragraph 2
+says that "<TT>operator delete(void*, std::size_t)</TT>" is a
+"usual (non-placement) deallocation function" if the class does
+not declare "<TT>operator delete(void*)</TT>."
+6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>] does not use the
+same terminology for allocation functions, but the most
+reasonable way to understand the uses of the term "placement
+allocation function" in the Standard is as an allocation function
+that has more than one parameter and thus can (but need not) be
+called using the "new-placement" syntax described in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>].  (In
+considering <A HREF="127.html">issue 127</A>,
+the core group discussed and endorsed the
+position that, "If a placement allocation function has default
+arguments for all its parameters except the first, it can be
+called using non-placement syntax.")</P>
+
+<P>7.6.2.8 [<A href="https://wg21.link/expr.new#19">expr.new</A>] paragraph 19
+says that any non-placement deallocation function
+matches a non-placement allocation function, and that a placement
+deallocation function matches a placement allocation function
+with the same parameter types after the first -- i.e., a
+non-placement deallocation function cannot match a placement
+allocation function.  This makes sense, because non-placement
+("usual") deallocation functions expect to free memory obtained
+from the system heap, which might not be the case for storage
+resulting from calling a placement allocation function.</P>
+
+<P>According to this analysis, the example shows a placement
+allocation function and a non-placement deallocation function, so
+the deallocation function should not be invoked at all, and the
+memory will just leak.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>Add the following text at the end of 7.6.2.8 [<A href="https://wg21.link/expr.new#19">expr.new</A>] paragraph 19:
+ </P>
+<BLOCKQUOTE>
+If the lookup finds the two-parameter form of a usual deallocation function
+(6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]), and that function, considered as
+a placement deallocation function, would have been selected as a match
+for the allocation function, the program is ill-formed.
+[<I>Example:</I>
+<BLOCKQUOTE>
+<PRE>
+struct S {
+  // <I>Placement allocation function:</I>
+  static void* operator new(std::size_t, std::size_t);
+
+  // <I>Usual (non-placement) deallocation function:</I>
+  static void operator delete(void*, std::size_t);
+};
+
+S* p = new (0) S; // <I>ill-formed: non-placement deallocation function matches </I>
+                  // <I>placement allocation function </I>
+</PRE>
+</BLOCKQUOTE>
+<I>--- end example]</I>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

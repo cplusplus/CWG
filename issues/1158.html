@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1158</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1158"></A><H4>1158.
+  
+Recursive instantiation via alias template
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-03<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US73">N3092 comment
+  US&#160;73<BR></A>
+
+<P>The current wording of 9.2.4 [<A href="https://wg21.link/dcl.typedef#2">dcl.typedef</A>] paragraph 2
+requires that the identifier in an
+<I>alias-declaration</I> &#8220;...shall not appear in the
+<I>type-id</I>.&#8221; With template aliases, however, the
+name of the alias can be used indirectly:</P>
+
+<PRE>
+    template&lt;typename T&gt; struct A;
+    template&lt;typename T&gt; using B=typename A&lt;T&gt;::U;
+    template&lt;typename T&gt; struct A {
+      typedef B&lt;T&gt; U;
+    };
+    B&lt;short&gt; b;
+</PRE>
+
+<P>Here the instantiation of <TT>B&lt;short&gt;</TT> causes
+the instantiation of <TT>A&lt;short&gt;</TT>, and the
+typedef in <TT>A&lt;short&gt;</TT> ends up attempting to use
+<TT>B&lt;short&gt;</TT>, which is still in the process of
+being instantiated.</P>
+
+<P>There should be an explicit prohibition of such uses.</P>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<P>Add the following as a new paragraph at the end of
+13.7.8 [<A href="https://wg21.link/temp.alias">temp.alias</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P><INS>The <I>type-id</I> in an alias template declaration
+shall not refer to the alias template being declared. The
+type produced by an alias template specialization shall not
+directly or indirectly make use of that
+specialization. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct A;
+  template &lt;class T&gt; using B = typename A&lt;T&gt;::U;
+  template &lt;class T&gt; struct A {
+    typedef B&lt;T&gt; U;
+  };
+  B&lt;short&gt; b; //<SPAN CLASS="cmnt"> Error: instantiation of </SPAN>B&lt;short&gt;<SPAN CLASS="cmnt"> uses own type via </SPAN>A&lt;short&gt;::U.</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<I>[Note: this wording assumes the change from &#8220;template
+alias&#8221; to &#8220;alias template&#8221; requested by comment
+FI 11 on FCD N3092.]</I>
+
+<BR><BR>
+</BODY>
+</HTML>

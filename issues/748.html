@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 748</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="748"></A><H4>748.
+  
+Always-complete archetypes
+</H4>
+<B>Section: </B>_N2914_.14.11.2.1&#160; [<A href="https://wg21.link/temp.archetype.assemble">temp.archetype.assemble</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 November, 2008<BR>
+
+
+
+
+<P>Suppose we have</P>
+
+<PRE>
+    template&lt;std::ObjectType T&gt;
+    T* f(T* p) {
+         return ++p; // Presumably ok
+    }
+</PRE>
+
+<P>7.6.2.3 [<A href="https://wg21.link/expr.pre.incr#1">expr.pre.incr</A>] paragraph 1 requires that &#8220;The
+type of the operand shall be an arithmetic type or a pointer to a
+completely-defined effective object type.&#8221;  At <TT>++p</TT> in
+this example, the type archetype <TT>T'</TT> is considered to be
+completely-defined because</P>
+
+<BLOCKQUOTE>
+
+A type archetype is considered to be completely defined when it is
+established
+
+</BLOCKQUOTE>
+
+<P>(_N2914_.14.11.2.1 [<A href="https://wg21.link/temp.archetype.assemble#1">temp.archetype.assemble</A>] paragraph 1) and
+13.9.3 [<A href="https://wg21.link/temp.explicit#7">temp.explicit</A>] paragraph 7 says that an archetype becomes
+established when</P>
+
+<BLOCKQUOTE>
+
+the archetype is used in a context where a complete type is required
+
+</BLOCKQUOTE>
+
+<P>So far, so good.  Consider use of <TT>f(T*)</TT> with an incomplete
+type, for instance:</P>
+
+<PRE>
+    struct A; // A is not defined yet.
+
+    A* g(A* p) {
+         return f(p);
+    }
+</PRE>
+
+<P>During template argument deduction against the template
+<TT>f(T*)</TT>, we find that there is a concept map for
+<TT>std::ObjectType&lt;A&gt;</TT> because <TT>std::ObjectType</TT> is
+a compiler-supported concept, and because <TT>A</TT> is an object type
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), so the compiler provides the concept map
+implicitly. Type deduction succeeds, but then we get an instantiation-time
+error on <TT>++p</TT> because <TT>A</TT> is incomplete.</P>
+
+<P>I see two potential solutions:</P>
+
+<OL>
+<LI><P>We can remove built-in operations for
+ptr-to-effective-object-type, so that you would have to explicitly
+require something like <TT>std::HasPreincrement&lt;T*&gt;</TT> before
+using <TT>++</TT> on values of type <TT>T*</TT> in <TT>f(T*)</TT>.
+Then <TT>A</TT>'s lack of completeness would be indicated when we try
+to satisfy those requirements automatically (and not at instantiation
+time).</P></LI>
+
+<LI><P>Alternatively, we can introduce the notion of a
+compiler-supported concept <TT>std::CompleteType&lt;T&gt;</TT>, and
+amend _N2914_.14.11.2.1 [<A href="https://wg21.link/temp.archetype.assemble">temp.archetype.assemble</A>] so that a type archetype is only
+considered to be completely-defined if it has that requirement.  This
+would imply that <TT>f(T*)</TT> above is ill-formed at <TT>++p</TT>
+because <TT>T</TT> would then be an incomplete effective object type;
+the user could fix this by inserting <TT>requires
+std::CompleteType&lt;T&gt;</TT> after the
+<I>template-parameter-list</I>, and then the call <TT>f(p)</TT> would
+be ill-formed because <TT>std::CompleteType&lt;A&gt;</TT> would not be
+satisfied.</P></LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,206 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 835</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="835"></A><H4>835.
+  
+Scoped enumerations and the &#8220;usual arithmetic conversions&#8221;
+</H4>
+<B>Section: </B>Clause 7&#160; [<A href="https://wg21.link/expr">expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Beman Dawes
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 March, 2009<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>A number of the operators described in Clause 7 [<A href="https://wg21.link/expr">expr</A>]
+take operands of enumeration type, relying on the &#8220;usual
+arithmetic conversions&#8221; (Clause 7 [<A href="https://wg21.link/expr#10">expr</A>] paragraph 10)
+to convert them to an appropriate integral type.  The assumption
+behind this pattern is invalid when one or more of the operands has
+a scoped enumeration type.</P>
+
+<P>Each operator that accepts operands of enumeration type should be
+evaluated as to whether the operation makes sense for scoped
+enumerations (for example, it is probably a good idea to allow
+comparison of operands having the same scoped enumeration type
+and conditional expressions in which the second and third operands
+have the same scoped enumeration type) and, if so, create a
+special case.  The usual arithmetic conversions should not be
+invoked for scoped enumeration types.</P>
+
+<P>(See also <A HREF="880.html">issue 880</A>.)</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<OL>
+<LI><P>Change Clause 7 [<A href="https://wg21.link/expr#10">expr</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...This pattern is called the usual arithmetic conversions, which
+are defined as follows:</P>
+
+<UL>
+<LI><P><INS>If either operand is of scoped enumeration type
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), no conversions are performed, and if the
+other operand does not have the same type, the expression is
+ill-formed.</INS></P></LI>
+
+<LI><P>If either operand is of type <TT>long double</TT>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.2 [<A href="https://wg21.link/expr.sub#1">expr.sub</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...One of the expressions shall have the type &#8220;pointer to
+<TT>T</TT>&#8221; and the other shall have <INS>unscoped</INS>
+enumeration or integral type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2 [<A href="https://wg21.link/expr.unary">expr.unary</A>] paragraphs 7-8 and 10 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The operand of the unary <TT>+</TT> operator shall have arithmetic,
+<INS>unscoped</INS> enumeration, or pointer type...</P>
+
+<P>The operand of the unary <TT>-</TT> operator shall have arithmetic or
+<INS>unscoped</INS> enumeration type...</P>
+
+<P>The operand of <TT>~</TT> shall have integral or <INS>unscoped</INS>
+enumeration type...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#6">expr.new</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The expression in a <I>noptr-new-declarator</I> shall be of
+integral type, <INS>unscoped</INS> enumeration type, or a class type
+for which a single non-explicit conversion function to integral or
+<INS>unscoped</INS> enumeration type exists (11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]).  If the expression...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.5 [<A href="https://wg21.link/expr.mul#2">expr.mul</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The operands of <TT>*</TT> and <TT>/</TT> shall have arithmetic or
+<INS>unscoped</INS> enumeration type; the operands of <TT>%</TT> shall
+have integral or <INS>unscoped</INS> enumeration type....
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.6 [<A href="https://wg21.link/expr.add#1">expr.add</A>] paragraph 1-2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...For addition, either both operands shall have arithmetic or
+<INS>unscoped</INS> enumeration type, or one operand shall be a
+pointer to a completely-defined effective object type and the other
+shall have integral or <INS>unscoped</INS> enumeration type.</P>
+
+<P>For subtraction, one of the following shall hold:</P>
+
+<UL>
+<LI><P>both operands have arithmetic or <INS>unscoped</INS>
+enumeration type; or</P></LI>
+
+<LI><P>both operands are pointers to cv-qualified or cv-unqualified
+versions of the same completely-defined effective object type;
+or</P></LI>
+
+<LI><P>the left operand is a pointer to a completely-defined effective
+object type and the right operand has integral or <INS>unscoped</INS>
+enumeration type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.7 [<A href="https://wg21.link/expr.shift#1">expr.shift</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The operands shall be of integral or <INS>unscoped</INS>
+enumeration type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.9 [<A href="https://wg21.link/expr.rel#4">expr.rel</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If both operands (after conversions) are of arithmetic <INS>or
+enumeration</INS> type, each of the operators shall yield
+<TT>true</TT> if the specified relationship is true and <TT>false</TT>
+if it is false.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.11 [<A href="https://wg21.link/expr.bit.and#1">expr.bit.and</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The operator applies only to integral or <INS>unscoped</INS>
+enumeration operands.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.12 [<A href="https://wg21.link/expr.xor#1">expr.xor</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The operator applies only to integral or <INS>unscoped</INS>
+enumeration operands.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.13 [<A href="https://wg21.link/expr.or#1">expr.or</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The operator applies only to integral or <INS>unscoped</INS>
+enumeration operands.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

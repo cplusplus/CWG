@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 354</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="354"></A><H4>354.
+  
+Null as nontype template argument
+</H4>
+<B>Section: </B>13.4.3&#160; [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 May 2002<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+
+
+<P>The standard does not permit a null value to be used as a nontype template
+argument for a nontype template parameter that is a pointer.</P>
+
+<P>This code is accepted by EDG, Microsoft, Borland and Cfront, but rejected
+by g++ and Sun:</P>
+<PRE>
+  template &lt;int *p&gt; struct A {};
+  A&lt;(int*)0&gt; ai;
+</PRE>
+<P>I'm not sure this was ever explicitly considered by the committee.
+Is there any reason to permit this kind of usage?</P>
+
+<P>
+<U>Jason Merrill</U>:
+I suppose it might be useful for a program to be able to express a
+degenerate case using a null template argument.  I think allowing it would
+be harmless.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>CWG decided that it would be desirable to allow null pointers
+as nontype template arguments, even though they are not
+representable in some current ABIs.  There was some discussion
+over whether to allow a bare <TT>0</TT> to be used with a pointer
+nontype template parameter.  The following case was decisive:</P>
+
+<PRE>
+    template&lt;int i&gt; void foo();
+    template&lt;int* i&gt; void foo();
+    ...
+    foo&lt;0&gt;();
+</PRE>
+
+<P>The current wording of 13.4 [<A href="https://wg21.link/temp.arg#7">temp.arg</A>] paragraph 7
+disambiguates the function call in favor of the <TT>int</TT>
+version.  If the null pointer conversion were allowed for pointer
+nontype template parameters, this case would become ambiguous, so
+it was decided to require a cast.</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<OL>
+
+<LI>
+<P>In 13.4.3 [<A href="https://wg21.link/temp.arg.nontype#1">temp.arg.nontype</A>] paragraph 1, insert the
+following after the third bullet:</P>
+
+<UL>
+
+<LI><P>a constant expression that evaluates to a null pointer
+value (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]); or</P></LI>
+
+<LI><P>a constant expression that evaluates to a null member
+pointer value (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]); or</P></LI>
+
+</UL>
+
+</LI>
+
+<LI>
+<P>Add the indicated text to the note in the second bullet of
+13.4.3 [<A href="https://wg21.link/temp.arg.nontype#5">temp.arg.nontype</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> In particular, neither the null pointer conversion
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) nor the derived-to-base conversion
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) are applied. Although <TT>0</TT> is a valid
+<I>template-argument</I> for a non-type <I>template-parameter</I> of integral
+type, it is not a valid <I>template-argument</I> for a non-type
+<I>template-parameter</I> of pointer type. <INS>However, <TT>(int*)0</TT> is a valid
+<I>template-argument</I> for a non-type <I>template-parameter</I> of type
+&#8220;pointer to int.&#8221;</INS> &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Replace the normative wording of 13.6 [<A href="https://wg21.link/temp.type#1">temp.type</A>] paragraph 1 with the following:</P>
+
+<BLOCKQUOTE>
+
+<P>Two <I>template-id</I>s refer to the same class or function
+if</P>
+
+<UL>
+
+<LI>their <I>template-name</I>s refer to the same template, and</LI>
+
+<LI>their corresponding type <I>template-argument</I>s are the
+same type, and</LI>
+
+<LI>their corresponding non-type <I>template-argument</I>s of
+integral or enumeration type have identical values, and</LI>
+
+<LI>their corresponding non-type <I>template-argument</I>s of
+pointer type refer to the same external object or function or are
+both the null pointer value, and</LI>
+
+<LI>their corresponding non-type <I>template-argument</I>s of
+pointer-to-member type refer to the same class member or are both
+the null member pointer value, and</LI>
+
+<LI>their corresponding non-type <I>template-arguments</I>s for
+template parameters of reference type refer to the same external
+object or function, and</LI>
+
+<LI>their corresponding template <I>template-argument</I>s refer
+to the same template.</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

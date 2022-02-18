@@ -1,0 +1,182 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 655</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="655"></A><H4>655.
+  
+Initialization not specified for forwarding constructors
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 October 2007<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>The changes for delegating constructors overlooked the need to
+change 11.9.3 [<A href="https://wg21.link/class.base.init#3">class.base.init</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>expression-list</I> in a <I>mem-initializer</I> is used to
+initialize the base class or non-static data member subobject denoted
+by the <I>mem-initializer-id</I>. The semantics of
+a <I>mem-initializer</I> are as follows:</P>
+
+<UL>
+<LI><P>if the <I>expression-list</I> of the <I>mem-initializer</I> is
+omitted, the base class or member subobject is value-initialized (see
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]);</P></LI>
+
+<LI><P>otherwise, the subobject indicated
+by <I>mem-initializer-id</I> is direct-initialized using
+<I>expression-list</I> as the <I>initializer</I> (see 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</P></LI>
+</UL>
+
+<P>The initialization of each base and member constitutes a
+full-expression. Any expression in a <I>mem-initializer</I> is
+evaluated as part of the full-expression that performs the
+initialization.</P>
+
+</BLOCKQUOTE>
+
+<P>This paragraph deals only with subobjects; it needs to be made more
+general to apply to the complete object as well when
+the <I>mem-initializer-id</I> designates the constructor's class.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#3">class.base.init</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The <I>expression-list</I> in a <I>mem-initializer</I> is used
+to initialize the base class or non-static data member subobject
+denoted by the <I>mem-initializer-id</I>. The semantics of a
+<I>mem-initializer</I> are</DEL> <INS>A <I>mem-initializer</I> in which the
+<I>mem-initializer-id</I> names the constructor's class initializes the
+object by invoking the selected target constructor with the
+<I>mem-initializer</I>'s <I>expression-list</I>. A
+<I>mem-initializer</I> in which the <I>mem-initializer-id</I> names a base
+class or non-static data member initializes the designated subobject</INS>
+as follows:</P>
+
+<UL>
+<LI><P>if the <I>expression-list</I> of the <I>mem-initializer</I>
+is omitted, the base class or member subobject is value-initialized
+(see 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]);</P></LI>
+
+<LI><P>otherwise, the subobject indicated by <I>mem-initializer-id</I> is
+direct-initialized using <I>expression-list</I> as the initializer (see
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</P></LI>
+
+</UL>
+
+<P>...</P>
+
+<P>The initialization <DEL>of each base and member</DEL> <INS>performed by
+each <I>mem-initializer</I></INS> constitutes a full-expression. Any
+expression...</P>
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>This text was significantly modified by N2756 (nonstatic data
+member initializers) and needs to be reworked in light of those
+changes.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<OL>
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#7">class.base.init</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <I>expression-list</I> or <I>braced-init-list</I> in a
+<I>mem-initializer</I> is used to initialize the <DEL>base class
+or non-static data member subobject denoted by the
+<I>mem-initializer-id</I></DEL> <INS>designated subobject (or, in
+the case of a delegating constructor, the complete class
+object)</INS> according to the initialization rules of
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] for direct-initialization.</P>
+
+<P>[<I>Example: ...</I>
+</P>
+
+<P>&#8212;<I>end example</I>] The initialization <DEL>of each base and
+member</DEL> <INS>performed by each <I>mem-initializer</I></INS>
+constitutes a full-expression...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#8">class.base.init</A>] paragraph 8 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If</DEL> <INS>In a non-delegating constructor, if</INS> a given
+non-static data member or base class is not named by a
+<I>mem-initializer-id</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#10">class.base.init</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Initialization</DEL> <INS>In a non-delegating constructor,
+initialization</INS> proceeds in the following order:
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#12">class.base.init</A>] paragraph 12 as follows
+(this is an unrelated change correcting an error noticed while
+preparing the resolution of this issue):</P></LI>
+
+<BLOCKQUOTE>
+
+Names in the <I>expression-list</I> <INS>or
+<I>braced-init-list</I></INS> of a <I>mem-initializer</I> are
+evaluated in the scope of the constructor...
+
+</BLOCKQUOTE>
+
+<LI><P>Change the next-to-last bullet of the note in 9.4.5 [<A href="https://wg21.link/dcl.init.list#1">dcl.init.list</A>] paragraph 1 as follows:</P></LI>
+
+<UL><LI><P>
+<DEL>as a base-or-member initializer</DEL> <INS>in a
+<I>mem-initializer</I></INS> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])
+</P></LI></UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

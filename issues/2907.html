@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2907</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2907"></A><H4>2907.
+  
+Constant lvalue-to-rvalue conversion on uninitialized <TT>std::nullptr_t</TT>
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-10<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/215">#215</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void f() {
+    std::nullptr_t np;       //<SPAN CLASS="cmnt"> uninitialized, thus </SPAN>np<SPAN CLASS="cmnt"> contains an erroneous value</SPAN>
+    constexpr void *p1 = np; //<SPAN CLASS="cmnt"> error: converted initializer is not a constant expression</SPAN>
+  }
+</PRE>
+
+<P>The lvalue-to-rvalue conversion on <TT>np</TT> does not actually
+read the value of <TT>np</TT> (7.3.2 [<A href="https://wg21.link/conv.lval#3.1">conv.lval</A>] bullet 3.1), yet the situation is made ill-formed by
+7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+
+<LI>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) unless it
+is applied to
+<UL>
+<LI class="ins">a glvalue of type <I>cv</I> <TT>std::nullptr_t</TT>,</LI>
+<LI>a non-volatile glvalue that refers to an object
+that is usable in constant expressions, or</LI>
+<LI>a non-volatile
+glvalue of literal type that refers to a non-volatile object whose
+lifetime began within the evaluation of E;</LI>
+</UL>
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

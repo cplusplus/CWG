@@ -1,0 +1,213 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 665</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="665"></A><H4>665.
+  
+Problems in the specification of <TT>dynamic_cast</TT>
+</H4>
+<B>Section: </B>7.6.1.7&#160; [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 December 2007<BR>
+
+
+<P>[Voted into the WP at the March, 2009 meeting.]</P>
+
+<P>At least one implementation accepts the following example as
+well-formed (returning a null pointer at runtime), although others
+reject it at compile time:</P>
+
+<PRE>
+    struct A { virtual ~A(); };
+    struct B: private A { } b;
+    A* pa = dynamic_cast&lt;A*&gt;(&amp;b);
+</PRE>
+
+<P>Presumably the intent of 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#5">expr.dynamic.cast</A>] paragraph 5
+is that all up-casts (converting from derived to base) are to be
+handled at compile time, regardless of whether the class involved is
+polymorphic or not:</P>
+
+<BLOCKQUOTE>
+
+If <TT>T</TT> is &#8220;pointer to <I>cv1</I> <TT>B</TT>&#8221;
+and <TT>v</TT> has type &#8220;pointer to <I>cv2</I> <TT>D</TT>&#8221;
+such that <TT>B</TT> is a base class of <TT>D</TT>, the result is a
+pointer to the unique <TT>B</TT> subobject of the <TT>D</TT> object
+pointed to by <TT>v</TT>. Similarly, if <TT>T</TT> is &#8220;reference
+to <I>cv1</I> <TT>B</TT>&#8221; and <TT>v</TT> has
+type <I>cv2</I> <TT>D</TT> such that <TT>B</TT> is a base class
+of <TT>D</TT>, the result is the unique <TT>B</TT> subobject of
+the <TT>D</TT> object referred to by <TT>v</TT>... In both the pointer
+and reference cases, <I>cv1</I> shall be the same cv-qualification as,
+or greater cv-qualification than, <I>cv2</I>, and <TT>B</TT> shall be
+an accessible unambiguous base class of <TT>D</TT>.
+
+</BLOCKQUOTE>
+
+<P>One explanation for the implementation that accepts the example at
+compile time is that the final sentence is interpreted as part of the
+condition for the applicability of this paragraph, so that this case
+falls through into the description of runtime checking that follows.
+This (mis-)interpretation is buttressed by the example in paragraph 9,
+which reads in significant part:</P>
+
+<PRE>
+    class A { virtual void f(); };
+    class B { virtual void g(); };
+    class D : public virtual A, private B {};
+    void g() {
+        D d;
+        B* bp;
+        bp = dynamic_cast&lt;B*&gt;(&amp;d); //<SPAN CLASS="cmnt"> fails</SPAN>
+    }
+</PRE>
+
+<P>The &#8220;fails&#8221; comment is identical to the commentary on
+the lines in the example where the run-time check fails.  If the
+interpretation that paragraph 5 is supposed to apply to all up-casts,
+presumably this comment should change to &#8220;ill-formed,&#8221; or
+the line should be removed from the example altogether.</P>
+
+<P>It should be noted that this interpretation (that the example is
+ill-formed and the runtime check applies only to down-casts and
+cross-casts) rejects some programs that could plausibly be accepted
+and actually work at runtime.  For example,</P>
+
+<PRE>
+    struct B { virtual ~B(); };
+    struct D: private virtual B { };
+
+    void test(D* pd) {
+        B* pb = dynamic_cast&lt;B*&gt;(pd); // #1
+    }
+
+    struct D2: virtual B, virtual D {};
+
+    void demo() {
+        D2 d2;
+        B* pb = dynamic_cast&lt;B*&gt;(&amp;d2); // #2
+        test(&amp;d2); // #3
+    }
+</PRE>
+
+<P>According to the interpretation that paragraph 5 applies,
+line #1 is ill-formed.  However, converting from <TT>D2</TT> to
+<TT>B</TT> (line #2) is well-formed; if the alternate interpretation
+were applied, the conversion in line #1 could succeed when applied
+to <TT>d2</TT> (line #3).</P>
+
+<P>One final note: the wording in 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#8">expr.dynamic.cast</A>] paragraph 8
+is incorrect:</P>
+
+<BLOCKQUOTE>
+
+<P>The run-time check logically executes as follows:</P>
+
+<UL>
+<LI><P>If, in the most derived object pointed (referred) to
+by <TT>v</TT>, <TT>v</TT> points (refers) to a <TT>public</TT> base
+class subobject of a <TT>T</TT> object, and if only one object of
+type <TT>T</TT> is derived from the subobject pointed (referred) to by
+<TT>v</TT> the result is a pointer (an lvalue referring) to
+that <TT>T</TT> object.</P></LI>
+
+<LI><P>Otherwise, if <TT>v</TT> points (refers) to a <TT>public</TT>
+base class subobject of the most derived object, and the type of the
+most derived object has a base class, of type <TT>T</TT>, that is
+unambiguous and <TT>public</TT>, the result is a pointer (an lvalue
+referring) to the <TT>T</TT> subobject of the most derived
+object.</P></LI>
+
+<LI><P>Otherwise, the run-time check fails.</P></LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>All uses of <TT>T</TT> in this paragraph treat it as if it were
+a class type; in fact, <TT>T</TT> is the type to which the expression
+is being cast and thus is either a pointer type or a reference type,
+not a class type.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<OL>
+<LI><P>Change 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#5">expr.dynamic.cast</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...In both the pointer and reference cases, <DEL><I>cv1</I> shall be the
+same cv-qualification as, or greater cv-qualification than,
+<I>cv2</I>, and <TT>B</TT> shall be an accessible unambiguous base
+class of <TT>D</TT></DEL> <INS>the program is ill-formed if <I>cv2</I> is
+greater cv-qualification than <I>cv1</I> or if <TT>B</TT> is an
+inaccessible or ambiguous base class of <TT>D</TT></INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the comment in the example in 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#9">expr.dynamic.cast</A>] paragraph 9
+as follows:</P></LI>
+
+<PRE>
+    bp = dynamic_cast&lt;B*&gt;(&amp;d);     //<SPAN CLASS="cmnt"> <DEL>fails</DEL> <INS>ill-formed (not a run-time check)</INS></SPAN>
+</PRE>
+
+<LI><P>Change 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#8">expr.dynamic.cast</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The</DEL> <INS>If <TT>C</TT> is the class type to which <TT>T</TT>
+points or refers, the</INS> run-time check logically executes as
+follows:</P>
+
+<UL>
+<LI><P>If, in the most derived object pointed (referred) to by
+<TT>v</TT>, <TT>v</TT> points (refers) to a public base class
+subobject of a <DEL><TT>T</TT></DEL> <INS><TT>C</TT></INS> object, and if only
+one object of type <DEL><TT>T</TT></DEL> <INS><TT>C</TT></INS> is derived from
+the subobject pointed (referred) to by <TT>v</TT> the result is a
+pointer (an lvalue referring) to that <DEL><TT>T</TT></DEL>
+<INS><TT>C</TT></INS> object.</P></LI>
+
+<LI><P>Otherwise, if <TT>v</TT> points (refers) to a public base class
+subobject of the most derived object, and the type of the most derived
+object has a base class, of type <DEL><TT>T</TT></DEL> <INS><TT>C</TT></INS>,
+that is unambiguous and public, the result is a pointer (an lvalue
+referring) to the <DEL><TT>T</TT></DEL> <INS><TT>C</TT></INS> subobject of the
+most derived object.</P></LI>
+
+<LI><P>Otherwise, the run-time check fails.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

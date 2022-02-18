@@ -1,0 +1,202 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 384</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="384"></A><H4>384.
+  
+Argument-dependent lookup and operator functions
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Sept 2002<BR>
+
+
+
+
+<P>I believe the following code example should unambiguously call the
+member operator+. Am I right?</P>
+<PRE>
+  //--- some library header ---
+  //
+  namespace N1 {
+    template&lt;class T&gt; struct Base { };
+
+    template&lt;class T&gt; struct X {
+      struct Y : public Base&lt;T&gt; {     // here's a member operator+
+        Y operator+( int _Off ) const { return Y(); }
+      };
+
+      Y f( unsigned i ) { return Y() + i; } // the "+" in question
+    };
+  }
+
+  //--- some user code ---
+  //
+  namespace N2 {
+    struct Z { };
+
+    template&lt;typename T&gt;              // here's another operator+
+    int* operator+( T , unsigned ) { static int i ; return &amp;i ; }
+  }
+
+  int main() {
+    N1::X&lt; N2::Z &gt; v;
+    v.f( 0 );
+  }
+</PRE>
+<P>My expectation is that 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ would govern, specifically:
+<BLOCKQUOTE>
+  If the ordinary unqualified lookup of the name finds the
+  declaration of a class member function, the associated
+  namespaces and classes are not considered.
+</BLOCKQUOTE>
+So I think the member should hide the otherwise-better-matching one in
+the associated namespace. Here's what compilers do:</P>
+
+<P>  Agree with me and call the member operator+:
+    Borland 5.5, Comeau 4.3.0.1, EDG 3.0.1, Metrowerks 8.0, MSVC 6.0</P>
+
+<P>  Disagree with me and try to call N2::operator+:
+    gcc 2.95.3, 3.1.1, and 3.2; MSVC 7.0</P>
+
+<P>Simple so far, but someone tells me that 12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+muddies the waters.
+There, paragraph 10 summarizes that subclause:
+<BLOCKQUOTE>
+  [Note: the lookup rules for operators in expressions are
+  different than the lookup rules for operator function names
+  in a function call, ...
+</BLOCKQUOTE>
+In particular, consider the above call to "Y() + unsigned" and please
+help me step through 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3:
+<BLOCKQUOTE>
+  ... for a binary operator @ with a left operand of a type whose
+  cv-unqualified version is T1 and a right operand of a type
+  whose cv-unqualified version is T2,
+</BLOCKQUOTE>
+OK so far, here @ is +, and T1 is N1::X::Y.
+<BLOCKQUOTE>
+  three sets of candidate functions, designated member candidates,
+  non-member candidates and built-in candidates, are constructed
+  as follows:
+</BLOCKQUOTE>
+[and later are union'd together to get the candidate list]
+<BLOCKQUOTE>
+  If T1 is a class type, the set of member candidates is the result
+  of the qualified lookup of T1::operator@ (over.call.func);
+  otherwise, the set of member candidates is empty.
+</BLOCKQUOTE>
+So there is one member candidate, N1::X::Y::operator+.
+<BLOCKQUOTE>
+  The set of non-member candidates is the result of the unqualified
+  lookup of operator@ in the context of the expression according to
+  the usual rules for name lookup in unqualified function calls
+  (basic.lookup.argdep) except that all member functions are ignored.
+</BLOCKQUOTE>
+</P>
+
+<P>*** This is the question: What does that last phrase mean? Does it mean:</P>
+
+<P>a) first apply the usual ADL rules to generate a candidate list, then
+ignore any member functions in that list (this is what I believe and
+hope it means, and in particular it means that the presence of a member
+will suppress names that ADL would otherwise find in the associated
+namespaces); or</P>
+
+<P>b) something else?</P>
+
+<P>In short, does N2::operator+ make it into the candidate list? I think it
+shouldn't. Am I right?</P>
+
+<P>
+<U>John Spicer</U>:
+I believe that the answer is sort-of "a" above.  More specifically, the
+unqualified lookup consists of a "normal" unqualified lookup and ADL.
+ADL always deals with only namespace members, so the "ignore members
+functions" part must affect the normal lookup, which should ignore class
+members when searching for an operator.</P>
+
+<P>I suspect that the difference between compilers may have to do with details
+of argument-dependent lookup.  In the example given, the argument types
+are "N1::X&lt;N2::Z&gt;::Y" and "unsigned int".  In order for N2::operator+ to
+be a candidate, N2 must be an associated namespace.</P>
+
+<P>N1::X&lt;N2::Z&gt;::Y is a class type, so
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] says that its associated classes are
+its direct and indirect base classes, and its namespaces are the namespaces
+of those classes.  So, its associated namespace is just N1.</P>
+
+<P>6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>] also says:
+<BLOCKQUOTE>
+If T is a template-id, its associated namespaces and classes are the
+    namespace  in  which  the template is defined; for member templates,
+    the member template's class; the namespaces and  classes  associated
+    with  the types of the template arguments provided for template type
+    parameters (excluding template template parameters); the  namespaces
+    in  which  any  template  template  arguments  are  defined; and the
+    classes in which any member  templates  used  as  template  template
+    arguments  are  defined.   [Note: non-type template arguments do not
+    contribute to the set of associated namespaces.  ]
+</BLOCKQUOTE>
+First of all, there is a problem with the term "is a template-id".  template-id
+is a syntactic constuct and you can't really talk about a type being a
+template-id.  Presumably, this is intended to mean "If T is the type of a
+class template specialization ...".
+But does this apply to N1::X&lt;N2::Z&gt;::Y?
+Y is a class nested within a class template specialization.  In addition,
+its base class is a class template specialization.</P>
+
+<P>I think this raises two issues:</P>
+<OL>
+<LI>
+Should the enclosing class(es) of a class, and their template argument lists
+ (if any) contribute to the associated classes/namespaces for ADL?</LI>
+
+<LI>Should the template argument lists of base classes contribute to the
+   associated classes/namespaces for ADL?</LI>
+</OL>
+
+<P><B>Notes from the April 2003 meeting:</B></P>
+
+<P>The ADL rules in the standard sort of look at if they are fully
+recursive, but in fact they are not; in some cases, enclosing classes
+and base classes are considered, and in others they are not.
+Microsoft and g++ did fully-recursive implementations, and
+EDG and IBM did it the other way.  Jon Caves reports that Microsoft saw
+no noticeable difference (e.g., no complaints from customers
+internal or external) when they made this change, so we believe
+that even if the rules are imperfect the way they are in the
+standard, they are clear and the imperfections are small enough
+that programmers will not notice them.  Given that, it seemed
+prudent to make no changes and just close this issue.</P>
+
+<P>The template-id issue is spun off as
+<A HREF="403.html">issue 403</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

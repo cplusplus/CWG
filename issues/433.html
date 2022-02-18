@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 433</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="433"></A><H4>433.
+  
+Do elaborated type specifiers in templates inject into enclosing namespace scope?
+</H4>
+<B>Section: </B>6.4.2&#160; [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 September 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P>Consider the following translation unit:</P>
+<PRE>
+  template&lt;class T&gt; struct S {
+    void f(union U*);  // (1)
+  };
+  template&lt;class T&gt; void S&lt;T&gt;::f(union U*) {}  // (2)
+  U *p;  // (3)
+</PRE>
+<P>Does (1) introduce U as a visible name in the surrounding
+namespace scope?</P>
+
+<P>If not, then (2) could presumably be an error since the
+"union U" in that definition does not find the same type
+as the declaration (1).</P>
+
+<P>If yes, then (3) is OK too.  However, we have gone through
+much trouble to allow template implementations that do not
+pre-parse the template definitions, but requiring (1) to
+be visible would change that.</P>
+
+<P>A slightly different case is the following:</P>
+<PRE>
+  template&lt;typename&gt; void f() { union U *p; }
+  U *q;  // Should this be valid?
+</PRE>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>There was consensus that example 1 should be allowed.
+(Compilers already parse declarations in templates; even MSVC++ 6.0
+accepts this case.)  The vote was 7-2.</P>
+
+<P>Example 2, on the other hand, is wrong; the union name goes
+into a block scope anyway.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>
+In 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]
+change the second bullet of paragraph 5 as follows:</P>
+<BLOCKQUOTE>
+for an <I>elaborated-type-specifier</I> of the form
+<PRE>
+   class-key identifier
+</PRE>
+if the <I>elaborated-type-specifier</I> is used in the
+<I>decl-specifier-seq</I> or <I>parameter-declaration-clause</I>
+of a function defined in namespace scope, the identifier is declared
+as a <I>class-name</I> in the namespace that contains the
+declaration; otherwise, except as a friend declaration, the identifier
+is declared in the smallest non-class, non-function-prototype scope
+that contains the declaration. <INS>[Note: These rules also apply within
+templates.]</INS> [Note: ...]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

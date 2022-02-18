@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 191</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="191"></A><H4>191.
+  
+Name lookup does not handle complex nesting
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alan Nash
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Dec 1999<BR>
+
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The current description of unqualified name lookup in
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#8">basic.lookup.unqual</A>] paragraph 8
+does
+not correctly handle complex cases of nesting.  The Standard
+currently reads,</P>
+
+<BLOCKQUOTE>
+A name used in the definition of a function that is a member function
+(9.3) of a class <TT>X</TT> shall be declared in one of the following
+ways:
+
+<BR><UL>
+<LI>before its use in the block in which it is used or in an enclosing
+block (6.3), or</LI>
+
+<LI>shall be a member of class <TT>X</TT> or be a member of a base
+class of <TT>X</TT> (10.2), or</LI>
+
+<LI>if <TT>X</TT> is a nested class of class <TT>Y</TT> (9.7), shall
+be a member of <TT>Y</TT>, or shall be a member of a base class of
+<TT>Y</TT> (this lookup applies in turn to <TT>Y</TT>'s enclosing
+classes, starting with the innermost enclosing class), or</LI>
+
+<LI>if <TT>X</TT> is a local class (9.8) or is a nested class of a
+local class, before the definition of class <TT>X</TT> in a block
+enclosing the definition of class <TT>X</TT>, or</LI>
+
+<LI>if <TT>X</TT> is a member of namespace <TT>N</TT>, or is a nested
+class of a class that is a member of <TT>N</TT>, or is a local class
+or nested class within a local class of a function that is a member of
+<TT>N</TT>, before the member function definition, in namespace
+<TT>N</TT> or in one of <TT>N</TT>'s enclosing namespaces.</LI>
+</UL>
+</BLOCKQUOTE>
+
+In particular, this formulation does not handle the following example:
+
+<PRE>
+    struct outer {
+        static int i;
+        struct inner {
+            void f() {
+                struct local {
+                    void g() {
+                        i = 5;
+                    }
+                };
+            }
+        };
+    };
+</PRE>
+
+Here the reference to <TT>i</TT> is from a member function of a local
+class of a member function of a nested class.  Nothing in the rules
+allows <TT>outer::i</TT> to be found, although intuitively it should
+be found.
+
+<P>A more comprehensive formulation is needed that allows traversal of
+any combination of blocks, local classes, and nested classes.
+Similarly, the final bullet needs to be augmented so that a function
+need not be a (direct) member of a namespace to allow searching that
+namespace when the reference is from a member function of a class
+local to that function.  That is, the current rules do not allow the
+following example:</P>
+
+<PRE>
+    int j;    // global namespace
+    struct S {
+        void f() {
+            struct local2 {
+                void g() {
+                    j = 5;
+                }
+            };
+        }
+    };
+</PRE>
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2963</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2963"></A><H4>2963.
+  
+Paradoxical variable-or-function declaration
+</H4>
+<B>Section: </B>8.9&#160; [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-17<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/643">#643</A>.)
+</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static int b;
+  };
+  struct B {
+    B(int);
+    B operator()();
+    using b=int;
+  };
+
+  namespace P {
+    B A(decltype(A())::b);
+  }
+</PRE>
+
+<P>If <TT>P::A</TT> is a variable, then <TT>decltype(A())::b</TT> is
+its initializer, and the <TT>A</TT> therein refers to the variable.
+That implies that the <TT>decltype</TT> is <TT>B</TT>
+and <TT>B::b</TT> is <TT>int</TT>, thus the declaration should be a
+function declaration instead.</P>
+
+<P>If <TT>P::A</TT> is a function, then its name is not available for
+lookup in its parameter list (see 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#1">basic.scope.pdecl</A>] paragraph 1), so <TT>A</TT> is <TT>::A</TT> and <TT>A::b</TT> is a
+varaible, thus the declaration should be a variable declaration
+instead.</P>
+
+<P>Implementations agree that <TT>P::A</TT> is a variable, but use the
+interpretation of <TT>decltype(A())</TT> that finds <TT>::A</TT>,
+presumably from some trial parse.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Extend the prohibition on using <TT>A</TT> in a template argument
+(8.9 [<A href="https://wg21.link/stmt.ambig#3">stmt.ambig</A>] paragraph 3 to <TT>decltype</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

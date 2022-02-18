@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 674</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="674"></A><H4>674.
+  
+&#8220;matching specialization&#8221; for a friend declaration
+</H4>
+<B>Section: </B>13.7.5&#160; [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 February, 2008<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+
+
+<P>13.7.5 [<A href="https://wg21.link/temp.friend#1.3">temp.friend</A>] bullet 1.3 says:</P>
+
+<UL><LI><P>if the name of the friend is a <I>qualified-id</I> and a
+matching specialization of a function template is found in the
+specified class or namespace, the friend declaration refers to that
+function template specialization, otherwise,</P></LI></UL>
+
+<P>I'm not sure this says what it's supposed to say.  For example:</P>
+
+<PRE>
+    namespace N {
+        template&lt;class T&gt; int f(T);
+    }
+
+    class A {
+        friend int N::f(int);
+        int m;
+        A();
+    };
+
+    namespace N {
+        template&lt; class T &gt; int f(T) {
+            A a;            //<SPAN CLASS="cmnt"> ok for </SPAN>T=int<SPAN CLASS="cmnt">?</SPAN>
+            return a.m;     //<SPAN CLASS="cmnt"> ok for </SPAN>T=int<SPAN CLASS="cmnt">?</SPAN>
+        }
+    }
+
+    int m = N::f(42);       //<SPAN CLASS="cmnt"> ok?</SPAN>
+    char c = N::f('a');     //<SPAN CLASS="cmnt"> Clearly ill-formed.</SPAN>
+</PRE>
+
+<P>The key is that the wording talks about a &#8220;matching
+specialization,&#8221; which to me means that <TT>N::f&lt;int&gt;</TT> is befriended only
+if that specialization existed in <TT>N</TT> before the friend declaration.  So
+it's ill-formed as written, but if we move the call to <TT>N::f&lt;int&gt;</TT> up to
+a point before the definition of <TT>A</TT>, it's well-formed.</P>
+
+<P>That seems surprising, especially given that the first bullet does
+not require a pre-existing specialization.  So I suggest replacing
+bullet 3 with something like:</P>
+
+<UL><LI><P>if the name of the friend is a <I>qualified-id</I> and a
+matching function template is found in the specified class or
+namespace, the friend declaration refers to the deduced specialization
+of that function template, otherwise,</P></LI></UL>
+
+<P><B>Proposed resolution (June, 2010):</B></P>
+
+<P>Change 13.7.5 [<A href="https://wg21.link/temp.friend#1.3">temp.friend</A>] bullet 1.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...For a friend function declaration that is not a template
+declaration:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>if the name of the friend is a <I>qualified-id</I> and a
+matching <DEL>specialization of a</DEL> function template is
+found in the specified class or namespace, the friend declaration
+refers to <DEL>that function template specialization</DEL>
+<INS>the deduced specialization of that function template
+(14.8.2.6 [temp.deduct.decl])</INS>,
+otherwise,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>(This resolution depends on that of <A HREF="873.html">issue 873</A>; in particular, the cross-reference to 14.8.2.6
+[temp.deduct.decl] refers to a new section added by the resolution
+of that issue.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

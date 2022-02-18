@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1918</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1918"></A><H4>1918.
+  
+<TT>friend</TT> templates with dependent scopes
+</H4>
+<B>Section: </B>13.7.5&#160; [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-04-27<BR>
+
+
+
+
+<P>It is not clear what should happen for an example like:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    class B {
+      class C {};
+    };
+  };
+  class X {
+    static int x;
+    template &lt;typename T&gt; friend class A&lt;T&gt;::B::C;
+  };
+  template&lt;&gt; struct A&lt;int&gt; {
+    typedef struct Q B;
+  };
+  struct Q {
+    class C {
+      int f() { return X::x; }
+    };
+  };
+</PRE>
+
+<P>It appears that the friend template matches <TT>Q::C</TT>, because that
+class is also <TT>A&lt;int&gt;::B::C</TT>, but neither GCC nor EDG allow
+this code (saying <TT>X::x</TT> is inaccessible). (Clang doesn't support
+friend template declarations with a dependent scope.)</P>
+
+<P>A strict reading of 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5 might
+suggest that the friend declaration itself is ill-formed, because it does
+not declare a member of a class template, but I can't find any compiler
+that implements template friends that way.</P>
+
+<P><B>Additional note (January, 2024)</B></P>
+
+<P>The example is ill-formed per the resolution of
+<A HREF="1862.html">issue 1862</A> (adopted in November, 2017).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

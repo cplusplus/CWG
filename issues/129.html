@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 129</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="129"></A><H4>129.
+  
+Stability of uninitialized auto variables
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Myers
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 June 1999<BR>
+
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>Does the Standard require that an uninitialized auto variable have
+a stable (albeit indeterminate) value?  That is, does the Standard
+require that the following function return <TT>true</TT>?</P>
+
+<PRE>
+    bool f() {
+        unsigned char i;  // not initialized
+        unsigned char j = i;
+        unsigned char k = i;
+        return j == k;    // true iff "i" is stable
+    }
+</PRE>
+
+6.8.2 [<A href="https://wg21.link/basic.fundamental#1">basic.fundamental</A>] paragraph 1
+
+requires that uninitialized <TT>unsigned char</TT> variables have a
+valid value, so the initializations of <TT>j</TT> and <TT>k</TT> are
+well-formed and required not to trap.  The question here is whether
+the value of <TT>i</TT> is allowed to change between those
+initializations.
+
+<P>
+<U>Mike Miller</U>:
+6.9.1 [<A href="https://wg21.link/intro.execution#10">intro.execution</A>] paragraph 10
+says,</P>
+
+<BLOCKQUOTE>
+An instance of each object with automatic storage
+duration (6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]
+) is
+associated with each entry into
+its block.  Such an object exists and retains its
+last-stored value during the execution of the block
+and while the block is suspended...
+</BLOCKQUOTE>
+
+I think that the most reasonable way to read this is that the
+only thing that is allowed to change the value of an automatic
+(non-volatile?) value is a "store" operation in the abstract
+machine.  There are no "store" operations to <TT>i</TT> between the
+initializations of <TT>j</TT> and <TT>k</TT>, so it must retain its
+original (indeterminate but valid) value, and the result of
+the program is well-defined.
+
+<P>The quibble, of course, is whether the wording "last-stored
+value" should be applied to a "never-stored" value.  I
+think so, but others might differ.</P>
+
+<P>
+<U>Tom Plum</U>:
+9.2.9.2 [<A href="https://wg21.link/dcl.type.cv#8">dcl.type.cv</A>] paragraph 8
+says,</P>
+
+<BLOCKQUOTE>
+[<I>Note:</I> <TT>volatile</TT> is a hint to the implementation
+to avoid aggressive
+optimization involving
+the object because the value of the object might be changed by means
+undetectable
+by an implementation. See
+6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ for detailed
+semantics. In general, the semantics
+of <TT>volatile</TT>
+are intended to be the same in C++ as they are in C. ]
+</BLOCKQUOTE>
+
+&gt;From this I would infer that non-volatile means "shall not be
+changed
+by means undetectable by an implementation"; that the compiler is entitled to
+safely cache accesses to non-volatile objects if it can prove that no
+"detectable"
+means can modify them; and that therefore  i  <I>shall</I>
+maintain the same value
+during the example above.
+
+<P>
+<U>Nathan Myers</U>:
+This also has practical code-generation consequences.  If the
+uninitialized auto variable lives in a register, and its value is
+<I>really</I> unspecified, then until it is initialized that register
+can be used as a temporary.  Each time it's "looked at" the variable
+has the value that last washed up in that register.  After it's
+initialized it's "live" and cannot be used as a temporary any more,
+and your register pressure goes up a notch.  Fixing the uninit'd
+value would make it "live" the first time it is (or might be) looked
+at, instead.</P>
+
+<P>
+<U>Mike Ball</U>:
+I agree with this.  I also believe that it was certainly never
+my intent that an uninitialized variable be stable, and I would
+have strongly argued against such a provision.  Nathan has well
+stated the case.
+And I am quite certain that it would be disastrous for optimizers.
+To ensure it, the frontend would have to generate an initializer,
+because optimizers track not only the lifetimes of variables, but
+the lifetimes of values assigned to those variables.  This would
+put C++ at a significant performance disadvantage compared to
+other languages.  Not even Java went this route.  Guaranteeing
+defined behavior for a very special case of a generally undefined
+operation seems unnecessary.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="616.html">issue 616</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

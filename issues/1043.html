@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1043</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1043"></A><H4>1043.
+  
+Qualified name lookup in the current instantiation
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Doug Gregor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-05<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as paper N3283.]</P>
+
+
+
+<P>13.8.3.2 [<A href="https://wg21.link/temp.dep.type#4">temp.dep.type</A>] paragraph 4 treats <I>unqualified-id</I>s
+and <I>qualified-id</I>s in which the <I>nested-name-specifier</I> refers
+to the current instantiation as equivalent.  However, the lookups
+associated with these two <I>id-expression</I>s are different in the
+presence of dependent base classes (13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3)
+: with an <I>unqualified-id</I>, a dependent base class
+scope is never examined, while with a <I>qualified-id</I> it is. The
+current wording does not specify how an example like the following is
+to be handled:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct B {};
+  struct C { typedef int type; };
+
+  template&lt;typename T&gt;
+  struct A : B&lt;T&gt;, C {
+    template&lt;typename U&gt; type a(); // #1
+    template&lt;typename U&gt; typename A&lt;T&gt;::type a(); // #2: different from #1?
+  };
+
+  template&lt;typename T&gt; template&lt;typename U&gt; typename A&lt;T&gt;::type
+    A&lt;T&gt;::a() { ... } // defines #1 or #2?
+</PRE>
+
+<P>There seem to be two possible strategies for the handling of
+<TT>typename A&lt;T&gt;::type</TT>:</P>
+
+<OL>
+<LI><P>It is handled like the <I>unqualified-id</I> case,
+looking only in non-dependent base classes and not being a
+dependent type.</P></LI>
+
+<LI><P>Since the current instantiation has dependent base classes,
+it is handled as a dependent type.</P></LI>
+
+</OL>
+
+<P>EDG seems to be doing the former, g++ the latter.</P>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+<P>The CWG agreed that if a name is found in a non-dependent base,
+the type should be treated as non-dependent also.</P>
+
+<P><B>Additional note (November, 2010):</B></P>
+
+<P>The overall treatment of dependent base classes in handling a
+<I>qualified-id</I> in which the <I>nested-name-specifier</I> names
+the current instantiation or in a member access expression where the
+object expression is <TT>*this</TT> is not very clear.  It would be
+helpful if the resolution of this issue could clarify the overall
+treatment while dealing with the mixed dependent/non-dependent case
+given in the example.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

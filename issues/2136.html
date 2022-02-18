@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2136</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2136"></A><H4>2136.
+  
+Argument-dependent lookup and initializer lists
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ryou Ezoe
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-10<BR>
+
+
+
+
+<P>Argument-dependent lookup does not consider the elements of
+an initializer list used as an argument. This seems inconsistent:
+</P>
+
+<PRE>
+  namespace NS {
+    struct X { } ;
+    void f( std::initializer_list&lt;X&gt; ) { }
+  }
+
+  int main() {
+    NS::X x ;
+    //<SPAN CLASS="cmnt"> ADL fails to find </SPAN>NS::f
+    f( {x,x,x} ) ;
+
+    //<SPAN CLASS="cmnt"> OK. ADL finds </SPAN>NS::f
+    auto i = {x,x,x} ;
+    f( i ) ;
+
+    //<SPAN CLASS="cmnt"> Also OK</SPAN>
+    f( std::initializer_list&lt;NS::X&gt;{x,x,x} ) ;
+  }
+</PRE>
+
+<P><B>Rationale (October, 2015):</B></P>
+
+<P>Argument-dependent lookup makes sense when the arguments
+correspond to actual parameters of the function.  In the
+case of an initializer list, however, the elements of the
+initializer list need not bear any relationship to the
+actual parameter type of the function; instead, they
+provide values for aggregate initialization or construction
+of the object being initialized, and there is no reason
+to expect that that type will have the same associated
+namespace as the types of the elements of the initializer
+list.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

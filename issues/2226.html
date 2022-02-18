@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2226</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2226"></A><H4>2226.
+  
+Xvalues vs lvalues in conditional expressions
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-02-01<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>In the following example,</P>
+
+<PRE>
+   const T a;
+   T b;
+   false ? a : std::move(b);
+</PRE>
+
+<P>the most appropriate result would seem to be that the expression is
+an lvalue of type <TT>const T</TT> that refers to either <TT>a</TT> or
+<TT>b</TT>. However, because 7.6.16 [<A href="https://wg21.link/expr.cond#4.1">expr.cond</A>] bullet 4.1
+requires that the conversion bind directly to an lvalue, while
+<TT>std::move(b)</TT> is an xvalue, the result is a <TT>const T</TT>
+temporary copy-initialized from <TT>std::move(b)</TT>.</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#4.1">expr.cond</A>] bullet 4.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Attempts are made to form an implicit conversion sequence from an
+operand expression <TT>E1</TT> of type <TT>T1</TT> to a target type related
+to the type <TT>T2</TT> of the operand expression <TT>E2</TT> as
+follows:</P>
+
+<UL>
+<LI><P>If <TT>E2</TT>
+is an lvalue, the target type is &#8220;lvalue reference to
+<TT>T2</TT>&#8221;, subject to the constraint that in the conversion the
+reference must bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to <DEL>an
+lvalue</DEL> <INS>a glvalue</INS>.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 787</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="787"></A><H4>787.
+  
+Unnecessary lexical undefined behavior
+</H4>
+<B>Section: </B>5.2&#160; [<A href="https://wg21.link/lex.phases">lex.phases</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>UK
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 March, 2009<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#UK9">N2800 comment
+  UK&#160;9<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#UK12">N2800 comment
+  UK&#160;12<BR></A>
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>There are several instances of undefined behavior in lexical
+processing:</P>
+
+<UL>
+<LI><P>5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1, phase 2: a
+universal-character-name resulting from a line splice.
+</P></LI>
+
+<LI><P>5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1, phase 2: a file ending
+without a new-line character or with a new-line character that is spliced
+away.</P></LI>
+
+<LI><P>5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1, phase 4: a
+universal-character-name resulting from macro token concatenation.</P></LI>
+
+<LI><P>5.6 [<A href="https://wg21.link/lex.header#2">lex.header</A>] paragraph 2: <TT>'</TT>, <TT>\</TT>,
+<TT>/*</TT>, <TT>//</TT>, or <TT>"</TT> appearing in a <I>header-name</I>.
+</P></LI>
+
+</UL>
+
+<P>These would be more appropriately handled as conditionally-supported
+behavior, requiring implementations either to document their handling
+of these constructs or to issue a diagnostic.</P>
+
+<P><B>Additional note, March, 2009:</B></P>
+
+<P>The undefined behavior referred to above regarding
+universal-character-names is the result of the considerations
+described in <A href="http://www.open-std.org/jtc1/sc22/wg14/www/C99RationaleV5.10.pdf">
+the C99 Rationale</A>, section 5.2.1, in the part entitled &#8220;UCN
+models.&#8221; Three different models for support of UCNs are
+described, each involving different conversions between UCNs and wide
+characters and/or at different times during program translation.
+Implementations, as well as the specification in a language standard,
+can employ any of the three, but it must be impossible for a
+well-defined program to determine which model was actually employed by
+implementation.  The implication of this &#8220;equivalence
+principle&#8221; is that any construct that would give different
+results under the different models must be classified as undefined
+behavior.  For example, an apparent UCN resulting from a line-splice
+would be recognized as a UCN by an implementation in which all wide
+characters were translated immediately into UCNs, as described in C++
+phase 1, but would not be recognized as a UCN by another
+implementation in which all UCNs were translated immediately into wide
+characters (a possibility mentioned parenthetically in C++ phase
+1).</P>
+
+<P>There are additional implications for this &#8220;equivalence
+principle&#8221; beyond the ones identified in the UK CD comments.
+See also <A HREF="578.html">issue 578</A>; presumably a string
+like the one in that issue should also be described as having
+undefined behavior.  Also, because C++'s model introduces backslash
+characters as part of UCNs for any character outside the basic source
+character set, any <I>header-name</I> that contains such a character
+(e.g., <TT>#include "@.h"</TT>) will have undefined behavior in C++.
+This is also the reason that UCNs are translated into wide characters
+inside raw strings: two of the three models articulated in the C99
+Rationale translate to or from UCNs in phase 1, before raw strings
+are recognized as tokens in phase 3, so raw strings cannot treat UCNs
+differently from the way they are treated in other contexts.
+  See also <A HREF="789.html">issue 789</A> for
+similar points regarding trigraphs.
+</P>
+
+<P><B>Notes from the October, 2009 meeting:</B></P>
+
+<P>The CWG decided that the non-UCN aspects of this issue should be
+resolved, while the overall questions regarding trigraphs, UCNs, and
+raw strings will be investigated separately.
+</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<OL>
+<LI><P>Change 5.2 [<A href="https://wg21.link/lex.phases#1">lex.phases</A>] paragraph 1 phase 2 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>If a</DEL> <INS>A</INS> source file that is not empty <INS>and
+that</INS> does not end in a new-line character, or <INS>that</INS>
+ends in a new-line character immediately preceded by a backslash
+character before any such splicing takes place, <DEL>the behavior is
+undefined</DEL> <INS>shall be processed as if an additional new-line
+character were appended to the file</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.6 [<A href="https://wg21.link/lex.header#2">lex.header</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If</DEL> <INS>The appearance of</INS> either of the characters
+<TT>'</TT> or <TT>\</TT><DEL>,</DEL> or <INS>of</INS> either of the
+character sequences <TT>/*</TT> or <TT>//</TT> <DEL>appears</DEL> in a
+<I>q-char-sequence</I> or <DEL>a</DEL> <INS>an</INS>
+<I>h-char-sequence</I> <INS>is conditionally-supported with
+implementation-defined semantics</INS>, <DEL>or</DEL> <INS>as is
+the appearance of</INS> the character <TT>"</TT>
+<DEL>appears</DEL> in <DEL>a</DEL> <INS>an</INS>
+<I>h-char-sequence</I><DEL>, the behavior is undefined</DEL>.
+[<I>Footnote:</I> Thus, <INS>a</INS> sequence<DEL>s</DEL> of
+characters that resemble<INS>s an</INS> escape sequence<DEL>s cause
+undefined behavior</DEL> <INS>might result in an error, be interpreted
+as the character corresponding to the escape sequence, or have a
+completely different meaning, depending on the
+implementation</INS>. &#8212;<I>end footnote</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

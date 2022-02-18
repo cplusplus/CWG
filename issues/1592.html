@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1592</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1592"></A><H4>1592.
+  
+When do template parameters match?
+</H4>
+<B>Section: </B>13.4.4&#160; [<A href="https://wg21.link/temp.arg.template">temp.arg.template</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-12-03<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+
+
+<P>According to 13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+A <I>template-argument</I> matches a template
+<I>template-parameter</I> (call it <TT>P</TT>) when each of the template
+parameters in the <I>template-parameter-list</I> of the
+<I>template-argument</I>'s corresponding class template or alias
+template (call it <TT>A</TT>) matches the corresponding template
+parameter in the <I>template-parameter-list</I> of <TT>P</TT>.
+
+</BLOCKQUOTE>
+
+<P>There does not appear to be a formal definition of the criteria for
+whether two template parameters &#8220;match,&#8221; however, and
+there is implementation variance in the treatment of an example like</P>
+
+<PRE>
+  struct A {
+    typedef int T1;
+    typedef int T2;
+  };
+  template&lt;template&lt;typename T, typename T::T1 N&gt; class U&gt;
+  struct B {
+    U&lt;A, 0&gt; u;
+  };
+  template&lt;typename T, typename T::T2 N&gt;
+  struct C {
+  };
+  B&lt;C&gt; b; //<SPAN CLASS="cmnt"> ok?</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (June, 2013):</B></P>
+
+<P>Change 13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>template-argument</I> matches a template <I>template-parameter</I>
+(call it <TT>P</TT>) when each of the template parameters in
+the <I>template-parameter-list</I> of the <I>template-argument</I>'s
+corresponding class template or alias template (call it <TT>A</TT>) matches
+the corresponding template parameter in the <I>template-parameter-list</I>
+of <TT>P</TT>. <INS>Two template parameters match if they are of the same
+kind (type, non-type, template), for non-type <I>template-parameter</I>s,
+their types are equivalent (13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]), and for
+template <I>template-parameter</I>s, each of their corresponding
+<I>template-parameter</I>s matches, recursively.</INS>
+When <TT>P</TT>'s <I>template-parameter-list</I> contains a template
+parameter pack...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

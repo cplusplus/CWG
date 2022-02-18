@@ -1,0 +1,201 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2776</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2776"></A><H4>2776.
+  
+Substitution failure and implementation limits
+</H4>
+<B>Section: </B>4.1.1&#160; [<A href="https://wg21.link/intro.compliance.general">intro.compliance.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-27
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Are there behavioral bounds in case an implementation limit is
+encountered?  For example, a constant expression may fail to be
+recognized as such due to an implementation limit (e.g. a recursion or
+step limit), causing overload resolution to pick a different overload.
+Is that acceptable?</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 4.1.1 [<A href="https://wg21.link/intro.compliance.general#2">intro.compliance.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Although this document states only requirements on C++
+implementations, those requirements are often easier to understand if
+they are phrased as requirements on programs, parts of programs, or
+execution of programs <INS>as specified in the rules in
+Clause 5 [<A href="https://wg21.link/lex">lex</A>] through Clause 32 [<A href="https://wg21.link/thread">thread</A>] and Annex
+D</INS>. Such requirements have the following meaning:
+<UL>
+<LI class="ins">
+<P>If a program contains a violation of a rule for which no diagnostic
+is required, this document places no requirement on implementations
+with respect to that program.</P>
+</LI>
+
+<LI class="ins">
+<P>Otherwise, if an implementation limit (Annex B) is reached during
+translation, an implementation shall reject the program.</P>
+<P>
+<I>Recommended practice:</I> An implementation should document
+limits where they are known, and should issue a diagnostic in cases
+where it can reasonably detect that the implementation limit is
+reached.</P>
+</LI>
+
+<LI>
+<DEL>If a program contains no
+violations of the rules in Clause 5 [<A href="https://wg21.link/lex">lex</A>] through
+Clause 32 [<A href="https://wg21.link/thread">thread</A>] and Annex D, a conforming implementation
+shall, within its resource limits as described in Annex B,
+accept and correctly execute [ Footnote: ... ] that program.</DEL>
+</LI>
+
+<LI>
+<DEL>If a program contains a violation
+of a rule for which no diagnostic is required, this document places no
+requirement on implementations with respect to that program.</DEL>
+</LI>
+
+<LI>
+Otherwise, if <DEL>a</DEL> <INS>that</INS> program contains a violation
+of any diagnosable rule or an occurrence of a construct described in
+this document as &#8220;conditionally-supported&#8221; when the
+implementation does not support that construct, a conforming
+implementation shall issue at least one diagnostic message.
+</LI>
+
+<LI class="ins">
+Otherwise, a conforming implementation shall accept and correctly
+execute that program.  [ Note: "Correct execution" can include
+undefined behavior, depending on the data being processed; see
+Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>] and 4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>]. -- end note ] 
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph after 4.1.2 [<A href="https://wg21.link/intro.abstract#6">intro.abstract</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+[Note 2 : More stringent correspondences between abstract and actual
+semantics can be defined by each implementation.  -- end note]
+</P>
+
+<P class="ins">
+If an implementation limit (Annex B) is reached, the behavior is
+undefined.
+</P>
+
+<P class="ins">
+<I>Recommended practice:</I> An implementation should document limits
+where they are known and abort the execution of the program in cases
+where it can reasonably detect that the implementation limit is
+reached.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5">expr.const</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+<DEL>an expression that would exceed the implementation-defined limits (see
+Annex B);</DEL>
+</LI>
+<LI>
+an operation that would have undefined behavior as specified in
+Clause 4 [<A href="https://wg21.link/intro">intro</A>] through Clause 15 [<A href="https://wg21.link/cpp">cpp</A>], excluding
+9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>] <INS>and exceeding an implementation limit
+(4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>])</INS>; [ Footnote: ... ]
+<DIV class="ins">[ Example:
+<PRE>
+  constexpr bool f(int x) { return (x == 0) || f(x-1); }
+  const bool g = f(60000);    // <SPAN CLASS="cmnt">well-formed static initialization (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]);</SPAN>
+                              // <SPAN CLASS="cmnt">program can be rejected because implementation limit is reached</SPAN>
+</PRE>
+-- end example ]
+</DIV>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#16">temp.inst</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+There is an implementation-defined quantity that specifies the limit
+on the total depth of recursive instantiations (Annex B), which could
+involve more than one template. <DEL>The result of an infinite recursion in
+instantiation is undefined.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2023-08-25</B></P>
+
+<P>For the example in change 3, implementations currently switch to
+dynamic initialization when their implementation limits related to
+constant evaluation are exceeded.  This might be surprising to users,
+because dynamic initialization can exhibit order-of-initialization
+issues.  It might be less harmful to reject such situations as
+ill-formed.  Furthermore, it is unclear whether implementations can
+reliably determine that an implementation limit is reached, before
+crashing.</P>
+
+<P>CWG is requesting EWG guidance via
+<A HREF="https://github.com/cplusplus/papers/issues/1631">paper issue #1631</A>.</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>EWG is soliciting a paper to make this either ill-formed, no
+diagnostic required, or well-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

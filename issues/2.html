@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2"></A><H4>2.
+  
+How can dependent names be used in member declarations that appear outside of the class template definition?
+</H4>
+<B>Section: </B>13.8.4&#160; [<A href="https://wg21.link/temp.dep.res">temp.dep.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>unknown
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+
+
+<PRE>
+    template &lt;class T&gt; class Foo {
+
+       public:
+       typedef int Bar;
+       Bar f();
+    };
+    template &lt;class T&gt; typename Foo&lt;T&gt;::Bar Foo&lt;T&gt;::f() { return 1;}
+                       --------------------
+</PRE>
+In the class template definition, the declaration of the member function
+is interpreted as:
+<PRE>
+   int Foo&lt;T&gt;::f();
+</PRE>
+In the definition of the member function that appears outside of the class
+template, the return type is not known until the member function
+is instantiated.
+Must the return type of the member function be known when this out-of-line
+definition is seen (in which case the definition above is ill-formed)?
+Or is it OK to wait until the member function is instantiated to see if
+the type of the return type matches the return type in the class template
+definition (in which case the definition above is well-formed)?
+
+<P>
+<B>Suggested resolution:</B> (John Spicer)</P>
+
+<P>My opinion (which I think matches several posted on the reflector recently)
+is that the out-of-class definition must match the
+declaration in the template.
+In your example they do match, so it is well formed.</P>
+
+<P>I've added some additional cases that illustrate cases that I think
+either are allowed or should be allowed, and some cases that I don't think
+are allowed.</P>
+<PRE>
+    template &lt;class T&gt; class A { typedef int X; };
+
+
+    template &lt;class T&gt; class Foo {
+     public:
+       typedef int Bar;
+       typedef typename A&lt;T&gt;::X X;
+       Bar f();
+       Bar g1();
+       int g2();
+       X h();
+       X i();
+       int j();
+     };
+
+     // Declarations that are okay
+     template &lt;class T&gt; typename Foo&lt;T&gt;::Bar Foo&lt;T&gt;::f()
+                                                     { return 1;}
+     template &lt;class T&gt; typename Foo&lt;T&gt;::Bar Foo&lt;T&gt;::g1()
+                                                     { return 1;}
+     template &lt;class T&gt; int Foo&lt;T&gt;::g2() { return 1;}
+     template &lt;class T&gt; typename Foo&lt;T&gt;::X Foo&lt;T&gt;::h() { return 1;}
+
+     // Declarations that are not okay
+     template &lt;class T&gt; int Foo&lt;T&gt;::i() { return 1;}
+     template &lt;class T&gt; typename Foo&lt;T&gt;::X Foo&lt;T&gt;::j() { return 1;}
+</PRE>
+In general, if you can match the declarations up using only information
+from the template, then the declaration is valid.
+
+<P>Declarations like <TT>Foo::i</TT> and <TT>Foo::j </TT>are invalid because
+for a given instance of <TT>A&lt;T&gt;</TT>, <TT>A&lt;T&gt;::X</TT> may not actually
+be int if the class is specialized.</P>
+
+<P>This is not a problem for <TT>Foo::g1</TT> and <TT>Foo::g2</TT> because
+for any instance of <TT>Foo&lt;T&gt;</TT> that is generated from the template
+you know that Bar will always be int. If an instance of <TT>Foo</TT> is
+specialized, the template member definitions are not used so it doesn't
+matter whether a specialization defines <TT>Bar</TT> as int or not.</P>
+
+
+<BR><BR>
+</BODY>
+</HTML>

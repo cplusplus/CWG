@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 664</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="664"></A><H4>664.
+  
+Direct binding of references to non-class rvalue references
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Eric Niebler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 December 2007<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting as document N3055.]</P>
+
+
+
+<P>According to 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5, a reference
+initialized with a reference-compatible rvalue of class type binds
+directly to the object.  A reference-compatible non-class rvalue
+reference, however, is first copied to a temporary and the reference
+binds to that temporary, not to the target of the rvalue reference.
+This can cause problems when the result of a forwarding function is
+used in such a way that the address of the result is captured.  For
+example:</P>
+
+<PRE>
+    struct ref {
+        explicit ref(int&amp;&amp; i): p(&amp;i) { }
+        int* p;
+    };
+
+    int&amp;&amp; forward(int&amp;&amp; i) {
+        return i;
+    }
+
+    void f(int&amp;&amp; i) {
+        ref r(forward(i));
+        //<SPAN CLASS="cmnt"> Here </SPAN>r.p<SPAN CLASS="cmnt"> is a dangling pointer, pointing to a defunct </SPAN>int<SPAN CLASS="cmnt"> temporary</SPAN>
+    }
+</PRE>
+
+<P>A formulation is needed so that rvalue references are treated like
+class and array rvalues.</P>
+
+<P><B>Notes from the February, 2008 meeting:</B></P>
+
+<P>You can't just treat scalar rvalues like class and array rvalues,
+because they might not have an associated object.  However, if you have
+an rvalue reference, you know that there is an object, so probably the
+best way to address this issue is to specify somehow that binding a
+reference to an rvalue reference does not introduce a new temporary.</P>
+
+<P>(See also issues <A HREF="690.html">690</A> and
+<A HREF="846.html">846</A>.)</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>See paper N3030.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

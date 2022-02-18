@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 591</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="591"></A><H4>591.
+  
+When a dependent base class is the current instantiation
+</H4>
+<B>Section: </B>13.8.3&#160; [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 August 2006<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>Is the following example well-formed?</P>
+
+<PRE>
+    template&lt;class T&gt; struct A {
+         typedef int M;
+         struct B {
+             typedef void M;
+             struct C;
+         };
+    };
+
+    template&lt;class T&gt; struct A&lt;T&gt;::B::C : A&lt;T&gt; {
+         M  // A&lt;T&gt;::M or A&lt;T&gt;::B::M?
+             p[2];
+    };
+</PRE>
+
+<P>13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3 says the use
+of <TT>M</TT> should refer to <TT>A&lt;T&gt;::B::M</TT> because
+the base class <TT>A&lt;T&gt;</TT> is not searched because it's
+dependent.  But in this case <TT>A&lt;T&gt;</TT> is also the
+current instantiation (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]) so it
+seems like it should be searched.
+</P>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<P>The recent changes to the handling of the current instantiation
+may have sufficiently addressed this issue.  </P>
+
+<P><B>Additional note (September, 2012):</B></P>
+
+<P>See also <A HREF="1526.html">issue 1526</A> for additional
+analysis demonstrating that this issue is still current despite the
+changes to the description of the current instantiation.  The status
+has consequently been changed back to "open"  for further consideration.</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph before
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#4">temp.dep.type</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>A <I>dependent base class</I> is a base class that is a dependent
+type and is not the current instantiation. [<I>Note:</I> a base class can
+be the current instantiation in the case of a nested class naming an
+enclosing class as a base. &#8212;<I>end note</I>]
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;class T&gt; struct A {
+    typedef int M;
+    struct B {
+      typedef void M;
+      struct C;
+    };
+  };
+
+  template&lt;class T&gt; struct A&lt;T&gt;::B::C : A&lt;T&gt; {
+    M m; //<SPAN CLASS="cmnt"> OK, </SPAN>A&lt;T&gt;::M
+  };</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<P>A name is a <I>member of the current instantiation</I> if...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.2 [<A href="https://wg21.link/temp.local#9">temp.local</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In the definition of a class template or in the definition of a member of
+such a template that appears outside of the template definition, for each
+<INS>non-dependent</INS> base class
+<INS>(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])</INS> <DEL>which does not depend on
+a <I>template-parameter</I> (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>])</DEL>, if the
+name of the base class or the name of a member of the base class is the
+same as the name of a <I>template-parameter</I>, the base class name or
+member name hides the <I>template-parameter</I> name
+(_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>]). [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3 [<A href="https://wg21.link/temp.dep#3">temp.dep</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In the definition of a class or class template, <DEL>if a base class
+depends on a <I>template-parameter</I>, the base class scope</DEL> <INS>the
+scope of a dependent base class (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])</INS> is
+not examined during unqualified name lookup either at the point of
+definition of the class template or member or during an instantiation of
+the class template or member. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,227 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2700</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2700"></A><H4>2700.
+  
+<TT>#error</TT> disallows existing implementation practice
+</H4>
+<B>Section: </B>4.1.1&#160; [<A href="https://wg21.link/intro.compliance.general">intro.compliance.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-02-13
+  &#160;&#160;&#160;
+  <B>Liaison: </B>WG14<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>The resolution for <A HREF="2518.html">issue 2518</A> disallows
+existing implementation practice, as detailed below:</P>
+
+<UL>
+<LI>The requirement to issue a diagnostic message for each appearance
+of <TT>#warning</TT> conflicts with existing implementations having a
+diagnostic limit.  Furthermore, an implementation with an on-the-fly
+incremental preprocessor is no longer allowed to abort the compilation
+when an error deemed fatal happens (e.g. a <TT>#include</TT> file that
+does not exist).</LI>
+
+<LI>The wording does not allow for implementation-specific mechanisms
+for creating a preprocessing translation unit, such as vendor-specific
+forms of <TT>#if</TT>-like directives and <TT>#pragma once</TT>.</LI>
+
+</UL>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 4.1.1 [<A href="https://wg21.link/intro.compliance.general#2">intro.compliance.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Furthermore, a conforming implementation
+<UL>
+<LI>shall not accept a preprocessing translation unit containing a
+#error preprocessing directive
+(15.8 [<A href="https://wg21.link/cpp.error">cpp.error</A>])<DEL>,</DEL> <INS>and</INS>
+</LI>
+
+<LI><DEL>shall issue at least one diagnostic message for each #warning or
+#error preprocessing directive not following a #error preprocessing
+directive in a preprocessing translation unit, and</DEL></LI>
+
+<LI>shall not accept a translation unit with
+a <I><TT>static_assert</TT>-declaration</I> that fails
+(9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 5.1 [<A href="https://wg21.link/lex.separate#1">lex.separate</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The text of the program is kept in units called source files in this
+document. A source file together with all the headers
+(16.4.2.3 [<A href="https://wg21.link/headers">headers</A>]) and source files included
+(15.3 [<A href="https://wg21.link/cpp.include">cpp.include</A>]) via the preprocessing directive #include,
+less any source lines skipped by any of the conditional inclusion
+(15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>]) preprocessing directives <INS>or by the
+implementation-defined behavior of
+any <I>conditionally-supported-directive</I>s
+(15.1 [<A href="https://wg21.link/cpp.pre">cpp.pre</A>])</INS>, is called a <I>preprocessing
+translation unit</I>.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-03-03</B></P>
+
+<P>Permit that <TT>#warning</TT> can be ignored if another diagnostic
+is produced.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-01-19):</B></P>
+
+<OL>
+<LI>
+<P>Change in 4.1.1 [<A href="https://wg21.link/intro.compliance.general#2.3">intro.compliance.general</A>] bullet 2.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+
+<LI>Otherwise, if a program contains
+
+<UL>
+<LI>a violation of any diagnosable rule<DEL> or</DEL><INS>,</INS>
+</LI>
+
+<LI><INS>a preprocessing translation unit with a <TT>#warning</TT>
+preprocessing directive (15.8 [<A href="https://wg21.link/cpp.error">cpp.error</A>]), or</INS></LI>
+
+<LI>an occurrence of a construct described in this document as
+&#8220;conditionally-supported&#8221; when the implementation does not
+support that construct,</LI>
+</UL>
+a conforming implementation shall issue at least one diagnostic message.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 4.1.1 [<A href="https://wg21.link/intro.compliance.general#2">intro.compliance.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Furthermore, a conforming implementation shall not accept
+<UL>
+<LI>a preprocessing translation unit containing a
+#error preprocessing directive
+(15.8 [<A href="https://wg21.link/cpp.error">cpp.error</A>])<DEL>,</DEL> <INS>or</INS>
+</LI>
+
+<LI><DEL>shall issue at least one diagnostic message for each #warning or
+#error preprocessing directive not following a #error preprocessing
+directive in a preprocessing translation unit, and</DEL></LI>
+
+<LI>
+<DEL>shall not accept</DEL> a translation unit with
+a <I><TT>static_assert</TT>-declaration</I> that fails
+(9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 5.1 [<A href="https://wg21.link/lex.separate#1">lex.separate</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The text of the program is kept in units called source files in this
+document. A source file together with all the headers
+(16.4.2.3 [<A href="https://wg21.link/headers">headers</A>]) and source files included
+(15.3 [<A href="https://wg21.link/cpp.include">cpp.include</A>]) via the preprocessing directive #include,
+less any source lines skipped by any of the conditional inclusion
+(15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>]) preprocessing directives,
+<INS>as modified by the implementation-defined behavior of any
+conditionally-supported-directives (15.1 [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]) and
+pragmas (15.9 [<A href="https://wg21.link/cpp.pragma">cpp.pragma</A>]), if any,</INS>
+is called a <I>preprocessing translation unit</I>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.8 [<A href="https://wg21.link/cpp.error">cpp.error</A>] as follows:</P>
+
+
+<BLOCKQUOTE>
+
+A preprocessing directive of <DEL>either of the following
+forms</DEL> <INS>the form</INS>
+
+<PRE>
+# error <I>pp-tokens<SUB>opt</SUB> new-line</I>
+</PRE>
+
+<INS>renders the program ill-formed.  A preprocessing directive of the
+form</INS>
+<PRE>
+# warning <I>pp-tokens<SUB>opt</SUB> new-line</I>
+</PRE>
+<DEL>causes</DEL> <INS>requires</INS> the implementation to
+produce <DEL>a</DEL> <INS>at least one</INS> diagnostic
+message <INS>for the preprocessing translation unit
+(4.1.1 [<A href="https://wg21.link/intro.compliance.general">intro.compliance.general</A>])</INS> <DEL>that</DEL>.
+
+<P>
+<INS><I>Recommended practice:</I> Any diagnostic message caused by
+either of these directives</INS> should include the specified sequence
+of preprocessing tokens<DEL>; the <TT>#error</TT> directive renders
+the program ill-formed</DEL>.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2859</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2859"></A><H4>2859.
+  
+Value-initialization with multiple default constructors
+</H4>
+<B>Section: </B>9.4.1&#160; [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-09<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/501">#501</A>.)</P>
+
+<P>Subclause 9.4.1 [<A href="https://wg21.link/dcl.init.general#9">dcl.init.general</A>] paragraph 9 specifies (as
+modified by <A HREF="2820.html">issue 2820</A>):</P>
+
+<BLOCKQUOTE>
+
+To <I>value-initialize</I> an object of type T means:
+<UL>
+<LI>If T is a (possibly
+cv-qualified) class type (Clause 11 [<A href="https://wg21.link/class">class</A>]), then
+<UL>
+<LI>if T has either no
+default constructor (11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]) or a default
+constructor that is user-provided or deleted, then the object is
+default-initialized;</LI>
+<LI>otherwise, the object is zero-initialized and then
+default-initialized.</LI>
+</UL>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Per the specification, no zero-initialization occurs if the class
+has <I>any</I> user-provided default constructor, even if that
+constructor is not actually selected for the default initialization.
+This is observable in a constant expression, where reads of
+uninitialized data members are ill-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-04-05):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The lifetime of an object or reference is a runtime property of the
+object or reference. A variable is said to have <I>vacuous
+initialization</I> if it is default-initialized<INS>, no other
+initialization is performed,</INS> and, if it is of class type or a
+(possibly multidimensional) array thereof, <INS>a trivial constructor
+of</INS> that class type <DEL>has a trivial default
+constructor</DEL> <INS>is selected for the
+default-initialization</INS>. The lifetime of an object of type T
+begins when: ...
+
+</BLOCKQUOTE>
+
+</LI>
+<LI>
+<P>Change in 9.4.1 [<A href="https://wg21.link/dcl.init.general#9">dcl.init.general</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+To <I>value-initialize</I> an object of type T means:
+<UL>
+<LI>If T is a (possibly cv-qualified) class type
+(Clause 11 [<A href="https://wg21.link/class">class</A>]), then
+<UL class="del">
+<LI>if T has either no default constructor
+(11.4.5.2 [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]) or a default constructor that is
+user-provided or deleted, then the object is default-initialized;</LI>
+<LI>otherwise, the object is zero-initialized and then
+default-initialized.</LI>
+</UL>
+<INS>let <TT>C</TT> be the constructor selected to default-initialize
+the object, if any. If <TT>C</TT> is not user-provided, the object is first
+zero-initialized.  In all cases, the object is then
+default-initialized.</INS>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

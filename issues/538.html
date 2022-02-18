@@ -1,0 +1,322 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 538</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="538"></A><H4>538.
+  
+Definition and usage
+of <I>structure</I>, <I>POD-struct</I>, <I>POD-union</I>,
+and <I>POD class</I>
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 August 2005<BR>
+
+
+<P>[Voted into WP at April, 2007 meeting.]</P>
+
+<P>There are several problems with the terms defined in
+Clause 11 [<A href="https://wg21.link/class#4">class</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+A <I>structure</I> is a class defined with
+the <I>class-key</I> <TT>struct</TT>; its members and base classes
+(11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) are public by default (
+11.8 [<A href="https://wg21.link/class.access">class.access</A>]). A <I>union</I> is a class defined with the
+<I>class-key</I> <TT>union</TT>; its members are public by default and
+it holds only one data member at a time (11.5 [<A href="https://wg21.link/class.union">class.union</A>]). [<I>Note:</I> aggregates of class type are described
+in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]. &#8212;<I>end note</I>]
+A <I>POD-struct</I> is an aggregate class that has no non-static data
+members of type non-POD-struct, non-POD-union (or array of such types)
+or reference, and has no user-declared copy assignment operator and no
+user-declared destructor. Similarly, a <I>POD-union</I> is an
+aggregate union that has no non-static data members of type
+non-POD-struct, non-POD-union (or array of such types) or reference,
+and has no user-declared copy assignment operator and no user-declared
+destructor. A <I>POD class</I> is a class that is either a POD-struct
+or a POD-union.
+
+</BLOCKQUOTE>
+
+<OL>
+
+<LI>
+<P>Although the term <I>structure</I> is defined here, it is
+used only infrequently throughout the Standard, often apparently
+inadvertently and consequently incorrectly:</P>
+
+<UL>
+
+<LI><P>7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4: the use is in a
+note and is arguably correct and helpful.</P></LI>
+
+<LI><P>11.4 [<A href="https://wg21.link/class.mem#11">class.mem</A>] paragraph 11: the term is used
+(three times) in an example.  There appears to be no reason to use
+it instead of &#8220;class,&#8221; but its use is not
+problematic.</P></LI>
+
+<LI><P>_N4567_.17.3 [<A href="https://wg21.link/definitions">definitions</A>] &#8220;<B>iostream class templates</B>:&#8221;
+the <TT>traits</TT> argument
+to the iostream class templates is (presumably unintentionally)
+constrained to be a structure, i.e., to use the <TT>struct</TT>
+keyword and not the <TT>class</TT> keyword in its definition.</P></LI>
+
+<LI><P>Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2: the minimum number of
+declarator operators is given for structures and unions but not
+for classes defined using the <TT>class</TT> keyword.</P></LI>
+
+<LI><P>Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2: class, structure,
+and union are used as disjoint terms in describing nesting
+levels.  (The nonexistent nonterminal <I>struct-declaration-list</I>
+is used, as well.)</P></LI>
+
+</UL>
+
+<P>There does not appear to be a reason for defining the term
+<I>structure</I>.  The one reference where it is arguably useful,
+in the note in 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], could be rewritten
+as something like, &#8220;'class objects' may be defined using the
+<TT>class</TT>, <TT>struct</TT>, or <TT>union</TT>
+<I>class-key</I>s; see Clause 11 [<A href="https://wg21.link/class">class</A>].&#8221;</P>
+
+</LI>
+
+<LI>
+<P>Based on its usage later in the paragraph and elsewhere,
+&#8220;POD-struct&#8221; appears to be intended to exclude unions.
+However, the definition of &#8220;aggregate class&#8221; in
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr#1">dcl.init.aggr</A>] paragraph 1 includes unions.
+Furthermore, the name itself is confusing, leading to the question of
+whether it was intended that only classes defined
+using <TT>struct</TT> could be POD-structs or
+if <TT>class</TT>-classes are included.  The definition should
+probably be rewritten as, &#8220;A <I>POD-struct</I> is an aggregate
+class <INS>defined with the <I>class-key</I> <TT>struct</TT> or
+the <I>class-key</I> <TT>class</TT></INS> that has no...</P>
+
+</LI>
+
+<LI><P>In most references outside Clause 11 [<A href="https://wg21.link/class">class</A>],
+POD-struct and POD-union are mentioned together and treated
+identically.  These references should be changed to refer to the
+unified term, &#8220;POD class.&#8221;</P></LI>
+
+<LI><P>Noted in passing: 17.2 [<A href="https://wg21.link/support.types#4">support.types</A>] paragraph 4
+refers to the undefined terms &#8220;POD structure&#8221; and
+(unhyphenated) &#8220;POD union;&#8221; the pair should be replaced
+by a single reference to &#8220;POD class.&#8221;</P></LI>
+
+</OL>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<OL>
+
+<LI>
+<P>Change Clause 11 [<A href="https://wg21.link/class#4">class</A>] paragraph 4 as indicated:</P>
+
+<BLOCKQUOTE>
+
+<DEL>A <I>structure</I> is a class defined with
+the <I>class-key</I> <TT>struct</TT>; its members and base classes
+(11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) are public by default (
+11.8 [<A href="https://wg21.link/class.access">class.access</A>]).</DEL> A <I>union</I> is a class defined with the
+<I>class-key</I> <TT>union</TT>; <DEL>its members are public by default
+and</DEL> it holds only one data member at a time (11.5 [<A href="https://wg21.link/class.union">class.union</A>]).  [<I>Note:</I> aggregates of class type are described
+in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>].  &#8212;<I>end note</I>]
+<DEL>A <I>POD-struct</I> is an aggregate class that has no non-static
+data members of type non-POD-struct, non-POD-union (or array of such
+types) or reference, and has no user-declared copy assignment operator
+and no user-declared destructor. Similarly, a <I>POD-union</I> is an
+aggregate union that has no non-static data members of type
+non-POD-struct, non-POD-union (or array of such types) or reference,
+and has no user-declared copy assignment operator and no user-declared
+destructor. A <I>POD class</I> is a class that is either a POD-struct
+or a POD-union.</DEL> <INS>A <I>POD class</I> is an aggregate class that
+has no non-static data members of non-POD type (or array of such a
+type) or reference, and has no user-declared copy assignment operator
+and no user-declared destructor. A <I>POD-struct</I> is a POD class
+defined with the <I>class-key</I> <TT>struct</TT> or
+the <I>class-key</I> <TT>class</TT>. A <I>POD-union</I> is a POD class
+defined with the <I>class-key</I> <TT>union</TT>.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 11.8.3 [<A href="https://wg21.link/class.access.base#2">class.access.base</A>] paragraph 2 as indicated:</P>
+
+<BLOCKQUOTE>
+
+In the absence of an <I>access-specifier</I> for a base
+class, <TT>public</TT> is assumed when the derived class is
+<DEL>declared</DEL> <INS>defined with
+the <I>class-key</I></INS> <TT>struct</TT> and <TT>private</TT> is
+assumed when the class is <DEL>declared</DEL> <INS>defined with the
+<I>class-key</I></INS> <TT>class</TT>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Delete the note in 7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note:</I> &#8220;class objects&#8221; can be structures
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) and unions (11.5 [<A href="https://wg21.link/class.union">class.union</A>]). Classes are discussed in Clause 11 [<A href="https://wg21.link/class">class</A>].
+&#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the commentary in the example in 11.4 [<A href="https://wg21.link/class.mem#11">class.mem</A>] paragraph 11
+as indicated:</P>
+
+<BLOCKQUOTE>
+
+<P>...an integer, and two pointers to <DEL>similar structures</DEL>
+<INS>objects of the same type</INS>. Once this definition...</P>
+
+<P>...the <TT>count</TT> member of the <DEL>structure</DEL> <INS>object</INS>
+to which <TT>sp</TT> points; <TT>s.left</TT> refers to
+the <TT>left</TT> subtree pointer of the <DEL>structure</DEL>
+<INS>object</INS> <TT>s</TT>; and...</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change _N4567_.17.3 [<A href="https://wg21.link/definitions">definitions</A>] &#8220;<B>iostream class
+templates</B>&#8221; as indicated:</P>
+
+<BLOCKQUOTE>
+
+...the argument <TT>traits</TT> is a <DEL>structure</DEL> <INS>class</INS>
+which defines additional characteristics...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 17.6 [<A href="https://wg21.link/support.dynamic#4">support.dynamic</A>] paragraph 4 as indicated:</P>
+
+<BLOCKQUOTE>
+
+If <I>type</I> is not a <DEL>POD structure or a POD union</DEL>
+<INS>POD class</INS> (clause 9), the results are undefined.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the third bullet of Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2 as
+indicated:</P>
+
+<UL><LI><P>
+
+Pointer, array, and function declarators (in any combination)
+modifying <DEL>an</DEL> <INS>a class,</INS> arithmetic, <DEL>structure,
+union,</DEL> or incomplete type in a declaration [256].
+
+</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Change the nineteenth bullet of Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2
+as indicated:</P>
+
+<UL><LI><P>
+
+Data members in a single class<DEL>, structure, or union</DEL> [16 384].
+
+</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Change the twenty-first bullet of Clause Annex B [<A href="https://wg21.link/implimits#2">implimits</A>] paragraph 2
+as indicated:</P>
+
+<UL><LI><P>
+
+Levels of nested class<DEL>, structure, or union</DEL> definitions in a
+single <DEL><I>struct-declaration-list</I></DEL>
+<INS><I>member-specification</I></INS> [256].
+
+</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Change C.8 [<A href="https://wg21.link/diff.library#6">diff.library</A>] paragraph 6 as indicated:</P>
+
+<BLOCKQUOTE>
+
+The C++ Standard library provides 2 standard <DEL>structures</DEL>
+<INS><TT>struct</TT>s</INS> from the C library, as shown in Table 126.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the last sentence of 6.8 [<A href="https://wg21.link/basic.types#10">basic.types</A>] paragraph 10
+as indicated:</P>
+
+<BLOCKQUOTE>
+
+Scalar types, <DEL>POD-struct types, POD-union types</DEL> <INS>POD
+classes</INS> (Clause 11 [<A href="https://wg21.link/class">class</A>]), arrays of such types
+and <I>cv-qualified</I> versions of these types (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) are collectively called
+<I>POD types</I>.
+
+</BLOCKQUOTE>
+
+<P>
+<I>Drafting note:</I> Do not change 6.8 [<A href="https://wg21.link/basic.types#11">basic.types</A>] paragraph 11,
+ because it's a note and the definition of
+&#8220;layout-compatible&#8221; is separate for POD-struct and
+POD-union in 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>].</P>
+
+</LI>
+
+</OL>
+
+<P>(This resolution also resolves <A HREF="327.html">issue 327</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

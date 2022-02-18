@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2212</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2212"></A><H4>2212.
+  
+Typedef changing linkage after use
+</H4>
+<B>Section: </B>9.2.4&#160; [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-12-09<BR>
+
+
+<P>[Accepted at the July, 2019 meeting as part of paper
+P1766R1 (Mitigating minor modules maladies)].</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  typedef struct { void f() { extern decltype(*this) x; void *p = &amp;x; } } X;
+</PRE>
+
+<P>This forms a complete anonymous type, builds a variable of that
+type, which is declared, but not defined, then the variable is
+odr-used, then the class is given a typedef name for linkage purposes,
+which changes the linkage of the class and the variable.</P>
+
+<P>More insidious examples can be constructed where the use of the
+class's linkage happens while parsing the body of the class, not one
+of its methods, so we can't entirely fix this by delaying the delayed
+parts of the class a bit longer.</P>
+
+<P>It might be reasonable to expect an implementation to look ahead
+past the close brace for a typedef name for linkage when it
+sees <TT>typedef struct {</TT>, but the possibility that
+the <TT>typedef</TT> keyword might be after the close brace means even
+that would not be entirely correct.</P>
+
+<P>One approach would be to make this ill-formed by fixating the
+linkage of the type at the point where it is used in a way that
+requires linkage, and giving an error when the linkage would change.
+Another approach would be to limit an anonymous type to the feature
+subset of C (no <TT>this</TT>, no member functions, no static
+members).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

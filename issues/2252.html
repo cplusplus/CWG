@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2252</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2252"></A><H4>2252.
+  
+Enumeration list-initialization from the same type
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-03-22<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>According to 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.8">dcl.init.list</A>] bullet 3.8,</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if <TT>T</TT> is an enumeration with a fixed underlying type
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), the <I>initializer-list</I> has a single
+element <TT>v</TT>, and the initialization is direct-list-initialization,
+the object is initialized with the value <TT>T(v)</TT>
+(7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]); if a narrowing conversion is required to
+convert <TT>v</TT> to the underlying type of <TT>T</TT> , the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<P>This could be read as requiring that there be a conversion from
+<TT>v</TT> to the underlying type of <TT>T</TT>, leaving the status of an
+example like the following unclear:</P>
+
+<PRE>
+  enum class E {};
+  struct X { operator E(); };
+  E{X()}; //<SPAN CLASS="cmnt"> ok? </SPAN>
+</PRE>
+
+<P><B>Notes from the March, 2018 meeting:</B></P>
+
+<P>CWG disagreed that the existing wording requires such a conversion, only
+that if such a conversion is possble, it must not narrow. A formulation
+along the lines of &#8220;if that initialization involves a narrowing
+conversion to the underlying type of <TT>T</TT>...&#8221; was suggested to
+clarify the intent. This will be handled editorially, and the issue will be
+left in "review" status until the change has been verified.</P>
+
+<P><B>Additional notes (August, 2023)</B></P>
+
+<P>
+<A HREF="2374.html">Issue 2374</A> has meanwhile clarified
+that <TT>v</TT> is required to implicitly convert to the underlying
+type of the enumeration for 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.8">dcl.init.list</A>] bullet 3.8 to
+apply.  Now, the logic falls through to 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.9">dcl.init.list</A>] bullet 3.9 for the above example, making it well-formed.</P>
+
+<P><B>CWG 2023-09-15</B></P>
+
+<P>Class types with conversions to scalar types were not in view when
+the wording in this bullet was conceived.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-10-06):</B></P>
+
+<P>Change in 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.8">dcl.init.list</A>] bullet 3.8 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if T is an enumeration with a fixed underlying type
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) U, the initializer-list has a single
+element v <INS>of scalar type</INS>, v can be implicitly converted to
+U, and the initialization is direct-list-initialization, the object is
+initialized with the value T(v) (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]); if a
+narrowing conversion is required to convert v to U, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

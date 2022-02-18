@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 873</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="873"></A><H4>873.
+  
+Deducing rvalue references in declarative contexts
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 April, 2009<BR>
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+<P>13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#3">temp.deduct.call</A>] paragraph 3 gives the deduction of
+rvalue references special treatment in the context of a function call:</P>
+
+<BLOCKQUOTE>
+
+If <TT>P</TT> is of the form <TT>T&amp;&amp;</TT>, where <TT>T</TT> is
+a template parameter, and the argument is an lvalue, the type
+<TT>A&amp;</TT> is used in place of <TT>A</TT> for type deduction.
+
+</BLOCKQUOTE>
+
+<P>A similar provision is needed, but is not present, in declarative
+contexts.  For example:</P>
+
+<PRE>
+    template&lt;typename T&gt; void f(T&amp;&amp;);
+    template&lt;&gt; void f(int&amp;) { }    // #1
+    template&lt;&gt; void f(int&amp;&amp;) { }   // #2
+    void g(int i) {
+        f(i);    // calls f&lt;int&amp;&gt;(int&amp;), i.e., #1
+        f(0);    // calls f&lt;int&gt;(int&amp;&amp;), i.e., #2
+    }
+</PRE>
+
+<P>There need to be rules that deduce the template arguments for the
+specializations in the same way that the arguments are deduced in the
+calls.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<OL>
+<LI><P>Change 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#10">temp.deduct.type</A>] paragraph 10 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Similarly, if <TT>P</TT> has a form that contains
+<TT>(T)</TT>, then each parameter type
+<TT>P</TT><SUB><I>i</I></SUB> of the respective
+<I>parameter-type-list</I> of <TT>P</TT> is compared with the
+corresponding parameter type <TT>A</TT><SUB><I>i</I></SUB> of the
+corresponding <I>parameter-type-list</I> of <TT>A</TT>.  <INS>If
+<TT>P</TT> and <TT>A</TT> are function types that originated from
+deduction when taking the address of a function template
+(13.10.3.3 [<A href="https://wg21.link/temp.deduct.funcaddr">temp.deduct.funcaddr</A>]) or when deducing template
+arguments from a function declaration ([temp.deduct.decl]) and
+<TT>P</TT><SUB><I>i</I></SUB> and <TT>A</TT><SUB><I>i</I></SUB>
+are parameters of the top-level <I>parameter-type-list</I> of
+<TT>P</TT> and <TT>A</TT>, respectively, <TT>P</TT><SUB><I>i</I></SUB>
+is adjusted if it is an rvalue reference to
+a cv-unqualified template parameter and
+<TT>A</TT><SUB><I>i</I></SUB> is an lvalue reference, in which case
+the type of <TT>P</TT><SUB><I>i</I></SUB> is
+changed to be the template parameter type (i.e.,
+<TT>T&amp;&amp;</TT> is changed to simply
+<TT>T</TT>). [<I>Note:</I> As a result, when
+<TT>P</TT><SUB><I>i</I></SUB> is <TT>T&amp;&amp;</TT> and
+<TT>A</TT><SUB><I>i</I></SUB> is <TT>X&amp;</TT>, the adjusted
+<TT>P</TT><SUB><I>i</I></SUB> will be <TT>T</TT>, causing
+<TT>T</TT> to be deduced as <TT>X&amp;</TT>. &#8212;<I>end
+note</I>] [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template&lt;typename T&gt; void f(T&amp;&amp;);
+  template&lt;&gt; void f(int&amp;) { }      //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;&gt; void f(int&amp;&amp;) { }     //<SPAN CLASS="cmnt"> #2</SPAN>
+  void g(int i) {
+    f(i);   //<SPAN CLASS="cmnt"> calls </SPAN>f&lt;int&amp;&gt;(int&amp;)<SPAN CLASS="cmnt">, i.e., #1</SPAN>
+    f(0);   //<SPAN CLASS="cmnt"> calls </SPAN>f&lt;int&gt;(int&amp;&amp;)<SPAN CLASS="cmnt">, i.e., #2</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<P>If the <I>parameter-declaration</I> corresponding to
+<TT>P</TT><SUB><I>i</I></SUB> is a function parameter pack...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new section under 13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>], either before
+or after 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>], as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS><B>14.8.2.x Deducing template arguments from a function declaration [temp.deduct.decl]</B></INS></P>
+
+<P><INS>In a declaration whose <I>declarator-id</I> refers to a
+specialization of a function template, template argument
+deduction is performed to identify the specialization to which
+the declaration refers. Specifically, this is done for explicit
+instantiations (13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]), explicit
+specializations (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), and certain friend
+declarations (13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]). This is also done to
+determine whether a function template specialization matches a
+placement <TT>operator new</TT> (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>],
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). In all these cases, <TT>P</TT> is the
+type of the function template being considered as a potential
+match and <TT>A</TT> is the function type from the
+declaration. The deduction is done as described in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>].</INS></P>
+
+<P><INS>If, for the set of function templates so considered, there is
+either no match or more than one match after partial ordering has
+been considered (13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]), deduction fails
+and the declaration is ill-formed.</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(Note that the resolution of <A HREF="674.html">issue 674</A> depends on this resolution.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

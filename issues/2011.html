@@ -1,0 +1,210 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2011</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2011"></A><H4>2011.
+  
+Unclear effect of reference capture of reference
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ville Voutilainen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-09-28<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting as document P0613R0.]</P>
+
+
+
+<P>The Standard refers to capturing &#8220;entities,&#8221; and a
+reference is an entity.  However, it is not clear what capturing a
+reference by reference would mean.  In particular, 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#16">expr.prim.lambda</A>] paragraph 16
+says,</P>
+
+<BLOCKQUOTE>
+
+It is unspecified whether additional unnamed non-static data
+members are declared in the closure type for entities
+captured by reference.
+
+</BLOCKQUOTE>
+
+<P>If a reference captured by reference is not represented by a
+member, it is hard to see how something like the following
+example could work:</P>
+
+<PRE>
+  #include &lt;functional&gt;
+  #include &lt;iostream&gt;
+
+  std::function&lt;void()&gt; make_function(int&amp; x) {
+    return [&amp;]{ std::cout &lt;&lt; x &lt;&lt; std::endl; };
+  }
+
+  int main() {
+    int i = 3;
+    auto f = make_function(i);
+    i = 5;
+    f();
+  }
+</PRE>
+
+<P>Should this be undefined behavior or should it print <TT>5</TT>?</P>
+
+<P><B>Proposed resolution (November, 2014) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#18">expr.prim.lambda</A>] paragraph 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Every <I>id-expression</I> within
+the <I>compound-statement</I> of a <I>lambda-expression</I>
+that is an odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of an entity captured by copy is
+transformed into an access to the corresponding unnamed data
+member of the closure type. [<I>Note:</I>
+An <I>id-expression</I> that is not an odr-use refers to the
+original entity, never to a member of the closure
+type. Furthermore, such an <I>id-expression</I> does not
+cause the implicit capture of the entity.  &#8212;<I>end
+note</I>] If <TT>this</TT> is captured, each odr-use
+of <TT>this</TT> is transformed into an access to the
+corresponding unnamed data member of the closure type, cast
+(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]) to the type of <TT>this</TT>. [<I>Note:</I> The cast
+ensures that the transformed expression is a
+prvalue. &#8212;<I>end
+note</I>] <INS>An <I>id-expression</I> within
+the <I>compound-statement</I> of a <I>lambda-expression</I>
+that is an odr-use of a reference captured by reference
+refers to the entity to which the captured reference is
+bound and not to the captured reference. [<I>Note:</I> Such
+odr-uses are not invalidated by the end of the captured
+reference's lifetime. &#8212;<I>end note</I>]</INS>
+[<I>Example:</I>
+</P>
+
+<PRE>
+  void f(const int*);
+  void g() {
+    const int N = 10;
+    [=] {
+    int arr[N]; //<SPAN CLASS="cmnt"> OK: not an odr-use, refers to automatic variable</SPAN>
+    f(&amp;N);      //<SPAN CLASS="cmnt"> OK: causes </SPAN>N<SPAN CLASS="cmnt"> to be captured; </SPAN>&amp;N<SPAN CLASS="cmnt"> points to the</SPAN>
+                //<SPAN CLASS="cmnt"> corresponding member of the closure type</SPAN>
+    };
+  }
+<INS>  auto h(int &amp;r) {
+    return [&amp;]() {
+      ++r;      //<SPAN CLASS="cmnt"> Valid after </SPAN>h<SPAN CLASS="cmnt"> returns if the lifetime of the</SPAN>
+                //<SPAN CLASS="cmnt"> object to which </SPAN>r<SPAN CLASS="cmnt"> is bound has not ended</SPAN>
+    };
+  }</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#23">expr.prim.lambda</A>] paragraph 23 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> If <DEL>an</DEL> <INS>a non-reference</INS> entity is
+implicitly or explicitly captured by reference, invoking the function call
+operator of the corresponding <I>lambda-expression</I> after the lifetime
+of the entity has ended is likely to result in undefined
+behavior. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Proposed resolution (February, 2017):</B></P>
+
+<OL>
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#17">expr.prim.lambda</A>] paragraph 17 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Every <I>id-expression</I> within the <I>compound-statement</I> of
+a <I>lambda-expression</I> that is an odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of
+an entity captured by copy is transformed into an access to the
+corresponding unnamed data member of the closure type. [<I>Note:</I>
+An <I>id-expression</I> that is not an odr-use refers to the original
+entity, never to a member of the closure type. Furthermore, such
+an <I>id-expression</I> does not cause the implicit capture of the entity.
+&#8212;<I>end note</I>] If <TT>*this</TT> is captured by copy, each odr-use
+of <TT>this</TT> is transformed into a pointer to the corresponding unnamed
+data member of the closure type, cast (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]) to the
+type of <TT>this</TT>. [<I>Note:</I> The cast ensures that the transformed
+expression is a prvalue. &#8212;<I>end
+note</I>] <INS>An <I>id-expression</I> within the <I>compound-statement</I>
+of a <I>lambda-expression</I> that is an odr-use of a reference captured by
+reference refers to the entity to which the captured reference is bound and
+not to the captured reference. [<I>Note:</I> The validity of such
+captures is determined by the lifetime of the object to which the
+reference refers, not by the lifetime of the reference
+itself. &#8212;<I>end note</I>]</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  void f(const int*);
+  void g() {
+    const int N = 10;
+    [=] {
+    int arr[N]; //<SPAN CLASS="cmnt"> OK: not an odr-use, refers to automatic variable</SPAN>
+    f(&amp;N);      //<SPAN CLASS="cmnt"> OK: causes </SPAN>N<SPAN CLASS="cmnt"> to be captured; </SPAN>&amp;N<SPAN CLASS="cmnt"> points to the</SPAN>
+                //<SPAN CLASS="cmnt"> corresponding member of the closure type</SPAN>
+    };
+  }
+<INS>  auto h(int &amp;r) {
+    return [&amp;] {
+      ++r;      //<SPAN CLASS="cmnt"> Valid after </SPAN>h<SPAN CLASS="cmnt"> returns if the lifetime of the</SPAN>
+                //<SPAN CLASS="cmnt"> object to which </SPAN>r<SPAN CLASS="cmnt"> is bound has not ended</SPAN>
+    };
+  }</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#25">expr.prim.lambda</A>] paragraph 25 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> If <DEL>an</DEL> <INS>a non-reference</INS> entity is
+implicitly or explicitly captured by reference, invoking the function call
+operator of the corresponding <I>lambda-expression</I> after the lifetime
+of the entity has ended is likely to result in undefined
+behavior. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

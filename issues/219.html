@@ -1,0 +1,181 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 219</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="219"></A><H4>219.
+  
+Cannot defend against destructors that throw exceptions
+</H4>
+<B>Section: </B>14.6.2&#160; [<A href="https://wg21.link/except.terminate">except.terminate</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Mar 2000<BR>
+
+
+
+
+<P>Destructors that throw can easily cause programs to terminate,
+with no possible defense.  Example: Given</P>
+
+<PRE>
+    struct XY { X x; Y y; };
+</PRE>
+
+<P>Assume that <TT>X::~X()</TT> is the only destructor in the entire
+program that can throw. Assume further that <TT>Y</TT> construction is
+the only other operation in the whole program that can throw. Then
+<TT>XY</TT> cannot be used safely, in any context whatsoever, period
+&#8212; even simply declaring an <TT>XY</TT> object can crash the
+program:</P>
+
+<PRE>
+    XY xy; // construction attempt might terminate program:
+	   //   1. construct x -- succeeds
+	   //   2. construct y -- fails, throws exception
+	   //   3. clean up by destroying x -- fails, throws exception,
+	   //      but an exception is already active, so call
+	   //      std::terminate() (oops)
+	   // there is no defense
+</PRE>
+
+So it is highly dangerous to have even one destructor that could throw.
+
+<P>Suggested Resolution:</P>
+
+<P>Fix the above problem in one of the following two ways. I prefer
+the first.</P>
+
+<OL>
+
+<LI>We already have text that specifies that any destructor operation in
+the standard library (presumably including the destructors of UDTs used in
+containers or as predicates, etc.) may not throw. There is good reason to
+widen this injunction to specify that destructors may never throw at all.
+(I realize this would render existing programs nonconforming if they did
+do this, but it's unsafe anyway.)</LI>
+
+<LI>Specify what happens in the above case so that
+<TT>std::terminate()</TT> won't be called.</LI>
+
+</OL>
+
+<P>
+<U>Fergus Henderson</U>: I disagree.  Code using <TT>XY</TT> may
+well be safe, if <TT>X::~X()</TT> only throws if
+<TT>std::uncaught_exception()</TT> is <TT>false</TT>.</P>
+
+<P>I think the current exception handling scheme in C++ is certainly
+flawed, but the flaws are IMHO design flaws, not minor technical
+defects, and I don't think they can be solved by minor tweaks to the
+existing design.  I think that at this point it is probably better to
+keep the standard stable, and learn to live with the existing flaws,
+rather than trying to solve them via TC.</P>
+
+<P>
+<U>Bjarne Stroustrup</U>: I strongly prefer to have the call to
+<TT>std::terminate()</TT> be conforming. I see <TT>std::terminate()</TT> as a
+proper way to blow away "the current mess" and get to the next level
+of error handling. I do not want that escape to be non-conforming
+&#8212; that would imply that programs relying on a error handling
+based on serious errors being handled by terminating a process (which
+happens to be a C++ program) in <TT>std::terminate()</TT> becomes
+non-conforming. In many systems, there are &#8212; and/or should be
+&#8212; error-handling and recovery mechanisms beyond what is offered
+by a single C++ program.</P>
+
+<P>
+<U>Andy Koenig</U>: If we were to prohibit writing a destructor
+that can throw, how would I solve the following problem?</P>
+
+<P>I want to write a class that does buffered output.  Among the
+other properties of that class is that destroying an object of
+that class writes the last buffer on the output device before
+freeing memory.</P>
+
+<P>What should my class do if writing that last buffer indicates a
+hardware output error?  My user had the option to flush the last
+buffer explicitly before destroying the object, but didn't do so, and
+therefore did not anticipate such a problem.  Unfortunately, the
+problem happened anyway.  Should I be required to suppress this
+error indication anyway?  In all cases?</P>
+
+<P>
+<U>Herb Sutter</U> (June, 2007): IMO, it's fine to suppress
+it.  The user had the option of flushing the buffer and thus
+being notified of the problem and chose not to use it.  If the
+caller didn't flush, then likely the caller isn't ready for an
+exception from the destructor, either.  You could also put an
+assert into the destructor that would trigger if <TT>flush()</TT>
+had not been called, to force callers to use the interface that
+would report the error.  
+</P>
+
+<P>In practice, I would rather thrown an exception, even at the risk
+of crashing the program if we happen to be in the middle of stack
+unwinding.  The reason is that the program would crash only if a
+hardware error occurred in the middle of cleaning up from some other
+error that was in the process of being handled.  I would rather have
+such a bizarre coincidence cause a crash, which stands a chance of
+being diagnosed later, than to be ignored entirely and leave the
+system in a state where the ignore error could cause other trouble
+later that is even harder to diagnose.</P>
+
+<P>If I'm not allowed to throw an exception when I detect this problem,
+what are my options?</P>
+
+<P>
+<U>Herb Sutter</U>: I understand that some people might feel that
+"a failed dtor during stack unwinding is preferable in certain cases"
+(e.g., when recovery can be done beyond the scope of the program), but
+the problem is "says who?"  It is the application program that should
+be able to decide whether or not such semantics are correct for it,
+and the problem here is that with the status quo a program cannot
+defend itself against a <TT>std::terminate()</TT> &#8212; period. The
+lower-level code makes the decision for everyone. In the original
+example, the mere existence of an <TT>XY</TT> object puts at risk
+every program that uses it, whether <TT>std::terminate()</TT> makes sense
+for that program or not, and there is no way for a program to protect
+itself.</P>
+
+<P>That the "it's okay if the process goes south should a rare
+combination of things happen" decision should be made by lower-level
+code (e.g., <TT>X</TT> dtor) for all apps that use it, and which
+doesn't even understand the context of any of the hundreds of apps
+that use it, just cannot be correct.</P>
+
+<P><B>Additional note (April, 2011):</B></P>
+
+<P>The addition of the <TT>noexcept</TT> specifier, along with changes
+to make many destructors <TT>noexcept</TT> by default, may have
+sufficiently addressed these concerns.  CWG should consider changing
+this to NAD or extension status.</P>
+
+<P><B>Rationale (August, 2011):</B></P>
+
+<P>As given in the preceding note.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,217 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2771</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2771"></A><H4>2771.
+  
+Transformation for <I>unqualified-id</I>s in address operator
+</H4>
+<B>Section: </B>11.4.3&#160; [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-16<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A{
+    int a;
+    void show(){
+      int* r = &amp;a; //<SPAN CLASS="cmnt"> #1 </SPAN>
+    }
+  };
+</PRE>
+
+<P>According to 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, the
+transformation to class member access does not happen for
+the <I>id-expression</I> <TT>a</TT>, because it is the unparenthesized
+operand of <TT>&amp;</TT>:</P>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (7.5.5 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
+neither part of a class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
+unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
+current class is X (7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
+the <I>id-expression</I> to a non-static non-type member of some class
+C, and if either the <I>id-expression</I> is potentially evaluated or
+C is X or a base class of X, the <I>id-expression</I> is transformed
+into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+using (*this) as the <I>postfix-expression</I> to the left of the .
+operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<P>This resolution moves the transformation to
+7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>], where the similar transformation for
+anonymous unions is already described.</P>
+
+<OL>
+
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#7">basic.def.odr</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<TT>*this</TT> is odr-used if this appears as a potentially-evaluated
+expression (including as the result of <DEL>the</DEL> <INS>any</INS>
+implicit transformation <DEL>in the body of a non-static member
+function</DEL> <INS>to a class member access expression</INS>
+(<DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL>
+<INS>7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS>)).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#2">expr.prim.id.general</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<DIV class="ins">
+<P>
+If an <I>id-expression</I> <I>E</I> denotes a non-static non-type member of
+some class <TT>C</TT> at a point where the current class
+(7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is <TT>X</TT> and
+<UL class="ins">
+<LI>
+<I>E</I> is potentially evaluated or <TT>C</TT> is <TT>X</TT> or a
+base class of <TT>X</TT>, and</LI>
+<LI>
+<I>E</I> is not the <I>id-expression</I> of a class member access
+expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), and</LI>
+<LI>if <I>E</I> is a <I>qualified-id</I>, <I>E</I> is not the
+un-parenthesized operand of the unary <TT>&amp;</TT> operator
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),</LI>
+</UL>
+the <I>id-expression</I> is transformed into a class member access
+expression using <TT>(*this)</TT> as the object expression.
+[<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. Also, if the <I>id-expression</I> occurs within a static or explicit object member function, the class member access is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
+</P>
+</DIV>
+
+<P>If an <I>id-expression</I> E denotes a member M of an anonymous union 
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) U:
+<UL>
+<LI>If U is a non-static data member, E refers to M as a member of the
+lookup context of the terminal name of E (after
+any <INS>implicit</INS> transformation to a class member access
+expression <DEL>(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])</DEL>).</LI>
+<LI>...</LI>
+</UL>
+</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#3">expr.prim.id.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> that denotes a non-static data member or
+implicit object member function of a class can only be used:
+
+<UL>
+<LI>as part of a class member access
+(<DEL>7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]</DEL><INS>after any implicit
+transformation (see above)</INS>) in which the
+object expression refers to the member's class <DEL>[ Footnote: This
+also applies when the object expression is an
+implicit <TT>(*this)</TT> (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).]</DEL> or a
+class derived from that class, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#1">expr.prim.id.unqual</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [ Note: ... <DEL>Within the definition of a non-static member
+function, an identifier that names a non-static member is transformed
+to a class member access expression
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).</DEL> &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, including the example:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When an <I>id-expression</I> (7.5.5 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
+neither part of a class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
+unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
+current class is X (7.5.3 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
+the <I>id-expression</I> to a non-static non-type member of some class
+C, and if either the <I>id-expression</I> is potentially evaluated or
+C is X or a base class of X, the <I>id-expression</I> is transformed
+into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+using (*this) as the <I>postfix-expression</I> to the left of the .
+operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]). [ Example: ... ]</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#6">temp.dep.type</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+[ Example: ...
+<PRE>
+  template int C&lt;B&gt;::g();    //<SPAN CLASS="cmnt"> OK, transformation to class member access syntax</SPAN>
+                             //<SPAN CLASS="cmnt"> does not occur in the template definition context; see <DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL> <INS>7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS></SPAN>
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 683</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="683"></A><H4>683.
+  
+Requirements for trivial subobject special functions
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 March, 2008<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting (resolution
+in paper N2757).]</P>
+
+
+
+<P>Part of the decision regarding whether a class has a trivial special
+function (copy constructor, copy assignment operator, default constructor)
+is whether its base and member subobjects have corresponding trivial
+member functions.  However, with the advent of defaulted functions, it is
+now possible for a single class to have both trivial and nontrivial
+overloads for those functions.  For example,</P>
+
+<PRE>
+    struct B {
+       B(B&amp;) = default;    //<SPAN CLASS="cmnt"> trivial</SPAN>
+       B(const B&amp;);        //<SPAN CLASS="cmnt"> non-trivial, because user-provided</SPAN>
+    };
+
+    struct D : B { };
+</PRE>
+
+<P>Although <TT>B</TT> has <I>a</I> trivial copy constructor and thus
+satisfies the requirements in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#6">class.copy.ctor</A>] paragraph 6,
+the copy constructor in <TT>B</TT> that would be called by the
+implicitly-declared copy constructor in <TT>D</TT> is <I>not</I>
+trivial.  This could be fixed either by requiring that all the
+subobject's copy constructors (or copy assignment operators, or
+default constructors) be trivial or that the one that would be
+selected by overload resolution be trivial.</P>
+
+<P><B>Proposed resolution (July, 2008):</B></P>
+
+<P>Change 9.5 [<A href="https://wg21.link/dcl.fct.def#9">dcl.fct.def</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+... A special member function that would be implicitly defined as
+deleted shall not be explicitly defaulted. <INS>If a special member
+function for a class <TT>X</TT> is defaulted on its first declaration,
+no other special member function of the same kind (default
+constructor, copy constructor, or copy assignment operator) shall be
+declared in class <TT>X</TT>.</INS> A special member function is
+<I>user-provided</I>...
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The resolution adopted as part of paper N2757 differs from the
+July, 2008 proposed resolution by allowing defaulted and
+user-provided special member functions to coexist.  Instead, a
+trivial class is defined as having no non-trivial copy constructors
+or copy assignment operators, and a trivial copy constructor or
+assignment operator is defined as invoking only trivial copy
+operations for base and member subobjects.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

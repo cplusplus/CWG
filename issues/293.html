@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 293</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="293"></A><H4>293.
+  
+Syntax of explicit instantiation/specialization too permissive
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mark Mitchell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Jun 2001<BR>
+
+
+<P>13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>] defines an explicit instantiation as</P>
+
+<UL>
+<I>explicit-instantiation</I>:
+<UL>
+<TT>template</TT> <I>declaration</I>
+</UL>
+</UL>
+
+<P>Syntactically, that allows things like:</P>
+<PRE>
+    template int S&lt;int&gt;::i = 5, S&lt;int&gt;::j = 7;
+</PRE>
+
+<P>which isn't what anyone actually expects.  As far as I can tell,
+nothing in the standard explicitly forbids this, as written.  Syntactically,
+this also allows:</P>
+
+<PRE>
+    template namespace N { void f(); }
+</PRE>
+
+<P>although perhaps the surrounding context is enough to suggest that this is
+invalid.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>I think we should say:</P>
+
+<UL>
+<I>explicit-instantiation</I>:
+<UL>
+<I>type-specifier-seq</I><SUB>opt</SUB>
+    <I>declarator</I><SUB>opt</SUB> <TT>;</TT>
+</UL>
+</UL>
+
+<P>
+<I>[Steve Adamczyk: presumably, this should have</I>
+<TT>template</TT> <I>at the beginning.]</I>
+</P>
+
+<P>and then say that:</P>
+
+<UL>
+<LI>
+The declarator can be omitted only when the <I>type-specifier-seq</I>
+consists solely of an <I>elaborated-type-specifier</I> for a class type, in
+which case the instantiation is for the named class.  If the
+declarator is present the instantiation is for the named entity.
+</LI>
+<LI>
+The <I>type-specifier-seq</I> can be omitted only when the declarator
+is for a constructor, destructor, or conversion operator.
+</LI>
+<LI>
+The <I>type-specifier-seq</I> cannot define any new types.
+</LI>
+</UL>
+
+<P>There are similar problems in 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]:</P>
+
+<UL>
+<I>explicit-specialization</I>:
+<UL>
+<TT>template</TT> &lt;&gt; <I>declaration</I>
+</UL>
+</UL>
+
+<P>Here, I think we want:</P>
+
+<UL>
+<I>explicit-specialization</I>:
+<UL>
+<I>decl-specifier-seq</I><SUB>opt</SUB> <I>init-declarator</I><SUB>opt</SUB> <TT>;</TT>
+</UL>
+</UL>
+
+<P>with similar restrictions as above.</P>
+
+<P>
+<I>[Steve Adamczyk: This also needs to have</I>
+<TT>template &lt;&gt;</TT> <I>at the beginning, possibly repeated.]</I>
+</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

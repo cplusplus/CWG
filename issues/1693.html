@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1693</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1693"></A><H4>1693.
+  
+Superfluous semicolons in class definitions
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-05-29<BR>
+
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>The grammar in 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>] and 9.5.1 [<A href="https://wg21.link/dcl.fct.def.general#1">dcl.fct.def.general</A>] paragraph 1
+are (in part):</P>
+
+<UL>
+<I>member-declaration:</I>
+<UL>
+<I>function-definition</I> <TT>;</TT><I><SUB>opt</SUB></I>
+
+</UL>
+
+</UL>
+
+<UL>
+<I>function-definition:</I>
+<UL>
+<I>function-body</I>
+
+</UL>
+
+</UL>
+
+<UL>
+<I>function-body:</I>
+<UL>
+<TT>= default ;</TT><BR>
+<TT>= delete ;</TT>
+
+</UL>
+
+</UL>
+
+<P>This leads to the following curiosity:</P>
+
+<PRE>
+  struct A {
+    void f1() = delete;   //<SPAN CLASS="cmnt"> #1, ok</SPAN>
+    void f2() = delete;;  //<SPAN CLASS="cmnt"> #2, ok</SPAN>
+    void f3() = delete;;; //<SPAN CLASS="cmnt"> #3, error, extraneous semicolon</SPAN>
+  };
+</PRE>
+
+<P>This could be addressed by moving the semicolon into the productions
+for <I>function-body</I> for the non-<TT>default</TT>/<TT>delete</TT>
+forms or by adding <I>empty-declaration</I> to the list of
+<I>member-declaration</I> productions, as is done with namespace-scope
+declarations.</P>
+
+<P><B>Proposed resolution (November, 2013):</B></P>
+
+<OL>
+<LI><P>Change the grammar in 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>] as follows:</P></LI>
+
+<UL>
+<I>member-declaration:</I>
+<UL>
+<I>attribute-specifier-seq<SUB>opt</SUB> decl-specifier-seq<SUB>opt</SUB> member-declarator-list<SUB>opt</SUB></I> <TT>;</TT><BR>
+<I>function-definition</I> <DEL><TT>;</TT><SUB><I>opt</I></SUB></DEL><BR>
+<I>using-declaration</I><BR>
+<I>static_assert-declaration</I><BR>
+<I>template-declaration</I><BR>
+<I>alias-declaration</I><BR>
+<INS><I>empty-declaration</I></INS>
+
+</UL>
+
+</UL>
+
+<LI><P>Change 11.4 [<A href="https://wg21.link/class.mem#1">class.mem</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Except when used to declare friends
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) or to introduce the name of a
+member of a base class into a derived class
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]), <INS>or when the declaration is
+an <I>empty-declaration</I>,</INS> <I>member-declaration</I>s
+declare members of the class, and each
+such <I>member-declaration</I> shall declare at least one
+member name of the class.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

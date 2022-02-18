@@ -1,0 +1,203 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 389</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="389"></A><H4>389.
+  
+Unnamed types in entities with linkage
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Oct 2002<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+
+
+<P>6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 says (among other things):</P>
+<BLOCKQUOTE>
+A name with no linkage (notably, the name of a class or enumeration
+declared in a local scope (6.4.3 [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>])) shall not
+be used to declare an entity with linkage.
+If a declaration uses a typedef name, it is the linkage of the type
+name to which the typedef refers that is considered.
+</BLOCKQUOTE>
+
+<P>I would expect this to catch situations such as the following:</P>
+<PRE>
+  // File 1:
+  typedef struct {} *UP;
+  void f(UP) {}
+
+  // File 2:
+  typedef struct {} *UP; // Or: typedef struct {} U, *UP;
+  void f(UP);
+</PRE>
+<P>The problem here is that most implementations must generate the same
+mangled name
+for "f" in two translation units.  The quote from the standard above
+isn't quite
+clear, unfortunately: There is no type name to which the typedef refers.</P>
+
+<P>A related situation is the following:
+<PRE>
+  enum { no, yes } answer;
+</PRE>
+The variable "answer" is declared as having external linkage, but it is
+declared
+with an unnamed type.  Section 6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]
+talks about the linkage of <I>names</I>, however,
+and does therefore not prohibit this.  There is no implementation issue
+for most
+compilers because they do not ordinarily mangle variable names, but I
+believe
+the intent was to allow that implementation technique.</P>
+
+<P>Finally, these problems are much less relevant when declaring names
+with internal
+linkage.  For example, I would expect there to be few problems with:</P>
+<PRE>
+  typedef struct {} *UP;
+  static void g(UP);
+</PRE>
+<P>I recently tried to interpret 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8
+with the assumption that types with no names
+have no linkage.  Surprisingly, this resulted in many diagnostics on
+variable declarations (mostly like "answer" above).</P>
+
+<P>I'm pretty sure the standard needs clarifying words in this matter, but
+which way should it go?</P>
+
+<P>See also <A HREF="319.html">issue 319</A>.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>There was agreement that this check is not needed for variables
+and functions with extern "C" linkage, and a change there is
+desirable to allow use of legacy C headers.  The check is also not needed for
+entities with internal linkage, but there was no strong sentiment
+for changing that case.</P>
+
+<P>We also considered relaxing this requirement for extern "C++"
+variables but decided that we did not want to change that case.</P>
+
+<P>We noted that if extern "C" functions are allowed an additional
+check is needed when such functions are used as arguments in calls
+of function templates.  Deduction will put the type of the extern "C"
+function into the type of the template instance, i.e., there would
+be a need to mangle the name of an unnamed type.  To plug that hole
+we need an additional requirement on the template created in
+such a case.</P>
+
+<P><B>Proposed resolution (April 2003, revised slightly October 2003
+and March 2004):</B></P>
+
+<P>In 6.6 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8, change</P>
+<BLOCKQUOTE>
+A name with no linkage (notably, the name of a class or enumeration
+declared in a local scope (6.4.3 [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>]))
+shall not be used to declare an
+entity with linkage.  If a declaration uses a typedef name, it is
+the linkage of the type name to which the typedef refers that is
+considered.
+</BLOCKQUOTE>
+<P>to</P>
+<BLOCKQUOTE>
+A type is said to have linkage if and only if
+<UL>
+<LI>
+it is a class or enumeration type that is named (or has a name for
+linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]))
+and the name has linkage; or
+</LI>
+<LI>
+it is a specialization of a class template (Clause 13 [<A href="https://wg21.link/temp">temp</A>])
+[Footnote: a class template always has external linkage, and
+the requirements of 13.4.2 [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>]
+and 13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]
+ensure that the template arguments will also have appropriate linkage]; or
+</LI>
+<LI>
+it is a fundamental type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]); or
+</LI>
+<LI>
+it is a compound type (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>])
+other than a class or enumeration,
+compounded exclusively from types that have linkage; or
+</LI>
+<LI>
+it is a cv-qualified (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>])
+version of a type that has linkage.
+</LI>
+</UL>
+A type without linkage shall not be used as the type of a variable or
+function with linkage, unless the variable or function has extern "C"
+linkage (9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]).
+[<I>Note:</I> in other words, a type without linkage contains
+a class or enumeration that cannot be named outside
+of its translation unit.  An entity with external linkage
+declared using such a type could not correspond to any other entity
+in another translation unit of the program and is thus not permitted.
+Also note that classes with linkage may contain members whose types do
+not have linkage, and that typedef names are ignored in the determination of
+whether a type has linkage.]
+</BLOCKQUOTE>
+<P>Change 13.4.2 [<A href="https://wg21.link/temp.arg.type#2">temp.arg.type</A>] paragraph 2 from (note:
+this is the wording as updated by <A HREF="62.html">issue 62</A>)</P>
+<BLOCKQUOTE>
+The following types shall not be used as a <I>template-argument</I>
+for a template <I>type-parameter</I>:
+
+<UL>
+
+<LI>a type whose name has no linkage</LI>
+
+<LI>an unnamed class or enumeration type that has no name for
+linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>])</LI>
+
+<LI>a cv-qualified version of one of the types in this list</LI>
+
+<LI>a type created by application of declarator operators to one
+of the types in this list</LI>
+
+<LI>a function type that uses one of the types in this list</LI>
+
+</UL>
+</BLOCKQUOTE>
+<P>to</P>
+<BLOCKQUOTE>
+A type without linkage (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>])
+shall not be used as a <I>template-argument</I>
+for a template <I>type-parameter</I>.
+</BLOCKQUOTE>
+
+<P>Once this issue is ready, <A HREF="319.html">issue 319</A>
+should be moved back to ready as well.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

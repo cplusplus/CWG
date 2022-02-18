@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2761</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2761"></A><H4>2761.
+  
+Implicitly invoking the deleted destructor of an anonymous union member
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-11<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S{
+    ~S() {}
+  };
+
+  struct A {
+    union {
+      S arr_;
+    };
+    ~A(); //<SPAN CLASS="cmnt"> user-provided!</SPAN>
+  };
+
+  auto foo() {
+    return A{S()};
+  }
+</PRE>
+
+<P>Does the destructor of <TT>A</TT> attempt to destroy the (unnamed)
+data member that is the anonymous union?  The latter has a deleted
+destructor per 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>].  For the default
+constructor, 11.9.3 [<A href="https://wg21.link/class.base.init#9.2">class.base.init</A>] paragraph 9.2 prevents the
+corresponding construction.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-08-25):</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#9">dcl.init.aggr</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+The destructor for each element of class type <INS>other than an
+anonymous union member</INS> is potentially invoked
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) from the context where the aggregate
+initialization occurs
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#13">class.dtor</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+After executing the body of the destructor and destroying any objects
+with automatic storage duration allocated within the body, a
+destructor for class X calls the destructors for X's direct
+non-variant non-static data members <INS>other than anonymous
+unions</INS>, the destructors for X's non-virtual direct base classes
+and, if X is the most derived class (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), its
+destructor calls the destructors for X's virtual base classes. All
+destructors are called as if they were referenced with a qualified
+name, that is, ignoring any possible virtual overriding destructors in
+more derived classes.  Bases and members are destroyed in the reverse
+order of the completion of their constructor (see
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+A subobject is <I>known to be initialized</I> if <INS>it is not an
+anonymous union member and</INS> its initialization is specified
+<UL>
+<LI>in 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] for initialization by
+constructor,</LI>
+<LI>in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] for initialization by defaulted
+copy/move constructor,</LI>
+<LI>in 11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>] for initialization by inherited
+constructor,</LI>
+<LI>in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] for aggregate initialization,</LI>
+<LI>in 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>] for the initialization of the
+closure object when evaluating a lambda-expression,</LI>
+<LI>in 9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>] for default-initialization,
+value-initialization, or direct-initialization of an array.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

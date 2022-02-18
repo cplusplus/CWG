@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 430</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="430"></A><H4>430.
+  
+Ordering of expression evaluation in initializer list
+</H4>
+<B>Section: </B>9.4.2&#160; [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 July 2003<BR>
+
+
+<P>[Voted into the WP at the April, 2007 meeting as part of paper
+J16/07-0099 = WG21 N2239.]</P>
+
+
+
+<P>A recent GCC bug report
+(<A HREF="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11633">
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11633</A>)
+asks about the validity of
+<PRE>
+  int count = 23;
+  int foo[] = { count++, count++, count++ };
+</PRE>
+is this undefined or unspecified or something else? I can find nothing in
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>] that indicates whether the components of
+an initializer-list are evaluated in order or not, or whether they
+have sequence points between them.</P>
+
+<P>6.7.8/23 of the C99 std has this to say
+<BLOCKQUOTE>
+The order in which any side effects occur among the initialization list
+expressions is unspecified.
+</BLOCKQUOTE>
+I think similar wording is needed in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]</P>
+
+<P>
+<U>Steve Adamczyk:</U>
+I believe the standard is clear that each initializer
+expression in the above is a full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]/12-13; see also
+<A HREF="392.html">issue 392</A>) and therefore there is a sequence point
+after each expression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]/16).  I agree that the
+standard does not seem to dictate the order in which the expressions
+are evaluated, and perhaps it should.  Does anyone know of a compiler
+that would not evaluate the expressions left to right?</P>
+
+<P>
+<U>Mike Simons:</U> Actually there is one, that does not do
+left to right: gcc/C++.  None of the post increment operations
+take effect until after the statement finishes.  So in the sample
+code gcc stores 23 into all positions in the array.  The
+commercial vendor C++ compilers for AIX, Solaris, Tru64, HPUX
+(parisc and ia64), and Windows, all do sequence points at each
+',' in the initializer list.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

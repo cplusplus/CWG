@@ -1,0 +1,221 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 140</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="140"></A><H4>140.
+  
+Agreement of parameter declarations
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 Jul 1999<BR>
+
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3
+says,</P>
+
+<BLOCKQUOTE>
+All declarations for a function with a given parameter list shall
+agree exactly both in the type of the value returned and in the
+number and type of parameters.
+</BLOCKQUOTE>
+
+It is not clear what this requirement means with respect to a pair
+of declarations like the following:
+
+<PRE>
+    int f(const int);
+    int f(int x) { ... }
+</PRE>
+
+Do they violate this requirement?  Is <TT>x const</TT> in the body of
+the function declaration?
+
+<P>
+<U>Tom Plum</U>:
+I think the FDIS quotation means that the pair of decls are valid.
+But it doesn't clearly answer whether
+<TT>x</TT> is <TT>const</TT> inside the function definition.
+As to intent, I <I>know</I> the intent was that if the function
+definition wants to specify that <TT>x</TT> is <TT>const</TT>,
+the <TT>const</TT> must appear specifically in the defining
+decl, not just on some decl elsewhere.
+But I can't prove that intent from the drafted words.</P>
+
+<P>
+<U>Mike Miller</U>:
+I think the intent was something along the
+following lines:</P>
+
+<BLOCKQUOTE>
+Two function declarations denote the same entity if
+the names are the same and the function signatures
+are the same.  (Two function declarations with C
+language linkage denote the same entity if the names
+are the same.)  All declarations of a given function
+shall agree exactly both in the type of the value
+returned and in the number and type of parameters;
+the presence or absence of the ellipsis is considered
+part of the signature.
+</BLOCKQUOTE>
+
+(See 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9.
+
+That paragraph talks about names in different
+scopes and says that function references are the same if the
+"types are identical for purposes of overloading," i.e., the
+signatures are the same.  See also
+9.11 [<A href="https://wg21.link/dcl.link#6">dcl.link</A>] paragraph 6
+
+regarding C language
+linkage, where only the name is required to be the same for
+declarations in different namespaces to denote the same
+function.)
+
+<P>According to this paragraph, the type of a parameter is
+determined by considering its <I>decl-specifier-seq</I> and
+<I>declarator</I>
+and then applying the array-to-pointer and function-to-pointer
+adjustments.  The <I>cv-qualifier</I> and storage class adjustments
+are performed for the function type but not for the parameter
+types.</P>
+
+<P>If my interpretation of the intent of the second sentence of
+the paragraph is correct, the two declarations in the example
+violate that restriction &#8212; the parameter types are not the
+same, even though the function types are.  Since there's no
+dispensation mentioned for "no diagnostic required," an
+implementation presumably must issue a diagnostic in this
+case.  (I think "no diagnostic required" should be stated if
+the declarations occur in different translation units &#8212;
+unless there's a blanket statement to that effect that I have
+forgotten?)</P>
+
+<P>(I'd also note in passing that, if my interpretation is
+correct,</P>
+
+<PRE>
+    void f(int);
+    void f(register int) { }
+</PRE>
+
+is also an invalid pair of declarations.)
+
+
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<OL>
+<LI><P>In Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>] &#8220;<B>signature</B>,&#8221; change
+"the types of its parameters"
+to
+"its parameter-type-list (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])".
+</P></LI>
+
+<LI><P>In the third bullet of 6.6 [<A href="https://wg21.link/basic.link#9">basic.link</A>] paragraph 9
+change
+"the function types are identical for the purposes of overloading"
+to
+"the parameter-type-lists of the functions (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) are identical."
+</P></LI>
+
+<LI><P>In the sub-bullets of the third bullet of
+7.6.1.5 [<A href="https://wg21.link/expr.ref#4">expr.ref</A>] paragraph 4, change all four occurrences
+of
+"function of (parameter type list)"
+to
+"function of parameter-type-list."
+</P></LI>
+
+<LI><P>In 9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3, change
+
+<BLOCKQUOTE>
+All declarations for a function with a given parameter list shall agree
+exactly both in the type of the value returned and in the number and
+type of parameters; the presence or absence of the ellipsis is
+considered part of the function type.
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+All declarations for a function shall
+agree exactly in both the return type and the
+parameter-type-list.
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>In 9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3, change
+
+<BLOCKQUOTE>
+The resulting list of transformed parameter types is the function's
+<I>parameter type list</I>.
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+The resulting list of transformed parameter types and the presence or
+absence of the ellipsis is the function's <I>parameter-type-list</I>.
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>In 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4, change
+"the parameter type list"
+to
+"the parameter-type-list."
+</P></LI>
+
+<LI><P>In the second bullet of _N4868_.12.2 [<A href="https://wg21.link/over.load#2">over.load</A>] paragraph 2,
+change all occurrences of "parameter types" to
+"parameter-type-list."
+</P></LI>
+
+<LI><P>In 12.2 [<A href="https://wg21.link/over.match#1">over.match</A>] paragraph 1, change "the types of
+the parameters" to "the parameter-type-list."
+</P></LI>
+
+<LI><P>In the last sub-bullet of the third bullet of
+12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3, change "parameter type
+list" to "parameter-type-list."
+</P></LI>
+
+</OL>
+<P><B>Note, 7 Sep 2001:</B></P>
+<P>Editorial changes while putting in <A HREF="147.html">issue 147</A>
+brought up the fact that injected-class-name is not a syntax term and
+therefore perhaps shouldn't be written with hyphens. The same can be said of
+parameter-type-list.
+
+</P>
+<BR><BR>
+</BODY>
+</HTML>

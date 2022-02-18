@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2481</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2481"></A><H4>2481.
+  
+Cv-qualification of temporary to which a reference is bound
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-03-20<BR>
+
+
+<P>[Accepted as a DR at the June, 2021 meeting.]</P>
+
+<P>According to 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4.2">dcl.init.ref</A>] bullet 5.4.2,
+when a reference is initialized with a non-class value and
+the referenced type is not reference-related to the type of
+the initializer,</P>
+
+<UL>
+<LI><P>Otherwise, the initializer expression is implicitly
+converted to a prvalue of type &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221;. The temporary materialization conversion
+is applied and the reference is bound to the
+result.</P></LI>
+
+</UL>
+
+<P>According to 7.2.2 [<A href="https://wg21.link/expr.type#2">expr.type</A>] paragraph 2, the
+cv-qualification is discarded before invoking the temporary
+materialization conversion:</P>
+
+<BLOCKQUOTE>
+
+If a prvalue initially has the type &#8220;<I>cv</I>
+<TT>T</TT>&#8221;, where <TT>T</TT> is a cv-unqualified
+non-class, non-array type, the type of the expression is
+adjusted to <TT>T</TT> prior to any further analysis.
+
+</BLOCKQUOTE>
+
+<P>This results in a reference-to-const being bound to a
+non-const object, meaning that a <TT>const_cast</TT> of
+the reference to a reference-to-nonconst would allow a
+well-defined modification of the value:</P>
+
+<PRE>
+  constexpr const int &amp;r = 42;
+  const_cast&lt;int &amp;&gt;(r) = 23;  //<SPAN CLASS="cmnt"> Well-defined</SPAN>
+  static_assert(r == 42);     //<SPAN CLASS="cmnt"> Ill-formed, non-constant expression</SPAN>
+</PRE>
+
+<P>This was different from the situation before the advent
+of the temporary materialization conversion in C++17, when
+the description of the reference binding created the
+temporary explicitly with the cv-qualified type:</P>
+
+<BLOCKQUOTE>
+
+If <TT>T1</TT> is a non-class type, a temporary of type
+&#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is created and copy-initialized (8.5)
+from the initializer expression. The reference is then bound
+to the temporary.
+
+</BLOCKQUOTE>
+
+<P>Presumably this difference was unintentional and should
+be reverted.</P>
+
+<P><B>Proposed resolution, May, 2021:</B></P>
+
+<P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4.2">dcl.init.ref</A>] bullet 5.4.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+initialized by an expression of type &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; as follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>Otherwise:</P></LI>
+
+<UL>
+<LI><P>If <TT>T1</TT> or <TT>T2</TT> is a class type and
+<TT>T1</TT> is not reference-related to <TT>T2</TT>...</P></LI>
+
+<LI><P>Otherwise, the initializer expression is implicitly
+converted to a prvalue of type <DEL>&#8220;<I>cv1</I></DEL>
+<TT>T1</TT><DEL>&#8221;</DEL>. The temporary materialization
+conversion is applied<INS>, considering the type of the
+prvalue to be &#8220;<I>cv1</I> <TT>T1</TT>&#8221;,</INS>
+and the reference is bound to the result.</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

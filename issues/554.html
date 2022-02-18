@@ -1,0 +1,251 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 554</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="554"></A><H4>554.
+  
+Definition of &#8220;declarative region&#8221; and &#8220;scope&#8221;
+</H4>
+<B>Section: </B>6.4&#160; [<A href="https://wg21.link/basic.scope">basic.scope</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 December 2005<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>The various uses of the term &#8220;declarative region&#8221;
+throughout the Standard indicate that the term is intended to refer
+to the entire block, class, or namespace that contains a given
+declaration.  For example, 6.4 [<A href="https://wg21.link/basic.scope#2">basic.scope</A>] paragraph 2
+says, in part:</P>
+
+<BLOCKQUOTE>
+
+<P>[<I>Example:</I> in</P>
+
+<PRE>
+    int j = 24;
+    int main()
+    {
+        int i = j, j;
+        j = 42;
+    }
+</PRE>
+
+<P>The declarative region of the first <TT>j</TT> includes the entire
+example... The declarative region of the second declaration
+of <TT>j</TT> (the <TT>j</TT> immediately before the semicolon)
+includes all the text between <TT>{</TT> and <TT>}</TT>...</P>
+
+</BLOCKQUOTE>
+
+<P>However, the actual definition given for &#8220;declarative
+region&#8221; in 6.4 [<A href="https://wg21.link/basic.scope#1">basic.scope</A>] paragraph 1
+does not match this usage:</P>
+
+<BLOCKQUOTE>
+
+Every name is introduced in some portion of program text called a
+<I>declarative region</I>, which is the largest part of the program in
+which that name is <I>valid</I>, that is, in which that name may be
+used as an unqualified name to refer to the same entity.
+
+</BLOCKQUOTE>
+
+<P>Because (except in class scope) a name cannot be used before
+it is declared, this definition contradicts the statement in the
+example and many other uses of the term throughout the Standard.
+As it stands, this definition is identical to that of the scope
+of a name.</P>
+
+<P>The term &#8220;scope&#8221; is also misused.  The scope of a
+declaration is defined in 6.4 [<A href="https://wg21.link/basic.scope#1">basic.scope</A>] paragraph 1 as
+the region in which the name being declared is valid.  However, there
+is frequent use of the phrase &#8220;the scope of a class,&#8221; not
+referring to the region in which the class's name is valid but to the
+declarative region of the class body, and similarly for namespaces,
+functions, exception handlers, etc.  There is even a mention of
+looking up a name &#8220;in the scope of the
+complete <I>postfix-expression</I>&#8221; (_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#3">basic.lookup.classref</A>] paragraph 3), which is the exact inverse of the scope
+of a declaration.</P>
+
+<P>This terminology needs a thorough review to make it logically
+consistent.  (Perhaps a discussion of the scope of template
+parameters could also be added to section 6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>]
+at the same time, as all other kinds of scopes are described there.)</P>
+
+<P><B>Proposed resolution (November, 2006):</B></P>
+
+<OL>
+<LI><P>Change 6.4 [<A href="https://wg21.link/basic.scope#1">basic.scope</A>] paragraph 1 as follows:
+</P></LI>
+
+<BLOCKQUOTE>
+
+Every name is introduced in some portion of program text called a
+<I>declarative region</I>, which is <DEL>the largest part of the
+program in which that name is <I>valid</I>, that is, in which
+that name may be used as an unqualified name to refer to the same
+entity</DEL> <INS>a <I>statement</I>, block, function declarator,
+<I>function-definition</I>, class, handler, <I>template-declaration</I>,
+<I>template-parameter-list</I> of a template
+<I>template-parameter</I>, or namespace</INS>. In general, each
+particular name <DEL>is valid</DEL> <INS>may be used as an unqualified
+name to refer to the entity of its declaration or to the
+label</INS> only within some possibly discontiguous portion of
+program text called its <I>scope</I>. To determine the scope of a
+declaration...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.4 [<A href="https://wg21.link/basic.scope#3">basic.scope</A>] paragraph 3 as follows:
+</P></LI>
+
+<BLOCKQUOTE>
+
+The names declared by a declaration are introduced into the
+<DEL>scope in which the declaration occurs</DEL> <INS>declarative
+region that directly encloses the declaration</INS>, except that
+<INS><I>declaration-statement</I>s, function parameter names in the
+declarator of a <I>function-definition</I>,
+<I>exception-declaration</I>s (6.4.3 [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>]),</INS>
+the presence of a <TT>friend</TT> specifier (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]), certain uses of the
+<I>elaborated-type-specifier</I> (9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]),
+and <I>using-directive</I>s (9.8.4 [<A href="https://wg21.link/namespace.udir">namespace.udir</A>]) alter
+this general behavior.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.4.3 [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>] paragraphs 1-3 and add a
+new paragraph 4 before the existing paragraph 4 as follows:
+</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>A name declared in a block (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]) is
+local to that block. Its potential scope begins at its point of
+declaration (6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]) and ends at the end of
+its declarative region.</DEL> <INS>The declarative region of a name
+declared in a <I>declaration-statement</I> is the directly
+enclosing block (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]). Such a name is local
+to the block.</INS>
+</P>
+
+<P>The <DEL>potential scope</DEL> <INS>declarative region</INS> of a
+function parameter name <DEL>(including one appearing </DEL> <INS>in
+the declarator of a <I>function-definition</I> or</INS> in a
+<I>lambda-parameter-declaration-clause</I><DEL>)</DEL> or of a
+function-local predefined variable in a function definition
+(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]) <DEL>begins at its point of
+declaration. If the function has a <I>function-try-block</I> the
+potential scope of a parameter or of a function-local predefined
+variable ends at the end of the last associated handler,
+otherwise it ends at the end of the outermost block of the
+function definition. A parameter name</DEL> <INS>is the entire
+function definition or <I>lambda-expression</I>. Such a name is
+local to the function definition and</INS> shall not be redeclared
+in <DEL>the</DEL> <INS>any</INS> outermost block of the <DEL>function
+definition nor in the outermost block of any handler associated
+with a <I>function-try-block</I></DEL>
+<INS><I>function-body</I> (including handlers of a
+<I>function-try-block</I>) or <I>lambda-expression</I></INS>.</P>
+
+<P>
+<DEL>The name in a <TT>catch</TT> exception-declaration</DEL>
+<INS>The declarative region of a name declared in an
+<I>exception-declaration</I> is its entire handler. Such a
+name</INS> is local to the handler and shall not be redeclared in
+the outermost block of the handler.</P>
+
+<P><INS>The potential scope of any local name begins at its point
+of declaration (6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]) and ends at the end
+of its declarative region.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4868_.6.4.5 [<A href="https://wg21.link/basic.funscope">basic.funscope</A>] as indicated:
+</P></LI>
+
+<BLOCKQUOTE>
+
+Labels (8.2 [<A href="https://wg21.link/stmt.label">stmt.label</A>]) have <I>function scope</I> and
+may be used anywhere in the function in which they are declared
+<INS>except in members of local classes (11.6 [<A href="https://wg21.link/class.local">class.local</A>])
+of that function</INS>. Only labels have function scope.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 8.8 [<A href="https://wg21.link/stmt.dcl#1">stmt.dcl</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A declaration statement introduces one or more new <DEL>identifiers</DEL>
+<INS>names</INS> into a block; it has the form</P>
+
+<UL>
+<I>declaration-statement:</I>
+<UL>
+<I>block-declaration</I>
+</UL>
+</UL>
+
+<P>
+<INS>[<I>Note:</I></INS> If <DEL>an identifier</DEL> <INS>a name</INS>
+introduced by a declaration was previously declared in an outer
+block, the outer declaration is hidden for the remainder of the
+block, after which it resumes its force <INS>(_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>])</INS>. <INS>&#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+</OL>
+
+<P><I>[Drafting notes: This resolution deals almost exclusively
+with the unclear definition of &#8220;declarative region.&#8221;
+I've left the ambiguous use of &#8220;scope&#8221; alone for now.
+However sections 3.3.x all have headings reading &#8220;xxx
+scope,&#8221; but they don't mean the scope of a declaration but
+the different kinds of declarative regions and their effects on
+the scope of declarations contained therein. To me, it looks like
+most of 3.4 should refer to &#8220;declarative region&#8221; and
+not to &#8220;scope.&#8221;</I></P>
+
+<P><I>The change to 6.7 fixes an &#8220;identifier&#8221; misuse
+(e.g., <TT>extern T operator+(T,T);</TT> at block scope
+introduces a name but not an identifier) and removes normative
+redundancy.]</I></P>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>This issue has been returned to "drafting" status to be
+reconciled with changes to the underlying existing text.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

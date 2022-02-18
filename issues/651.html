@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 651</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="651"></A><H4>651.
+  
+Problems in <TT>decltype</TT> specification and examples
+</H4>
+<B>Section: </B>9.2.9.3&#160; [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Aug 2007<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+<P>The second bullet of 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#4">dcl.type.simple</A>] paragraph 4
+reads,</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>otherwise, if <TT>e</TT> is a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) or an invocation of an overloaded operator
+(parentheses around <TT>e</TT> are ignored), <TT>decltype(e)</TT> is
+the return type of that function;</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>The reference to &#8220;that function&#8221; is imprecise; it is
+not the actual function called at runtime but the statically chosen
+function (ignoring covariant return types in virtual functions).</P>
+
+<P>Also, the examples in this paragraph have errors:</P>
+
+<OL>
+
+<LI><P>The declaration of <TT>struct A</TT> should end with a
+semicolon.</P></LI>
+
+<LI><P>The lines of the form <TT>decltype(...);</TT> are ill-formed;
+they need a declarator.</P></LI>
+
+</OL>
+
+<P><B>Proposed Resolution (October, 2007):</B></P>
+
+<P>Change 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#4">dcl.type.simple</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The type denoted by <TT>decltype(e)</TT> is defined as follows:</P>
+
+<UL>
+
+<LI><P>if <TT>e</TT> is an <I>id-expression</I> or a class member
+access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), <TT>decltype(e)</TT> is the type
+of the entity named by <TT>e</TT>. If there is no such entity, or
+if <TT>e</TT> names a set of overloaded functions, the program is
+ill-formed;</P></LI>
+
+<LI><P>otherwise, if <TT>e</TT> is a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) or an invocation of an overloaded operator (parentheses
+around <TT>e</TT> are ignored), <TT>decltype(e)</TT> is the return
+type of <DEL>that</DEL> <INS>the statically chosen</INS> function;</P></LI>
+
+<LI><P>otherwise, if <TT>e</TT> is an lvalue, <TT>decltype(e)</TT>
+is <TT>T&amp;</TT>, where <TT>T</TT> is the type of <TT>e</TT>;</P></LI>
+
+<LI><P>otherwise, <TT>decltype(e)</TT> is the type
+of <TT>e</TT>.</P></LI>
+</UL>
+
+<P>The operand of the <TT>decltype</TT> specifier is an unevaluated
+operand (Clause 7 [<A href="https://wg21.link/expr">expr</A>]).</P>
+
+<P>[<I>Example:</I>
+</P>
+<PRE>
+    const int&amp;&amp; foo();
+    int i;
+    struct A { double x; }<INS>;</INS>
+    const A* a = new A();
+    decltype(foo())<INS> x1</INS>;      //<SPAN CLASS="cmnt"> type is </SPAN>const int&amp;&amp;
+    decltype(i)<INS> x2</INS>;          //<SPAN CLASS="cmnt"> type is </SPAN>int
+    decltype(a-&gt;x)<INS> x3</INS>;       //<SPAN CLASS="cmnt"> type is </SPAN>double
+    decltype((a-&gt;x))<INS> x4</INS>;     //<SPAN CLASS="cmnt"> type is </SPAN>const double&amp;
+</PRE>
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

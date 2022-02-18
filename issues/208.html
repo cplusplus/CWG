@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 208</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="208"></A><H4>208.
+  
+Rethrowing exceptions in nested handlers
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Wade
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Feb 2000<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+<P>Paragraph 7 of 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>] discusses which exception
+is thrown by a <I>throw-expression</I> with no operand.</P>
+
+<P>May an expression which has been "finished" (paragraph 7) by an
+inner catch block be rethrown by an outer catch block?</P>
+
+<PRE>
+    catch(...)    // Catch the original exception
+    {
+      try{ throw; }    // rethrow it at an inner level
+                       // (in reality this is probably
+                       // inside a function)
+      catch (...)
+      {
+      }   // Here, an exception (the original object)
+          // is "finished" according to 15.1p7 wording
+
+      // 15.1p7 says that only an unfinished exception
+      // may be rethrown.
+      throw;    // Can we throw it again anyway?  It is
+                // certainly still alive (15.1p4).
+    }
+</PRE>
+
+<P>I believe this is ok, since the paragraph says that the exception
+is finished when the "corresponding" catch clause exits.  However
+since we have two clauses, and only one exception, it would seem that
+the one exception gets "finished" twice.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<OL>
+<LI><P>In 14.2 [<A href="https://wg21.link/except.throw#4">except.throw</A>] paragraph 4, change
+
+<BLOCKQUOTE>
+
+When the last handler being executed for the exception exits by any
+means other than <TT>throw;</TT> ...
+
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+
+When the last remaining active handler for the exception exits by any
+means other than <TT>throw;</TT> ...
+
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>In 14.2 [<A href="https://wg21.link/except.throw#6">except.throw</A>] paragraph 6, change
+
+<BLOCKQUOTE>
+
+A <I>throw-expression</I> with no operand rethrows the exception being
+handled.
+
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+
+A <I>throw-expression</I> with no operand rethrows the currently
+handled exception (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).
+
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>Delete 14.2 [<A href="https://wg21.link/except.throw#7">except.throw</A>] paragraph 7.</P></LI>
+
+<LI><P>Add the following before 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>] paragraph
+6:
+
+<BLOCKQUOTE>
+
+An exception is considered caught when a handler for that exception
+becomes active (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]).  [<I>Note:</I> an
+exception can have active handlers and still be considered uncaught if
+it is rethrown.]
+
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>Change 14.4 [<A href="https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 from
+
+<BLOCKQUOTE>
+
+An exception is considered handled upon entry to a handler.
+[<I>Note:</I> the stack will have been unwound at that point.]
+
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+
+<P>A handler is considered active when initialization is complete for
+the formal parameter (if any) of the catch clause.  [<I>Note:</I> the
+stack will have been unwound at that point.]  Also, an implicit
+handler is considered active when <TT>std::terminate()</TT> or
+<TT>std::unexpected()</TT> is entered due to a throw.  A handler is no
+longer considered active when the catch clause exits or when
+<TT>std::unexpected()</TT> exits after being entered due to a throw.</P>
+
+<P>The exception with the most recently activated handler that is
+still active is called the <I>currently handled exception</I>.</P>
+
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>In 14.4 [<A href="https://wg21.link/except.handle#16">except.handle</A>] paragraph 16, change "exception
+being handled" to "currently handled exception."
+</P></LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

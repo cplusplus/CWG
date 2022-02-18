@@ -1,0 +1,61 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2301</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2301"></A><H4>2301.
+  
+Value-initialization and constexpr constructor evaluation
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-04-18<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  union A {
+    constexpr A(int) : x(++x) { }
+    int x;
+    char* y;
+  };
+  union B {
+    A a = 5;
+  };
+  int arr[B().a.x];
+</PRE>
+
+<P>Value-initialization of the object created by <TT>B()</TT>
+zero-initializes the object (9.4 [<A href="https://wg21.link/dcl.init#8.2">dcl.init</A>] bullet 8.2),
+which should mean that the <TT>++x</TT> in the <I>mem-initilizer</I>
+for <TT>A</TT> operates on a zero-initialized object, but current
+implementations reject this code as non-constant. It is not clear what
+in the current wording justifies this treatment.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

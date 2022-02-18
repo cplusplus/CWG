@@ -1,0 +1,442 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 413</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="413"></A><H4>413.
+  
+Definition of "empty class"
+</H4>
+<B>Section: </B>Clause 11&#160; [<A href="https://wg21.link/class">class</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Pete Becker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 Apr 2003<BR>
+
+
+<P>[Voted into WP at April, 2007 meeting.]</P>
+
+
+
+<P>The proposal says that value is true if "T is an empty class (10)".
+Clause 10 doesn't define an empty class, although it has a note that
+says a base class may "be of zero size (clause 9)" 9/3 says "Complete
+objects and member subobjects of class type shall have nonzero size."
+This has a footnote, which says "Base class subobjects are not so
+constrained."</P>
+
+<P>The standard uses the term "empty class" in two places
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), but neither of
+those places defines it. It's also listed in the index, which refers to
+the page that opens clause 9, i.e. the nonzero size stuff cited above.</P>
+
+<P>So, what's the definition of "empty class" that determines whether the
+predicate is_empty is true?</P>
+
+<P>The one place where it's used is
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8, which says (roughly paraphrased)
+that an aggregate initializer for an empty class must be "{}", and when
+such an initializer is used for an aggregate that is not an empty class the
+members are default-initialized. In this context it's pretty clear what's
+meant. In the type traits proposal it's not as clear, and it was probably
+intended to have a different meaning. The boost implementation, after it
+eliminates non-class types, determines whether the trait is true by
+comparing the size of a class derived from T to the size of an
+otherwise-identical class that is not derived from T.</P>
+
+<P>
+<U>Howard Hinnant:</U>
+<TT>is_empty</TT> was created to find out whether a type could be derived from
+and have the empty base class optimization successfully applied.  It
+was created in part to support <TT>compressed_pair</TT> which attempts to
+optimize away the space for one of its members in an attempt to reduce
+spatial overhead.  An example use is:</P>
+<PRE>
+  template &lt;class T, class Compare = std::less&lt;T&gt; &gt;
+  class SortedVec
+  {
+  public:
+  ...
+  private:
+    T* data_;
+    compressed_pair&lt;Compare, size_type&gt; comp_;
+
+    Compare&amp;       comp()       {return comp_.first();}
+    const Compare&amp; comp() const {return comp_.first();}
+    size_type&amp;     sz()         {return comp_.second();}
+    size_type      sz() const   {return comp_.second();}
+  };
+</PRE>
+<P>Here the compare function is optimized away via the empty base
+optimization if Compare turns out to be an "empty" class.  If Compare
+turns out to be a non-empty class, or a function pointer, the space is
+not optimized away.  <TT>is_empty</TT> is key to making this work.</P>
+
+<P>This work built on Nathan's article:
+<A HREF="http://www.cantrip.org/emptyopt.html">
+http://www.cantrip.org/emptyopt.html</A>.</P>
+
+<P>
+<U>Clark Nelson:</U>
+I've been looking at issue 413, and I've reached the conclusion that
+there are two different kinds of empty class. A class containing only
+one or more anonymous bit-field members is empty for purposes of
+aggregate initialization, but not (necessarily) empty for purposes of
+empty base-class optimization.</P>
+
+<P>Of course we need to add a definition of emptiness for purposes of
+aggregate initialization. Beyond that, there are a couple of questions:</P>
+<OL>
+<LI>
+Should the definition of emptiness used by the is_empty predicate be
+defined in a language clause or a library clause?
+</LI>
+<LI>
+Do we need to open a new core issue pointing out the fact that the
+section on aggregate initialization does not currently say that unnamed
+bit-fields are skipped?
+</LI>
+</OL>
+
+<P><B>Notes from the October, 2005 meeting:</B></P>
+
+<P>There are only two places in the Standard where the phrase
+&#8220;empty class&#8221; appears, both in 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8.  Because it is not clear whether the
+definition of &#8220;empty for initialization purposes&#8221; is
+suitable for use in defining the <TT>is_empty</TT> predicate, it would
+be better just to avoid using the phrase in the language clauses.  The
+requirements of 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8 appear to be
+redundant; paragraph 6 says that an <I>initializer-list</I> must have
+no more initializers than the number of elements to initialize, so an
+empty class already requires an empty <I>initializer-list</I>, and
+using an empty <I>initializer-list</I> with a non-empty class is
+covered adequately by paragraph 7's description of the handling of an
+<I>initializer-list</I> with fewer <I>initializer</I>s than the
+number of members to initialize.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+
+<LI><P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#5">dcl.init.aggr</A>] paragraph 5 by inserting
+the indicated text:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Static data members <INS>and anonymous bit fields</INS> are not
+considered members of the class for purposes of aggregate
+initialization. [<I>Example:</I>
+</P>
+
+<PRE>
+    struct A {
+        int i;
+        static int s;
+        int j;<INS>
+        int :17;
+        int k;</INS>
+    } a = { 1 , 2<INS> , 3</INS> };
+</PRE>
+
+<P>Here, the second initializer 2 initializes <TT>a.j</TT> and not the
+static data member <TT>A::s</TT><INS>, and the third initializer 3
+initializes <TT>a.k</TT> and not the padding before it.</INS>
+&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>initializer</I> for an aggregate member that is an empty
+class shall have the form of an empty <I>initializer-list</I>
+<TT>{}</TT>.  [<I>Example:</I>
+</P>
+
+<PRE>
+    struct S { };
+    struct A {
+        S s;
+        int i;
+    } a = { { } , 3 };
+</PRE>
+
+<P>&#8212;<I>end example</I>] An empty initializer-list can be used to
+initialize any aggregate. If the aggregate is not an empty class, then
+each member of the aggregate shall be initialized with a value of the
+form <TT>T()</TT> (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]), where <TT>T</TT>
+represents the type of the uninitialized member.</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>This resolution also resolves
+<A HREF="491.html">issue 491</A>.</I></P>
+
+<P><B>Additional note (October, 2005):</B></P>
+
+<P>Deleting 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8 altogether may
+not be a good idea.  It would appear that, in its absence, the
+initializer elision rules of paragraph 11 would allow the initializer
+for <TT>a</TT> in the preceding example to be written <TT>{ 3 }</TT>
+(because the empty-class member <TT>s</TT> would consume no
+<I>initializer</I>s from the list).</P>
+
+<P><B>Proposed resolution (October, 2006):</B></P>
+
+<P><I>(Drafting note: this resolution also cleans up incorrect
+references to syntactic non-terminals in the nearby paragraphs.)</I></P>
+
+<OL>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#4">dcl.init.aggr</A>] paragraph 4 as indicated:</P>
+
+<BLOCKQUOTE>
+
+An array of unknown size initialized with a brace-enclosed
+<I>initializer-list</I> containing <TT>n</TT> <DEL><I>initializer</I>s</DEL>
+<INS><I>initializer-clause</I>s</INS>, where <TT>n</TT> shall be greater
+than zero... An empty initializer list <TT>{}</TT> shall not be used as the
+<DEL>initializer</DEL> <INS><I>initializer-clause</I></INS> for an array of
+unknown bound.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#5">dcl.init.aggr</A>] paragraph 5 by inserting
+the indicated text:</P>
+
+<BLOCKQUOTE>
+
+<P>Static data members <INS>and anonymous bit fields</INS> are not
+considered members of the class for purposes of aggregate
+initialization. [<I>Example:</I>
+</P>
+
+<PRE>
+    struct A {
+        int i;
+        static int s;
+        int j;<INS>
+        int :17;
+        int k;</INS>
+    } a = { 1 , 2<INS> , 3</INS> };
+</PRE>
+
+<P>Here, the second initializer <TT>2</TT> initializes <TT>a.j</TT>
+and not the static data member <TT>A::s</TT><INS>, and the third
+initializer <TT>3</TT> initializes <TT>a.k</TT> and not the anonymous
+bit field before it.</INS> &#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#6">dcl.init.aggr</A>] paragraph 6 as indicated:</P>
+
+<BLOCKQUOTE>
+
+An <I>initializer-list</I> is ill-formed if the number of
+<DEL><I>initializer</I>s</DEL> <INS><I>initializer-clause</I>s</INS>
+exceeds the number of members...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#7">dcl.init.aggr</A>] paragraph 7 as indicated:</P>
+
+<BLOCKQUOTE>
+
+If there are fewer <DEL><I>initializer</I>s</DEL>
+<INS><I>initializer-clause</I>s</INS> in the list than there are members...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Replace 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>initializer</I> for an aggregate member that is an empty
+class shall have the form of an empty <I>initializer-list</I>
+<TT>{}</TT>.  [<I>Example:</I>
+</P>
+
+<PRE>
+    struct S { };
+    struct A {
+        S s;
+        int i;
+    } a = { { } , 3 };
+</PRE>
+
+<P>&#8212;<I>end example</I>] An empty initializer-list can be used to
+initialize any aggregate. If the aggregate is not an empty class, then
+each member of the aggregate shall be initialized with a value of the
+form <TT>T()</TT> (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]), where <TT>T</TT>
+represents the type of the uninitialized member.</P>
+
+</BLOCKQUOTE>
+
+<P>with:</P>
+
+<BLOCKQUOTE>
+
+<P>If an aggregate class <TT>C</TT> contains a subaggregate
+member <TT>m</TT> that has no members for purposes of aggregate
+initialization, the <I>initializer-clause</I> for <TT>m</TT> shall not
+be omitted from an <I>initializer-list</I> for an object of type
+<TT>C</TT> unless the <I>initializer-clause</I>s for all members
+of <TT>C</TT> following <TT>m</TT> are also omitted.  [<I>Example:</I>
+</P>
+
+<PRE>
+    struct S { } s;
+    struct A {
+        S s1;
+        int i1;
+        S s2;
+        int i2;
+        S s3;
+        int i3;
+    } a = {
+        { },   //<SPAN CLASS="cmnt"> Required initialization</SPAN>
+        0,
+        s,     //<SPAN CLASS="cmnt"> Required initialization</SPAN>
+        0
+    };         //<SPAN CLASS="cmnt"> Initialization not required for </SPAN>A::s3<SPAN CLASS="cmnt"> because </SPAN>A::i3<SPAN CLASS="cmnt"> is also not initialized</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#10">dcl.init.aggr</A>] paragraph 10 as indicated:</P>
+
+<BLOCKQUOTE>
+
+When initializing a multi-dimensional array, the <DEL><I>initializer</I>s</DEL>
+<INS><I>initializer-clause</I>s</INS> initialize the elements...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#11">dcl.init.aggr</A>] paragraph 11 as indicated:</P>
+
+<BLOCKQUOTE>
+
+Braces can be elided in an <I>initializer-list</I> as follows. If the
+<I>initializer-list</I> begins with a left brace, then the succeeding
+comma-separated list of <DEL><I>initializer</I>s</DEL>
+<INS><I>initializer-clause</I>s</INS> initializes the members of a
+subaggregate; it is erroneous for there to be more <DEL>initializers</DEL>
+<INS><I>initializer-clause</I>s</INS> than members. If, however,
+the <I>initializer-list</I> for a subaggregate does not begin with a
+left brace, then only enough <DEL><I>initializer</I>s</DEL>
+<INS><I>initializer-clause</I>s</INS> from the list are taken to
+initialize the members of the subaggregate; any
+remaining <DEL><I>initializer</I>s</DEL> <INS><I>initializer-clause</I>s</INS>
+are left to initialize the next member of the aggregate of which the
+current subaggregate is a member. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#12">dcl.init.aggr</A>] paragraph 12 as indicated:</P>
+
+<BLOCKQUOTE>
+
+All implicit type conversions (7.3 [<A href="https://wg21.link/conv">conv</A>]) are
+considered when initializing the aggregate member with an <DEL>initializer
+from an <I>initializer-list</I></DEL> <INS><I>assignment-expression</I></INS>. If
+the <DEL><I>initializer</I></DEL> <INS><I>assignment-expression</I></INS> can
+initialize a member, the member is initialized. Otherwise, if the
+member is itself a <DEL>non-empty</DEL> subaggregate, brace elision is
+assumed and the <DEL><I>initializer</I></DEL>
+<INS><I>assignment-expression</I></INS> is considered for the
+initialization of the first member of the
+subaggregate. <INS>[<I>Note:</I> As specified above, brace elision
+cannot apply to subaggregates with no members for purposes of
+aggregate initialization; an <I>initializer-clause</I> for the entire
+subobject is required.  &#8212;<I>end note</I>]</INS>
+[<I>Example:</I>...  Braces are elided around
+the <DEL><I>initializer</I></DEL> <INS><I>initializer-clause</I></INS> for
+<TT>b.a1.i</TT>...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#15">dcl.init.aggr</A>] paragraph 15 as indicated:</P>
+
+<BLOCKQUOTE>
+
+When a union is initialized with a brace-enclosed initializer, the
+braces shall only contain an <DEL>initializer</DEL>
+<INS><I>initializer-clause</I></INS> for the first member of the
+union...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#16">dcl.init.aggr</A>] paragraph 16 as indicated:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> <DEL>as</DEL> <INS>As</INS> described above, the braces around
+the <DEL>initializer</DEL> <INS><I>initializer-clause</I></INS> for a union
+member can be omitted if the union is a member of another
+aggregate. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><I>(Note: this resolution also resolves
+<A HREF="491.html">issue 491</A>.)</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

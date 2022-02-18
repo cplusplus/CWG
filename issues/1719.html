@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1719</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1719"></A><H4>1719.
+  
+Layout compatibility and cv-qualification revisited
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jeffrey Yasskin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-24<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>When the effect of cv-qualification on layout compatibility was
+previously discussed (see <A HREF="1334.html">issue 1334</A>), the
+question was resolved by reference to the historical origin of layout
+compatibility: it was a weakening of type correctness that was added for C
+compatibility, mimicking exactly the corresponding C specification of
+compatible types in this context and going no further.  Because
+cv-qualified and cv-unqualified types are not compatible in C, they were
+not made layout-compatible in C++.</P>
+
+<P>Because of specific use-cases involving <TT>std::pair</TT> and the like,
+however, and in consideration of the fact that cv-qualified and
+cv-unqualified versions of types are aliasable by the rules of
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>], the outcome of that question is worthy of
+reconsideration.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Change 6.1 [<A href="https://wg21.link/basic.pre#3">basic.pre</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An <I>entity</I> is a value, object, reference, function,
+enumerator, type, class member, <INS>bit-field,</INS> template,
+template specialization, namespace, parameter pack,
+or <TT>this</TT>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8 [<A href="https://wg21.link/basic.types#11">basic.types</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If two types <TT>T1</TT> and <TT>T2</TT> are the same type,
+then <TT>T1</TT> and <TT>T2</TT></DEL> <INS>Two types
+<I>cv1</I> <TT>T1</TT> and <I>cv2</I> <TT>T2</TT></INS>
+are <I>layout-compatible</I> types <INS>if <TT>T1</TT> and
+<TT>T2</TT> are the same type, layout-compatible enumerations
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or layout-compatible standard-layout
+class types (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>])</INS>. <DEL>[<I>Note:</I>
+Layout-compatible enumerations are described in
+9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]. Layout-compatible standard-layout
+structs and standard-layout unions are described in
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]. &#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The value representation of pointer types is
+implementation-defined. Pointers to <DEL>cv-qualified and
+cv-unqualified versions (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) of</DEL>
+layout-compatible types shall have the same value representation
+and alignment requirements
+(6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]). [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new paragraph before
+11.4 [<A href="https://wg21.link/class.mem#16">class.mem</A>] paragraph 16 and change paragraphs 16
+through 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>The <I>common initial sequence</I> of two standard-layout
+struct (Clause 11 [<A href="https://wg21.link/class">class</A>]) types is the longest
+sequence of non-static data members and bit-fields in declaration
+order, starting with the first such entity in each of the structs,
+such that corresponding entities have layout-compatible types and
+either neither entity is a bit-field or both are bit-fields with
+the same width. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct A { int a; char b; };
+  struct B { const int b1; volatile char b2; };
+  struct C { int c; unsigned : 0; char b; };
+  struct D { int d; char b : 4; };
+  struct E { unsigned int e; char b; };</INS>
+</PRE>
+
+<P><INS>The common initial sequence of <TT>A</TT> and <TT>B</TT>
+comprises all members of either class.  The common initial
+sequence of <TT>A</TT> and <TT>C</TT> and of <TT>A</TT> and
+<TT>D</TT> comprises the first member in each case.  The
+common initial sequence of <TT>A</TT> and <TT>E</TT> is
+empty. &#8212;<I>end example</I>]</INS></P>
+
+<P>Two standard-layout struct (Clause 11 [<A href="https://wg21.link/class">class</A>]) types
+are layout-compatible if <DEL>they have the same number of non-static
+data members and corresponding non-static data members (in
+declaration order) have layout-compatible types</DEL> <INS>their
+common initial sequence comprises all members and bit-fields of
+both classes</INS> (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).</P>
+
+<P>Two standard-layout <DEL>union (Clause 11 [<A href="https://wg21.link/class">class</A>])
+types</DEL> <INS>unions</INS> are layout-compatible if they have
+the same number of non-static data members and corresponding
+non-static data members (in any order) have layout-compatible
+types (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]).</P>
+
+<P>
+<DEL>If a standard-layout union contains two or more standard-layout
+structs that share a common initial sequence, and if the
+standard-layout union object currently contains one of these
+standard-layout structs, it is permitted to inspect the common
+initial part of any of them. Two standard-layout structs share a
+common initial sequence if corresponding members have
+layout-compatible types and either neither member is a bit-field
+or both are bit-fields with the same width for a sequence of one
+or more initial members.</DEL> <INS>In a standard-layout union with
+an active member (11.5 [<A href="https://wg21.link/class.union">class.union</A>]) of struct type
+<TT>T1</TT>, it is permitted to read a non-static data member
+<TT>m</TT> of another union member of struct type <TT>T2</TT>
+provided <TT>m</TT> is part of the common initial sequence of
+<TT>T1</TT> and <TT>T2</TT>. [<I>Note:</I> Reading a volatile
+object through a non-volatile glvalue has undefined behavior
+(9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>]). &#8212;<I>end note</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

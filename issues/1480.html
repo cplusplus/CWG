@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1480</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1480"></A><H4>1480.
+  
+Constant initialization via non-constant temporary
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-17<BR>
+
+
+
+
+<P>The following initializations appear to be well-formed:</P>
+
+<PRE>
+  struct C {
+   int m;
+   constexpr C(int m ) : m{m} {};
+   constexpr int get() { return m; };
+  };
+
+  C&amp;&amp; rr = C{1};
+  constexpr int k1 = rr.get();
+
+  const C&amp; cl = C{1};
+  constexpr int k2 = cl.get();
+</PRE>
+
+<P>They appear to fall under the bullet of 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2,
+</P>
+
+<UL>
+<LI>
+
+<P>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) unless it is
+applied to
+</P>
+</LI>
+
+<UL>
+
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>a non-volatile glvalue of literal type that refers to a non-volatile
+temporary object whose lifetime has not ended, initialized with a
+constant expression;
+</P>
+</LI>
+
+</UL>
+
+</UL>
+
+<P>The problem in this example is that the referenced temporary object
+is not a constant, so it would be well-defined for intervening code to
+modify its value before it was used in the later initialization.</P>
+
+<P><B>Additional note (February, 2013):</B></P>
+
+<P>The intent is that non-const references to temporaries should be allowed
+within constant expressions, e.g., across <TT>constexpr</TT> function
+calls, but not as the result of a constant expression.</P>
+
+<P><B>Proposed resolution (April, 2013):</B></P>
+
+<P>This issue was rendered moot by paper N3652, adopted at
+the April, 2013 meeting.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2692</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2692"></A><H4>2692.
+  
+Static and explicit object member functions with the same parameter-type-lists
+</H4>
+<B>Section: </B>12.2.2.2.1&#160; [<A href="https://wg21.link/over.match.call.general">over.match.call.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matthew House
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-16
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted at the February, 2023 meeting as part of paper P2797R0.]</P>
+
+<P>(Split off from <A HREF="2687.html">issue 2687</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static void f(A);
+    void f(this A);
+
+    void g();
+  };
+
+  void A::g() {
+    (&amp;A::f)(A()); //<SPAN CLASS="cmnt"> #1</SPAN>
+    (&amp;A::f)();    //<SPAN CLASS="cmnt"> #2</SPAN>
+  }
+</PRE>
+
+<P>It is obvious that #2 is ill-formed, but what about #1?  One
+possible answer is to make such declarations conflict.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#3">basic.scope.scope</A>] paragraph 3, adding bullets, a
+follows:</P>
+
+<BLOCKQUOTE>
+
+Two function templates have corresponding signatures if
+<UL>
+<LI>their <I>template-parameter-list</I>s have the same length,</LI>
+<LI>their corresponding <I>template-parameter</I>s are equivalent,</LI>
+<LI>they have equivalent
+<UL>
+<LI>
+<INS>parameter-type-lists or</INS>
+non-object-parameter-type-lists and</LI>
+<LI>return types (if any), and,</LI>
+</UL>
+</LI>
+<LI>if
+both are non-static members, they have corresponding object
+parameters.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#4.3.1">basic.scope.scope</A>] bullet 4.3.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>
+both declare functions with the same <INS>parameter-type-list or</INS>
+non-object-parameter-type-list [Footnote: ...], equivalent
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>]) trailing <I>requires-clause</I>s (if
+any, except as specified in 13.7.5 [<A href="https://wg21.link/temp.friend">temp.friend</A>]), and, if both
+are non-static members, they have corresponding object parameters,
+or</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-01-27</B></P>
+
+<P>Forward to EWG to determine whether such member declarations are
+considered sufficiently confusing to outweigh concerns of language
+orthogonality; see
+<A HREF="https://github.com/cplusplus/papers/issues/1455">plusplus/papers#1455</A>.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

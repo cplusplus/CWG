@@ -1,0 +1,258 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1116</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1116"></A><H4>1116.
+  
+Aliasing of union members
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Adopted at the June, 2016 meeting as document P0137R1.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US27">N3092 comment
+  US&#160;27<BR></A>
+
+<P>Related to <A HREF="1027.html">issue 1027</A>, consider:</P>
+
+<PRE>
+    int f() {
+      union U { double d; } u1, u2;
+      (int&amp;)u1.d = 1;
+      u2 = u1;
+      return (int&amp;)u2.d;
+    }
+</PRE>
+
+<P>Does this involve undefined behavior? 6.7.4 [<A href="https://wg21.link/basic.life#4">basic.life</A>] paragraph 4 seems to say that it's OK to clobber
+<TT>u1</TT> with an <TT>int</TT> object. Then union
+assignment copies the object representation, possibly
+creating an <TT>int</TT> object in <TT>u2</TT> and making
+the return statement well-defined. If this is well-defined,
+compilers are significantly limited in the assumptions they
+can make about type aliasing. On the other hand, the variant
+where <TT>U</TT> has an array of <TT>unsigned char</TT>
+member must be well-defined in order to support
+<TT>std::aligned_storage</TT>.</P>
+
+<P>
+<U>Suggested resolution</U>: Clarify that this case is
+undefined, but that adding an array of <TT>unsigned
+char</TT> to union <TT>U</TT> would make it well-defined
+&#8212; if a storage location is allocated with a particular
+type, it should be undefined to create an object in that
+storage if it would be undefined to access the stored value
+of the object through the allocated type.</P>
+
+<P>(See also issues <A HREF="1027.html">1027</A> and
+<A HREF="1338.html">1338</A>.)</P>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<OL>
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...The lifetime of an object of type <TT>T</TT> begins when
+<INS>storage with the proper alignment and size for type <TT>T</TT>
+is obtained, and either</INS>:</P>
+
+<UL>
+<LI><DEL>storage with the proper alignment and size for type
+<TT>T</TT> is obtained, and</DEL></LI>
+
+<LI><P>if the object has non-trivial initialization, its
+initialization is complete<DEL>.</DEL><INS>, or</INS>
+</P></LI>
+
+<LI><P><INS>if <TT>T</TT> is trivially copyable, the object representation
+of another <TT>T</TT> object is copied into the storage.</INS></P></LI>
+
+</UL>
+
+<P>The lifetime of an object of type <TT>T</TT> ends...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#4">basic.life</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A program may end the lifetime of any object by reusing
+the storage which the object occupies or by explicitly
+calling the destructor for an object of a class type with a
+non-trivial destructor.  For an object of a class type with
+a non-trivial destructor, the program is not required to
+call the destructor explicitly before the storage which the
+object occupies is reused or released; however, if there is
+no explicit call to the destructor or if a
+<I>delete-expression</I> (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]) is not
+used to release the storage, the destructor shall not be
+implicitly called and any program that depends on the side
+effects produced by the destructor has undefined
+behavior. <INS>If a program obtains storage for an object of
+a particular type <TT>A</TT> (e.g. with a variable definition or
+<I>new-expression</I>) and later reuses that storage for an
+object of another type <TT>B</TT> such that accessing the
+stored value of the <TT>B</TT> object through a glvalue of
+type <TT>A</TT> would have undefined behavior (7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]), the behavior is undefined. [<I>Example:</I>
+</INS>
+</P>
+
+<PRE>
+<INS>  int i;
+  (double&amp;)i = 1.0; //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+
+  struct S { unsigned char alignas(double) ar[sizeof (double)]; } s;
+  (double&amp;)s = 1.0; //<SPAN CLASS="cmnt"> OK, can access stored </SPAN>double<SPAN CLASS="cmnt"> through </SPAN>s<SPAN CLASS="cmnt"> because it has an </SPAN>unsigned char<SPAN CLASS="cmnt"> subobject</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#10">basic.lval</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a program attempts to access the stored value of an
+object through a glvalue of other than one of the following
+types the behavior is undefined<SUP>52</SUP><INS>:</INS>
+
+<UL>
+<LI><P>the dynamic type of the object,</P></LI>
+
+<LI><P>a cv-qualified version of the dynamic type of the
+object,</P></LI>
+
+<LI><P>a type similar (as defined in 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to the dynamic type of the object,</P></LI>
+
+<LI><P>a type that is the signed or unsigned type
+corresponding to the dynamic type of the object,</P></LI>
+
+<LI><P>a type that is the signed or unsigned type
+corresponding to a cv-qualified version of the dynamic type
+of the object,</P></LI>
+
+<LI><P><INS>a <TT>char</TT> or <TT>unsigned char</TT> type,</INS></P></LI>
+
+<LI><P>an aggregate or union type that includes one of the
+aforementioned types among its elements<INS>, bases,</INS>
+or non-static data members (including, recursively, an
+element<INS>, base,</INS> or non-static data member of a
+subaggregate<INS>, base,</INS> or contained
+union)<DEL>,</DEL><INS>.</INS>
+</P></LI>
+
+<LI><P><DEL>a type that is a (possibly cv-qualified) base class
+type of the dynamic type of the object,</DEL></P></LI>
+
+<LI><P><DEL>a <TT>char</TT> or <TT>unsigned char</TT> type.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1027.html">issue 1027</A>.</P>
+
+<P><B>Additional note (August, 2012):</B></P>
+
+<P>Concerns have been raised 
+regarding the interaction of this change with facilities like
+<TT>std::aligned_storage</TT> and memory pools. Care must be taken
+to achieve the proper balance between supporting type-based optimization
+techniques and allowing practical storage management.</P>
+
+<P><B>Additional note (January, 2013):</B></P>
+
+<P>Several questions have been raised about the wording above
+.  In
+particular:</P>
+
+<OL>
+<LI><P>Since aggregates and unions cannot have base classes, why
+are base classes mentioned?</P></LI>
+
+<LI><P>Since unions can now have special member functions, is it still
+valid to assume that they alias all their member types?</P></LI>
+
+<LI><P>Shouldn't standard-layout classes also be considered and not
+just aggregates?</P></LI>
+
+</OL>
+
+<P><B>Additional note, February, 2014:</B></P>
+
+<P>According to 6.7.2 [<A href="https://wg21.link/intro.object#1">intro.object</A>] paragraph 1, an object (i.e., a
+&#8220;region of storage&#8221;) is created by one of only three means:</P>
+
+<BLOCKQUOTE>
+
+An object is created by a definition (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]), by
+a <I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) or by the
+implementation (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) when needed. The properties of
+an object are determined when the object is created.
+
+</BLOCKQUOTE>
+
+<P>This does not allow for obtaining the storage in other ways, such as
+via <TT>malloc</TT>, in determining the lifetime of an object with vacuous
+initialization (6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1).</P>
+
+<P>In addition, 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 does not require
+the storage obtained for an object of type <TT>T</TT> to be accessed via
+an lvalue of type <TT>T</TT> in order to be considered an object of
+that type. The treatment of &#8220;effective type&#8221; by C may be
+helpful here.</P>
+
+<P><B>Additional note, May, 2015:</B></P>
+
+<P>We never say what the active member of a union is, how it can
+be changed, and so on.  The Standard doesn't make clear whether the
+following is valid:</P>
+
+<PRE>
+    union U { int a; short b; } u = { 0 };
+    int x = u.a; //<SPAN CLASS="cmnt"> presumably this is OK, but we never say that </SPAN>a<SPAN CLASS="cmnt"> is the active member</SPAN>
+    u.b = 0;     //<SPAN CLASS="cmnt"> not clear whether this is valid </SPAN>
+</PRE>
+
+<P>The closest we come to talking about this is the non-normative
+example in 11.5 [<A href="https://wg21.link/class.union#4">class.union</A>] paragraph 4, which suggests
+that a placement <TT>new</TT> is needed.</P>
+
+<P>It's also not clear whether <TT>a</TT> has two subobjects or
+only one (corresponding to the active member).</P>
+
+<BR><BR>
+</BODY>
+</HTML>

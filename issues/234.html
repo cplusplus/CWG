@@ -1,0 +1,78 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 234</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="234"></A><H4>234.
+  
+Reuse of base class subobjects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Wade
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Jun 2000<BR>
+
+
+<P>6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>] and 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>] discuss
+explicit management of object lifetime.  It seems clear that most
+object lifetime issues apply to sub-objects (array elements, and data
+members) as well.  The standard supports</P>
+
+<PRE>
+     struct X { T t } x;
+     T* pt = &amp;x.t;
+     pt-&gt;~T();
+     new(pt) T;
+</PRE>
+
+<P>and this kind of behavior is useful  in allocators.</P>
+
+<P>However the standard does not seem to prohibit the same operations
+on base sub-objects.</P>
+
+<PRE>
+   struct D: B{ ... } d;
+   B* pb = &amp;d;
+   pb-&gt;~B();
+   new(pb) B;
+</PRE>
+
+<P>However if <TT>B</TT> and/or <TT>D</TT> have virtual member
+functions or virtual bases, it is unlikely that this code will result
+in a well-formed <TT>D</TT> object in current implementations (note
+that the various lines may be in different functions).</P>
+
+<P>
+<B>Suggested resolution:</B> 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>] should be
+modified so that explicit destruction of base-class sub-objects be
+made illegal, or legal only under some restrictive conditions.</P>
+
+<P><B>Rationale (04/01):</B></P>
+
+<P>Reallocation of a base class subobject is already disallowed
+by 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

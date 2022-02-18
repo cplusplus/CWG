@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2681</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2681"></A><H4>2681.
+  
+Deducing member array type from string literal
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Caves
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-03-17<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T, std::size_t N&gt;
+  struct A {
+    T array[N];
+  };
+
+  A a = { "meow" };
+</PRE>
+
+<P>The current wording says in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.8">over.match.class.deduct</A>] bullet 1.8:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>if ei is of array type and xi is a <I>braced-init-list</I>
+or <I>string-literal</I>, Ti is an rvalue reference to the declared
+type of ei, and</LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This will fail overload resolution, because a string literal (which
+is an lvalue) does not match a parameter of type <TT>T
+(&amp;&amp;)[N]</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-07):</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.8">over.match.class.deduct</A>] paragraph 1.8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+
+<LI>if e<sub>i</sub> is of array type and x<sub>i</sub> is
+a <I>braced-init-list</I>
+<DEL>or <I>string-literal</I></DEL>, T<sub>i</sub> is an rvalue
+reference to the declared type of e<sub>i</sub>, and</LI>
+
+<LI><INS>if e<sub>i</sub> is of array type and x<sub>i</sub> is
+a <I>string-literal</I>, T<sub>i</sub> is an lvalue reference to
+the <INS>const-qualified</INS> declared type of e<sub>i</sub>,
+and</INS></LI>
+
+<LI>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Append to the example in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#2">over.match.class.deduct</A>] paragraph 2 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  G g(true, 'a', 1); //<SPAN CLASS="cmnt"> OK, deduces G&lt;char, bool&gt;</SPAN>
+</PRE>
+<PRE class="ins">
+  template&lt;class T, std::size_t N&gt;
+  struct H {
+    T array[N];
+  };
+  template&lt;class T, std::size_t N&gt;
+  struct I {
+    volatile T array[N];
+  };
+  template&lt;std::size_t N&gt;
+  struct J {
+    unsigned char array[N];
+  };
+
+  H h = { "abc" };  //<SPAN CLASS="cmnt"> OK, deduces </SPAN>H&lt;char, 4&gt;<SPAN CLASS="cmnt"> (not </SPAN>T = const char<SPAN CLASS="cmnt">)</SPAN>
+  I i = { "def" };  //<SPAN CLASS="cmnt"> OK, deduces </SPAN>I&lt;char, 4&gt;
+  J j = { "ghi" };  //<SPAN CLASS="cmnt"> error: cannot bind reference to array of unsigned char to array of char in deduction</SPAN>
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

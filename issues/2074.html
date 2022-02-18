@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2074</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2074"></A><H4>2074.
+  
+Type-dependence of local class of function template
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-01-20<BR>
+
+
+
+
+<P>According to 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#9">temp.dep.type</A>] paragraph 9, a
+local class in a function template is dependent if and only if
+it contains a subobject of a dependent type.  However, given
+an example like</P>
+
+<PRE>
+  template&lt;typename T&gt; void f() {
+    struct X {
+      typedef int type;
+  #ifdef DEPENDENT
+      T x;
+  #endif
+    };
+  X::type y;    //<SPAN CLASS="cmnt"> #1</SPAN>
+  }
+  void g() { f&lt;int&gt;(); }
+</PRE>
+
+<P>there is implementation variance in the treatment of #1, but
+whether or not <TT>DEPENDENT</TT> is defined appears to make no
+difference.</P>
+
+<P>In a related question, should a value-dependent
+<TT>alignas</TT> specifier cause a type to be dependent? Given</P>
+
+<PRE>
+  template&lt;int N&gt; struct Y { typedef int type; };
+  template&lt;int N&gt; void h() {
+    struct alignas(N) X {};
+    Y&lt;alignof(X)&gt;::type z;   //<SPAN CLASS="cmnt"> #2</SPAN>
+  }
+  void i() { h&lt;4&gt;(); }
+</PRE>
+
+<P>Most/all implementations issue an error for a missing
+<TT>typename</TT> in #2.</P>
+
+<P>Perhaps the right answer is that the types should be dependent
+but a member of the current instantiation, permitting name
+lookup without <TT>typename</TT>.</P>
+
+<P><B>Additional notes (September, 2022):</B></P>
+
+<P>At present, the term "current instantiation" is defined for class
+templates only, and thus does not apply to function templates.</P>
+
+<P>Moreover, the resolution for this issue should also handle local
+enums, with particular attention to 9.7.2 [<A href="https://wg21.link/enum.udecl#1">enum.udecl</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+The <I>elaborated-enum-specifier</I> shall not name a dependent type
+and...
+
+</BLOCKQUOTE>
+
+<P>This rule, without amendment, would disallow the following
+reasonable example if local enums were made dependent types:</P>
+
+<PRE>
+template &lt;class T&gt;
+void f() {
+  enum class E { e1, e2 };
+  using enum E;
+}
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

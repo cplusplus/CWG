@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2875</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2875"></A><H4>2875.
+  
+Missing support for round-tripping null pointer values through indirection/address operators
+</H4>
+<B>Section: </B>C.7.4&#160; [<A href="https://wg21.link/diff.expr">diff.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-21<BR>
+
+
+
+
+<P>C supports the following, C++ does not (see issues
+<A HREF="232.html">232</A> and <A HREF="2823.html">2823</A>):</P>
+<PRE>
+  void f() {
+    char *p = 0;
+    char *p2 = &amp;*p;       // <SPAN CLASS="cmnt">OK in C, undefined behavior in C++</SPAN>
+    int a[5];
+    int *q = &amp;a[5];       // <SPAN CLASS="cmnt">OK in C, undefined behavior in C++</SPAN>
+  }
+</PRE>
+
+<P>This incompatibility should be documented in Annex C.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-26):</B></P>
+
+<P>Add a new paragraph to C.7.4 [<A href="https://wg21.link/diff.expr">diff.expr</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]<BR>
+<B>Change:</B> In certain contexts, taking the address of a
+dereferenced null or past-the-end pointer value is well-defined in C
+(and yields the original pointer value), but results in undefined
+behavior in C++.
+For example:
+<PRE>
+  void f() {
+    char *p = 0;
+    char *p2 = &amp;*p;   // <SPAN CLASS="cmnt">well-defined in C, undefined behavior in C++</SPAN>
+    char *p3 = &amp;p[0]; // <SPAN CLASS="cmnt">well-defined in C, undefined behavior in C++</SPAN>
+    int a[5];
+    int *q = &amp;a[5];   // <SPAN CLASS="cmnt">well-defined in C, undefined behavior in C++</SPAN>
+  }
+</PRE>
+<B>Rationale:</B> Consistent treatment of lvalues in C++.<BR>
+<B>Effect on original feature:</B> Well-formed and well-defined C code exhibits undefined behavior in C++.<BR>
+<B>Difficulty of converting:</B> Syntactic transformation to pointer arithmetic and
+possible addition of a check for null pointer values.<BR>
+<B>How widely used:</B> Occasionally.
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>Implementations are required to diagnose undefined behavior in
+constant expressions.  The issue is kept in review status to allow
+time for submitting a paper to EWG to make the <TT>&amp;a[5]</TT> case
+well-defined.  See also C23 6.5.3.2p3.</P>
+		  
+<BR><BR>
+</BODY>
+</HTML>

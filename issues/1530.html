@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1530</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1530"></A><H4>1530.
+  
+Member access in out-of-lifetime objects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Howard Hinnant
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-07-26<BR>
+
+
+
+
+<P>According to 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>] paragraphs 5 and 6, a program
+has undefined behavior if a pointer or glvalue designating an
+out-of-lifetime object</P>
+
+<BLOCKQUOTE>
+
+is used to access a non-static data member or call a non-static member
+function of the object
+
+</BLOCKQUOTE>
+
+<P>It is not clear what the word &#8220;access&#8221; means in this
+context.  A reasonable interpretation might be using the pointer or
+glvalue as the left operand of a class member access expression;
+alternatively, it might mean to read or write the value of that
+member, allowing a class member access expression that is used only
+to form an address or bind a reference.</P>
+
+<P>This needs to be clarified.  A relevant consideration is the
+recent adoption of the resolution of <A HREF="597.html">issue 597</A>,
+which eased the former restriction on simple address manipulations
+involving out-of-lifetime objects: if base-class offset calculations
+are now allowed, why not non-static data member offset calculations?</P>
+
+<P>(See also <A HREF="1531.html">issue 1531</A> for other uses of
+the term &#8220;access.&#8221;)</P>
+
+<P><B>Additional note (January, 2013):</B></P>
+
+<P>A related question is the meaning of the phrase
+&#8220;before the constructor begins execution&#8221; in
+11.9.5 [<A href="https://wg21.link/class.cdtor#1">class.cdtor</A>] paragraph 1 means:</P>
+
+<BLOCKQUOTE>
+
+For an object with a non-trivial constructor, referring to any
+non-static member or base class of the object before the constructor
+begins execution results in undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>For example:</P>
+
+<PRE>
+  struct DerivedMember { ... };
+
+  struct Base {
+    Base(DerivedMember const&amp;);
+  };
+
+  struct Derived : Base {
+    DerivedMember x;
+    Derived() : Base(x) {}
+  };
+
+  Derived a;
+</PRE>
+
+<P>Is the reference to <TT>Derived::x</TT> in the <I>mem-initializer</I>
+valid?</P>
+
+<P><B>Additional note (March, 2013):</B></P>
+
+<P>This clause is phrased in terms of the execution of the constructor.
+However, it is possible for an aggregate to have a non-trivial default
+constructor and be initialized without executing a constructor.  The
+wording needs to be updated to allow for non-constructor initialization
+to avoid appearing to imply undefined behavior for an example like:</P>
+
+<PRE>
+  struct X {
+    std::string s;
+  } x = {};
+  std::string t = x.s;  //<SPAN CLASS="cmnt"> No constructor called for </SPAN>x<SPAN CLASS="cmnt">: undefined behavior?</SPAN>
+</PRE>
+
+
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

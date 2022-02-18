@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1865</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1865"></A><H4>1865.
+  
+Pointer arithmetic and multi-level qualification conversions
+</H4>
+<B>Section: </B>7.6.6&#160; [<A href="https://wg21.link/expr.add">expr.add</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Geoffrey Romer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-02-15<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>The resolution of <A HREF="1504.html">issue 1504</A> added
+7.6.6 [<A href="https://wg21.link/expr.add#7">expr.add</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+For addition or subtraction, if the expressions <TT>P</TT> or <TT>Q</TT>
+have type &#8220;pointer to <I>cv</I> <TT>T</TT>&#8221;, where <TT>T</TT>
+is different from the cv-unqualified array element type, the behavior is
+undefined.
+
+</BLOCKQUOTE>
+
+<P>This wording was intended to address derived-base conversion in pointer
+arithmetic, but it inadvertently categorized as undefined behavior
+previously well-defined pointer arithmetic on pointers that are the result
+of multi-level qualification conversions.  For example:</P>
+
+<PRE>
+  void f() {
+    int i = 0;
+    int* arr[3] = {&amp;i, &amp;i, &amp;i};
+    int const * const * aptr = arr;
+    assert(aptr[2] == &amp;i);
+  }
+</PRE>
+
+<P>This now has undefined behavior because the type of <TT>*aptr</TT> is
+&#8220;pointer to <TT>const int</TT>,&#8221; which is different from the
+cv-unqualified array element type, &#8220;pointer
+to <TT>int</TT>.&#8221;</P>
+
+<P>See also 
+<A HREF="330.html">issue 330</A>.</P>
+
+<P><B>Proposed Resolution (July, 2014):</B></P>
+
+<P>Change 7.6.6 [<A href="https://wg21.link/expr.add#7">expr.add</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+For addition or subtraction, if the expressions <TT>P</TT>
+or <TT>Q</TT> have type &#8220;pointer
+to <I>cv</I> <TT>T</TT>&#8221;, where <TT>T</TT> <DEL>is
+different from the cv-unqualified</DEL> <INS>and the</INS>
+array element type <INS>are not similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])</INS>, the behavior is
+undefined. [<I>Note:</I> In particular, a pointer to a base
+class cannot be used for pointer arithmetic when the array
+contains objects of a derived class type. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

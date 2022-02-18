@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1971</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1971"></A><H4>1971.
+  
+Unclear disambiguation of destructor and <TT>operator~</TT>
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-07-15<BR>
+
+
+<P>[Moved to DR at the May, 2015 meeting.]</P>
+
+
+
+<P>There is language in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>] paragraph
+10 to disambiguate destructor references from references
+to <TT>operator~</TT>:</P>
+
+<BLOCKQUOTE>
+
+There is an ambiguity in
+the <I>unary-expression</I> <TT>~X()</TT>, where <TT>X</TT>
+is a <I>class-name</I> or <I>decltype-specifier</I>. The
+ambiguity is resolved in favor of treating <TT>~</TT> as a
+unary complement rather than treating <TT>~X</TT> as
+referring to a destructor.
+
+</BLOCKQUOTE>
+
+<P>However, it is not clear whether this is intended to apply
+to an example like,</P>
+
+<PRE>
+  struct X {
+    X(int);
+    operator int();
+    void foo() {
+      ~X(0);
+    }
+  };
+</PRE>
+
+<P>where the form of reference has an apparent argument.</P>
+
+<P><B>Proposed resolution (November, 2014):</B></P>
+
+<P>Change 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#10">expr.unary.op</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand of <TT>~</TT> shall have integral or unscoped enumeration type; the
+result is the one's complement of its operand. Integral promotions are
+performed. The type of the result is the type of the promoted operand.
+There is an ambiguity <DEL>in the <I>unary-expression</I> <TT>~X()</TT>,
+where <TT>X</TT> is</DEL> <INS>in the grammar when <TT>~</TT> is followed
+by</INS> a <I>class-name</I> or <I>decltype-specifier</I>. The ambiguity is
+resolved <DEL>in favor of</DEL> <INS>by</INS> treating <TT>~</TT>
+as <DEL>a</DEL> <INS>the</INS> unary complement <INS>operator</INS> rather
+than <DEL>treating <TT>~X</TT> as referring to</DEL> <INS>as
+the start of an <I>unqualified-id</I> naming</INS> a
+destructor. <INS>[<I>Note:</I> Because the grammar does not permit an
+operator to follow the <TT>.</TT>, <TT>-&gt;</TT>, or <TT>::</TT> tokens,
+a <TT>~</TT> followed by a <I>class-name</I> or <I>decltype-specifier</I>
+in a member access expression or <I>qualified-id</I> is unambiguously
+parsed as a destructor name. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2814</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2814"></A><H4>2814.
+  
+Alignment requirement of incomplete class type
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Janet Cobb
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-20<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct X;       //<SPAN CLASS="cmnt"> declared, but not defined</SPAN>
+
+  int i;
+  X* p = static_cast&lt;X*&gt;(static_cast&lt;void*&gt;(&amp;i));
+</PRE>
+
+<P>Is the value of <TT>p</TT> unspecified per
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast#14">expr.static.cast</A>] paragraph 14?</P>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to cv1 void&#8221; can be converted
+to a prvalue of type &#8220;pointer to cv2 T&#8221;, where T is an
+object type and cv2 is the same cv-qualification as, or greater
+cv-qualification than, cv1. If the original pointer value represents
+the address A of a byte in memory and A does not satisfy the alignment
+requirement of T, then the resulting pointer value is unspecified.
+Otherwise, ...
+
+</BLOCKQUOTE>
+
+<P>Is that a case where implementations have to possibly pessimize a
+use of an undefined class, because a later definition can have the
+worst possible properties?  Such a situation can also occur for
+pointer-to-members of undefined classes.</P>
+
+<P><B>CWG 2023-12-15</B></P>
+
+<P>The resulting pointer value should be unspecified if <TT>T</TT> is
+incomplete.</P>
+
+<P><B>CWG 2024-03-18</B></P>
+
+<P>CWG decided to reverse direction here and to constrain
+implementations, not programs.</P>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>Change in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#14">expr.static.cast</A>] paragraph 14 and add bullets as
+follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to cv1 void&#8221; can be converted
+to a prvalue of type &#8220;pointer to cv2 T&#8221;, where T is an
+object type and cv2 is the same cv-qualification as, or greater
+cv-qualification than, cv1. If the original pointer value represents
+the address A of a byte in memory
+<INS><TT>, T</TT> is complete,</INS> and
+A does not satisfy the alignment requirement of T,
+then the resulting pointer value is unspecified.  Otherwise, ...
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#14">expr.static.cast</A>] paragraph 14 and add bullets as
+follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to cv1 void&#8221; can be converted
+to a prvalue of type &#8220;pointer to cv2 T&#8221;, where T is an
+object type and cv2 is the same cv-qualification as, or greater
+cv-qualification than, cv1. If the original pointer value represents
+the address A of a byte in memory
+<INS><TT>, T</TT> is complete anywhere in the program,</INS> and
+A does not satisfy the alignment requirement of T,
+then the resulting pointer value is unspecified.  Otherwise, ...
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-06-28</B></P>
+
+<P>It is understood that a pointer value of type <TT>T*</TT> may point
+to an object whose type is unrelated to <TT>T</TT>.  (Any access
+through such a pointer value is undefined behavior.)  However, C++
+maintains the invariant that the address represented by a pointer
+value of type <TT>T*</TT> is always suitably aligned for a <TT>T</TT>.
+The rule that is the concern of this issue ensures the invariant holds
+even when values of type <TT>T*</TT> are obtained by casting, and not
+by taking the address of an object.  For the latter case, the
+invariant holds because an object cannot exist unless its storage is
+aligned suitably.</P>
+
+<P>The rule that is the concern of this issue therefore primarily
+constrains user programs, not implementations.  It is unclear which
+"pessimizations" are expected from casting to a type whose alignment
+requirements are unknown at the point of the cast.  Note that the
+resulting unspecified pointer value may be an invalid pointer value
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]), which is essentially useless.  Note also
+that incomplete class types may have (minimum) alignment requirements,
+because an <I>alignment-specifier</I> can appear in
+an <I>elaborated-type-specifier</I>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

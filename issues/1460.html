@@ -1,0 +1,212 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1460</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1460"></A><H4>1460.
+  
+What is an empty union?
+</H4>
+<B>Section: </B>11.5&#160; [<A href="https://wg21.link/class.union">class.union</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-08<BR>
+
+
+<P>[Moved to DR at the September, 2013 meeting.]</P>
+
+<P>When a similar question was raised in <A HREF="413.html">issue 413</A>,
+the resolution was to remove the use of the term.  The resolution of
+<A HREF="1359.html">issue 1359</A> has now reintroduced the concept of
+an &#8220;empty&#8221; union, so there is once again the need to define
+it.</P>
+
+<P>(See also issues <A HREF="1562.html">1562</A> and
+<A HREF="1622.html">1622</A>.)</P>
+
+<P><B>Proposed resolution (February, 2013) [superseded]:</B></P>
+
+<P>Change 11.5 [<A href="https://wg21.link/class.union#2">class.union</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...At most one non-static data member of a union may have
+a <I>brace-or-equal-initializer</I>. <INS>A union is an
+<I>empty union</I> if it has no non-static data members.</INS>
+[<I>Note:</I> If any...
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (March, 2013):</B></P>
+
+<P>The question was raised as to whether an example like</P>
+
+<PRE>
+  union A {
+    union {};
+    union {};
+    constexpr A() {}
+  };
+  A a = A();
+</PRE>
+
+<P>is well-formed, which hinges on the question of whether <TT>A</TT> is
+an &#8220;empty union,&#8221; per 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4
+bullet 5:</P>
+
+<UL>
+<LI><P>if the class is a non-empty union, or for each non-empty
+anonymous union member of a non-union class, exactly one non-static data
+member shall be initialized;</P></LI>
+
+</UL>
+
+<P>Must one of the empty anonymous union members be initialized for
+<TT>A</TT>'s constructor to be <TT>constexpr</TT>?</P>
+
+<P>The issue is being returned to "review" status for discussion of
+this point.</P>
+
+<P>See also issues <A HREF="1562.html">1562</A>,
+<A HREF="1587.html">1587</A>, <A HREF="1621.html">1621</A>,
+and <A HREF="1623.html">1623</A>.</P>
+
+<P><B>Proposed resolution (August, 2013):</B></P>
+
+<OL>
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#4">dcl.constexpr</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...In addition, either its <I>function-body</I> shall be <TT>=
+delete</TT>, or it shall satisfy the following constraints:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P><DEL>if the class is a non-empty union, or for each non-empty
+anonymous union member of a non-union class, exactly one non-static data
+member shall be initialized;</DEL></P></LI>
+
+<LI><P><INS>if the class is a union having variant members
+(11.5 [<A href="https://wg21.link/class.union">class.union</A>]), exactly one of them shall be
+initialized;</INS></P></LI>
+
+<LI><P><INS>if the class is a union-like class, but is not a union, for
+each of its anonymous union members having variant members, exactly one
+of them shall be initialized;</INS></P></LI>
+
+<LI><P>every constructor involved...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.5 [<A href="https://wg21.link/class.union#2">class.union</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A union can have member functions (including constructors and destructors),
+but not virtual (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) functions.  A union shall not
+have base classes. A union shall not be used as a base class. If a union
+contains a non-static data member of reference type the program is
+ill-formed. <DEL>At most one non-static data member of a union may have
+a <I>brace-or-equal-initializer</I>.</DEL> [<I>Note:</I> If any non-static
+data member...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.5 [<A href="https://wg21.link/class.union#8">class.union</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>union-like</I> class is a union or a class that has an anonymous union
+as a direct member. A union-like class <TT>X</TT> has a set
+of <I>variant</I> members. <DEL>If <TT>X</TT> is a union its variant
+members are the non-static data members; otherwise, its variant members are
+the non-static data members of all anonymous unions that are members
+of <TT>X</TT>.</DEL> <INS>If <TT>X</TT> is a union, a non-static data
+member of <TT>X</TT> that is not an anonymous union is a variant member
+of <TT>X</TT>.  In addition, a non-static data member of an anonymous
+union that is a member of <TT>X</TT> is also a variant member of
+<TT>X</TT>.  At most one variant member of a union may have a
+<I>brace-or-equal-initializer</I>.  [<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  union U {
+    int x = 0;
+    union { };
+    union {
+      int z;
+      int y = 1; //<SPAN CLASS="cmnt"> error: initialization for second variant member of </SPAN>U
+    };
+  };</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#8">class.base.init</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>In a non-delegating constructor, if a given non-static data member or
+base class is not designated by a <I>mem-initializer-id</I> (including the
+case where there is no <I>mem-initializer-list</I> because the constructor
+has no <I>ctor-initializer</I>) and the entity is not a virtual base class
+of an abstract class (11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), then</P>
+
+<UL>
+<LI><P>if the entity is a non-static data member that has
+a <I>brace-or-equal-initializer</I> <INS>and either</INS>
+</P></LI>
+
+<UL>
+<LI><P><INS>the constructor's class is a union
+(11.5 [<A href="https://wg21.link/class.union">class.union</A>]), and no other variant member of that union
+is designated by a <I>mem-initializer-id</I> or</INS></P></LI>
+
+<LI><P><INS>the constructor's class is not a union, and, if the entity
+is a member of an anonymous union, no other member of that union is
+designated by a <I>mem-initializer-id</I>,</INS></P></LI>
+
+</UL>
+
+<P>the entity is initialized as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>];</P>
+
+<LI><P>otherwise, if the entity...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>(This resolution also resolves <A HREF="1562.html">issue 1562</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

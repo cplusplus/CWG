@@ -1,0 +1,100 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2802</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2802"></A><H4>2802.
+  
+Constrained <TT>auto</TT> and redeclaration with non-abbreviated syntax
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-26<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt; void f(T);
+  void f(auto);
+</PRE>
+
+<P>These are redeclarations according to 9.3.4.6 [<A href="https://wg21.link/dcl.fct#22">dcl.fct</A>] paragraph 22:</P>
+
+<BLOCKQUOTE>
+
+... An abbreviated function template is equivalent to a function template
+(13.7.7 [<A href="https://wg21.link/temp.fct">temp.fct</A>]) whose <I>template-parameter-list</I>
+includes one invented type <I>template-parameter</I> for each generic
+parameter type placeholder of the function declaration, in order of
+appearance. ...
+
+</BLOCKQUOTE>
+
+<P>The same applies to constrained abbreviated functions:</P>
+
+<PRE>
+  template&lt;C T&gt; void g(T);
+  void g(C auto);          // <SPAN CLASS="cmnt">redeclaration</SPAN>
+</PRE>
+
+<P>However, this leads to a situation where two function templates are
+equivalent, but not functionally equivalent:</P>
+
+<PRE>
+  template&lt;typename T&gt; requires D&lt;T&gt; void h(C auto); //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename T, C U&gt; requires D&lt;T&gt; void h(U); //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>According to 13.5.3 [<A href="https://wg21.link/temp.constr.decl#3.3">temp.constr.decl</A>] bullet 3.3, #1 has the
+associated constraints <TT>D&lt;T&gt; &amp;&amp;
+C&lt;auto_param_1&gt;</TT> whereas #2 has the associated
+constraints <TT>C&lt;U&gt; &amp;&amp; D&lt;T&gt;</TT> (note reverse
+order).  Those are observably different because satisfaction is
+checked in lexical order and instantiation of one of the associated
+constraints may yield an error not in the immediate context.</P>
+
+<P>A number of options are available:</P>
+<UL>
+<LI>Change 13.5.3 [<A href="https://wg21.link/temp.constr.decl#3.3">temp.constr.decl</A>] bullet 3.3 to check
+constraints from function parameters before those introduced by
+a <I>requires-clause</I> in the <I>template-head</I>.
+</LI>
+<LI>Do not defined the non-abbreviated form to be "equivalent" to the
+abbreviated function template in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#22">dcl.fct</A>] paragraph 22.  Redeclarations thus cannot use the other syntax.
+</LI>
+<LI>The "equivalent" only applies to non-constrained <TT>auto</TT>
+parameters.
+</LI>
+<LI>The "equivalent to" rule could append to
+the <I>requires-clause</I> in the <I>template-head</I> instead of
+inventing a constrained template parameter.</LI>
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

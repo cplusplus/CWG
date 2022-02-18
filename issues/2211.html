@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2211</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2211"></A><H4>2211.
+  
+Hiding by lambda captures and parameters
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ville Voutilainen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-12-07<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+
+  int main()
+  {
+    [x=2](int x) { std::cout &lt;&lt; x &lt;&lt; std::endl; }(3);
+  }
+</PRE>
+
+<P>What is the code supposed to print?  There is implementation
+divergence.</P>
+
+<P><B>Proposed resolution (February, 2017):</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph after
+7.5.6 [<A href="https://wg21.link/expr.prim.lambda#11">expr.prim.lambda</A>] paragraph 11:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The <I>identifier</I> in a <I>simple-capture</I> is looked up using the
+usual rules for unqualified name lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]); each
+such lookup shall find an entity. An entity that is designated by
+a <I>simple-capture</I> is said to be <I>explicitly captured</I>, and shall
+be <TT>*this</TT> (when the <I>simple-capture</I> is &#8220;<TT>this</TT>
+&#8221; or &#8220;<TT>* this</TT> &#8221;) or a variable with automatic
+storage duration declared in the reaching scope of the local lambda
+expression.</P>
+
+<P><INS>If an <I>identifier</I> in a <I>simple-capture</I> appears as the
+<I>declarator-id</I> of a parameter of the <I>lambda-declarator</I>'s
+<I>parameter-declaration-clause</I>, the program is ill-formed.
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  void f() {
+    int x = 0;
+    auto g = [x](int x) { return 0; }  //<SPAN CLASS="cmnt"> error: parameter and simple-capture have the same name</SPAN>
+  }</INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the example of 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#12">expr.prim.lambda</A>] paragraph 12
+as follows:</P></LI>
+
+<PRE>
+  int x = 4;
+  auto y = [&amp;r = x, x = x+1]()-&gt;int {
+                  r += 2;
+                  return x+2;
+               }(); //<SPAN CLASS="cmnt"> Updates </SPAN>::x<SPAN CLASS="cmnt"> to 6, and initializes </SPAN>y<SPAN CLASS="cmnt"> to 7.</SPAN>
+<INS>  auto z = [a = 42](int a) { return 1; } //<SPAN CLASS="cmnt"> error: parameter and local variable have the same name</SPAN></INS>
+</PRE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

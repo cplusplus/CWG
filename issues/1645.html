@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1645</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1645"></A><H4>1645.
+  
+Identical inheriting constructors via default arguments
+</H4>
+<B>Section: </B>_N4527_.12.9&#160; [<A href="https://wg21.link/class.inhctor">class.inhctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-03-18<BR>
+
+
+<P>[Adopted at the October, 2015 meeting as P0136R1.]</P>
+
+
+
+<P>For an example like</P>
+
+<PRE>
+  struct A {
+    constexpr A(int, float = 0);
+    explicit A(int, int = 0);
+    A(int, int, int = 0) = delete;
+  };
+
+  struct B : A {
+    using A::A;
+  };
+</PRE>
+
+<P>it is not clear from _N4527_.12.9 [<A href="https://wg21.link/class.inhctor">class.inhctor</A>] what
+should happen: is <TT>B::B(int)</TT> <TT>constexpr</TT>
+and/or <TT>explicit</TT>?  Is <TT>B::B(int,
+int)</TT> <TT>explicit</TT> and/or deleted?  Although the
+rationale given in the note in paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+If two <I>using-declaration</I>s declare inheriting
+constructors with the same signatures, the program is
+ill-formed (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>],
+_N4868_.12.2 [<A href="https://wg21.link/over.load">over.load</A>]), because an implicitly-declared
+constructor introduced by the first <I>using-declaration</I>
+is not a user-declared constructor and thus does not
+preclude another declaration of a constructor with the same
+signature by a subsequent <I>using-declaration</I>.
+
+</BLOCKQUOTE>
+
+<P>might be thought to apply, paragraph 1 talks about
+a <I>set</I> of candidate constructors based on their
+parameter types, so presumably such a set would contain only
+a single declaration of <TT>A::A(int)</TT> and one
+for <TT>A::A(int, int)</TT>.  The constructor
+characteristics of that declaration, however, are not
+specified.</P>
+
+<P>One possibility might be to declare such a constructor, resulting
+from the transformation of more than one base class constrctor, to
+be deleted, so there would be an error only if it were used.</P>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>CWG agreed with the direction of defining such constructors as
+deleted.</P>
+
+<P><B>Additional note, June, 2014:</B></P>
+
+<P>See <A HREF="1941.html">issue 1941</A> for an alternative
+approach to this problem.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,210 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1353</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1353"></A><H4>1353.
+  
+Array and variant members and deleted special member functions
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Sean Hunt
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-16<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+
+
+<P>The specification of when a defaulted special member function is to
+be defined as deleted sometimes overlooks variant and array members.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-07):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#2">class.default.ctor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted default constructor for class X is defined as deleted if:
+<UL>
+<LI>
+<DEL>X is a union that has a variant member with a non-trivial
+default constructor and no variant member of X has a default member
+initializer,</DEL>
+</LI>
+<LI>
+<DEL>X is a non-union class that has a variant member M
+with a non-trivial default constructor and no variant member of the
+anonymous union containing M has a default member initializer,</DEL>
+</LI>
+<LI>
+any non-static data member with no default member initializer
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) is of reference type,
+</LI>
+<LI>
+any non-variant non-static data member of const-qualified type
+(or <INS>possibly multi-dimensional</INS> array thereof)
+with no <I>brace-or-equal-initializer</I> is not
+const-default-constructible (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]),
+</LI>
+<LI>
+X is a union and all of its variant members are of const-qualified type (or
+<INS>possibly multi-dimensional</INS> array thereof),
+</LI>
+<LI>
+X is a non-union class and all members of any
+anonymous union member are of const-qualified type (or <INS>possibly multi-dimensional</INS> array thereof),
+</LI>
+<LI>
+any potentially constructed subobject, except for a non-static data
+member with a <I>brace-or-equal-initializer</I> <INS>or a variant
+member of a union where another non-static data member has
+a <I>brace-or-equal-initializer</I></INS>, has class type M
+(or <INS>possibly multi-dimensional</INS> array thereof)
+and <DEL>either M has no default constructor or</DEL> overload
+resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) as applied to find M's
+corresponding constructor <DEL>results in an ambiguity or in a
+function that is deleted or inaccessible from the defaulted default
+constructor</DEL> <INS>either does not result in a usable candidate
+(12.2.1 [<A href="https://wg21.link/over.match.general">over.match.general</A>]) or, in the case of a variant member, selects a
+non-trivial function</INS>, or
+</LI>
+<LI>
+any potentially constructed subobject has <DEL>a type with</DEL>
+<INS>class type M (or possibly multi-dimensional array thereof) and M has</INS>
+a destructor that is deleted or inaccessible from the defaulted default
+constructor.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#10">class.copy.ctor</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+... A defaulted copy/move constructor for a class X is
+defined as deleted (9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]) if X has:
+<UL>
+<LI>
+a potentially constructed subobject of type M (or <INS>possibly multi-dimensional</INS> array thereof)
+<DEL>that cannot be copied/moved because</DEL> <INS>for which</INS>
+overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to find
+M's corresponding constructor, <DEL>results in an ambiguity or a
+function that is deleted or inaccessible from the defaulted
+constructor</DEL> <INS>either does not result in a usable candidate
+(12.2.1 [<A href="https://wg21.link/over.match.general">over.match.general</A>]) or, in the case of a variant member, selects a
+non-trivial function</INS>,
+</LI>
+<LI>
+<DEL>a variant member whose corresponding constructor as selected by
+overload resolution is non-trivial,</DEL>
+</LI>
+<LI>
+any potentially constructed subobject of <DEL>a type with</DEL>
+<INS>class type M (or possibly multi-dimensional array thereof) where M has</INS> a
+destructor that is deleted or inaccessible from the defaulted
+constructor, or,
+</LI>
+<LI>
+for the copy constructor, a non-static data member of rvalue reference type.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#7">class.copy.assign</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted copy/move assignment operator for class X is defined as
+deleted if X has:
+<UL>
+<LI>
+<DEL>a variant member with a non-trivial
+corresponding assignment operator and X is a union-like class, or</DEL>
+</LI>
+<LI>
+a non-static data member of const non-class type (or
+<INS>possibly multi-dimensional</INS> array thereof), or
+</LI>
+<LI>
+a non-static data member of reference type, or
+</LI>
+<LI>
+a direct non-static data member of class type M (or <INS>possibly
+multi-dimensional</INS> array thereof) or a direct base class M that
+cannot be copied/moved because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to find M's corresponding
+assignment operator, <DEL>results in an ambiguity or a function that
+is deleted or inaccessible from the defaulted assignment
+operator</DEL> <INS>either does not result in a usable candidate
+(12.2.1 [<A href="https://wg21.link/over.match.general">over.match.general</A>]) or, in the case of a variant member,
+selects a non-trivial function</INS>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#7">class.dtor</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted destructor for a class X is defined as deleted if:
+<UL>
+<LI>
+<DEL>X is a union-like class that has a variant member with a non-trivial
+destructor,</DEL>
+</LI>
+<LI>
+any potentially constructed subobject has class
+type M (or <INS>possibly multi-dimensional</INS> array thereof) and M has a <DEL>deleted</DEL> destructor <INS>that is deleted</INS> or <DEL>a
+destructor that</DEL> is inaccessible from the defaulted destructor
+<INS>or, in the case of a variant member, is non-trivial</INS>,
+</LI>
+<LI>
+or, for a virtual destructor, lookup of the non-array deallocation
+function results in an ambiguity or in a function that is deleted or
+inaccessible from the defaulted destructor.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1080</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1080"></A><H4>1080.
+  
+Confusing relationship between templates and copy constructors
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-06-19<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraphs 6-7 currently read,</P>
+
+<BLOCKQUOTE>
+
+<P>A declaration of a constructor for a class <TT>X</TT> is ill-formed
+if its first parameter is of type (optionally cv-qualified) <TT>X</TT>
+and either there are no other parameters or else all other parameters
+have default arguments.</P>
+
+<P> A member function template is never instantiated to perform the
+copy of a class object to an object of its class
+type. [<I>Example:</I>
+</P>
+
+<PRE>
+    struct S {
+        template&lt;typename T&gt; S(T);
+        template&lt;typename T&gt; S(T&amp;&amp;);
+        S();
+    };
+
+    S f();
+    const S g;
+
+    void h() {
+        S a( f() ); //<SPAN CLASS="cmnt"> does not instantiate member template;</SPAN>
+                    //<SPAN CLASS="cmnt"> uses the implicitly generated move constructor</SPAN>
+        S a(g);     //<SPAN CLASS="cmnt"> does not instantiate the member template;</SPAN>
+                    //<SPAN CLASS="cmnt"> uses the implicitly generated copy constructor</SPAN>
+    }
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>These paragraphs were previously a single paragraph, and the second
+sentence was intended to mean that</P>
+
+<PRE>
+    template &lt;class T&gt; A(T):
+</PRE>
+
+<P>will never be instantiated to produce <TT>A(A)</TT>.  It should
+not have been split and the example should not have been amended to
+include move construction.</P>
+
+<P>
+<U>Lawrence Crowl</U>: I suggest something along the lines of</P>
+
+<BLOCKQUOTE>
+
+A member function template is never instantiated to match the
+signature of an ill-formed constructor.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<P>Merge 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraphs 6 and 7 and change the
+text as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A declaration of a constructor for a class <TT>X</TT> is ill-formed
+if its first parameter is of type (optionally cv-qualified) <TT>X</TT>
+and either there are no other parameters or else all other parameters
+have default arguments.  A member function template is never
+instantiated to <DEL>perform the copy of a class object to an object
+of its class type</DEL> <INS>produce such a constructor
+signature</INS>. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct S {
+    template&lt;typename T&gt; S(T);
+<DEL>    template&lt;typename T&gt; S(T&amp;&amp;);</DEL>
+    S();
+  };
+
+<DEL>  S f();</DEL>
+  <DEL>const</DEL> S g;
+
+  void h() {
+<DEL>    S a( f() ); //<SPAN CLASS="cmnt"> does not instantiate member template;</SPAN>
+                //<SPAN CLASS="cmnt"> uses the implicitly generated move constructor</SPAN></DEL>
+    S a(g);     //<SPAN CLASS="cmnt"> does not instantiate the member template <INS>to produce </INS></SPAN><INS>S::S&lt;S&gt;(S)</INS><SPAN CLASS="cmnt">;</SPAN>
+                //<SPAN CLASS="cmnt"> uses the implicitly <DEL>generated</DEL> <INS>declared</INS> copy constructor</SPAN>
+}
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

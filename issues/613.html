@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 613</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="613"></A><H4>613.
+  
+Unevaluated uses of non-static class members
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 October 2006<BR>
+
+
+<P>[Voted into WP at April, 2007 meeting.]</P>
+
+
+
+<P>According to 11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9, the name of a
+non-static data member can only be used with an object reference
+(explicit or implied by the <TT>this</TT> pointer of a non-static
+member function) or to form a pointer to member.  This restriction
+applies even in the operand of <TT>sizeof</TT>, although the
+operand is not evaluated and thus no object is needed to perform the
+operation.  Consequently, determining the size of a non-static class
+member often requires a circumlocution like
+</P>
+
+<PRE>
+    sizeof ((C*) 0)-&gt;m
+</PRE>
+
+<P>instead of the simpler and more obvious (but incorrect)</P>
+
+<PRE>
+    sizeof (C::m)
+</PRE>
+
+<P>The CWG considered this question as part of
+<A HREF="198.html">issue 198</A> and decided at that time to
+retain the restriction on consistency grounds: the rule was
+viewed as applying uniformly to expressions, and making an
+exception for <TT>sizeof</TT> would require introducing a
+special-purpose &#8220;wart.&#8221;</P>
+
+<P>The issue has recently resurfaced, in part due to the fact that
+the restriction would also apply to the <TT>decltype</TT> operator.
+Like the unary <TT>&amp;</TT> operator to form a pointer to member,
+<TT>sizeof</TT> and <TT>decltype</TT> need neither an lvalue nor
+an rvalue, requiring solely the declarative information of the
+named operand.  One possible approach would be to define the concept
+of &#8220;unevaluated operand&#8221; or the like, exempt unevaluated
+operands from the requirement for an object reference in
+11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9, and then define the operands
+of these operators as &#8220;unevaluated.&#8221;</P>
+
+<P><B>Proposed resolution (April, 2007):</B></P>
+
+<P>The wording is given in paper J16/07-0113 = WG21 N2253.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

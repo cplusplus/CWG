@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2704</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2704"></A><H4>2704.
+  
+Clarify meaning of "bind directly"
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-11-11<BR>
+
+
+<P>Currently, 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+In all cases except the last (i.e., implicitly converting the
+initializer expression to the referenced type), the reference is said
+to <I>bind directly</I> to the initializer expression.
+
+</BLOCKQUOTE>
+
+<P>This is intended to refer to both sub-bullets of the last bullet
+(see <A HREF="1604.html">issue 1604</A>), but the presentation is
+unclear.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4">dcl.init.ref</A>] bullet 5.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise<INS>, the reference is said to <I>bind indirectly</I> to the
+initializer expression:</INS>
+<UL>
+<LI>If T1 or T2 is a class type and T1 is not
+reference-related to T2, user-defined conversions are considered using
+the rules for copy-initialization of an object of type &#8220;cv1
+T1&#8221; by user-defined conversion (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]); the
+program is ill-formed if the corresponding non-reference
+copy-initialization would be ill-formed. The result of the call to the
+conversion function, as described for the non-reference
+copy-initialization, is then used to direct-initialize the reference.
+For this direct-initialization, user-defined conversions are not
+considered.
+</LI>
+<LI>Otherwise, the initializer expression is
+implicitly converted to a prvalue of type &#8220;T1&#8221;. The
+temporary materialization conversion is applied, considering the type
+of the prvalue to be &#8220;cv1 T1&#8221;, and the reference is bound
+to the result.
+</LI>
+</UL>
+
+If T1 is reference-related to T2:
+<UL>
+<LI>cv1 shall be the same cv-qualification as, or greater
+cv-qualification than, cv2; and</LI>
+<LI>if the reference is an rvalue reference, the initializer
+expression shall not be an lvalue.  [<I>Note 3:</I> This can be
+affected by whether the initializer expression is move-eligible
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]). &#8212;<I>end note</I>]</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>In all cases except the last (i.e., implicitly converting the
+initializer expression to the referenced type),
+the</DEL> <INS>The</INS> reference is said to <I>bind directly</I> to
+the initializer expression <INS>if it does not bind indirectly</INS>.
+<INS>[ Example:</INS>
+<PRE class="ins">
+  struct S {
+    operator int();
+  };
+  struct T {
+    T(int);
+  };
+  int&amp;&amp; r1 = S(); //<SPAN CLASS="cmnt"> binds directly</SPAN>
+  T&amp;&amp; r2 = int(); //<SPAN CLASS="cmnt"> binds indirectly</SPAN>
+  int&amp;&amp; r3 = double(); //<SPAN CLASS="cmnt"> binds indirectly</SPAN>
+</PRE>
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

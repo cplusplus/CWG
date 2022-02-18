@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2051</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2051"></A><H4>2051.
+  
+Simplifying alias rules
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-12-03<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>The aliasing rules of 7.2.1 [<A href="https://wg21.link/basic.lval#10">basic.lval</A>] paragraph 10 were
+adapted from C with additions for C++.  However, a number of the points
+either do not apply or are subsumed by other points.  For example, the
+provision for aggregate and union types is needed in C for struct
+assignment, which in C++ is done via constructors and assignment
+operators in C++, not by accessing the complete object.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Replace 7.2.1 [<A href="https://wg21.link/basic.lval#10">basic.lval</A>] paragraph 10 as follows:</P>
+
+<P>If a program attempts to access the stored value of an object
+through a glvalue whose type is not similar (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])
+to one of the following types the behavior is undefined:
+[<I>Footnote:</I>... &#8212;<I>end footnote</I>]</P>
+
+<UL>
+<LI><P>the dynamic type of the object,</P></LI>
+
+<LI><P>the signed or unsigned type corresponding to the dynamic
+type of the object, or</P></LI>
+
+<LI><P>a <TT>char</TT> or <TT>unsigned char</TT> type.</P></LI>
+
+</UL>
+
+<P><B>Additional note, October, 2015:</B></P>
+
+<P>It has been suggested 
+that the aliasing rules should be extended to permit an object of
+an enumeration with a fixed underlying type to alias an object with
+that underlying type.</P>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<OL>
+<LI><P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a program attempts to access the stored value of an
+object through a glvalue <DEL>of other than</DEL>
+<INS>whose type is not similar (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])
+to</INS> one of the following types the behavior is
+undefined:<SUP>58</SUP>
+</P>
+
+<UL>
+<LI><P>the dynamic type of the object,</P></LI>
+
+<LI><P>
+<DEL>a cv-qualified version of the dynamic type of the object,</DEL>
+</P></LI>
+
+<LI><P><DEL>a type similar (as defined in 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to
+the dynamic type of the object,</DEL></P></LI>
+
+<LI><P>a type that is the signed or unsigned type
+corresponding to the dynamic type of the object,</P></LI>
+
+<LI><P><DEL>a type that is the signed or unsigned type
+corresponding to a cv-qualified version of the dynamic type
+of the object,</DEL></P></LI>
+
+<LI><P><DEL>an aggregate or union type that includes one of the
+aforementioned types among its elements or non-static data
+members (including, recursively, an element or non-static
+data member of a subaggregate or contained union),</DEL></P></LI>
+
+<LI><P><DEL>a type that is a (possibly cv-qualified) base class type of
+the dynamic type of the object,</DEL></P></LI>
+
+<LI><P>a <TT>char</TT>, <TT>unsigned char</TT>, or
+<TT>std::byte</TT> type.</P></LI>
+
+</UL>
+
+<P><INS>If a program invokes a defaulted copy/move constructor
+or copy/move assignment operator for a union of type <TT>U</TT>
+with a glvalue argument that does not denote an object of type
+<I>cv</I> <TT>U</TT> within its lifetime, the behavior is
+undefined. [<I>Note:</I> Unlike in C, C++ has no accesses of
+class type. &#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.3.6 [<A href="https://wg21.link/conv.qual#1">conv.qual</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>cv-decomposition</I> of a type <TT>T</TT>
+is a sequence of <I>cv<SUB>i</SUB></I>
+and <I>P<SUB>i</SUB></I> such that <TT>T</TT> is</P>
+
+<UL>&#8220;<I>cv<SUB>0</SUB> P<SUB>0</SUB> &#183;&#183;&#183; cv<SUB>n-1</SUB> P<SUB>n-1</SUB> cv<SUB>n</SUB></I> <TT>U</TT>&#8221; for <I>n</I> <DEL>&gt;</DEL> <INS>&#8805;</INS> 0,</UL>
+
+<P>where...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2109</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2109"></A><H4>2109.
+  
+Value dependence underspecified
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Maxim Kartashev
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-03-26<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>In the following example,</P>
+
+<PRE>
+  struct A {};
+
+  struct X {
+     template &lt;typename Q&gt;
+     int memfunc();
+  };
+
+  template &lt;int (X::* P) ()&gt; int foo(...);
+
+  template&lt;class T&gt; struct B {
+     static int bar() {
+       A a;
+       return foo&lt;&amp;X::memfunc&lt;T&gt; &gt;(a);
+     }
+  };
+
+  template &lt;int (X::* P) ()&gt;  int foo(A a) { return 0; }
+
+  int main()  {
+     return B&lt;int&gt;::bar();
+  }
+</PRE>
+
+<P>the call <TT>foo&lt;&amp;X::memfunc&lt;T&gt; &gt;(a);</TT> is
+dependent only if the template argument is dependent, which is
+only true because of the use of the template parameter <TT>T</TT>.
+Implementations generally agree that this is dependent, but there
+does not appear to be wording to support this determination.</P>
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<P>Change 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is value-dependent if:</P>
+
+<UL>
+<LI><P>it is <DEL>a name declared with a dependent type</DEL>
+<INS>type-dependent</INS>,</P></LI>
+
+<LI><P>it is the name of a non-type template parameter,</P></LI>
+
+<LI><P><DEL>it names a member of an unknown specialization,</DEL></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="2066.html">issue 2066</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

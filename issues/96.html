@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 96</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="96"></A><H4>96.
+  
+Syntactic disambiguation using the <TT>template</TT> keyword
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Feb 1999<BR>
+
+
+
+<P>[Voted into WP at August, 2010 meeting.]</P>
+
+<P>The following is the wording from
+13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]
+
+paragraphs 4 and 5 that discusses the use of the "template" keyword following
+<TT>.</TT> or <TT>-&gt;</TT> and in qualified names.</P>
+<UL>When the name of a member template specialization appears after <TT>.</TT>
+or <TT>-&gt;</TT> in a <I>postfix-expression</I>, or after <I>nested-name-specifier</I>
+in a <I>qualified-id</I>, and the <I>postfix-expression</I> or <I>qualified-id</I>
+explicitly depends on a <I>template-parameter</I>
+(13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+),
+the member template name must be prefixed by the keyword <TT>template</TT>.
+Otherwise the name is assumed to name a non-template. [<I>Example:</I>
+<PRE>
+    class X {
+    public:
+        template&lt;std::size_t&gt; X* alloc();
+        template&lt;std::size_t&gt; static X* adjust();
+    };
+
+    template&lt;class T&gt; void f(T* p) {
+        T* p1 = p-&gt;alloc&lt;200&gt;();
+                // ill-formed: &lt; means less than
+
+        T* p2 = p-&gt;template alloc&lt;200&gt;();
+                // OK: &lt; starts template argument list
+
+        T::adjust&lt;100&gt;();
+                // ill-formed: &lt; means less than
+
+        T::template adjust&lt;100&gt;();
+                // OK: &lt; starts explicit qualification
+    }
+</PRE>
+&#8212;<I>end example</I>]
+
+<P>If a name prefixed by the keyword <TT>template</TT> is not the name
+of a member template, the program is ill-formed.
+[<I>Note:</I> the keyword <TT>template</TT>
+may not be applied to non-template members of class templates. ]</P>
+</UL>
+The whole point of this feature is to say that the "<TT>template</TT>"
+keyword is needed to indicate that a "<TT>&lt;</TT>" begins a template
+parameter list in certain contexts. The constraints in paragraph 5 leave
+open to debate certain cases.
+
+<P>First, I think it should be made more clear that the template name must
+be followed by a template argument list when the "<TT>template</TT>" keyword
+is used in these contexts. If we don't make this clear, we would have to
+add several semantic clarifications instead. For example, if you say "<TT>p-&gt;template
+f()</TT>", and "<TT>f</TT>" is an overload set containing both templates
+and nontemplates: a) is this valid? b) are the nontemplates in the overload
+set ignored? If the user is forced to write "<TT>p-&gt;template f&lt;&gt;()</TT>"
+it is clear that this is valid, and it is equally clear that nontemplates
+in the overload set are ignored. As this feature was added purely to provide
+syntactic guidance, I think it is important that it otherwise have no semantic
+implications.</P>
+
+<P>I propose that paragraph 5 be modified to:</P>
+<UL>If a name prefixed by the keyword <TT>template</TT> is not the name
+of a member template, or an overload set containing one or more member
+templates, the program is ill-formed. If the name prefixed by the <TT>template</TT>
+keyword is not followed by a <I>template-argument-list</I>, the program
+is ill-formed.</UL>
+
+<P>(See also <A HREF="30.html">issue 30</A> and document
+J16/00-0008 = WG21 N1231.)</P>
+
+<P><B>Notes from 04/00 meeting:</B></P>
+
+<P>The discussion of this issue revived interest in issues
+<A HREF="11.html">11</A> and <A HREF="109.html">109</A>.
+
+</P>
+
+<P><B>Notes from the October 2003 meeting:</B></P>
+
+<P>We reviewed John Spicer's paper N1528 and agreed with his
+recommendations therein.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change 13.3 [<A href="https://wg21.link/temp.names#5">temp.names</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>If a</DEL> <INS>A</INS> name prefixed by the keyword
+<TT>template</TT> <DEL>is not the name of a template,</DEL>
+<INS>shall be a <I>template-id</I> or the name shall refer to a
+class template</INS> <DEL>the program is ill-formed</DEL>.
+[<I>Note:</I> the keyword <TT>template</TT> may not be applied to
+non-template members of class templates. &#8212;<I>end note</I>]
+[<I>Note:</I> as is the case with the <TT>typename</TT> prefix,
+the <TT>template</TT> prefix is allowed in cases where it is not
+strictly necessary; i.e., when the <I>nested-name-specifier</I>
+or the expression on the left of the <TT>-&gt;</TT> or <TT>.</TT>
+is not dependent on a <I>template-parameter</I>, or the use does
+not appear in the scope of a template. &#8212;<I>end note</I>]
+<INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct A {
+    void f(int);
+    template &lt;class U&gt; void f(U); };
+
+  template &lt;class T&gt; void f(T t) {
+    A&lt;T&gt; a;
+    a.template f&lt;&gt;(t); //<SPAN CLASS="cmnt"> OK: calls template</SPAN>
+    a.template f(t);   //<SPAN CLASS="cmnt"> error: not a template-id</SPAN>
+  }
+
+  template &lt;class T&gt; struct B {template &lt;class T2&gt; struct C {}; };
+  //<SPAN CLASS="cmnt"> OK: </SPAN>T::template C<SPAN CLASS="cmnt"> names a class template:</SPAN>
+  template &lt;class T, template &lt;class X&gt; class TT = T::template C&gt; struct D {};
+  D&lt;B&lt;int&gt;&gt; db;</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2522</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2522"></A><H4>2522.
+  
+Removing placemarker tokens and retention of whitespace
+</H4>
+<B>Section: </B>15.6.4&#160; [<A href="https://wg21.link/cpp.concat">cpp.concat</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2018-04-08
+  &#160;&#160;&#160;
+  <B>Liaison: </B>WG14<BR>
+
+
+
+
+<P>It appears that the replacement of a function-like macro
+following further rescanning and replacement may begin or
+end with whitespace when the leftmost or rightmost tokens
+were placemarker tokens. GCC and MSVC preserve the
+whitespace in both the starting and ending positions.  Clang
+and ICC preserve only the trailing whitespace. For
+example:</P>
+
+<PRE>
+  #define F( X ) X##X/**/&gt;
+  #define G( X ) !/**/X##X
+  #define F0( X ) F(X)
+  #define G0( X ) G(X)
+  #define STR2( X ) #X
+  #define STR( X ) STR2(X)
+  #define Q
+  static_assert(STR(&gt;F0(Q))[1] == '\u0020', STR(&gt;F0(Q)));
+    //<SPAN CLASS="cmnt"> ^ Works with GCC and MSVC; fails with Clang and ICC.</SPAN>
+  static_assert(STR(G0(Q)=)[1] == '\u0020', STR(G0(Q)=));
+</PRE>
+
+<P>This appears to be an issue in C as well; see ISO C 6.10.3.</P>
+
+<P>See also <A HREF="1625.html">issue 1625</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2855</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2855"></A><H4>2855.
+  
+Undefined behavior in postfix increment
+</H4>
+<B>Section: </B>7.6.1.6&#160; [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>L&#233;n&#225;rd Szolnoki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-12<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/479">#479</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  int8_t x = 127;
+  x++;
+</PRE>
+
+<P>This has undefined behavior, because the resulting value is not
+representable as an <TT>int8_t</TT>.  In contrast,</P>
+
+<PRE>
+  int8_t x = 127;
+  ++x;
+</PRE>
+
+<P>is well-defined, because it is equivalent to <TT>x += 1</TT>, which
+is equivalent to <TT>x = (int)x + 1</TT> after the usual arithmetic
+conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]).  No arithmetic overflow
+occurs.  The presence or absence of undefined behavior is detectable
+in constant evaluation.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value of its operand.
+[<I>Note 1:</I> The value obtained is a copy of the original
+value. &#8212;<I>end note</I>]  The operand shall be a modifiable
+lvalue. The type of the operand shall be an arithmetic type other than
+cv bool, or a pointer to a complete object type. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
+The value of the operand object is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])
+<DEL>by adding 1 to it</DEL> <INS>as if it were the operand of the
+prefix <TT>++</TT> operator (7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>]).</INS> The
+value computation of the ++ expression is sequenced before the
+modification of the operand object. With respect to an
+indeterminately-sequenced function call, the operation of postfix ++
+is a single evaluation.  [<I>Note 2:</I> Therefore, a function call
+cannot intervene between the lvalue-to-rvalue conversion and the side
+effect associated with any single postfix ++ operator. &#8212;<I>end
+note</I>] The result is a prvalue. The type of the result is the
+cv-unqualified version of the type of the operand. <DEL>If the operand
+is a bit-field that cannot represent the incremented value, the
+resulting value of the bit-field is implementation-defined. See also
+7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] and 7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>].</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The operand of prefix <TT>++</TT> <INS>or <TT>--</TT></INS> <DEL>is
+modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by adding 1. The operand shall be
+a modifiable lvalue. The type of the operand</DEL>
+shall <INS>not</INS> be <DEL>an arithmetic type other
+than</DEL> <INS>of type</INS> <I>cv</I> <TT>bool</TT><DEL>, or a
+pointer to a completely-defined object type</DEL>. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
+<DEL>The result is the updated operand; it is an lvalue, and it is a
+bit-field if the operand is a bit-field.</DEL> The
+expression <TT>++x</TT> is <INS>otherwise</INS> equivalent to
+x+=1 <INS>and the expression <TT>--x</TT> is otherwise equivalent
+to <TT>x-=1</TT></INS> <DEL>. [<I>Note 1:</I> See the discussions of
+addition (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and assignment operators</DEL>
+(7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]) <DEL>for information on conversions</DEL>.
+<DEL>&#8212;<I>end note</I>]</DEL>
+</P>
+
+<P>
+<DEL>The operand of prefix -- is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by subtracting 1. The requirements on the
+operand of prefix -- and the properties of its result are otherwise
+the same as those of prefix ++.</DEL> [<I>Note 2:</I> For postfix
+increment and decrement, see
+7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]. &#8212;<I>end note</I>]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

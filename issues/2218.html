@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2218</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2218"></A><H4>2218.
+  
+Ambiguity and namespace aliases
+</H4>
+<B>Section: </B>6.5&#160; [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-12-29<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>There is implementation divergence on the status of the following
+example:</P>
+
+<PRE>
+  namespace A { namespace B { int x; } }
+  namespace C { namespace B = A::B; }
+  using namespace A;
+  using namespace C;
+  int x = B::x;
+</PRE>
+
+<P>This should presumably be valid: the lookup of <TT>B</TT> finds
+<TT>A::B</TT> and <TT>C::B</TT>, but it is not ambiguous because they
+denote the same entity. A similar example with a <I>using-declaration</I>
+or <I>alias-declaration</I> seems to be universally accepted. Perhaps
+the lookup rules need to be clarified regarding the status of this
+example.</P>
+
+<P><B>Proposed resolution (November, 2016):</B></P>
+
+<P>Change 6.5 [<A href="https://wg21.link/basic.lookup#1">basic.lookup</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The name lookup rules apply uniformly to all names
+(including <I>typedef-name</I>s
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]), <I>namespace-name</I>s
+(9.8 [<A href="https://wg21.link/basic.namespace">basic.namespace</A>]), and <I>class-name</I>s
+(11.3 [<A href="https://wg21.link/class.name">class.name</A>])) wherever the grammar allows such names in the
+context discussed by a particular rule.  Name lookup associates the use of
+a name with a <DEL>declaration</DEL> <INS>set of declarations</INS>
+(6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]) of that name. <DEL>Name lookup shall find an
+unambiguous declaration for the name (see 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]). Name
+lookup may associate more than one declaration with a name if it finds the
+name to be a function name;</DEL> <INS>The declarations found by name
+lookup shall either all declare the same entity or shall all declare
+functions; in the latter case,</INS> the declarations are said to form a
+set of overloaded functions (_N4868_.12.2 [<A href="https://wg21.link/over.load">over.load</A>]). Overload
+resolution...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

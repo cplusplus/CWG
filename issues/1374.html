@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1374</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1374"></A><H4>1374.
+  
+Qualification conversion vs difference in reference binding
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-08-15<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+<P>The rule in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3 for ranking
+based on a difference in qualification conversion applies only if they
+"differ only in their qualification conversion".</P>
+
+<P>It is unclear as to whether the property of being a reference
+binding is a factor in determining if there is a difference
+between conversion sequences. Notice that 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>] maps reference bindings to other forms of
+implicit conversion sequences, but does not state that the
+property of being a reference binding is preserved; however,
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>] has cases which depend on whether
+certain standard conversion sequences are reference bindings or
+not and on the specifics of the bindings.</P>
+
+<P>In the following, picking <TT>T2 &amp;&amp;</TT> would bind an
+rvalue to an rvalue reference. Picking <TT>T1 &amp;</TT> would
+bind an rvalue to an lvalue reference, but the qualification
+conversion to <TT>T1</TT> is "better". Which is better?</P>
+
+<PRE>
+    typedef int *      *      *const *const T1;
+    typedef int *const *const *const *const T2;
+    void foo(T1 &amp;);
+    void foo(T2 &amp;&amp;) { }
+
+    int main() {
+       foo((int ****)0);
+       return 0;
+    }
+</PRE>
+
+<P><B>Notes from the February, 2012 meeting:</B></P>
+
+<P>The CWG agreed that bullets 3 and 4 should be reversed, to check
+the reference binding first and then for qualification conversion.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Move 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3, first bullet, third
+sub-bullet, after the current fifth sub-bullet, as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Two implicit conversion sequences of the same form are
+indistinguishable conversion sequences unless one of the following
+rules applies:</P>
+
+<UL>
+<LI><P>Standard conversion sequence <TT>S1</TT> is a better
+conversion sequence...</P></LI>
+
+<UL>
+<LI><P>
+<TT>S1</TT> is a proper subsequence of <TT>S2</TT>...</P></LI>
+
+<LI><P>the rank of <TT>S1</TT> is better...</P></LI>
+
+<LI><P><DEL><TT>S1</TT> and <TT>S2</TT> differ only in their
+qualification conversion... &#8212;<I>end example</I>] or if not
+that,</DEL></P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and neither refers...  or if not
+that,</P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and S1 binds... &#8212;<I>end
+example</I>] <INS>or if not that,</INS>
+</P></LI>
+
+<LI><P><INS><TT>S1</TT> and <TT>S2</TT> differ only in their
+qualification conversion... &#8212;<I>end example</I>]
+or if not that,</INS></P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), and the types to which the references
+refer...</P></LI>
+
+</UL>
+
+<LI>User-defined conversion sequence <TT>U1</TT>...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

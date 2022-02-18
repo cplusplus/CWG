@@ -1,0 +1,134 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 170</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="170"></A><H4>170.
+  
+Pointer-to-member conversions
+</H4>
+<B>Section: </B>7.3.13&#160; [<A href="https://wg21.link/conv.mem">conv.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Stump
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 Sep 1999<BR>
+
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+
+
+<P>The descriptions of explicit
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast#9">expr.static.cast</A>] paragraph 9)
+ and
+implicit (7.3.13 [<A href="https://wg21.link/conv.mem#2">conv.mem</A>] paragraph 2)
+
+pointer-to-member conversions differ in two significant ways:</P>
+
+<OL>
+<LI>In a <TT>static_cast</TT>, a conversion in which the class in
+the target pointer-to-member type is a base of the class in which
+the member is declared is permitted and required to work correctly,
+as long as the resulting pointer-to-member is eventually
+dereferenced with an object whose dynamic type contains the
+member.  That is, the class of the target pointer-to-member type
+is not required to contain the member referred to by the value
+being converted.  The specification of implicit pointer-to-member
+conversion is silent on this question.
+
+<P>(This situation cannot arise in an implicit pointer-to-member
+conversion where the source value is something like <TT>&amp;X::f</TT>,
+since you can only implicitly convert from pointer-to-base-member
+to pointer-to-derived-member.  However, if the source value is
+the result of an explicit "up-cast," the target type of the
+conversion might still not contain the member referred to by the
+source value.)</P>
+</LI>
+
+<LI>The target type in a <TT>static_cast</TT> is allowed to be
+more cv-qualified than the source type; in an implicit conversion,
+however, the cv-qualifications of the two types are required to
+be identical.</LI>
+</OL>
+
+<P>The first difference seems like an oversight.  It is not clear
+whether the latter difference is intentional or not.</P>
+
+<P>(See also <A HREF="794.html">issue 794</A>.)</P>
+
+<P><B>CWG 2022-11-09</B></P>
+
+<P>The second concern is NAD; implicit conversions allow chaining a
+pointer-to-member conversion with a qualification conversion.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-06):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.3.13 [<A href="https://wg21.link/conv.mem#2">conv.mem</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to member of B of type cv T&#8221;,
+where B is a class type, can be converted to a prvalue of type
+&#8220;pointer to member of D of type cv T&#8221;, where D is a
+complete class derived (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) from B. If B is an
+inaccessible (11.8 [<A href="https://wg21.link/class.access">class.access</A>]), ambiguous
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]), or virtual (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>])
+base class of D, or a base class of a virtual base class of D, a
+program that necessitates this conversion is ill-formed.
+<INS>If class D does not contain the original member and is not a base class of the class containing the original member, the behavior is undefined.  Otherwise,</INS>
+<DEL>The</DEL> <INS>the</INS> result of
+the conversion refers to the same member as the pointer to member
+before the conversion took place, but it refers to the base class
+member as if it were a member of the derived class. The result refers
+to the member in D's instance of B. Since the result has type
+&#8220;pointer to member of D of type cv T&#8221;, indirection through
+it with a D object is valid. The result is the same as if indirecting
+through the pointer to member of B with the B subobject of D.  The
+null member pointer value is converted to the null member pointer
+value of the destination type. [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#13">expr.static.cast</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If class B contains the original member, or is a base <DEL>or
+derived</DEL> class of the class containing the original member, the
+resulting pointer to member points to the original member. ...
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

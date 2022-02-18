@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2272</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2272"></A><H4>2272.
+  
+Implicit initialization of aggregate members of reference type
+</H4>
+<B>Section: </B>9.4.2&#160; [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-10<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    const int &amp;i;
+  } s{}; 
+</PRE>
+
+<P>This example ought to be ill-formed, but 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8 states that <TT>i</TT> is instead initialized from an empty
+initializer list, which causes <TT>i</TT> to bind to a
+value-initialized temporary of type <TT>int</TT>.</P>
+
+<P><B>Proposed resolution (February, 2017):</B></P>
+
+<OL>
+<LI><P>Change 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#8">dcl.init.aggr</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If there are fewer <I>initializer-clause</I>s in the list than there are
+elements in <DEL>the</DEL> <INS>a non-union</INS> aggregate, then each
+element not explicitly initialized <DEL>shall be initialized from its default
+member initializer (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) or, if there is no default
+member initializer, from an empty initializer list
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</DEL> <INS>is initialized as follows:</INS>
+</P>
+
+<UL>
+<LI><P><INS>If the element has a default member initializer
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), the element is initialized from that
+initializer.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if the element is not a reference, the element is
+copy-initialized from an empty initializer list
+(9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</INS></P></LI>
+
+<LI><P><INS>Otherwise, the program is ill-formed.</INS></P></LI>
+
+</UL>
+
+<P><INS>If the aggregate is a union and the initializer list is empty,
+then</INS></P>
+
+<UL>
+<LI><P><INS>if any variant member has a default member initializer,
+that member is initialized from its default member
+initializer;</INS></P></LI>
+
+<LI><P><INS>otherwise, the first member of the union (if any) is
+copy-initialized from an empty initializer list.</INS></P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 9.4.2 [<A href="https://wg21.link/dcl.init.aggr#11">dcl.init.aggr</A>] paragraph 11:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>If an incomplete or empty <I>initializer-list</I> leaves a member of
+reference type uninitialized, the program is ill-formed.</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1622.html">1622</A>
+and <A HREF="2116.html">2116</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

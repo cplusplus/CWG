@@ -1,0 +1,506 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 453</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="453"></A><H4>453.
+  
+References may only bind to &#8220;valid&#8221; objects
+</H4>
+<B>Section: </B>9.3.4.3&#160; [<A href="https://wg21.link/dcl.ref">dcl.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gennaro Prota
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Jan 2004<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4 says:</P>
+<BLOCKQUOTE>
+  A reference shall be initialized to refer to a valid object or
+  function. [Note: in particular, a null reference cannot exist
+  in a well-defined program, because the only way to create such
+  a reference would be to bind it to the "object" obtained by
+  dereferencing a null pointer, which causes undefined behavior
+  ...]
+</BLOCKQUOTE>
+<P>What is a "valid" object? In particular the expression "valid object"
+seems to exclude uninitialized objects, but the response to Core Issue
+363 clearly says that's not the intent. This is an example
+(overloading construction on constness of *this) by John Potter, which
+I think is supposed to be legal C++ though it binds references to
+objects that are not initialized yet:</P>
+<PRE>
+ struct Fun {
+    int x, y;
+    Fun (int x, Fun const&amp;) : x(x), y(42) { }
+    Fun (int x, Fun&amp;) : x(x), y(0) { }
+  };
+  int main () {
+    const Fun f1 (13, f1);
+    Fun f2 (13, f2);
+    cout &lt;&lt; f1.y &lt;&lt; " " &lt;&lt; f2.y &lt;&lt; "\n";
+  }
+</PRE>
+
+<P>Suggested resolution: Changing the final part of
+9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4 to:</P>
+<BLOCKQUOTE>
+  A reference shall be initialized to refer to an object or function.
+  From its point of declaration on (see 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>])
+  its name is an lvalue
+  which refers to that object or function. The reference may be
+  initialized to refer to an uninitialized object but, in that case,
+  it is usable in limited ways (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>], paragraph 6)
+  [Note: On the other hand, a declaration like this:
+<PRE>
+    int &amp; ref = *(int*)0;
+</PRE>
+  is ill-formed because ref will not refer to any object or function
+  ]
+</BLOCKQUOTE>
+
+<P>I also think a "No diagnostic is required." would better be added
+(what about something like int&amp; r = r; ?)</P>
+
+<P><B>Proposed Resolution (October, 2004) [SUPERSEDED]:</B></P>
+
+<P>(Note: the following wording depends on the proposed
+resolution for <A HREF="232.html">issue 232</A>.)</P>
+
+<P>Change 9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4 as follows:</P>
+<BLOCKQUOTE>
+
+<P>
+<DEL>A reference shall be initialized to refer to a valid object
+or function.</DEL> <INS>If an lvalue to which a reference is directly
+bound designates neither an existing object or function of an
+appropriate type (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), nor a region of
+memory of suitable size and alignment to contain an object of the
+reference's type (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>], 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>], 6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), the behavior is
+undefined.</INS> [<I>Note:</I> in particular, a null reference cannot
+exist in a well-defined program, because the only way to create
+such a reference would be to bind it to the
+<DEL>&#8220;object&#8221;</DEL> <INS>empty lvalue</INS> obtained by
+dereferencing a null pointer, which <DEL>causes undefined behavior.
+As</DEL> <INS>does not designate an object or function.  Also, as
+</INS> described in 11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>],
+a reference cannot be bound directly to a
+bit-field. ]</P>
+
+<P><INS>The name of a reference shall not be used in its own
+initializer.  Any other use of a reference before it is
+initialized results in undefined behavior.  [<I>Example:</I>
+</INS></P>
+
+<INS>
+<PRE>
+  int&amp; f(int&amp;);
+  int&amp; g();
+
+  extern int&amp; ir3;
+  int* ip = 0;
+
+  int&amp; ir1 = *ip;     // <I>undefined behavior: null pointer</I>
+  int&amp; ir2 = f(ir3);  // <I>undefined behavior: </I>ir3<I> not yet initialized</I>
+  int&amp; ir3 = g();
+  int&amp; ir4 = f(ir4);  // <I>ill-formed: </I>ir4<I> used in its own initializer</I>
+</PRE>
+&#8212;<I>end example</I>]
+</INS>
+</BLOCKQUOTE>
+
+<P>
+<B>Rationale: </B> The proposed wording goes beyond the specific
+concerns of the issue.  It was noted that, while the current
+wording makes cases like <TT>int&amp; r = r;</TT> ill-formed (because
+<TT>r</TT> in the initializer does not "refer to a valid object"), an
+inappropriate initialization can only be detected, if at all, at
+runtime and thus "undefined behavior" is a more appropriate treatment.
+Nevertheless, it was deemed desirable to continue to require a
+diagnostic for obvious compile-time cases.
+</P>
+
+<P>It was also noted that the current Standard does not say anything
+about using a reference before it is initialized.  It seemed
+reasonable to address both of these concerns in the same wording
+proposed to resolve this issue.
+</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>The CWG decided that whether to require an implementation to
+diagnose initialization of a reference to itself should be handled as
+a separate issue (<A HREF="504.html">504</A>) and also suggested referring
+to &#8220;storage&#8221; instead of &#8220;memory&#8221; (because
+6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>] defines an object as a &#8220;region of
+storage&#8221;).</P>
+
+<P><B>Proposed Resolution (April, 2005) [SUPERSEDED]:</B></P>
+
+<P>(Note: the following wording depends on the proposed
+resolution for <A HREF="232.html">issue 232</A>.)</P>
+
+<P>Change 9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4 as follows:</P>
+<BLOCKQUOTE>
+
+<P>
+<DEL>A reference shall be initialized to refer to a valid object
+or function.</DEL> <INS>If an lvalue to which a reference is directly
+bound designates neither an existing object or function of an
+appropriate type (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), nor a region of
+storage of suitable size and alignment to contain an object of the
+reference's type (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>], 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>], 6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), the behavior is
+undefined.</INS> [<I>Note:</I> in particular, a null reference cannot
+exist in a well-defined program, because the only way to create
+such a reference would be to bind it to the
+<DEL>&#8220;object&#8221;</DEL> <INS>empty lvalue</INS> obtained by
+dereferencing a null pointer, which <DEL>causes undefined behavior.
+As</DEL> <INS>does not designate an object or function.  Also, as
+</INS> described in 11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>],
+a reference cannot be bound directly to a
+bit-field. ]</P>
+
+<P><INS>Any use of a reference before it is initialized results in
+undefined behavior.  [<I>Example:</I>
+</INS></P>
+
+<INS>
+<PRE>
+  int&amp; f(int&amp;);
+  int&amp; g();
+
+  extern int&amp; ir3;
+  int* ip = 0;
+
+  int&amp; ir1 = *ip;     // <SPAN CLASS="cmnt">undefined behavior: null pointer</SPAN>
+  int&amp; ir2 = f(ir3);  // <SPAN CLASS="cmnt">undefined behavior: </SPAN>ir3<SPAN CLASS="cmnt"> not yet initialized</SPAN>
+  int&amp; ir3 = g();
+  int&amp; ir4 = f(ir4);  // <SPAN CLASS="cmnt">undefined behavior: </SPAN>ir4<SPAN CLASS="cmnt"> used in its own initializer</SPAN>
+</PRE>
+&#8212;<I>end example</I>]
+</INS>
+</BLOCKQUOTE>
+
+<P><B>Note (February, 2006):</B></P>
+
+<P>The word &#8220;use&#8221; in the last
+paragraph of the proposed resolution was intended to refer to the
+description in 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2.  However, that
+section does not define what it means for a reference to be
+&#8220;used,&#8221; dealing only with objects and functions.  Additional
+drafting is required to extend 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2
+to apply to references.  </P>
+
+<P><B>Additional note (May, 2008):</B></P>
+
+<P>The proposed resolution for <A HREF="570.html">issue 570</A>
+adds wording to define &#8220;use&#8221; for references.</P>
+
+<P><B>Note, January, 2012:</B></P>
+
+<P>The resolution should also probably deal with the fact that
+the &#8220;one-past-the-end&#8221; address of an array does not
+designate a valid object (even if such a pointer might
+&#8220;point to&#8221; an object of the correct type, per
+6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) and thus is not suitable for the
+lvalue-to-rvalue conversion.  </P>
+
+<P><B>CWG 2023-11-06</B></P>
+
+<P>We need a (possibly out-of-lifetime) object, not just a region of
+storage here.  Empty lvalues do not exist.  Otherwise, the direction
+is confirmed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-10) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An object of dynamic type <TT>T</TT><I><SUB>obj</SUB></I>
+is <I>type-accessible</I> through a glvalue of
+type <TT>T</TT><I><SUB>ref</SUB></I>
+if <TT>T</TT><I><SUB>ref</SUB></I> is similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to:
+<UL class="ins">
+<LI>
+<TT>T</TT><I><SUB>obj</SUB></I>,</LI>
+<LI>a type that is the signed or unsigned type corresponding
+to <TT>T</TT><I><SUB>obj</SUB></I>, or</LI>
+<LI>a <TT>char</TT>, <TT>unsigned char</TT>, or <TT>std:byte</TT>
+type.</LI>
+</UL>
+
+</P>
+
+If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
+value of an object through a glvalue <DEL>whose type is not similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to one of the following types</DEL>
+<INS>through which it is not type-accessible,</INS> the behavior is
+undefined<DEL>:</DEL><INS>.</INS>[ Footnote: ... ]
+<UL class="del">
+<LI>the dynamic type of the object,</LI>
+<LI>a type that is the signed or unsigned type corresponding to
+the dynamic type of the object, or</LI>
+<LI>a char, unsigned char, or std::byte type.</LI>
+</UL>
+
+If a program invokes a defaulted copy/move constructor or copy/move
+assignment operator for a union of type U with a glvalue argument that
+does not denote an object of type cv U within its lifetime, the
+behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#5">expr.call</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A type <TT>T</TT><I><SUB>call</SUB></I> is <I>call-compatible</I>
+with a function type <TT>T</TT><I><SUB>func</SUB></I>
+if <TT>T</TT><I><SUB>call</SUB></I> is the same type
+as <TT>T</TT><I><SUB>func</SUB></I> or if the type "pointer
+to <TT>T</TT><I><SUB>func</SUB></I>" can be converted to type "pointer
+to <TT>T</TT><I><SUB>call</SUB></I>" via a function pointer conversion
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]).</INS> Calling a function through an
+expression whose function type <DEL>E is different from the
+function</DEL> <INS>is not call-compatible with the</INS> type <DEL>F</DEL>
+of the called function's definition results in undefined
+behavior <DEL>unless the type &#8220;pointer to F&#8221; can be
+converted to the type &#8220;pointer to E&#8221; via a function
+pointer conversion (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>])</DEL>.  [<I>Note
+4:</I> <DEL>The exception applies</DEL> <INS>This requirement allows
+the case</INS> when the expression has the type of a
+potentially-throwing function, but the called function has a
+non-throwing exception specification, and the function types are
+otherwise the same. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change and split in 9.3.4.3 [<A href="https://wg21.link/dcl.ref#5">dcl.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>There shall be no references to references, no arrays of references,
+and no pointers to references. The declaration of a reference shall
+contain an initializer (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) except when the
+declaration contains an explicit extern specifier
+(9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]), is a class member
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) declaration within a class definition, or
+is the declaration of a parameter or a return type
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]); see 6.2 [<A href="https://wg21.link/basic.def">basic.def</A>].
+<DEL>A reference shall be initialized to refer to a valid object or
+function.</DEL>
+</P>
+
+<P>
+<INS>Attempting to bind a reference to a function where the
+initializer is a glvalue whose type is not call-compatible
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) with the type of the function's
+definition results in undefined behavior. Attempting to bind a
+reference to an object where the initializer is a glvalue through
+which the object is not type-accessible (7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>])
+results in undefined behavior.</INS> [<I>Note 2:</I> <DEL>In particular, a
+null reference cannot exist in a well-defined program, because the
+only way to create such a reference would be to bind it to the
+&#8220;object&#8221; obtained by indirection through a null pointer,
+which causes undefined behavior.</DEL>
+<INS>The object designated by such a glvalue can be outside its
+lifetime (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). Because a null pointer value or
+a pointer past the end of an object does not point to an object, a
+reference in a well-defined program cannot refer to such things; see
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>].</INS>
+As described in 11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>], a reference cannot be
+bound directly to a bit-field. &#8212;<I>end note</I>]
+<INS>An odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of a reference that does not
+happen after (6.9.2.2 [<A href="https://wg21.link/intro.races">intro.races</A>]) its initialization results
+in undefined behavior. [ Example:</INS>
+<PRE class="ins">
+int &amp;f(int&amp;);
+int &amp;g();
+extern int &amp;ir3;
+int *ip = 0;
+int &amp;ir1 = *ip;    //<SPAN CLASS="cmnt"> undefined behavior: null pointer</SPAN>
+int &amp;ir2 = f(ir3); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>ir3<SPAN CLASS="cmnt"> not yet initialized</SPAN>
+int &amp;ir3 = g();
+int &amp;ir4 = f(ir4); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>ir4<SPAN CLASS="cmnt"> used in its own initializer</SPAN>
+</PRE>
+<INS>-- end example ]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>Additional notes (November, 2023):</B></P>
+
+<P>An odr-use is a property of the program, not an evaluation that
+participates in the "happens before" relation.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An object of dynamic type <TT>T</TT><I><SUB>obj</SUB></I>
+is <I>type-accessible</I> through a glvalue of
+type <TT>T</TT><I><SUB>ref</SUB></I>
+if <TT>T</TT><I><SUB>ref</SUB></I> is similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to:
+<UL class="ins">
+<LI>
+<TT>T</TT><I><SUB>obj</SUB></I>,</LI>
+<LI>a type that is the signed or unsigned type corresponding
+to <TT>T</TT><I><SUB>obj</SUB></I>, or</LI>
+<LI>a <TT>char</TT>, <TT>unsigned char</TT>, or <TT>std:byte</TT>
+type.</LI>
+</UL>
+
+</P>
+
+If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
+value of an object through a glvalue <DEL>whose type is not similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to one of the following types</DEL>
+<INS>through which it is not type-accessible,</INS> the behavior is
+undefined<DEL>:</DEL><INS>.</INS>[ Footnote: ... ]
+<UL class="del">
+<LI>the dynamic type of the object,</LI>
+<LI>a type that is the signed or unsigned type corresponding to
+the dynamic type of the object, or</LI>
+<LI>a char, unsigned char, or std::byte type.</LI>
+</UL>
+
+If a program invokes a defaulted copy/move constructor or copy/move
+assignment operator for a union of type U with a glvalue argument that
+does not denote an object of type cv U within its lifetime, the
+behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#5">expr.call</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A type <TT>T</TT><I><SUB>call</SUB></I> is <I>call-compatible</I>
+with a function type <TT>T</TT><I><SUB>func</SUB></I>
+if <TT>T</TT><I><SUB>call</SUB></I> is the same type
+as <TT>T</TT><I><SUB>func</SUB></I> or if the type "pointer
+to <TT>T</TT><I><SUB>func</SUB></I>" can be converted to type "pointer
+to <TT>T</TT><I><SUB>call</SUB></I>" via a function pointer conversion
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]).</INS> Calling a function through an
+expression whose function type <DEL>E is different from the
+function</DEL> <INS>is not call-compatible with the</INS> type <DEL>F</DEL>
+of the called function's definition results in undefined
+behavior <DEL>unless the type &#8220;pointer to F&#8221; can be
+converted to the type &#8220;pointer to E&#8221; via a function
+pointer conversion (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>])</DEL>.  [<I>Note
+4:</I> <DEL>The exception applies</DEL> <INS>This requirement allows
+the case</INS> when the expression has the type of a
+potentially-throwing function, but the called function has a
+non-throwing exception specification, and the function types are
+otherwise the same. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change and split in 9.3.4.3 [<A href="https://wg21.link/dcl.ref#5">dcl.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>There shall be no references to references, no arrays of references,
+and no pointers to references. The declaration of a reference shall
+contain an initializer (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) except when the
+declaration contains an explicit extern specifier
+(9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]), is a class member
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) declaration within a class definition, or
+is the declaration of a parameter or a return type
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]); see 6.2 [<A href="https://wg21.link/basic.def">basic.def</A>].
+<DEL>A reference shall be initialized to refer to a valid object or
+function.</DEL>
+</P>
+
+<P>
+<INS>Attempting to bind a reference to a function where the
+converted initializer is a glvalue whose type is not call-compatible
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) with the type of the function's
+definition results in undefined behavior. Attempting to bind a
+reference to an object where the converted initializer is a glvalue through
+which the object is not type-accessible (7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>])
+results in undefined behavior.</INS> [<I>Note 2:</I> <DEL>In particular, a
+null reference cannot exist in a well-defined program, because the
+only way to create such a reference would be to bind it to the
+&#8220;object&#8221; obtained by indirection through a null pointer,
+which causes undefined behavior.</DEL>
+<INS>The object designated by such a glvalue can be outside its
+lifetime (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). Because a null pointer value or
+a pointer past the end of an object does not point to an object, a
+reference in a well-defined program cannot refer to such things; see
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>].</INS>
+As described in 11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>], a reference cannot be
+bound directly to a bit-field. &#8212;<I>end note</I>]
+<INS>The behavior of an evaluation of a reference
+(7.5.5 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>], 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) that does
+not happen after (6.9.2.2 [<A href="https://wg21.link/intro.races">intro.races</A>]) the initialization of
+the reference is undefined.  [ Example:</INS>
+<PRE class="ins">
+int &amp;f(int&amp;);
+int &amp;g();
+extern int &amp;ir3;
+int *ip = 0;
+int &amp;ir1 = *ip;    //<SPAN CLASS="cmnt"> undefined behavior: null pointer</SPAN>
+int &amp;ir2 = f(ir3); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>ir3<SPAN CLASS="cmnt"> not yet initialized</SPAN>
+int &amp;ir3 = g();
+int &amp;ir4 = f(ir4); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>ir4<SPAN CLASS="cmnt"> used in its own initializer</SPAN>
+
+char x alignas(int);
+int &amp;ir5 = *reinterpret_cast&lt;int *&gt;(&amp;x);  // <SPAN CLASS="cmnt">undefined behavior: initializer refers to char object</SPAN>
+</PRE>
+<INS>-- end example ]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,213 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 138</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="138"></A><H4>138.
+  
+Friend declaration name lookup
+</H4>
+<B>Section: </B>_N4868_.9.8.2.3&#160; [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin von Loewis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Jul 1999<BR>
+
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3
+says,</P>
+
+<BLOCKQUOTE>
+If a <TT>friend</TT> declaration in a non-local class first declares a
+class or function the friend class or function is a member of the
+innermost enclosing namespace...  When looking for a prior declaration
+of a class or a function declared as a <TT>friend</TT>, scopes outside
+the innermost enclosing namespace scope are not considered.
+</BLOCKQUOTE>
+
+It is not clear from this passage how to determine whether an entity
+is "first declared" in a <TT>friend</TT> declaration.  One question is
+whether a <I>using-declaration</I> influences this determination.
+For instance:
+
+<PRE>
+    void foo();
+    namespace A{
+      using ::foo;
+      class X{
+	friend void foo();
+      };
+    }
+</PRE>
+
+Is the <TT>friend</TT> declaration a reference to <TT>::foo</TT> or
+a different <TT>foo</TT>?
+
+<P>Part of the question involves determining the meaning of
+the word "synonym" in
+9.9 [<A href="https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+A <I>using-declaration</I> introduces a name into the declarative
+region in which the <I>using-declaration</I> appears.  That name
+is a synonym for the name of some entity declared elsewhere.
+</BLOCKQUOTE>
+
+Is "<TT>using ::foo;</TT>" the declaration of a function or not?
+
+<P>More generally, the question is how to describe the lookup of the
+name in a <TT>friend</TT> declaration.</P>
+
+<P>
+<U>John Spicer</U>:
+When a declaration specifies an unqualified name, that
+name is declared, not looked up.  There is a mechanism in which that
+declaration is linked to a prior declaration, but that mechanism is
+not, in my opinion, via normal name lookup.  So, the friend always
+declares a member of the nearest namespace scope regardless of how
+that name may or may not already be declared there.</P>
+
+<P>
+<U>Mike Miller</U>:
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#7">basic.lookup.unqual</A>] paragraph 7
+says:</P>
+
+<BLOCKQUOTE>
+A name used in the definition of a class <TT>X</TT> outside of a
+member function body or nested class definition shall be declared in
+one of the following ways:...  [<I>Note:</I> when looking for a
+prior declaration of a class or function introduced by a <TT>friend</TT>
+declaration, scopes outside of the innermost enclosing namespace scope
+are not considered.]
+</BLOCKQUOTE>
+
+The presence of this note certainly implies that this paragraph
+describes the lookup of names in <TT>friend</TT> declarations.
+
+<P>
+<U>John Spicer</U>:
+It most certainly does not.  If that section described the friend
+lookup it would yield the incorrect results for the friend declarations
+of <TT>f</TT> and <TT>g</TT> below.
+I don't know why that note is there, but it can't
+be taken to mean that that is how the friend lookup is done.</P>
+
+<PRE>
+    void f(){}
+    void g(){}
+    class B {
+        void g();
+    };
+    class A : public B {
+        void f();
+        friend void f(); // ::f not A::f
+        friend void g(); // ::g not B::g
+    };
+</PRE>
+
+<P>
+<U>Mike Miller</U>:
+If so, the lookups for friend functions and classes behave differently.
+Consider the example in
+6.5.6 [<A href="https://wg21.link/basic.lookup.elab#3">basic.lookup.elab</A>] paragraph 3:
+</P>
+
+<PRE>
+    struct Base {
+        struct Data;         // <I>OK: declares nested</I> Data
+        friend class Data;   // <I>OK: nested</I> Data <I>is a friend</I>
+    };
+</PRE>
+
+<P>If the <TT>friend</TT> declaration is <I>not</I> a reference to
+<TT>::foo</TT>, there is a related but separate question: does the
+<TT>friend</TT> declaration introduce a conflicting (albeit "invisible")
+declaration into namespace <TT>A</TT>, or is it simply a reference
+to an as-yet undeclared (and, in this instance, undeclarable)
+<TT>A::foo</TT>?  Another part of the example in
+6.5.6 [<A href="https://wg21.link/basic.lookup.elab#3">basic.lookup.elab</A>] paragraph 3
+is
+related:</P>
+
+<PRE>
+    struct Data {
+        friend struct Glob;  // <I>OK: Refers to (as yet) undeclared</I> Glob
+                             // <I>at global scope.</I>
+    };
+</PRE>
+
+<P>
+<U>John Spicer</U>:
+You can't refer to something that has not yet been declared.  The friend
+is a declaration of <TT>Glob</TT>,
+it just happens to declare it in a such a way that
+its name cannot be used until it is redeclared.</P>
+
+<P>(A somewhat similar question has been raised in connection with
+<A HREF="36.html">issue 36</A>.  Consider:</P>
+
+<PRE>
+    namespace N {
+        struct S { };
+    }
+    using N::S;
+    struct S;          // legal?
+</PRE>
+
+<P>According to 11.3 [<A href="https://wg21.link/class.name#2">class.name</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+A declaration consisting solely of <I>class-key identifier ;</I>
+is either a redeclaration of the name in the current scope or a
+forward declaration of the identifier as a class name.
+
+</BLOCKQUOTE>
+
+<P>Should the elaborated type declaration in this example be
+considered a redeclaration of <TT>N::S</TT> or an invalid
+forward declaration of a different class?)</P>
+
+<P>(See also issues
+<A HREF="95.html">95</A>,
+<A HREF="136.html">136</A>,
+<A HREF="139.html">139</A>,
+<A HREF="143.html">143</A>,
+<A HREF="165.html">165</A>, and
+<A HREF="166.html">166</A>, as well as paper J16/00-0006 = WG21
+N1229.)</P>
+
+
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

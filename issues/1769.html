@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1769</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1769"></A><H4>1769.
+  
+Catching a base class of the exception object
+</H4>
+<B>Section: </B>14.4&#160; [<A href="https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Canada
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-24<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA13">N3690 comment
+  CA&#160;13<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+<P>In saying that the catch-clause parameter is copy-initialized from
+the exception object, 14.4 [<A href="https://wg21.link/except.handle#16">except.handle</A>] paragraph 16 leaves open
+the possibility that a converting constructor might be used for the
+initialization when the type of the <I>exception-declaration</I> is
+a base of the type of the exception object.  It should be specified
+that the parameter is copy-constructed from the corresponding base class
+subobject in such cases.</P>
+
+<P><B>Proposed resolution (September, 2013) [superseded]:</B></P>
+
+<P>Change 14.4 [<A href="https://wg21.link/except.handle#16">except.handle</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If
+the <I>exception-declaration</I> <DEL>specifies</DEL> <INS>introduces</INS>
+a name, it declares a variable<DEL> which is copy-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the exception object. If
+the <I>exception-declaration</I> denotes an object type but does not
+specify a name, a temporary (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) is copy-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the exception object.</DEL><INS>;
+otherwise, an unnamed variable is created.  That variable, of type
+<I>cv</I> <TT>T</TT> or <I>cv</I> <TT>T&amp;</TT>, is initialized from
+the exception object, of type <TT>E</TT>, as follows:</INS>
+</P>
+
+<UL>
+<LI><P><INS>if <TT>T</TT> is a base class of <TT>E</TT>, the variable
+is copy-initialized from the corresponding base class subobject of the
+exception object;</INS></P></LI>
+
+<LI><P><INS>otherwise, the variable is copy-initialized from the
+exception object.</INS></P></LI>
+
+<P>The lifetime of the variable <DEL>or temporary</DEL> ends when the
+handler exits, after the destruction of any automatic objects initialized
+within the handler.</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (October, 2013):</B></P>
+
+<P>Additional discussion  has pointed out that, although the
+unnamed handler parameter is no longer called a &#8220;temporary&#8221; in
+the proposed resolution, 6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1 still lists
+&#8220;entering a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])&#8221; as one of the
+contexts in which a temporary is created.  A question was also raised as to
+whether it is necessary to deal with named and unnamed handler parameters
+separately, since both are now referred to as &#8220;variables&#8221; in
+the revised wording.  This issue has therefore been returned to "review"
+status to allow consideration of these points.</P>
+
+<P><B>Proposed resolution (November, 2013):</B></P>
+
+<OL>
+<LI><P>Change 6.1 [<A href="https://wg21.link/basic.pre#6">basic.pre</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>variable</I> is introduced by the declaration of a
+reference other than a non-static data member or of an
+object. The variable's name<INS>, if any,</INS> denotes the
+reference or object.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Temporaries of class type are created in various contexts:
+binding a reference to a prvalue
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), returning a prvalue
+(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]), a conversion that creates a
+prvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), throwing an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), <DEL>entering a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]),</DEL> and in some initializations
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+Throwing an exception copy-initializes
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) a
+temporary object, called the exception object. The temporary
+is an lvalue and is used to initialize the
+variable <DEL>named</DEL> <INS>declared</INS> in the
+matching handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]). If the type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.4 [<A href="https://wg21.link/except.handle#16">except.handle</A>] paragraph 16 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>If the <I>exception-declaration</I> specifies a name, it
+declares a variable which is copy-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the exception object. If
+the <I>exception-declaration</I> denotes an object type but
+does not specify a name, a temporary
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) is copy-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the exception object.</DEL>
+<INS>The variable declared by the <I>exception-declaration</I>,
+of type <I>cv</I> <TT>T</TT> or <I>cv</I> <TT>T&amp;</TT>, is
+initialized from the exception object, of type <TT>E</TT>, as
+follows:</INS>
+</P>
+
+<UL>
+<LI><P><INS>if <TT>T</TT> is a base class of <TT>E</TT>,
+the variable is copy-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])
+from the corresponding base class subobject of the exception
+object;</INS></P></LI>
+
+<LI><P><INS>otherwise, the variable is copy-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the exception object.</INS></P></LI>
+
+</UL>
+
+<P>The lifetime of the variable <DEL>or temporary</DEL> ends
+when the handler exits, after the destruction of any
+automatic objects initialized within the handler.</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

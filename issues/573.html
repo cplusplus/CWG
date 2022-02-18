@@ -1,0 +1,186 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 573</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="573"></A><H4>573.
+  
+Conversions between function pointers and <TT>void*</TT>
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 April 2006<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting.]</P>
+
+<P>The resolution to <A HREF="195.html">issue 195</A> makes
+&#8220;converting a pointer to a function into a pointer to an object
+type or vice versa&#8221; conditionally-supported behavior.  In doing
+so, however, it overlooked the fact that <TT>void</TT> is not an
+&#8220;object type&#8221; (6.8 [<A href="https://wg21.link/basic.types#9">basic.types</A>] paragraph 9).
+The wording should be amended to allow conversion to and
+from <TT>void*</TT> types.</P>
+
+<P><B>Proposed resolution (November, 2010):</B></P>
+
+<OL>
+<LI><P>Change _N4885_6.7.5.5.4 [<A href="https://wg21.link/basic.stc.dynamic.safety">basic.stc.dynamic.safety</A>] paragraphs 1-2 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>traceable pointer object</I> is</P>
+
+<UL>
+<LI><P>an object of <DEL><I>pointer-to-object</I></DEL> <INS>an
+object pointer</INS> type <INS>(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>])</INS>,
+or</P></LI>
+
+<LI><P>an object of an integral type that is at least as large as
+<TT>std::intptr_t</TT>, or</P></LI>
+
+<LI><P>a sequence of elements in an array of character type, where the
+size and alignment of the sequence match <DEL>that</DEL>
+<INS>those</INS> of some <DEL>pointer-to-object</DEL> <INS>object
+pointer</INS> type.</P></LI>
+
+</UL>
+
+<P>A pointer value is a <I>safely-derived pointer</I> to a dynamic
+object only if it has <DEL>pointer-to-object</DEL> <INS>an object
+pointer</INS> type and it is...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>] paragraphs 3-4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<INS>The type of a pointer to <TT>void</TT> or a pointer to an
+object type is called an <I>object pointer type</I>. [<I>Note:</I> A
+pointer to <TT>void</TT> does not have a pointer-to-object type,
+however, because <TT>void</TT> is not an object type. &#8212;<I>end
+note</I>] The type of a pointer that can designate a function is
+called a <I>function pointer type</I>.</INS> A pointer to objects of
+type <TT>T</TT> is referred to as a &#8220;pointer to
+<TT>T</TT>.&#8221; [<I>Example:</I>...</P>
+
+<P>
+<DEL>Objects of cv-qualified (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) or
+cv-unqualified type <TT>void*</TT> (pointer to void),</DEL> <INS>A
+pointer to cv-qualified (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) or cv-unqualified
+<TT>void</TT></INS> can be used to point to objects of unknown
+type. <DEL>A <TT>void*</TT></DEL> <INS>Such a pointer</INS> shall be
+able to hold any object pointer. <DEL>A cv-qualified or cv-unqualified
+(6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>])</DEL> <INS>An object of type
+<I>cv</I></INS> <TT>void*</TT> shall have the same representation and
+alignment requirements as <DEL>a cv-qualified or cv-unqualified</DEL>
+<INS><I>cv</I></INS> <TT>char*</TT>.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.3.12 [<A href="https://wg21.link/conv.ptr#1">conv.ptr</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A null pointer constant can be converted to a pointer type; the
+result is the <I>null pointer value</I> of that type and is
+distinguishable from every other value of <DEL>pointer to object or
+pointer to function</DEL> <INS>object pointer or function
+pointer</INS> type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.3.13 [<A href="https://wg21.link/conv.mem#2">conv.mem</A>] paragraph 2 footnote 58 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Note that a pointer to member is not <DEL>a pointer to object or a
+pointer to function</DEL> <INS>an object pointer or a function
+pointer</INS> and...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>] paragraphs 6-8 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <DEL>pointer to a</DEL> function <INS>pointer</INS> can be
+explicitly converted to a <DEL>pointer to a</DEL> function
+<INS>pointer</INS> of a different type...</P>
+
+<P>
+<DEL>A pointer to an</DEL> <INS>An</INS> object <INS>pointer</INS>
+can be explicitly converted to <DEL>a pointer to a different object
+type</DEL> <INS>an object pointer of a different type</INS>...</P>
+
+<P>Converting a <DEL>pointer to a function into a pointer to an
+object</DEL> <INS>function pointer to an object pointer</INS> type or
+vice versa is conditionally-supported...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the note in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> function types are checked during the assignments and
+initializations of <DEL>pointer-to-functions, reference-to-functions,
+and pointer-to-member-functions</DEL> <INS>pointers to functions,
+references to functions, and pointers to member
+functions</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>In the &#8220;Index of Implementation-defined Behavior,&#8221;
+change the following item as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+converting <DEL>pointer to function into pointer to object</DEL>
+<INS>function pointer to object pointer</INS> and vice versa
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Drafting note: 7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1 was not
+changed, so the operand of <TT>delete</TT> still cannot be a
+<TT>void*</TT>.  12.5 [<A href="https://wg21.link/over.built#14">over.built</A>] paragraph 14 was not
+changed, so <TT>void*</TT> pointers still do not get overloads for
+<TT>operator-</TT>.  13.2 [<A href="https://wg21.link/temp.param#4">temp.param</A>] paragraph 4 was not
+changed and thus continues to allow only pointers to objects, not
+object pointers, as non-type template parameters.]</I></P>
+
+<P>(See also <A HREF="1120.html">issue 1120</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

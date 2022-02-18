@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1493</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1493"></A><H4>1493.
+  
+Criteria for move-construction
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-04-02<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA23">N3690 comment
+  CA&#160;23<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+<P>The decision in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#32">class.copy.ctor</A>] paragraph 32 on whether or
+not a copy must be replaced by a move is phrased largely in terms of
+when copy elision can be performed, as described in the preceding
+paragraph.  In particular, the fourth bullet of paragraph 31 applies</P>
+
+<BLOCKQUOTE>
+
+when the <I>exception-declaration</I> of an exception handler (
+Clause 14 [<A href="https://wg21.link/except">except</A>]) declares an object of the same type (except
+for cv-qualification) as the exception object (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the copy/move operation can be omitted by treating the
+<I>exception-declaration</I> as an alias for the exception object if
+the meaning of the program will be unchanged except for the execution
+of constructors and destructors for the object declared by the
+<I>exception-declaration</I>.
+
+</BLOCKQUOTE>
+
+<P>The determination of &#8220;when the meaning of the program will be
+unchanged&#8221; is, in the general case, not practical.  Copy elision
+is optional, meaning that the compiler can simply choose not to
+perform it if the determination is too difficult.  Choosing whether
+to do a copy or a move, however, is mandatory, even if the copy is elided,
+and such a broad criterion is not appropriate.  Probably the best way
+to address this problem would be to eliminate <I>exception-declaration</I>s
+as a possible target for move-construction.</P>
+
+<P>(See also <A HREF="1579.html">issue 1579</A>.)</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraphs 31 and 32 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...This elision of copy/move operations, called copy elision, is
+permitted in the following circumstances (which may be combined to
+eliminate multiple copies):</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI>
+
+<P>when the <I>exception-declaration</I> of an exception handler (
+Clause 14 [<A href="https://wg21.link/except">except</A>]) declares an object of the same type (except for
+cv-qualification) as the exception object (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the
+copy<DEL>/move</DEL> operation can be omitted by treating
+the <I>exception-declaration</I> as an alias for the exception object if
+the meaning of the program will be unchanged except for the execution of
+constructors and destructors for the object declared by
+the <I>exception-declaration</I>. <INS>[<I>Note:</I> there cannot be a
+move from the exception object because it is always an lvalue.
+&#8212;<I>end note</I>]</INS>
+</P>
+</LI>
+
+</UL>
+
+<P>[<I>Example:</I>...</P>
+
+<P>When the criteria for elision of a copy<INS>/move</INS> operation are
+met<INS>, but not for an <I>exception-declaration</I>,</INS> or would be
+met save for the fact that the source object is a function parameter, and
+the object to be copied is designated by an lvalue, overload resolution to
+select the constructor for the copy is first performed as if the object
+were designated by an rvalue. If <INS>the first</INS> overload resolution
+fails <INS>or was not performed</INS>, or if the type of the first
+parameter of the selected constructor is not an rvalue reference to the
+object's type (possibly cv-qualified), overload resolution is performed
+again, considering the object as an lvalue. [<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

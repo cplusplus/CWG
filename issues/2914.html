@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2914</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2914"></A><H4>2914.
+  
+Unclear order of initialization of static and thread-local variables
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/559">#559</A>.)</P>
+
+<P>Specification is missing that clarifies that non-local variables
+with static storage duration are initialized before those with thread
+storage duration.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Variables with static storage duration are initialized as a
+consequence of program initiation. Variables with thread storage
+duration are initialized as a consequence of thread execution.
+<INS>
+If the program does not start a thread (6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>])
+other than the main thread (6.9.3.1 [<A href="https://wg21.link/basic.start.main">basic.start.main</A>]) before the
+completion of all non-deferred (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>])
+initialization of non-block variables with static storage duration,
+then all non-deferred initialization (if any) of non-block variables
+with static storage duration strongly happens before any non-deferred
+initialization of non-block variables with thread storage duration.
+</INS>
+Within each of these phases of initiation, initialization occurs as follows.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#5">basic.start.dynamic</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+It is implementation-defined whether the dynamic initialization of a
+non-block non-inline variable <INS><I>o</I></INS> with static storage
+duration is sequenced before the first statement of main or is
+deferred. If it is deferred, it strongly happens before any
+non-initialization odr-use of any non-inline function or non-inline
+variable defined in the same translation unit as <DEL>the variable to
+be initialized</DEL> <INS><I>o</I> and any deferred initialiation of
+non-inline non-block variables with thread storage duration defined in
+the same translation unit as <I>o</I></INS>. [ Footnote: ... ] It is
+implementation-defined in which threads and at which points in the
+program such deferred dynamic initialization occurs.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

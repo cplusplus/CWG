@@ -1,0 +1,802 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2631</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2631"></A><H4>2631.
+  
+Immediate function evaluations in default arguments
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Aaron Ballman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-09-16
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2720r0.pdf#FR019-005">P2720R0 comment
+  FR&#160;019-005<BR></A>
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+consteval int const_div(int a, int b) { return a / b; }
+int func(int x = const_div(10, 0));
+</PRE>
+
+<P>According to 7.7 [<A href="https://wg21.link/expr.const#14">expr.const</A>] paragraph 14:</P>
+
+<BLOCKQUOTE>
+
+An expression or conversion is an <I>immediate invocation</I> if it is a
+potentially-evaluated explicit or implicit invocation of an immediate
+function and is not in an immediate function context. An immediate
+invocation shall be a constant expression.
+
+</BLOCKQUOTE>
+
+<P>Subclause 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). The names in the default argument are
+looked up, and the semantic constraints are checked, at the point
+where the default argument appears. Name lookup and checking of
+semantic constraints for default arguments of templated functions are
+performed as described in 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].
+
+</BLOCKQUOTE>
+
+<P>Checking the semantic constraints of the default argument appears
+to include a check whether the immediate invocation
+of <TT>const_div</TT> is actually a constant expression, even though
+the default argument's value might never actually be used for any
+function call in the program.</P>
+
+<P>However, instantiation of a consteval function template to be able
+to perform the constant evaluation is not permitted per
+13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument shall
+not cause the template to be implicitly instantiated except that a
+class template may be instantiated where its complete type is needed
+to determine the correctness of the default argument. The use of a
+default argument in a function call causes specializations in the
+default argument to be implicitly instantiated.
+
+</BLOCKQUOTE>
+
+<P>Example 2:</P>
+
+<PRE>
+constexpr int g();
+consteval int f() {
+  return g();
+}
+
+int k(int x = f()) {  //<SPAN CLASS="cmnt"> error: constexpr evaluation of undefined function </SPAN>g
+  return x;
+}
+
+constexpr int g() {
+  return 42;
+}
+
+int main() {
+  return k();
+}
+</PRE>
+
+<P>Example 3:</P>
+
+<PRE>
+#include &lt;source_location&gt;
+#include &lt;iostream&gt;
+
+consteval int const_div(int a, int b) {
+  return a / b;
+}
+
+#line 5
+void foo(int x = const_div(1000, std::source_location::current().line() - 15)) {
+  std::cout &lt;&lt; x &lt;&lt; "\n";
+}
+
+//<SPAN CLASS="cmnt"> Should the definition of `bar` produce errors? (division by zero during constant</SPAN>
+//<SPAN CLASS="cmnt"> evaluation for constraint checking)</SPAN>
+#line 10
+void bar(int x = const_div(1000, std::source_location::current().line() - 10)) {
+  std::cout &lt;&lt; x &lt;&lt; "\n";
+}
+
+int main() {
+  //<SPAN CLASS="cmnt"> Should this call produce errors? (division by zero during constant</SPAN>
+  //<SPAN CLASS="cmnt"> evaluation of the default argument)</SPAN>
+  #line 15
+  foo();
+  #line 20
+  bar();
+}
+</PRE>
+
+<P>Note that <TT>source_location::current()</TT> is specified to take
+its value from the location where it is evaluated, if it appears in a
+default argument (17.8.2.2 [<A href="https://wg21.link/support.srcloc.cons#2">support.srcloc.cons</A>] paragraph 2):</P>
+
+<BLOCKQUOTE>
+
+<I>Remarks:</I> Any call to current that appears as a default member
+initializer (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or as a subexpression
+thereof, should correspond to the location of the constructor
+definition or aggregate initialization that uses the default member
+initializer. Any call to current that appears as a default argument
+(9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]), or as a subexpression thereof, should
+correspond to the location of the invocation of the function that uses
+the default argument (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (September, 2022) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+
+<P>Split 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5
+and change as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+</P>
+
+<P>
+<INS>A <I>default argument context</I> is</INS>
+<UL>
+<LI><INS>the <I>initializer-clause</I> in
+a <I>parameter-declaration</I>, including any conversions to the
+parameter type,</INS></LI>
+<LI><INS>a subexpression of one of the above that is not a
+subexpression of a nested unevaluated operand.</INS></LI>
+</UL>
+
+The names in the default argument are looked up, and the semantic
+constraints are checked, at the point where the default argument
+appears<INS>, except that an immediate invocation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) in a default argument context is neither
+evaluated nor checked for whether it is a constant expression at that
+point</INS>.  Name lookup and checking of semantic constraints for
+default arguments of templated functions are performed as described in
+13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument shall
+not cause the template to be implicitly instantiated except that a
+class template <INS>or a function template with a deduced return
+type</INS> may be instantiated where its complete type is needed to
+determine the correctness of the default argument.  The use of a
+default argument in a function call causes specializations in the
+default argument to be implicitly instantiated.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>Approved by EWG telecon 2022-09-29.</B></P>
+
+<P><U>Amendment to also cover default member initializers (October, 2022) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+
+<P>Split 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5
+and change as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+</P>
+
+<P>
+<INS>A <I>default argument context</I> of an <I>initializer</I> is</INS>
+<UL>
+<LI><INS>the <I>initializer</I>, including any conversions to the
+target type, or</INS></LI>
+<LI><INS>a subexpression thereof that is not a
+subexpression of a nested unevaluated operand.</INS></LI>
+</UL>
+
+The names in the default argument are looked up, and the semantic
+constraints are checked, at the point where the default argument
+appears<INS>, except that an immediate invocation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) in a default argument context of
+the <I>initializer-clause</I> in a <I>parameter-declaration</I> is
+neither evaluated nor checked for whether it is a constant expression
+at that point</INS>.  Name lookup and checking of semantic constraints
+for default arguments of templated functions are performed as
+described in 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#11">class.mem.general</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>brace-or-equal-initializer</I> for a non-static data member
+specifies a <I>default member initializer</I> for the member, and
+shall not directly or indirectly cause the implicit definition of a
+defaulted default constructor for the enclosing class or the exception
+specification of that constructor.
+
+<INS>An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) in a default
+argument context (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]) of a default member
+initializer is neither evaluated nor checked for whether it is a
+constant expression at the point where it appears.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument shall
+not cause the template to be implicitly instantiated except that a
+class template <INS>or a function template with a deduced return
+type</INS> may be instantiated where its complete type is needed to
+determine the correctness of the default argument.  The use of a
+default argument in a function call causes specializations in the
+default argument to be implicitly instantiated.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG telecon 2022-10-07:</B></P>
+
+<P>The new term should be defined in 6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+without reference to immediacy.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#4">intro.execution</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>subexpression</I> of an expression E is an immediate subexpression of E
+or a subexpression of an immediate subexpression of E. [ Note: ... -- end note ]
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+The <I>potentially-evaluated subexpressions</I> of an expression,
+conversion, or <I>initializer</I> <TT>E</TT> are
+
+<UL>
+<LI>the constituent expressions of <TT>E</TT> and</LI>
+<LI>the subexpressions thereof that are not subexpressions of a nested
+unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#16">expr.const</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression or conversion is <I>potentially constant evaluated</I> if it
+is:
+<UL>
+<LI>...</LI>
+<LI>a <INS>potentially-evaluated</INS> subexpression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of one of the above<DEL> that is not a
+subexpression of a nested unevaluated operand
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>])</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+
+<P>Change in 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+The names in the default argument are looked up, and the semantic
+constraints are checked, at the point where the default argument
+appears<INS>, except that an immediate invocation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a potentially-evaluated
+subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of
+the <I>initializer-clause</I> in a <I>parameter-declaration</I> is
+neither evaluated nor checked for whether it is a constant expression
+at that point</INS>.  Name lookup and checking of semantic constraints
+for default arguments of templated functions are performed as
+described in 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add a paragraph before 9.4.1 [<A href="https://wg21.link/dcl.init.general#17">dcl.init.general</A>] paragraph 17 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is not
+evaluated where it appears (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>],
+11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]) is evaluated and checked for whether it
+is a constant expression at the point where the
+enclosing <I>initializer</I> is used in a function call, a constructor
+definition, or an aggregate initialization.
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+
+An <I>initializer-clause</I> followed by an ellipsis is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#11">class.mem.general</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>brace-or-equal-initializer</I> for a non-static data member
+specifies a <I>default member initializer</I> for the member, and
+shall not directly or indirectly cause the implicit definition of a
+defaulted default constructor for the enclosing class or the exception
+specification of that constructor.
+
+<INS>An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a
+potentially-evaluated subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of a
+default member initializer is neither evaluated nor checked for
+whether it is a constant expression at the point where the
+subexpression appears.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument <INS>or
+default member initializer</INS> shall not cause the template to be
+implicitly instantiated except that a
+<INS>templated</INS> class <DEL>template</DEL> <INS>, a templated
+function with a deduced return type, or a variable template with a
+deduced type</INS> may be instantiated where its complete type is
+needed to determine the correctness of the default argument <INS>or
+default member initializer</INS>.  The use of a default argument in a
+function call causes specializations in the default argument to be
+implicitly instantiated. <INS>Similarly, the use of a default member
+initializer in a constructor definition or an aggregate initialization
+causes specializations in the default member initializer to be
+instantiated.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG telecon 2022-10-21:</B></P>
+
+<P>In the above wording, "constituent expression of a conversion" is
+not a defined term.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#2">intro.execution</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constituent expression is defined as follows:
+
+<UL>
+<LI>The constituent expression of an expression is that expression.
+</LI>
+
+<LI><INS>The constituent expression of a conversion is the
+corresponding implicit function call, if any, or the converted
+expression otherwise.</INS></LI>
+
+<LI>The constituent expressions of a <I>braced-init-list</I> or of a
+(possibly parenthesized) <I>expression-list</I> are the constituent
+expressions of the elements of the respective list.
+</LI>
+
+<LI>The constituent expressions of a <I>brace-or-equal-initializer</I>
+of the form = <I>initializer-clause</I> are the constituent
+expressions of the <I>initializer-clause</I>.
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#4">intro.execution</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>subexpression</I> of an expression E is an immediate subexpression of E
+or a subexpression of an immediate subexpression of E. [ Note: ... -- end note ]
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+The <I>potentially-evaluated subexpressions</I> of an expression,
+conversion, or <I>initializer</I> <TT>E</TT> are
+
+<UL>
+<LI>the constituent expressions of <TT>E</TT> and</LI>
+<LI>the subexpressions thereof that are not subexpressions of a nested
+unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#16">expr.const</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression or conversion is <I>potentially constant evaluated</I> if it
+is:
+<UL>
+<LI>...</LI>
+<LI>a <INS>potentially-evaluated</INS> subexpression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of one of the above<DEL> that is not a
+subexpression of a nested unevaluated operand
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>])</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+
+<P>Change in 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+The names in the default argument are looked up, and the semantic
+constraints are checked, at the point where the default argument
+appears<INS>, except that an immediate invocation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a potentially-evaluated
+subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of
+the <I>initializer-clause</I> in a <I>parameter-declaration</I> is
+neither evaluated nor checked for whether it is a constant expression
+at that point</INS>.  Name lookup and checking of semantic constraints
+for default arguments of templated functions are performed as
+described in 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add a paragraph before 9.4.1 [<A href="https://wg21.link/dcl.init.general#17">dcl.init.general</A>] paragraph 17 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is not
+evaluated where it appears (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>],
+11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]) is evaluated and checked for whether it
+is a constant expression at the point where the
+enclosing <I>initializer</I> is used in a function call, a constructor
+definition, or an aggregate initialization.
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+
+An <I>initializer-clause</I> followed by an ellipsis is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#11">class.mem.general</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>brace-or-equal-initializer</I> for a non-static data member
+specifies a <I>default member initializer</I> for the member, and
+shall not directly or indirectly cause the implicit definition of a
+defaulted default constructor for the enclosing class or the exception
+specification of that constructor.
+
+<INS>An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a
+potentially-evaluated subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of a
+default member initializer is neither evaluated nor checked for
+whether it is a constant expression at the point where the
+subexpression appears.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument <INS>or
+default member initializer</INS> shall not cause the template to be
+implicitly instantiated except that a
+<INS>templated</INS> class <DEL>template</DEL> <INS>, a templated
+function with a deduced return type, or a variable template with a
+deduced type</INS> may be instantiated where its complete type is
+needed to determine the correctness of the default argument <INS>or
+default member initializer</INS>.  The use of a default argument in a
+function call causes specializations in the default argument to be
+implicitly instantiated. <INS>Similarly, the use of a default member
+initializer in a constructor definition or an aggregate initialization
+causes specializations in the default member initializer to be
+instantiated.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2022-11-07</B></P>
+
+<P>Expand requirement to avoid template instantiations in default
+arguments by not giving a specific, closed list.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-08):</B></P>
+
+<OL>
+<LI>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#2">intro.execution</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constituent expression is defined as follows:
+
+<UL>
+<LI>The constituent expression of an expression is that expression.
+</LI>
+
+<LI><INS>The constituent expression of a conversion is the
+corresponding implicit function call, if any, or the converted
+expression otherwise.</INS></LI>
+
+<LI>The constituent expressions of a <I>braced-init-list</I> or of a
+(possibly parenthesized) <I>expression-list</I> are the constituent
+expressions of the elements of the respective list.
+</LI>
+
+<LI>The constituent expressions of a <I>brace-or-equal-initializer</I>
+of the form = <I>initializer-clause</I> are the constituent
+expressions of the <I>initializer-clause</I>.
+</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#4">intro.execution</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>subexpression</I> of an expression E is an immediate subexpression of E
+or a subexpression of an immediate subexpression of E. [ Note: ... -- end note ]
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+The <I>potentially-evaluated subexpressions</I> of an expression,
+conversion, or <I>initializer</I> <TT>E</TT> are
+
+<UL>
+<LI>the constituent expressions of <TT>E</TT> and</LI>
+<LI>the subexpressions thereof that are not subexpressions of a nested
+unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#16">expr.const</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression or conversion is <I>potentially constant evaluated</I> if it
+is:
+<UL>
+<LI>...</LI>
+<LI>a <INS>potentially-evaluated</INS> subexpression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of one of the above<DEL> that is not a
+subexpression of a nested unevaluated operand
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>])</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+
+<P>Change in 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The default argument has the same semantic constraints as the
+initializer in a declaration of a variable of the parameter type,
+using the copy-initialization semantics (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).
+The names in the default argument are looked up, and the semantic
+constraints are checked, at the point where the default argument
+appears<INS>, except that an immediate invocation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a potentially-evaluated
+subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of
+the <I>initializer-clause</I> in a <I>parameter-declaration</I> is
+neither evaluated nor checked for whether it is a constant expression
+at that point</INS>.  Name lookup and checking of semantic constraints
+for default arguments of templated functions are performed as
+described in 13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>].</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add a paragraph before 9.4.1 [<A href="https://wg21.link/dcl.init.general#17">dcl.init.general</A>] paragraph 17 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is not
+evaluated where it appears (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>],
+11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]) is evaluated and checked for whether it
+is a constant expression at the point where the
+enclosing <I>initializer</I> is used in a function call, a constructor
+definition, or an aggregate initialization.
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+
+An <I>initializer-clause</I> followed by an ellipsis is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#11">class.mem.general</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>brace-or-equal-initializer</I> for a non-static data member
+specifies a <I>default member initializer</I> for the member, and
+shall not directly or indirectly cause the implicit definition of a
+defaulted default constructor for the enclosing class or the exception
+specification of that constructor.
+
+<INS>An immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is a
+potentially-evaluated subexpression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of a
+default member initializer is neither evaluated nor checked for
+whether it is a constant expression at the point where the
+subexpression appears.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The use of a template specialization in a default argument <INS>or
+default member initializer</INS> shall not cause the template to be
+implicitly instantiated except <DEL>that a
+class template may be instantiated</DEL> where <DEL>its complete type is</DEL>
+needed to determine the correctness of the default argument <INS>or
+default member initializer</INS>.  The use of a default argument in a
+function call causes specializations in the default argument to be
+implicitly instantiated. <INS>Similarly, the use of a default member
+initializer in a constructor definition or an aggregate initialization
+causes specializations in the default member initializer to be
+instantiated.</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

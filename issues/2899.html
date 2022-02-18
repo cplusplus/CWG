@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2899</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2899"></A><H4>2899.
+  
+Bad value representations should cause undefined behavior
+</H4>
+<B>Section: </B>7.3.2&#160; [<A href="https://wg21.link/conv.lval">conv.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-05<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From editorial issue
+<A HREF="https://github.com/cplusplus/draft/issues/7051">#7051</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+static_assert(sizeof(bool) == 1);  // <SPAN CLASS="cmnt">assumption for the example</SPAN>
+bool f() {
+  char c = 2;
+  bool b = true;
+  memcpy(&amp;b, &amp;c, 1);     // <SPAN CLASS="cmnt">#1</SPAN>
+  return b;              // <SPAN CLASS="cmnt">#2</SPAN>
+}
+</PRE>
+
+<P>Assuming that false and true are represented as 0 and 1, the value
+representation of <TT>b</TT> now has a bad value.  This should, but
+does not, result in undefined behavior during the lvalue-to-rvalue
+conversion at #2.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-08-16):</B></P>
+
+<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3">conv.lval</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The result of the conversion is determined according to the following
+rules:
+<UL>
+<LI>If T is cv std::nullptr_t, the result is a null pointer constant
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]).  [<I>Note 1:</I> Since the conversion
+does not access the object to which the glvalue refers, there is no
+side effect even if T is volatile-qualified
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), and the glvalue can refer to an inactive
+member of a union (11.5 [<A href="https://wg21.link/class.union">class.union</A>]). &#8212;<I>end note</I>]
+</LI>
+<LI>Otherwise, if T has a class type, the conversion copy-initializes
+the result object from the glvalue.</LI>
+<LI>Otherwise, if the object to which the glvalue refers contains an
+invalid pointer value (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]), the behavior
+is implementation-defined.</LI>
+<LI class="ins">Otherwise, if the bits in the value representation of
+the object to which the glvalue refers are not valid for the object's
+type, the behavior is undefined.
+[ Example:
+<PRE>
+bool f() {
+  bool b = true;
+  char c = 42;
+  memcpy(&amp;b, &amp;c, 1);
+  return b;           //<SPAN CLASS="cmnt"> undefined behavior if 42 is not a valid value representation for </SPAN>bool
+}
+</PRE>
+-- end example ]
+</LI>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
+the prvalue result. <DEL>If the result is an erroneous value
+(6.7.5 [<A href="https://wg21.link/basic.indet">basic.indet</A>]) and the bits in the value representation
+are not valid for the object's type, the behavior is
+undefined.</DEL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

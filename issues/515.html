@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 515</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="515"></A><H4>515.
+  
+Non-dependent references to base class members
+</H4>
+<B>Section: </B>13.8.3&#160; [<A href="https://wg21.link/temp.dep">temp.dep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Apr 2005<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>Implementations vary in their treatment of the following code:</P>
+
+<PRE>
+    struct A {
+      int foo_;
+    };
+    template &lt;typename T&gt; struct B: public A { };
+    template &lt;typename T&gt; struct C: B&lt;T&gt; {
+      int foo() {
+        return A::foo_;  //<SPAN CLASS="cmnt"> #1</SPAN>
+      }
+    };
+    int f(C&lt;int&gt;* p) {
+      return p-&gt;foo();
+    }
+</PRE>
+
+<P>According to <A HREF="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=21008">one
+analysis</A>, because the expression <TT>A::foo_</TT> on line #1
+is non-dependent, it must be analyzed in the definition
+context.  It that context, it violates the restrictions of
+11.4 [<A href="https://wg21.link/class.mem#10">class.mem</A>] paragraph 10 on how the name of a
+nonstatic data member of a class can be used and thus should be
+treated as an error.</P>
+
+<P>On the other hand, the description of the transformation of
+an <I>id-expression</I> into a class member access expression
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3) does not have any special
+treatment of templates; when <TT>C&lt;int&gt;::foo()</TT> is
+instantiated, the reference to <TT>A::foo_</TT> turns out to be to a
+base class member and is thus transformed into
+<TT>(*this).A::foo_</TT> and is thus not an error.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3 as indicated:</P>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]) that is not
+part of a class member access syntax (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+and not used to form a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used in the body of a non-static member function
+of class <TT>X</TT> or used in the <I>mem-initializer</I> for a
+constructor of class <TT>X</TT>, if name lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) resolves the name in the <I>id-expression</I> to a
+non-static non-type member of <DEL>class <TT>X</TT> or of a base class
+of <TT>X</TT></DEL> <INS>some class <TT>C</TT></INS>,
+the <I>id-expression</I> is transformed into a class member access
+expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) using <TT>(*this)</TT>
+(_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>]) as the
+<I>postfix-expression</I> to the left of the <TT>.</TT>
+operator.  <INS>[<I>Note:</I> If <TT>C</TT> is not <TT>X</TT> or a base
+class of <TT>X</TT>, the class member access expression is ill-formed.
+&#8212;<I>end note</I>]</INS> <DEL>The member name then refers to the
+member of the object for which the function is called.</DEL> Similarly
+during name lookup...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

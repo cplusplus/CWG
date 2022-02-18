@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1774</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1774"></A><H4>1774.
+  
+Discrepancy between subobject destruction and stack unwinding
+</H4>
+<B>Section: </B>14.3&#160; [<A href="https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Canada
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-24<BR><BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA24">N3690 comment
+  CA&#160;24<BR></A>
+
+<P>The current wording of 14.6.2 [<A href="https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2
+affords implementations a significant degree of freedom when exception
+handling results in a call to <TT>std::terminate:</TT>
+</P>
+
+<BLOCKQUOTE>
+
+In the situation where no matching handler is found, it is
+implementation-defined whether or not the stack is unwound before
+<TT>std::terminate()</TT> is called. In the situation where the search for
+a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) encounters the outermost block of a
+function with a <I>noexcept-specification</I> that does not allow the
+exception (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), it is implementation-defined whether
+the stack is unwound, unwound partially, or not unwound at all before
+<TT>std::terminate()</TT> is called. In all other situations, the stack
+shall not be unwound before std::terminate() is called.
+
+</BLOCKQUOTE>
+
+<P>This contrasts with the treatment of subobjects and objects constructed
+via delegating constructos in 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+An object of any storage duration whose initialization or destruction is
+terminated by an exception will have destructors executed for all of its
+fully constructed subobjects (excluding the variant members of a union-like
+class), that is, for subobjects for which the principal constructor
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has completed execution and the destructor
+has not yet begun execution. Similarly, if the non-delegating constructor
+for an object has completed execution and a delegating constructor for that
+object exits with an exception, the object's destructor will be invoked.
+
+</BLOCKQUOTE>
+
+<P>Here the destructors must be called.  It would be helpful if these
+requirements were harmonized.</P>
+
+<P><B>Notes from the September, 2013 meeting:</B></P>
+
+<P>Although the Canadian NB comment principally was a request to reconsider
+the resolution of <A HREF="1424.html">issue 1424</A>, which CWG decided
+to retain, the comment also raised the question above, which CWG felt
+merited its own issue.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<OL>
+<LI><P>Change all of 14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>], reparagraphing
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>As control passes from the point where an exception is thrown to
+a handler, destructors are invoked <INS>by a process, specified in
+this section, called <I>stack unwinding</I>.  If a destructor
+directly invoked by stack unwinding exits with an exception,
+<TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+[<I>Note:</I> Consequently, destructors should generally catch
+exceptions and not let them propagate out of the destructor.
+&#8212;<I>end note</I>]</INS>
+</P>
+
+<P>
+<INS>The destructor is invoked</INS>
+for <DEL>all automatic objects</DEL> <INS>each automatic
+object of class type</INS> constructed since the try block
+was entered. The automatic objects are destroyed in the reverse
+order of the completion of their construction.</P>
+
+<P>
+<DEL>An</DEL> <INS>For an</INS> object <INS>of class
+type</INS> of any storage duration whose initialization or
+destruction is terminated by an exception <DEL>will have
+destructors executed</DEL><INS>, the destructor is invoked</INS>
+for <DEL>all</DEL> <INS>each</INS> of <DEL>its</DEL> <INS>the
+object's</INS> fully constructed subobjects (excluding the
+variant members of a union-like class), that is,
+for <DEL>subobjects</DEL> <INS>each subobject</INS> for which the
+principal constructor (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has completed
+execution and the destructor has not yet begun
+execution. <INS>The subobjects are destroyed in the reverse order
+of the completion of their construction.  Such destruction is
+sequenced before entering a handler of the <I>function-try-block</I>
+of the constructor or destructor, if any.</INS>
+</P>
+
+<P>Similarly, if the non-delegating constructor for an
+object has completed execution and a delegating constructor for
+that object exits with an exception, the object's destructor <DEL>will
+be</DEL> <INS>is</INS> invoked. <INS>Such destruction is sequenced
+before entering a handler of the <I>function-try-block</I> of a
+delegating constructor for that object, if any.</INS>
+</P>
+
+<P>
+<INS>[<I>Note:</I></INS> If the object was
+allocated <DEL>in</DEL> <INS>by</INS> a <I>new-expression</I>
+<INS>(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>])</INS>, the matching
+deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]<DEL>,
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]</DEL>), if any,
+is called to free the storage occupied by the object.
+<INS>&#8212;<I>end note</I>]</INS>
+</P>
+
+<P><DEL>The process of calling destructors for automatic objects
+constructed on the path from a try block to the point where an
+exception is thrown is called &#8220;<I>stack unwinding</I>.&#8221; If a
+destructor called during stack unwinding exits with an exception,
+<TT>std::terminate</TT> is called
+(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). [<I>Note:</I> So destructors
+should generally catch exceptions and not let them propagate out
+of the destructor. &#8212;<I>end note</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 14.4 [<A href="https://wg21.link/except.handle#11">except.handle</A>] paragraph 11:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The fully constructed base classes and members of an object shall
+be destroyed before entering the handler of
+a <I>function-try-block</I> of a constructor for that
+object. Similarly, if a delegating constructor for an object
+exits with an exception after the non-delegating constructor for
+that object has completed execution, the object's destructor
+shall be executed before entering the handler of
+a <I>function-try-block</I> of a constructor for that object. The
+base classes and non-variant members of an object shall be
+destroyed before entering the handler of
+a <I>function-try-block</I> of a destructor for that object
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1807.html">issue 1807</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

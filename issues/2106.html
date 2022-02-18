@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2106</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2106"></A><H4>2106.
+  
+Unclear restrictions on use of function-type template arguments
+</H4>
+<B>Section: </B>13.4.2&#160; [<A href="https://wg21.link/temp.arg.type">temp.arg.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Krauss
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-03-17<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+<P>According to 13.4.2 [<A href="https://wg21.link/temp.arg.type#3">temp.arg.type</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+If a declaration acquires a function type through a type
+dependent on a <I>template-parameter</I> and this causes a
+declaration that does not use the syntactic form of a
+function declarator to have function type, the program is
+ill-formed.
+
+</BLOCKQUOTE>
+
+<P>This is not clear enough regarding which declarations are in
+view.  For example, does it apply to a <TT>typedef</TT>
+declaration?  Does it apply to a parameter declaration, where
+normal function-to-pointer decay would apply?  There is implementation
+variance at block scope.</P>
+
+<P>Also, since this applies a restriction to the usage of
+dependent types, not template type arguments per se, the
+paragraph presumably should appear in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+and not its current location.</P>
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<OL>
+<LI><P>Delete 13.4.2 [<A href="https://wg21.link/temp.arg.type#3">temp.arg.type</A>] paragraph 3:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>If a declaration acquires a function type through a type dependent
+on a <I>template-parameter</I> and this causes a declaration that does not
+use the syntactic form of a function declarator to have function type, the
+program is ill-formed. [<I>Example:</I></DEL></P>
+
+<PRE>
+<DEL>  template&lt;class T&gt; struct A {
+    static T t;
+  };
+  typedef int function();
+  A&lt;function&gt; a; //<SPAN CLASS="cmnt"> ill-formed: would declare </SPAN>A&lt;function&gt;::t
+                 //<SPAN CLASS="cmnt"> as a static member function</SPAN></DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+<LI>Add the following as a new paragraph following 13.9 [<A href="https://wg21.link/temp.spec#6">temp.spec</A>] paragraph 6:
+</LI>
+
+<BLOCKQUOTE>
+
+<P>...<TT>X&lt;int&gt;</TT> has a static member <TT>s</TT> of
+type <TT>int</TT> and <TT>X&lt;char*&gt;</TT> has a static member <TT>s</TT> of type
+<TT>char*</TT>. &#8212;<I>end example</I>]</P>
+
+<P><INS>If a function declaration acquired its function type through
+a dependent type (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]) without using the
+syntactic form of a function declaator, the program is ill-formed.
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>   template&lt;class T&gt; struct A {
+     static T t;
+   };
+   typedef int function();
+   A&lt;function&gt; a;   //<SPAN CLASS="cmnt"> ill-formed: would declare </SPAN>A&lt;function&gt;::t
+                    //<SPAN CLASS="cmnt"> as a static member function</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

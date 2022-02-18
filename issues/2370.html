@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2370</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2370"></A><H4>2370.
+  
+<TT>friend</TT> declarations of namespace-scope functions
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrew Marino
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-12-04<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+<P>
+<A HREF="1906.html">Issue 1906</A> discussed unqualified lookup
+in <TT>friend</TT> declarations of class member functions, and CWG
+decided to reaffirm the existing specification without change. However,
+there is a similar issue regarding <TT>friend</TT> declarations of
+namespace-scope functions. According to 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#9">basic.lookup.unqual</A>] paragraph 9,
+</P>
+
+<BLOCKQUOTE>
+
+Name lookup for a name used in the definition of a friend
+function (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) defined inline in the
+class granting friendship shall proceed as described for
+lookup in member function definitions. If the friend
+function is not defined in the class granting friendship,
+name lookup in the friend function definition shall proceed
+as described for lookup in namespace member function
+definitions.
+
+</BLOCKQUOTE>
+
+<P>In particular, &#8220;as described for lookup in member
+function definitions&#8221; does not consider names declared
+in the namespace of the friend function, and non-defining
+<TT>friend</TT> declarations of namespace-scope functions
+are not described at all. There is implementation divergence
+on these points. For example:</P>
+
+<PRE>
+  namespace N {
+    typedef int type;
+    void f(type);
+    void g(type);
+    void h(type);
+  }
+  class C {
+    typedef N::type N_type;
+    friend void N::f(type) { }  //<SPAN CLASS="cmnt"> Ill-formed: cannot define namespace friend</SPAN>
+    friend void N::g(type);     //<SPAN CLASS="cmnt"> Unclear whether </SPAN>type<SPAN CLASS="cmnt"> is found or not</SPAN>
+    friend void N::h(N_type);   //<SPAN CLASS="cmnt"> Unclear whether </SPAN>N_type<SPAN CLASS="cmnt"> is found or not</SPAN>
+  };
+</PRE>
+
+<P><B>Notes from the November, 2018 meeting:</B></P>
+
+<P>CWG agreed that the lookup for functions in namespaces should be
+similar to that for class member functions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

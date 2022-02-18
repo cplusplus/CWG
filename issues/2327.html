@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2327</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2327"></A><H4>2327.
+  
+Copy elision for direct-initialization with a conversion function
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-09-30<BR>
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+  struct Cat {};
+  struct Dog { operator Cat(); };
+
+  Dog d;
+  Cat c(d);
+</PRE>
+
+<P>This goes to 9.4 [<A href="https://wg21.link/dcl.init#17.6.2">dcl.init</A>] bullet 17.6.2:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the initialization is direct-initialization, or if
+it is copy-initialization where the cv-unqualified version of the
+source type is the same class as, or a derived class of, the
+class of the destination, constructors are considered. The
+applicable constructors are enumerated
+(12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]), and the best one is chosen
+through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]). The
+constructor so selected is called to initialize the object, with
+the initializer expression or <I>expression-list</I> as its
+argument(s). If no constructor applies, or the overload
+resolution is ambiguous, the initialization is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>Overload resolution selects the move constructor of <TT>Cat</TT>.
+Initializing the <TT>Cat&amp;&amp;</TT> parameter of the constructor
+results in a temporary, per 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] bullet
+5.2.1.2. This precludes the possitiblity of copy elision for this
+case.</P>
+
+<P>This seems to be an oversight in the wording change for
+guaranteed copy elision. We should presumably be simultaneously
+considering both constructors and conversion functions in this
+case, as we would for copy-initialization, but we'll need to make
+sure that doesn't introduce any novel problems or ambiguities.</P>
+
+<P>See also <A HREF="2311.html">issue 2311</A>.</P>
+
+<P>This issue is addressed by paper P2828.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

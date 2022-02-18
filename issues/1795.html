@@ -1,0 +1,229 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1795</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1795"></A><H4>1795.
+  
+Disambiguating <I>original-namespace-definition</I> and <I>extension-namespace-definition</I>
+</H4>
+<B>Section: </B>9.8.2&#160; [<A href="https://wg21.link/namespace.def">namespace.def</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-10-04<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>According to 9.8.2 [<A href="https://wg21.link/namespace.def#2">namespace.def</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+The <I>identifier</I> in an <I>original-namespace-definition</I> shall not
+have been previously defined in the declarative region in which
+the <I>original-namespace-definition</I> appears.
+
+</BLOCKQUOTE>
+
+<P>Apparently the intent of this requirement is to say that, given the
+declarations</P>
+
+<PRE>
+  namespace N { }
+  namespace N { }
+</PRE>
+
+<P>the second declaration is to be taken as
+an <I>extension-namespace-definition</I> and not an
+<I>original-namespace-definition</I>, since the general rules in
+_N4868_.6.4.1 [<A href="https://wg21.link/basic.scope.declarative">basic.scope.declarative</A>] cover the case in which the <I>identifier</I>
+has been previously declared as something other than a namespace.</P>
+
+<P>This use of &#8220;shall&#8221; for disambiguation is novel,
+however, and it would be better to replace it with a specific statement
+addressing disambiguation in paragraphs 2 and 3.</P>
+
+<P><B>Proposed Resolution (July, 2014):</B></P>
+
+<OL>
+<LI><P>Change 6.4.6 [<A href="https://wg21.link/basic.scope.namespace#1">basic.scope.namespace</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The declarative region of a <I>namespace-definition</I> is
+its <I>namespace-body</I>. <DEL>The potential scope denoted
+by an <I>original-namespace-name</I> is the concatenation of
+the declarative regions established by each of
+the <I>namespace-definition</I>s in the same declarative
+region with that <I>original-namespace-name</I>.</DEL>
+Entities declared in a <I>namespace-body</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.8.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>] paragraphs 1-4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The grammar for a <I>namespace-definition</I> is</P>
+
+<UL>
+<I>namespace-name:</I>
+<UL>
+<I><DEL>original-namespace-name</DEL> <INS>identifier</INS></I><BR>
+<I>namespace-alias</I>
+</UL>
+</UL>
+
+<UL>
+<DEL><I>original-namespace-name:</I></DEL>
+<UL>
+<DEL><I>identifier</I></DEL>
+</UL>
+</UL>
+
+<UL>
+<I>namespace-definition:</I>
+<UL>
+<I>named-namespace-definition</I><BR>
+<I>unnamed-namespace-definition</I>
+</UL>
+</UL>
+
+<UL>
+<I>named-namespace-definition:</I>
+<UL>
+<DEL><I>original-namespace-definition</I><BR>
+<I>extension-namespace-definition</I></DEL>
+</UL>
+</UL>
+
+<UL>
+<DEL><I>original-namespace-definition:</I></DEL>
+<UL>
+<TT>inline</TT><I><SUB>opt</SUB></I> <TT>namespace</TT> <I>identifier</I> <TT>{</TT> <I>namespace-body</I> <TT>}</TT>
+</UL>
+</UL>
+
+<UL>
+<DEL><I>extension-namespace-definition:</I></DEL>
+<UL>
+<DEL><TT>inline</TT><I><SUB>opt</SUB></I> <TT>namespace</TT> <I>original-namespace-name</I> <TT>{</TT> <I>namespace-body</I> <TT>}</TT></DEL>
+</UL>
+</UL>
+
+<UL>
+<I>unnamed-namespace-definition:</I>
+<UL>
+<TT>inline</TT><I><SUB>opt</SUB></I> <TT>namespace {</TT> <I>namespace-body</I> <TT>}</TT>
+</UL>
+</UL>
+
+<UL>
+<I>namespace-body:</I>
+<UL>
+<I>declaration-seq<SUB>opt</SUB></I>
+</UL>
+</UL>
+
+<P><DEL>The identifier in an <I>original-namespace-definition</I>
+shall not have been previously defined in the declarative
+region in which the <I>original-namespace-definition</I>
+appears. The identifier in
+an <I>original-namespace-definition</I> is the name of the
+namespace. Subsequently in that declarative region, it is
+treated as an <I>original-namespace-name</I>.</DEL></P>
+
+<P><DEL>The <I>original-namespace-name</I> in
+an <I>extension-namespace-definition</I> shall have
+previously been defined in
+an <I>original-namespace-definition</I> in the same
+declarative region.</DEL></P>
+
+<P>Every <I>namespace-definition</I> shall appear in the global
+scope or in a namespace scope (6.4.6 [<A href="https://wg21.link/basic.scope.namespace">basic.scope.namespace</A>]).</P>
+
+<P><INS>In a <I>named-namespace-definition</I>, the <I>identifier</I>
+is the name of the namespace.  If the <I>identifier</I>, when looked
+up (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]), refers to a <I>namespace-name</I>
+(but not a <I>namespace-alias</I>) introduced in the declarative
+region in which the <I>named-namespace-definition</I> appears, the
+<I>namespace-definition</I> <I>extends</I> the previously-declared
+namespace.  Otherwise, the <I>identifier</I> is introduced as a
+<I>namespace-name</I> into the declarative region in which the
+<I>named-namespace-definition</I> appears.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.8.2 [<A href="https://wg21.link/namespace.def#7">namespace.def</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If the optional initial <TT>inline</TT> keyword appears in
+a <I>namespace-definition</I> for a particular namespace,
+that namespace is declared to be an <I>inline namespace</I>. The
+<TT>inline</TT> keyword may be used on
+<DEL>an <I>extension-namespace-definition</I></DEL>
+<INS>a <I>namespace-definition</I> that extends a
+namespace</INS> only if it was previously used on
+the <DEL><I>original-namespace-definition</I></DEL>
+<INS><I>namespace-definition</I> that initially declared
+the <I>namespace-name</I></INS> for that namespace.
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 9.8.3 [<A href="https://wg21.link/namespace.alias#4">namespace.alias</A>] paragraph 4:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>A <I>namespace-name</I> or <I>namespace-alias</I> shall not
+be declared as the name of any other entity in the same
+declarative region. A <I>namespace-name</I> defined at
+global scope shall not be declared as the name of any other
+entity in any global scope of the program. No diagnostic is
+required for a violation of this rule by declarations in
+different translation units.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.8.4 [<A href="https://wg21.link/namespace.udir#5">namespace.udir</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a namespace is extended <DEL>by
+an <I>extension-namespace-definition</I></DEL> after
+a <I>using-directive</I> for that namespace is given, the
+additional members of the extended namespace and the members
+of namespaces nominated by <I>using-directive</I>s in
+the <DEL><I>extension-namespace-definition</I></DEL>
+<INS>extending <I>namespace-definition</I></INS> can be used after
+the <DEL><I>extension-namespace-definition</I></DEL>
+<INS>extending <I>namespace-definition</I></INS>.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2667</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2667"></A><H4>2667.
+  
+Named module imports do not import macros
+</H4>
+<B>Section: </B>15.5&#160; [<A href="https://wg21.link/cpp.import">cpp.import</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-16<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+<P>It should be clarified via an example or a note that named module
+imports do not make macros available.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-01-06):</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 10.3 [<A href="https://wg21.link/module.import#7">module.import</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+... These rules can in turn lead to the importation of yet more
+translation units.
+<INS>[ Note: Such indirect importation does not make macros available,
+because a translation unit is a sequence of tokens in translation
+phase 7 (5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]). Macros can be made available by
+directly importing header units as described in
+15.5 [<A href="https://wg21.link/cpp.import">cpp.import</A>]. -- end note ]</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add to the example in 15.5 [<A href="https://wg21.link/cpp.import#8">cpp.import</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  import "a.h";  //<SPAN CLASS="cmnt"> point of definition of #1, #2, and #3, point of undefinition of #1 in "e.h"</SPAN>
+  import "d.h";  //<SPAN CLASS="cmnt"> point of definition of #4 and #5 in "e.h"</SPAN>
+  int a = Y;     //<SPAN CLASS="cmnt"> OK, active macro definitions #2 and #4 are valid redefinitions</SPAN>
+  int c = Z;     //<SPAN CLASS="cmnt"> error: active macro definitions #3 and #5 are not valid redefinitions of Z</SPAN>
+</PRE>
+
+<INS>Module unit <TT>f</TT>:</INS>
+
+<PRE class="ins">
+export module f;
+export import "a.h";
+
+int a = Y;    // <SPAN CLASS="cmnt">OK</SPAN>
+</PRE>
+
+<INS>Translation unit #1:</INS>
+
+<PRE class="ins">
+import f;
+int x = Y;   //<SPAN CLASS="cmnt"> error: </SPAN>Y<SPAN CLASS="cmnt"> is neither a defined macro nor a declared name</SPAN>
+</PRE>
+
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

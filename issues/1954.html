@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1954</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1954"></A><H4>1954.
+  
+<TT>typeid</TT> null dereference check in subexpressions
+</H4>
+<B>Section: </B>7.6.1.8&#160; [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Majnemer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-06-23<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>According to 7.6.1.8 [<A href="https://wg21.link/expr.typeid#2">expr.typeid</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+If the glvalue expression is obtained by applying the
+unary <TT>*</TT> operator to a pointer<SUP>69</SUP> and the
+pointer is a null pointer value (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]),
+the <TT>typeid</TT> expression throws an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that would match a
+handler of type
+<TT>std::bad_typeid</TT> exception (17.7.5 [<A href="https://wg21.link/bad.typeid">bad.typeid</A>]).
+
+</BLOCKQUOTE>
+
+<P>The footnote makes clear that this requirement applies without
+regard to parentheses, but it is unspecified whether it applies when
+the dereference occurs in a subexpression of the operand (e.g., in
+the second operand of the comma operator or the second or third
+operand of a conditional operator).  There is implementation
+divergence on this question.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-09):</B></P>
+
+<P>Insert a new paragraph before 7.6.1.8 [<A href="https://wg21.link/expr.typeid#3">expr.typeid</A>] paragraph 3
+and change the latter as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+If an <I>expression</I> operand of <TT>typeid</TT> is a
+possibly-parenthesized <I>unary-expression</I>
+whose <I>unary-operator</I> is <TT>*</TT> and whose operand evaluates
+to a null pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]),
+the <TT>typeid</TT> expression throws an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that would match a handler of
+type <TT>std::bad_typeid</TT> (17.7.5 [<A href="https://wg21.link/bad.typeid">bad.typeid</A>]). [ Note:
+In other contexts, evaluating such a <I>unary-expression</I> results
+in undefined behavior (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) -- end note ]
+</P>
+
+<P>
+When typeid is applied to a glvalue whose type is a polymorphic class
+type (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]), the result refers to a
+std::type_info object representing the type of the most derived object
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) (that is, the dynamic type) to which the
+glvalue refers. <DEL>If the glvalue is obtained by applying the unary *
+operator to a pointer [ Footnote: ... ] and the pointer is a null
+pointer value (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]), the typeid expression
+throws an exception (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that would
+match a handler of type std::bad_typeid exception
+(17.7.5 [<A href="https://wg21.link/bad.typeid">bad.typeid</A>]).</DEL>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

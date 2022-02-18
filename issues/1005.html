@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1005</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1005"></A><H4>1005.
+  
+Qualified name resolution in member functions of class templates
+</H4>
+<B>Section: </B>11.4.3&#160; [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Doug Gregor
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2009-11-19<BR>
+
+
+
+
+<P>It's not clear how lookup of a non-dependent qualified name
+should be handled in a non-static member function of a class
+template.  For example,</P>
+
+<PRE>
+    struct A {
+      int f(int);
+      static int f(double);
+    };
+
+    struct B {};
+
+    template&lt;typename T&gt; struct C : T {
+      void g() {
+        A::f(0);
+      }
+    };
+</PRE>
+
+<P>The call to <TT>A::f</TT> inside <TT>C::g()</TT> appears
+non-dependent, so one might expect that it would be bound at
+template definition time to <TT>A::f(double)</TT>.  However, the
+resolution for <A HREF="515.html">issue 515</A> changed
+11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3 to transform an
+<I>id-expression</I> to a member access expression using
+<TT>(*this).</TT> if lookup resolves the name to a non-static
+member of <I>any</I> class, making the reference dependent.  The
+result is that if <TT>C</TT> is instantiated with <TT>A</TT>,
+<TT>A::f(int)</TT> is called; if <TT>C</TT> is instantiated with
+<TT>B</TT>, the call is ill-formed (the call is transformed to
+<TT>(*this).A::f(0)</TT>, and there is no <TT>A</TT> subobject in
+<TT>C&lt;B&gt;</TT>).  Both these results seem unintuitive.</P>
+
+<P>(See also <A HREF="1017.html">issue 1017</A>.)</P>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+The CWG agreed that the resolution of <A HREF="515.html">issue 515</A>
+was ill-advised and should be reversed.
+
+<P><B>Rationale (March, 2011):</B></P>
+
+<P>The analysis is incorrect; whether the reference is dependent or
+not, overload resolution chooses <TT>A::f(int)</TT> because of the
+rules in 12.2.2.2.2 [<A href="https://wg21.link/over.call.func#3">over.call.func</A>] paragraph 3 dealing with
+contrived objects for static member functions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

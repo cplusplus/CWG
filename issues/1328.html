@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1328</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1328"></A><H4>1328.
+  
+Conflict in reference binding vs overload resolution
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-05-31<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>According to 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1, the
+determination of the candidate functions is based on whether
+9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] requires an lvalue result or an rvalue
+result.  It is not sufficiently clear exactly what this means,
+particularly with respect to function lvalues and rvalues.</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<OL>
+<LI><P>Change 12.2.2.7 [<A href="https://wg21.link/over.match.ref#1">over.match.ref</A>] paragraph 1 as follows:</P></LI>
+
+<UL><LI><P>The conversion functions of <TT>S</TT> and its base classes
+are considered, except that for copy-initialization, only the
+non-explicit conversion functions are considered. Those that are not
+hidden within <TT>S</TT> and yield type &#8220;lvalue reference to
+<I>cv2</I> <TT>T2</TT>&#8221; (when <DEL>9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+requires an lvalue result</DEL> <INS>initializing an lvalue reference
+or an rvalue reference to function</INS>) or &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; or &#8220;rvalue reference to <I>cv2</I>
+<TT>T2</TT>&#8221; (when <DEL>9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>] requires an
+rvalue result</DEL> <INS>initializing an rvalue reference or an lvalue
+reference to function</INS>), where &#8220;<I>cv1</I>
+<TT>T</TT>&#8221; is reference-compatible (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>])
+with &#8220;<I>cv2</I> <TT>T2</TT>&#8221;, are candidate
+functions.</P></LI></UL>
+
+<LI><P>Change 12.2.4 [<A href="https://wg21.link/over.match.best#1">over.match.best</A>] paragraph 1 as follows:</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>the context is an initialization by user-defined conversion... or
+if not that,</P></LI>
+
+<LI>
+<P><INS>the context is an initialization by conversion function
+for direct reference binding (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) of a
+reference to function type, the return type of <TT>F1</TT> is the same
+kind of reference (i.e. lvalue or rvalue) as the reference being
+initialized, and the return type of <TT>F2</TT> is not
+[<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct A {
+    operator T&amp;();  //<SPAN CLASS="cmnt"> #1</SPAN>
+    operator T&amp;&amp;(); //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+  typedef int Fn();
+  A&lt;Fn&gt; a;
+  Fn&amp; lf = a;      //<SPAN CLASS="cmnt"> calls #1</SPAN>
+  Fn&amp;&amp; rf = a;     //<SPAN CLASS="cmnt"> calls #2</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>] or, if not that,</INS></P>
+
+</LI>
+
+<LI><P>
+<TT>F1</TT> is a non-template function...</P></LI>
+
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

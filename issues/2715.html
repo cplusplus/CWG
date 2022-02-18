@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2715</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2715"></A><H4>2715.
+  
+"calling function" for parameter initialization may not exist
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-04-02<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>Subclause 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+... The initialization and destruction of each parameter occurs within the
+context of the calling function.  [<I>Example 2:</I> The access of the
+constructor, conversion functions or destructor is checked at the
+point of call in the calling function. If a constructor or destructor
+for a function parameter throws an exception, the search for a handler
+starts in the calling function; in particular, if the function called
+has a <I>function-try-block</I> (14.1 [<A href="https://wg21.link/except.pre">except.pre</A>]) with a
+handler that can handle the exception, this handler is not
+considered. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P>However, there is no calling function in the case where a function
+call appears in the initializer of a namespace-scope
+variable. Likewise, some constant expressions appearing in
+a <I>type-id</I> do not have calling functions, either.  For
+example:</P>
+
+<PRE>
+  class C {
+   private:
+    constexpr int C(int) {}
+    friend void foo(int (*a)[1]) noexcept;
+  };
+
+  constexpr int bar(C) { return 1; }
+
+  void foo(int (&amp;a)[bar(1)]) noexcept(bar(2) &gt; 0); //<SPAN CLASS="cmnt"> presumably OK because of friendship</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2023-04-28):</B></P>
+
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+...  The initialization and destruction of each parameter occurs
+within the context of the <DEL>calling
+function</DEL> <INS>full-expression (6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) where
+the function call appears</INS>.  [<I>Example 2:</I> The access
+<INS>(11.8.1 [<A href="https://wg21.link/class.access.general">class.access.general</A>])</INS> of the constructor,
+conversion functions<INS>,</INS> or destructor is checked at the point
+of call <DEL>in the calling function</DEL>. If a constructor or
+destructor for a function parameter throws an exception, <DEL>the
+search for a handler starts in the calling function; in particular, if
+the function called has a</DEL>
+<INS>any</INS> <I>function-try-block</I>
+(14.1 [<A href="https://wg21.link/except.pre">except.pre</A>]) <INS>of the called function</INS> with a
+handler that can handle the exception<DEL>, this handler</DEL> is not
+considered. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

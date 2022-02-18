@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 471</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="471"></A><H4>471.
+  
+Conflicting inherited access specifications
+</H4>
+<B>Section: </B>11.8.3&#160; [<A href="https://wg21.link/class.access.base">class.access.base</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Jun 2004<BR>
+
+
+<P>The Standard does not appear to specify how to handle cases in
+which conflicting access specifications for a member are
+inherited from different base classes.  For example,</P>
+
+<PRE>
+    struct A {
+    public:
+      int i;
+    };
+    struct B : virtual public A {
+    protected:
+      using A::i;
+    };
+    struct C : virtual public A, public B {
+      // "i" is protected from B, public from A
+    };
+</PRE>
+
+<P>This question affects both the existing wording of
+11.8.3 [<A href="https://wg21.link/class.access.base#4">class.access.base</A>] paragraph 4 (&#8220;<I>m</I> as a
+member of <I>N</I> is public ... <I>m</I> as a member of <I>N</I>
+is private ... <I>m</I> as a member of <I>N</I> is
+protected&#8221;) and the proposed wording for <A HREF="385.html">issue 385</A> (&#8220;when a nonstatic data member or
+nonstatic member function is a protected member of its naming
+class&#8221;).</P>
+
+<P>One possible definition of &#8220;is public&#8221; would be
+something like, &#8220;if any visible declaration of the entity
+has public access.&#8221; One could also plausibly define the
+access of <TT>m</TT> in <TT>N</TT> to be the minimum of all the
+visible declarations, or even an error if the visible
+declarations are inconsistent.</P>
+
+<P>11.8.3 [<A href="https://wg21.link/class.access.base#1">class.access.base</A>] paragraph 1 describes the access of
+inherited members, so a clarifying statement resolving this issue
+might plausibly be inserted at the end of that paragraph.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Add the following text as a new paragraph after 11.8.3 [<A href="https://wg21.link/class.access.base#1">class.access.base</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+<P>If a given base class can be reached along more than one path
+through a derived class's sub-object lattice (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]), a member of that base class could have different
+accessibility in the derived class along different paths.  In
+such cases, the most permissive access
+prevails. [<I>Example:</I>
+</P>
+
+<PRE>
+    struct B { static int i; };
+    class I: protected B { };
+    class D1: public B, public I { };
+    class D2: public I, private B { };
+</PRE>
+
+<P>
+<TT>i</TT> is accessible as a public member of <TT>D1</TT> and
+as a protected member of <TT>D2</TT>. &#8212;<I>end
+example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>
+<B>Rationale (03/2005):</B> This question is already covered, in
+almost identical words, in 11.8.7 [<A href="https://wg21.link/class.paths">class.paths</A>].
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

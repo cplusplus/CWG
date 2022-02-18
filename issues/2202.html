@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2202</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2202"></A><H4>2202.
+  
+When does default argument instantiation occur?
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-11-19<BR>
+
+
+
+
+<P>According to 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11,</P>
+
+<BLOCKQUOTE>
+
+If a function template <TT>f</TT> is called in a way that requires a
+default argument to be used, the dependent names are looked up, the
+semantics constraints are checked, and the instantiation of any template
+used in the default argument is done as if the default argument had been an
+initializer used in a function template specialization with the same scope,
+the same template parameters and the same access as that of the function
+template <TT>f</TT> used at that point, except that the scope in which a
+closure type is declared (7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]) &#8212; and
+therefore its associated namespaces &#8212; remain as determined from the
+context of the definition for the default argument.  This analysis is
+called default argument instantiation. The instantiated default argument is
+then used as the argument of <TT>f</TT>.
+
+</BLOCKQUOTE>
+
+<P>Some details are not clear from this description. For example, given</P>
+
+<PRE>
+  #include &lt;type_traits&gt;
+  template&lt;class T&gt; struct Foo { Foo(T = nullptr) {} };
+  bool b = std::is_constructible&lt;Foo&lt;int&gt;&gt;::value;
+  int main() {}
+</PRE>
+
+<P>does &#8220;used&#8221; mean odr-used or used in any way? Is a failure
+of default argument instantiation in the immediate context of the call
+or is a failure a hard error? And does it apply only to function templates,
+as it says, or should it apply to member functions of class templates? There
+is implementation divergence on these questions.</P>
+
+<P><B>Notes from the March, 2018 meeting:</B></P>
+
+<P>CWG felt that such errors should be substitution failures, not hard
+errors.</P>
+
+<P><B>Additional notes (March, 2024)</B></P>
+
+<P>This issue is related to <A HREF="2296.html">issue 2296</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

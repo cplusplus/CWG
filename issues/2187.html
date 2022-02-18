@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2187</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2187"></A><H4>2187.
+  
+Protected members and access via <I>qualified-id</I>
+</H4>
+<B>Section: </B>11.8.5&#160; [<A href="https://wg21.link/class.protected">class.protected</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-10-16<BR>
+
+
+
+
+<P>The following line in the example in
+11.8.5 [<A href="https://wg21.link/class.protected#1">class.protected</A>] paragraph 1 is no longer allowed
+following the change from <A HREF="1873.html">issue 1873</A>:</P>
+
+<PRE>
+  class B {
+  protected:
+    int i;
+    static int j;
+  };
+  // ...
+  class D2 : public B {
+    friend void fr(B*, D1*, D2*);
+    void mem(B*, D1*);
+  };
+  void fr(B* pb, D1* p1, D2* p2) {
+    // ...
+    p2-&gt;B::i = 4;  // <SPAN CLASS="cmnt">OK (access through a </SPAN>D2<SPAN CLASS="cmnt">, even though naming class is </SPAN>B<SPAN CLASS="cmnt">)</SPAN>
+    // ...
+  }
+</PRE>
+
+<P>The example line ought to work, but none of the bullets in
+11.8.3 [<A href="https://wg21.link/class.access.base#5">class.access.base</A>] paragraph 5 apply:</P>
+
+<BLOCKQUOTE>
+
+A member m is accessible at the point R when named in class N if
+<UL>
+<LI>m as a member of N is public, or</LI>
+<LI>m as a member of N is private, and R occurs in a direct member or friend of class N, or</LI>
+<LI>m as a member of N is protected, and R occurs in a direct
+member or friend of class N, or in a member of a class P derived from
+N, where m as a member of P is public, private, or protected, or</LI>
+<LI>there exists a base class B of N that is accessible at R, and m
+is accessible at R when named in class B.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>One aproach might be that 11.8.3 [<A href="https://wg21.link/class.access.base#5.3">class.access.base</A>] bullet 5.3
+should also consider friends of a class P derived from N where P is
+the type of the object expression (if any) or a base class thereof,
+and m as a member of P is public, protected, or private.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

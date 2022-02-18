@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2321</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2321"></A><H4>2321.
+  
+Conditional operator and cv-qualified class prvalues
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-09-06<BR>
+
+
+<P>[Accepted as a DR at the June, 2018 (Rapperswil) meeting.]</P>
+
+
+
+<P>The following example is ill-formed:</P>
+
+<PRE>
+  struct A {};
+  struct B : A {};
+  using T = const B;
+  A a = true ? A() : T();
+</PRE>
+
+<P>We don't convert from <TT>A</TT> to <TT>T</TT> because we can't form an
+implicit conversion sequence. We don't convert from <TT>T</TT>
+to <TT>A</TT> because <TT>T</TT> is more cv-qualified (even though we could
+form an implicit conversion sequence).  It would seem reasonable to accept
+this case; it seems that we should only be using cv-qualifiers as a
+tie-breaker if the class types are otherwise the same.</P>
+
+<P><B>Proposed resolution (March, 2018):</B></P>
+
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#4.3">expr.cond</A>] bullet 4.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...Attempts are made to form an implicit conversion sequence from an
+operand expression <TT>E1</TT> of type <TT>T1</TT> to a target type related
+to the type <TT>T2</TT> of the operand expression <TT>E2</TT> as
+follows:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>If <TT>E2</TT> is a prvalue or if neither of the conversion
+sequences above can be formed and at least one of the operands has
+(possibly cv-qualified) class type:</P></LI>
+
+<UL>
+<LI><P>if <TT>T1</TT> and <TT>T2</TT> are the same class type (ignoring
+cv-qualification)<DEL>, or one is a base class of the other,</DEL>
+and <TT>T2</TT> is at least as cv-qualified as <TT>T1</TT> , the target
+type is <TT>T2</TT>,</P></LI>
+
+<LI><P><INS>otherwise, if <TT>T2</TT> is a base class of <TT>T1</TT>,
+the target type is <I>cv1</I> <TT>T2</TT>, where <I>cv1</I> denotes the
+cv-qualifiers of <TT>T1</TT>,</INS></P></LI>
+
+<LI><P>otherwise, the target type is the type that <TT>E2</TT> would have
+after applying the lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions.</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

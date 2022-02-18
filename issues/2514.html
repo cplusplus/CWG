@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2514</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2514"></A><H4>2514.
+  
+Modifying const subobjects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-11-07
+  &#160;&#160;&#160;
+  <B>Liaison: </B>SG12<BR>
+
+
+<P>The change in C++20 for
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1971r0.html#RU007">RU007</A>
+allows transparently replacing a const subobject whose complete
+object is not const, and the new object can be non-const.
+However, if the reuse of the object has not happened, modifying
+such subobjects is still undefined behavior.</P>
+
+<P>This restriction causes problems in the implementation of
+<TT>std::map</TT> and <TT>std::unordered_map</TT>; see
+<A HREF="https://reviews.llvm.org/D47607">this bug report</A>.
+Here, the <TT>key_type</TT> objects in map containers are
+const, and implementations generally can't replace these objects
+after construction.</P>
+
+<P>Perhaps these restrictions can be relaxed to assist in this
+case: if</P>
+
+<UL>
+<LI><P>the complete object of a <TT>key_type</TT> subobject
+in a container is not const (as the <TT>mapped_type</TT>
+subobject is not const), or</P></LI>
+
+<LI><P>the complete object has dynamic storage duration</P></LI>
+
+</UL>
+
+<P>a const subobject could be modified.</P>
+
+<P>(Is it meaningful to allow a <I>new-expression</I> like
+<TT>new const int(42)</TT> to create cv-qualified objects?
+Perhaps such objects should be unqualified, while maintaining
+the cv-qualification in the type of the expression?)</P>
+
+<P><B>Notes from the November, 2022 meeting</B></P>
+
+<P>The advice of SG12 is solicited; see
+<A HREF="https://github.com/cplusplus/papers/issues/1365">cplusplus/papers#1395</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

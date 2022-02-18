@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 841</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="841"></A><H4>841.
+  
+Ill-formed concept refinement example
+</H4>
+<B>Section: </B>_N2914_.14.10.3.2&#160; [<A href="https://wg21.link/concept.refine.maps">concept.refine.maps</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 March, 2009<BR>
+
+
+
+
+<P>The example in _N2914_.14.10.3.2 [<A href="https://wg21.link/concept.refine.maps#3">concept.refine.maps</A>] paragraph 3 reads:</P>
+
+<PRE>
+    concept C&lt;typename T&gt; { }
+    concept D&lt;typename T, typename U&gt; : C&lt;T&gt; { }
+    template&lt;typename T&gt; struct A { };
+    template&lt;typename T&gt; concept_map D&lt;A&lt;T&gt;, T&gt; { }
+    ...
+</PRE>
+
+<P>Since all concept maps templates are constrained templates, we know
+that we're in a constrained context at the point of the
+<TT>concept_map</TT> keyword.  Then the first argument to <TT>D</TT>
+is <TT>A&lt;T&gt;</TT>, and <TT>A</TT> is an unconstrained template,
+so this is ill-formed by _N2914_.14.11 [<A href="https://wg21.link/temp.constrained#5">temp.constrained</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+Within a constrained context, a program shall not require a template
+specialization of an unconstrained template for which the template
+arguments of the specialization depend on a template parameter.
+
+</BLOCKQUOTE>
+
+<P>Suggestion: make <TT>A</TT> a constrained template, e.g.,</P>
+
+<PRE>
+    template&lt;std::ObjectType T&gt; struct A { };
+</PRE>
+
+<P><B>Additional notes (May, 2009):</B></P>
+
+
+
+<P>There are other examples that exhibit the same problem.  For
+example, _N2960_.14.6.8 [<A href="https://wg21.link/temp.concept.map#7">temp.concept.map</A>] paragraph 7 has this example:</P>
+
+<PRE>
+    concept Stack&lt;typename X&gt; {
+      typename value_type;
+      value_type&amp; top(X&amp;);
+      // ...
+    }
+
+    template&lt;typename T&gt; struct dynarray {
+      T&amp; top();
+    };
+
+    template&lt;&gt; struct dynarray&lt;bool&gt; {
+      bool top();
+    };
+
+    template&lt;typename T&gt;
+    concept_map Stack&lt;dynarray&lt;T&gt;&gt; {
+      typedef T value_type;
+      T&amp; top(dynarray&lt;T&gt;&amp; x) { return x.top(); }
+    }
+</PRE>
+
+<P>
+<TT>dynarray</TT> needs to be constrained.  Similarly, in
+_N2914_.14.10.2.2 [<A href="https://wg21.link/concept.map.assoc#3">concept.map.assoc</A>] paragraph 3, in the example</P>
+
+<PRE>
+    concept Allocator&lt;typename Alloc&gt; {
+      template&lt;class T&gt; class rebind_type;
+    }
+
+    template&lt;typename T&gt;
+    class my_allocator {
+      template&lt;typename U&gt; class rebind_type;
+    };
+
+    template&lt;typename T&gt;
+    concept_map Allocator&lt;my_allocator&lt;T&gt;&gt; {
+      template&lt;class U&gt; using rebind_type = my_allocator&lt;T&gt;::rebind_type;
+    }
+</PRE>
+
+<P>
+<TT>my_allocator</TT> must be constrained.  (Note also the missing
+template argument in the target of the template alias declaration.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

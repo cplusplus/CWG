@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 98</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="98"></A><H4>98.
+  
+Branching into try block
+</H4>
+<B>Section: </B>Clause 14&#160; [<A href="https://wg21.link/except">except</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jack Rouse
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Feb 1999<BR>
+
+
+
+<P>At the top of clause 15, in paragraph 2, it says:</P>
+<BLOCKQUOTE>
+A <TT>goto</TT>, <TT>break</TT>, <TT>return</TT>, or <TT>continue</TT> statement can be used to transfer
+control out of a try block or handler, but not into one.
+</BLOCKQUOTE>
+What about <TT>switch</TT> statements?
+<PRE>
+    switch ( f() )
+    {
+    case 1:
+         try {
+             g();
+    case 2:
+             h();
+         }
+         catch (...)
+         {
+             // handler
+         }
+    break;
+    }
+</PRE>
+
+<B>Daveed Vandevoorde:</B>
+
+<P>Consider:</P>
+<PRE>
+    void f() {
+        try {
+        label:
+            ;
+        } catch(...) {
+            goto label;
+        }
+    }
+</PRE>
+
+Now the phrase "try block" (without a hyphen) is used in paragraph
+1 in a way that causes me to think that it is not intended to
+include the corresponding handlers. On the other hand, the grammar
+entity "<I>try-block</I>" (with hyphen) does include the handlers.
+
+So is the intent to prohibit the above or not?
+
+<P><B>Proposed resolution (10/00:</B></P>
+
+<P>Change text in Clause 14 [<A href="https://wg21.link/except#2">except</A>] paragraph 2 from:</P>
+
+<BLOCKQUOTE>A <TT>goto</TT>, <TT>break</TT>, <TT>return</TT>, or
+<TT>continue</TT> statement
+can be used to transfer control out of a try block or handler, but not
+into one.
+</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>
+A <TT>goto</TT> or <TT>switch</TT> statement shall not be used
+to transfer control into a try block or into a handler.
+<BR>[ <I>Example:</I>
+<BLOCKQUOTE>
+<TT>void f() {</TT>
+<BR><TT>&#160; goto l1;&#160; // Ill-formed</TT>
+<BR><TT>&#160; goto l2;&#160; // Ill-formed</TT>
+<BR><TT>&#160; try {</TT>
+<BR><TT>&#160;&#160;&#160; goto l1;&#160; // OK</TT>
+<BR><TT>&#160;&#160;&#160; goto l2;&#160; // Ill-formed</TT>
+<BR><TT>&#160;&#160;&#160; l1: ;</TT>
+<BR><TT>&#160; } catch (...) {</TT>
+<BR><TT>&#160;&#160;&#160; l2: ;</TT>
+<BR><TT>&#160;&#160;&#160; goto l1;&#160; // Ill-formed</TT>
+<BR><TT>&#160;&#160;&#160; goto l2;&#160; // OK</TT>
+<BR><TT>&#160; }</TT>
+<BR><TT>}</TT>
+</BLOCKQUOTE>
+&#8212;<I>end example</I> ]
+<BR>A <TT>goto</TT>, <TT>break</TT>, <TT>return</TT>, or <TT>continue</TT>
+statement can be used to transfer control out of a try block or handler.
+</BLOCKQUOTE>
+
+<P>(See also <A HREF="246.html">issue 246</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

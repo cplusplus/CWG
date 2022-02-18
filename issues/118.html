@@ -1,0 +1,220 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 118</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="118"></A><H4>118.
+  
+Calls via pointers to virtual member functions
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Martin O'Riordan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 May 1999<BR>
+
+
+
+<P>[Voted into the WP at the June, 2008 meeting.]</P>
+
+
+
+<P>
+<U>Martin O'Riordan:</U>
+Having gone through all the relevant references in the IS, it is not
+conclusive that a call via a pointer to a virtual member function
+is polymorphic at all, and could legitimately be
+interpreted as being static.</P>
+
+<P>Consider 7.6.1.3 [<A href="https://wg21.link/expr.call#1">expr.call</A>] paragraph 1:
+</P>
+<BLOCKQUOTE>
+
+The function called in a member function call is normally selected
+according to the static type of the object expression (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]
+), but if that function is
+<TT>virtual</TT> and is not specified using a <I>qualified-id</I> then
+the function actually called will be the final overrider
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]
+) of the selected
+function in the dynamic type of the object expression.
+
+</BLOCKQUOTE>
+Here it is quite specific that you get the polymorphic call only if you use
+the unqualified syntax.  But, the address of a member function is "always"
+taken using the qualified syntax, which by inference would indicate that
+call with a PMF is static and not polymorphic!  Not what was intended.
+
+<P>Yet other references such as
+7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4:
+</P>
+<BLOCKQUOTE>
+
+If the dynamic type of the object does not contain the member to which
+the pointer refers, the behavior is undefined.
+
+</BLOCKQUOTE>
+indicate that the opposite may have been intended, by stating that it is the
+dynamic type and not the static type that matters.  Also,
+7.6.4 [<A href="https://wg21.link/expr.mptr.oper#6">expr.mptr.oper</A>] paragraph 6:
+
+<BLOCKQUOTE>
+
+If the result of <TT>.*</TT> or <TT>-&gt;*</TT> is a function,
+then that result can be used
+only as the operand for the function
+call operator (). [<I>Example:</I>
+<PRE>
+        (ptr_to_obj-&gt;*ptr_to_mfct)(10);
+</PRE>
+calls the member function denoted by <TT>ptr_to_mfct</TT>
+for the object pointed
+to by <TT>ptr_to_obj</TT>. ]
+
+</BLOCKQUOTE>
+
+which also implies that it is the object pointed to that determines both the
+validity of the expression (the static type of '<TT>ptr_to_obj</TT>'
+may not have a
+compatible function) and the implicit (polymorphic) meaning.   Note too,
+that this is stated in the non-normative example text.
+
+<P>
+<U>Andy Sawyer:</U>
+Assuming the resolution is what I've assumed it is for the
+last umpteen years (i.e. it does the polymorphic thing), then
+the follow on to that is "Should there also be a way of selecting
+the non-polymorphic behaviour"?</P>
+
+<P>
+<U>Mike Miller:</U>
+It might be argued that the current wording of
+7.6.1.3 [<A href="https://wg21.link/expr.call#1">expr.call</A>] paragraph 1
+does give
+polymorphic behavior to simple calls via pointers to members.
+(There is no <I>qualified-id</I> in <TT>obj.*pmf</TT>, and the IS says
+that if the function is not specified using a <I>qualified-id</I>, the
+final overrider will be called.)  However, it clearly says the wrong
+thing when the pointer-to-member itself is specified using a
+<I>qualified-id</I> (<TT>obj.*X::pmf</TT>).</P>
+
+<P>
+<U>Bill Gibbons:</U>
+The phrase <I>qualified-id</I> in
+7.6.1.3 [<A href="https://wg21.link/expr.call#1">expr.call</A>] paragraph 1
+refers to the
+<I>id-expression</I> and not to the "pointer-to-member expression"
+earlier in the paragraph:</P>
+
+<BLOCKQUOTE>
+For a member function call, the postfix expression shall be an
+implicit (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
+,
+11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]
+) or explicit class member
+access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+) whose
+<I>id-expression</I> is a function member name, or a pointer-to-member
+expression (7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]
+) selecting
+a function member.
+</BLOCKQUOTE>
+
+<P>
+<U>Mike Miller:</U>
+To be clear, here's an example:</P>
+
+<PRE>
+    struct S {
+	virtual void f();
+    };
+    void (S::*pmf)();
+    void g(S* sp) {
+	sp-&gt;f();         // 1: polymorphic
+	sp-&gt;S::f();      // 2: non-polymorphic
+	(sp-&gt;S::f)();    // 3: non-polymorphic
+	(sp-&gt;*pmf)();    // 4: polymorphic
+	(sp-&gt;*&amp;S::f)();  // 5: polymorphic
+    }
+</PRE>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>This was moved back to open for lack of a champion.  Martin O'Riordan
+is not expected to be attending meetings.</P>
+
+<P><B>Proposed resolution (February, 2008):</B></P>
+
+<OL>
+<LI>
+<P>Change 7.6.1.3 [<A href="https://wg21.link/expr.call#1">expr.call</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... For a member function call, the postfix expression shall be an
+implicit (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>], 11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]) or
+explicit class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) whose
+<I>id-expression</I> is a function member name, or a pointer-to-member
+expression (7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]) selecting a function member<DEL>.
+The first expression in the postfix expression is then called the
+<I>object expression</I>, and</DEL><INS>;</INS> the call is as a member of
+the object pointed to or referred to <INS>by the object expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>])</INS>. In the
+case of an implicit class member access, the implied object is the one
+pointed to by <TT>this</TT>.  [<I>Note:</I> a member function call of
+the form <TT>f()</TT> is interpreted as <TT>(*this).f()</TT> (see
+11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]). &#8212;<I>end note</I>] If a function or
+member function name is used, the name can be overloaded (
+Clause 12 [<A href="https://wg21.link/over">over</A>]), in which case the appropriate function shall
+be selected according to the rules in 12.2 [<A href="https://wg21.link/over.match">over.match</A>]. <DEL>The function called in a member function call is
+normally selected according to the static type of the object
+expression (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), but if that function
+is <TT>virtual</TT> and is not specified using a <I>qualified-id</I>
+then the function actually called will be the final overrider
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) of the selected function in the dynamic
+type of the object expression</DEL> <INS>If the selected function is
+non-virtual, or if the <I>id-expression</I> in the class member access
+expression is a <I>qualified-id</I>, that function is called.
+Otherwise, its final overrider (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) in the
+dynamic type of the object expression is called.</INS> ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.6.4 [<A href="https://wg21.link/expr.mptr.oper#4">expr.mptr.oper</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>The first operand is called the <I>object expression</I>.</INS> If
+the dynamic type of the object <INS>expression</INS> does not contain the
+member to which the pointer refers, the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

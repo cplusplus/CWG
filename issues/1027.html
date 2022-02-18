@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1027</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1027"></A><H4>1027.
+  
+Type consistency and reallocation of scalar types
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-02-03<BR>
+
+
+
+
+<P>Is the following well-formed?</P>
+
+<PRE>
+    int f() {
+        int i = 3;
+        new (&amp;i) float(1.2);
+        return i;
+    }
+</PRE>
+
+<P>The wording that is intended to prevent such shenanigans,
+6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>] paragraphs 7-9, doesn't quite apply here.
+In particular, paragraph 7 reads,</P>
+
+<BLOCKQUOTE>
+
+<P>If, after the lifetime of an object has ended and before the
+storage which the object occupied is reused or released, a new
+object is created at the storage location which the original
+object occupied, a pointer that pointed to the original object, a
+reference that referred to the original object, or the name of
+the original object will automatically refer to the new object
+and, once the lifetime of the new object has started, can be used
+to manipulate the new object, if:</P>
+
+<UL>
+<LI><P>the storage for the new object exactly overlays the
+storage location which the original object occupied, and</P></LI>
+
+<LI><P>the new object is of the same type as the original object
+(ignoring the top-level cv-qualifiers), and...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>The problem here is that this wording only applies
+&#8220;<B>after</B> the lifetime of an object has ended and
+<B>before</B> the storage which the object occupied is
+reused;&#8221; for an object of a scalar type, its lifetime only
+ends <I>when</I> the storage is reused or released (paragraph 1),
+so it appears that these restrictions cannot apply to such
+objects.</P>
+
+<P>(See also issues <A HREF="1116.html">1116</A> and
+<A HREF="1338.html">1338</A>.)</P>
+
+<P><B>Proposed resolution (August, 2010) [SUPERSEDED]:</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1116.html">issue 1116</A>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Before the lifetime of an object has started but after the storage
+which the object will occupy has been allocated [ Footnote:
+... ]<INS>,</INS> or<DEL>,</DEL> after the lifetime of an object has
+ended and before the storage which the object occupied is <DEL>reused
+or</DEL> released, any pointer that represents the address of the
+storage location where the object will be or was located may be used
+but only in limited ways. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+Similarly, before the lifetime of an object has started but after the
+storage which the object will occupy has been allocated<INS>,</INS>
+or<DEL>,</DEL> after the lifetime of an object has ended and before
+the storage which the object occupied is <DEL>reused or</DEL>
+released, any glvalue that refers to the original object may be used
+but only in limited ways. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

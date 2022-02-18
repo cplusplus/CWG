@@ -1,0 +1,325 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 452</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="452"></A><H4>452.
+  
+Wording nit on description of <TT>this</TT>
+</H4>
+<B>Section: </B>_N4868_.11.4.3.2&#160; [<A href="https://wg21.link/class.this">class.this</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gennaro Prota
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Jan 2004<BR>
+
+
+<P>[Voted into WP at July, 2007 meeting.]</P>
+
+<P>_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this#1">class.this</A>] paragraph 1, which specifies the
+meaning of the
+keyword 'this', seems to limit its usage to the *body* of non-static
+member functions. However 'this' is also usable in ctor-initializers
+which, according to the grammar in
+9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>] par. 1, are not
+part of the body.</P>
+
+<P>Proposed resolution: Changing the first part of
+_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>] par. 1 to:</P>
+<BLOCKQUOTE>
+  In the body of a nonstatic (9.3) member function <INS>or in a
+   ctor-initializer (12.6.2)</INS>, the keyword <TT>this</TT> is a non-lvalue
+   expression whose value is the address of the object for which
+   the function is called.
+</BLOCKQUOTE>
+<P>NOTE: I'm talking of constructors as functions that are "called";
+there have been discussions on c.l.c++.m as to whether constructors
+are "functions" and to whether this terminology is correct or not; I
+think it is both intuitive and in agreement with the standard wording.</P>
+
+<P>
+<U>Steve Adamczyk:</U> See also <A HREF="397.html">issue 397</A>,
+which is defining a new syntax term for the body of a function
+including the ctor-initializers.</P>
+
+<P><B>Notes from the March 2004 meeting:</B></P>
+
+<P>This will be resolved when
+<A HREF="397.html">issue 397</A> is resolved.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+
+<LI><P>Change 9.5 [<A href="https://wg21.link/dcl.fct.def#1">dcl.fct.def</A>] paragraph 1 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Function definitions have the form</P>
+
+<P><UL>
+<I>function-definition:</I>
+<UL><I>decl-specifier-seq<SUB>opt</SUB> declarator <DEL>ctor-initializer<SUB>opt</SUB></DEL> function-body</I></UL>
+<UL><I><DEL>decl-specifier-seq<SUB>opt</SUB> declarator function-try-block</DEL></I></UL>
+<I>function-body:</I>
+<UL><I><INS>ctor-initializer<SUB>opt</SUB></INS> compound-statement</I></UL>
+<UL><I><INS>function-try-block</INS></I></UL>
+</UL></P>
+
+<P><INS>An informal reference to the body of a function should be
+interpreted as a reference to the nonterminal <I>function-body</I>.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change the definition of <I>function-try-block</I> in
+Clause 14 [<A href="https://wg21.link/except#1">except</A>] paragraph 1:</P></LI>
+
+<BLOCKQUOTE>
+
+<UL>
+<I>function-try-block:</I>
+<UL>
+<TT>try</TT><I> ctor-initializer<SUB>opt</SUB> <DEL>function-body</DEL> <INS>compound-statement</INS> handler-seq</I>
+</UL>
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1, point 1, as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+The potential scope of a name declared in a class consists not only of
+the declarative region following the name's point of declaration, but
+also of all function <DEL>bodies,</DEL> <INS>bodies and</INS> default
+arguments<DEL>, and constructor <I>ctor-initializer</I>s</DEL> in that
+class (including such things in nested classes).
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.4.7 [<A href="https://wg21.link/basic.scope.class#1">basic.scope.class</A>] paragraph 1, point 5, as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+The potential scope of a declaration that extends to or past the end
+of a class definition also extends to the regions defined by its
+member definitions, even if the members are defined lexically outside
+the class (this includes static data member definitions, nested class
+definitions, member function definitions (including the member
+function body <DEL>and, for constructor functions (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), the ctor-initializer (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</DEL>)
+and any portion of the declarator part of such definitions which
+follows the identifier, including a <I>parameter-declaration-clause</I>
+and any default arguments (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]).
+[<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change footnote 32 in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#8">basic.lookup.unqual</A>] paragraph 8
+as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+That is, an unqualified name that occurs, for instance, in a type or
+default argument expression in the <DEL><I>parameter-declaration-clause</I>,</DEL>
+<INS><I>parameter-declaration-clause</I> or</INS> in the function body<DEL>,
+or in an expression of a <I>mem-initializer</I> in a constructor
+definition</DEL>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#3">expr.prim.general</A>] paragraph 3 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...The keyword <TT>this</TT> shall be used only inside a non-static
+class member function body (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]) <DEL>or in a
+constructor <I>mem-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4 [<A href="https://wg21.link/class.mem#2">class.mem</A>] paragraph 2 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...Within the class <I>member-specification</I>, the class is regarded as
+complete within function bodies, default arguments, <INS>and</INS>
+<I>exception-specification</I>s<DEL>, and constructor
+<I>ctor-initializer</I>s</DEL> (including such things in nested classes)...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4 [<A href="https://wg21.link/class.mem#9">class.mem</A>] paragraph 9 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+Each occurrence in an expression of the name of a non-static data
+member or non-static member function of a class shall be expressed as
+a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), except when it
+appears in the formation of a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>])<DEL>, or</DEL> <INS>or</INS> when it appears in the body of
+a non-static member function of its class or of a class derived from
+its class (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])<DEL>, or when it appears in
+a <I>mem-initializer</I> for a constructor for its class or for a
+class derived from its class (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</DEL>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the note in 11.4.2 [<A href="https://wg21.link/class.mfct#5">class.mfct</A>] paragraph 5 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> a name used in a member function definition (that is, in the
+<I>parameter-declaration-clause</I> including the default arguments
+(9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>])<DEL>, or</DEL> <INS>or</INS> in the member
+function body<DEL>, or, for a constructor function (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), in a <TT>mem-initializer</TT> expression (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</DEL>) is looked up as described in 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#1">class.mfct.non.static</A>] paragraph 1 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...A non-static member function may also be called directly using
+the function call syntax (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>], 12.2.2.2 [<A href="https://wg21.link/over.match.call">over.match.call</A>]) <INS>from within the body of a member function of its class or of a class derived from its class.</INS>
+</P>
+
+<UL><DEL>
+<LI>from within the body of a member function of its class or of a
+class derived from its class, or</LI>
+<LI>from a <I>mem-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) for
+a constructor for its class or for a class derived from its class.</LI>
+</DEL></UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#3">class.mfct.non.static</A>] paragraph 3 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]) that is not
+part of a class member access syntax (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+and not used to form a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used in the body of a non-static member function
+of class <TT>X</TT> <DEL>or used in the <I>mem-initializer</I> for a
+constructor of class <TT>X</TT></DEL>, if name lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) resolves the name in the <I>id-expression</I> to a
+non-static non-type member of class <TT>X</TT> or of a base class
+of <TT>X</TT>, the <I>id-expression</I> is transformed into a class
+member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+using <TT>(*this)</TT> (_N4868_.11.4.3.2 [<A href="https://wg21.link/class.this">class.this</A>]) as the
+<I>postfix-expression</I> to the left of the <TT>.</TT>  operator...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#7">class.ctor</A>] paragraph 7 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...The implicitly-defined default constructor performs the set of
+initializations of the class that would be performed by a user-written
+default constructor for that class with <DEL>an
+empty <I>mem-initializer-list</I></DEL> <INS>no <I>ctor-initializer</I></INS> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])
+and an empty <DEL>function body</DEL> <INS><I>compound-statement</I></INS>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.9.3 [<A href="https://wg21.link/class.base.init#4">class.base.init</A>] paragraph 4 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+...After the call to a constructor for class <TT>X</TT> has completed, if a
+member of <TT>X</TT> is neither specified in the constructor's
+<I>mem-initializer</I>s, nor default-initialized, nor
+value-initialized, nor given a value during execution
+of <INS>the <I>compound-statement</I> of</INS> the body of the
+constructor, the member has indeterminate value.
+
+</BLOCKQUOTE>
+
+<LI><P>Change the last bullet of 11.9.3 [<A href="https://wg21.link/class.base.init#5">class.base.init</A>] paragraph 5
+as indicated:</P></LI>
+
+<UL><LI><P>Finally, the <DEL>body</DEL> <INS><I>compound-statement</I></INS> of the
+constructor <INS>body</INS> is executed.</P></LI></UL>
+
+<LI><P>Change Clause 14 [<A href="https://wg21.link/except#4">except</A>] paragraph 4 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>function-try-block</I> associates a <I>handler-seq</I> with the
+<I>ctor-initializer</I>, if present, and the <DEL><I>function-body</I></DEL>
+<INS><I>compound-statement</I></INS>. An exception thrown during the
+execution of the initializer expressions in
+the <I>ctor-initializer</I> or during the execution of
+the <DEL><I>function-body</I></DEL> <INS><I>compound-statement</I></INS>
+transfers control to a handler in a
+<I>function-try-block</I> in the same way as an exception thrown
+during the execution of a <I>try-block</I> transfers control to other
+handlers. [<I>Example:</I>
+</P>
+
+<PRE>
+    int f(int);
+    class C {
+        int i;
+        double d;
+    public:
+        C(int, double);
+    };
+
+    C::C(int ii, double id)
+    try
+        : i(f(ii)), d(id)
+    {
+        //<SPAN CLASS="cmnt"> constructor <DEL>function body</DEL> <INS>statements</INS></SPAN>
+    }
+    catch (...)
+    {
+        //<SPAN CLASS="cmnt"> handles exceptions thrown from the ctor-initializer</SPAN>
+        //<SPAN CLASS="cmnt"> and from the constructor <DEL>function body</DEL> <INS>statements</INS></SPAN>
+    }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 as indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+When an exception is thrown, control is transferred to the nearest
+handler with a matching type (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]);
+&#8220;nearest&#8221; means the handler for which the
+<DEL><I>compound-statement</I>,</DEL> <INS><I>compound-statement</I>
+or</INS> <I>ctor-initializer</I><DEL>, or <I>function-body</I></DEL> following
+the <TT>try</TT> keyword was most recently entered by the thread of
+control and not yet exited.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

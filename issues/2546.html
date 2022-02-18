@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2546</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2546"></A><H4>2546.
+  
+Defaulted secondary comparison operators defined as deleted
+</H4>
+<B>Section: </B>11.10.4&#160; [<A href="https://wg21.link/class.compare.secondary">class.compare.secondary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-07<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(See also editorial issues
+<A HREF="https://github.com/cplusplus/draft/issues/5335">5335</A> and
+<A HREF="https://github.com/cplusplus/draft/issues/5336">5336</A>.)</P>
+
+<P>Consider the example in 11.10.4 [<A href="https://wg21.link/class.compare.secondary#3">class.compare.secondary</A>] paragraph 3:</P>
+
+<PRE>
+  struct HasNoLessThan { };
+  struct C {
+    friend HasNoLessThan operator&lt;=&gt;(const C&amp;, const C&amp;);
+    bool operator&lt;(const C&amp;) const = default;  //<SPAN CLASS="cmnt"> OK, function is deleted</SPAN>
+  };
+</PRE>
+
+<P>While the comment may reflect the intent, it does not follow from
+the wording.  11.10.4 [<A href="https://wg21.link/class.compare.secondary#2">class.compare.secondary</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+The operator function with parameters <TT>x</TT> and <TT>y</TT> is
+defined as deleted if
+
+<UL>
+<LI>
+overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>x @
+y</TT>, does not result in a usable candidate, or
+</LI>
+
+<LI>
+the candidate selected by overload resolution is not a rewritten
+candidate.
+</LI>
+</UL>
+
+<P>Otherwise, the operator function yields <TT>x @ y</TT>. The defaulted
+operator function is not considered as a candidate in the overload
+resolution for the <TT>@</TT> operator.</P>
+
+</BLOCKQUOTE>
+
+<P>Overload resolution applied to <TT>x &lt; y</TT> results in a
+usable candidate <TT>operator&lt;=&gt;</TT>
+(12.2.1 [<A href="https://wg21.link/over.match.general">over.match.general</A>]) and that candidate is a rewritten
+candidate (12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.4">over.match.oper</A>] bullet 3.4),
+thus <TT>operator&lt;</TT> in the above example is not deleted.
+However, its definition is ill-formed, because the rewrite <TT>(x
+&lt;=&gt; y) &lt; 0</TT> is ill-formed (12.2.2.3 [<A href="https://wg21.link/over.match.oper#8">over.match.oper</A>] paragraph 8).</P>
+
+<P>There is implementation divergence.</P>
+
+<P>Subclause 11.10.3 [<A href="https://wg21.link/class.spaceship#1">class.spaceship</A>] paragraph 1 seems to prefer an
+ill-formed program for similar synthesized situations:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 1:</I> A synthesized three-way comparison is ill-formed if
+overload resolution finds usable candidates that do not otherwise meet
+the requirements implied by the defined expression. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+Change in 11.10.4 [<A href="https://wg21.link/class.compare.secondary#2">class.compare.secondary</A>] paragraph 2 as follows:
+
+<BLOCKQUOTE>
+
+The operator function with parameters <TT>x</TT> and <TT>y</TT> is
+defined as deleted if
+
+<UL>
+<LI>
+<INS>a first</INS> overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as
+applied to <TT>x @ y</TT>,
+
+<UL>
+<LI>does not result in a usable candidate, or</LI>
+<LI>the <INS>selected</INS> candidate <DEL>selected by overload
+resolution</DEL> is not a rewritten candidate<DEL>.</DEL> <INS>, or</INS>
+</LI>
+</UL>
+
+</LI>
+
+<LI class="ins">a second overload resolution for the expression
+resulting from the interpretation of <TT>x @ y</TT> using the selected
+rewritten candidate (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]) does not result in
+a usable candidate (for example, that expression might be <TT>(x
+&lt;=&gt; y) @ 0</TT>), or
+</LI>
+
+<LI class="ins">
+<TT>x @ y</TT> cannot be implicitly converted to <TT>bool</TT>.
+</LI>
+</UL>
+
+<P>
+<INS>In any of the two overload resolutions above, the defaulted
+operator function is not considered as a candidate for the <TT>@</TT>
+operator.</INS> Otherwise, the operator function yields <TT>x @
+y</TT>. <DEL>The defaulted operator function is not considered as a
+candidate in the overload resolution for the <TT>@</TT>
+operator.</DEL>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

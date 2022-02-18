@@ -1,0 +1,371 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 291</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="291"></A><H4>291.
+  
+Overload resolution needed when binding reference to class rvalue
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 Jun 2001<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+<P>There is a place in the Standard where overload resolution is implied
+but the way that a set of candidate functions is to be formed is
+omitted. See below.</P>
+
+<P>According to the Standard, when initializing a reference to a
+non-volatile const class type (<I>cv1</I> <TT>T1</TT>) with an rvalue
+expression (<I>cv2</I> <TT>T2</TT>) where <I>cv1</I> <TT>T1</TT> is
+reference compatible with <I>cv2</I> <TT>T2</TT>, the implementation
+shall proceed in one of the following
+ways (except when initializing the implicit object parameter of a
+copy constructor) 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.2">dcl.init.ref</A>] bullet 5.2
+sub-bullet 1:</P>
+
+<UL>
+<LI>
+The reference is bound to the object represented by the rvalue (see
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or to a sub-object within that object.
+</LI>
+<LI>
+A temporary of type "<I>cv1</I> <TT>T2</TT>" [sic] is created, and a
+constructor is called to copy the entire rvalue object into the temporary...
+</LI>
+</UL>
+
+<P>While the first case is quite obvious, the second one is a bit unclear
+as it says "a constructor is called to copy the entire rvalue object
+into the temporary" without specifying how the temporary is created --
+by direct-initialization or by copy-initialization? As stated in DR
+152, this can make a difference when the copy constructor is declared
+as explicit. How should the set of candidate functions be formed? The
+most appropriate guess is that it shall proceed as per
+12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>].</P>
+
+<P>Another detail worth of note is that in the draft version of the
+Standard as of 2 December 1996 the second bullet read:</P>
+
+<UL>
+<LI>
+A temporary of type "<I>cv1</I> <TT>T2</TT>" [sic] is created, and a copy
+constructor is called to copy the entire rvalue object into the
+temporary...
+</LI>
+</UL>
+
+<P>J. Stephen Adamczyk replied that the reason for changing "a copy
+constructor" to "a constructor" was to allow for member template
+converting constructors.</P>
+
+<P>However, the new wording is somewhat in conflict with the footnote #93
+that says that when initializing the implicit object parameter of a
+copy constructor an implementation must eventually choose the first
+alternative (binding without copying) to avoid infinite recursion.
+This seems to suggest that a copy constructor is always used for
+initializing the temporary of type "<I>cv1</I> <TT>T2</TT>".</P>
+
+<P>Furthermore, now that the set of candidate functions is not limited to
+only the copy constructors of <TT>T2</TT>, there might be some unpleasant
+consequences.
+Consider a rather contrived sample below:</P>
+
+<PRE>
+    int   * pi = ::new(std::nothrow) int;
+    const std::auto_ptr&lt;int&gt;   &amp; ri = std::auto_ptr&lt;int&gt;(pi);
+</PRE>
+
+<P>In this example the initialization of the temporary of type
+'<TT>&lt;TT&gt;const std::auto_ptr&lt;int&gt;</TT>'
+(to which '<TT>ri</TT>' is meant to be subsequently bound)
+doesn't fail, as it would had the approach with copy constructors been
+retained, instead, a yet another temporary gets created as the
+well-known sequence:</P>
+<PRE>
+    std::auto_ptr&lt;int&gt;::operator std::auto_ptr_ref&lt;int&gt;()
+    std::auto_ptr&lt;int&gt;(std::auto_ptr_ref&lt;int&gt;)
+</PRE>
+<P>is called (assuming, of course, that the set of candidate functions is
+formed as per 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]). The second temporary
+is transient and gets
+destroyed at the end of the initialization. I doubt that this is the
+way that the committee wanted this kind of reference binding to go.</P>
+
+<P>Besides, even if the approach restricting the set of candidates to copy
+constructors is restored, it is still not clear how the initialization
+of the temporary (to which the reference is intended to be bound) is
+to be performed -- using direct-initialization or copy-initialization.</P>
+
+<P>Another place in the Standard that would benefit from a similar
+clarification is the creation of an exception object, which is
+delineated in 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>].</P>
+
+<P>
+<U>David Abrahams (February 2004):</U>
+It appears, looking at core 291, that there may be a need to tighten
+up 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]/5.  </P>
+
+<P>Please see the attached example file, which demonstrates "move
+semantics" in C++98.  Many compilers fail to compile test 10 because
+of the way 8.5.3/5 is interpreted.  My problem with that
+interpretation is that test 20:
+<PRE>
+    typedef X const XC;
+    sink2(XC(X()));
+</PRE>
+does compile.  In other words, it *is* possible to construct the const
+temporary from the rvalue.  IMO, that is the proper test.</P>
+
+<P>8.5.3/5 doesn't demand that a "copy constructor" is used to copy the
+temporary, only that a constructor is used "to copy the temporary".
+I hope that when the language is tightened up to specify direct (or
+copy initialization), that it also unambiguously allows the enclosed
+test to compile.  Not only is it, I believe, within the scope of
+reasonable interpretation of the current standard, but it's an
+incredibly important piece of functionality for library writers and
+users alike.</P>
+
+<PRE>
+#include &lt;iostream&gt;
+#include &lt;cassert&gt;
+
+template &lt;class T, class X&gt;
+struct enable_if_same
+{
+};
+
+template &lt;class X&gt;
+struct enable_if_same&lt;X, X&gt;
+{
+    typedef char type;
+};
+
+struct X
+{
+    static int cnt;  // count the number of Xs
+
+    X()
+      : id(++cnt)
+      , owner(true)
+    {
+        std::cout &lt;&lt; "X() #" &lt;&lt; id &lt;&lt; std::endl;
+    }
+
+    // non-const lvalue - copy ctor
+    X(X&amp; rhs)
+      : id(++cnt)
+      , owner(true)
+    {
+        std::cout &lt;&lt; "copy #" &lt;&lt; id &lt;&lt; " &lt;- #" &lt;&lt; rhs.id &lt;&lt; std::endl;
+    }
+
+    // const lvalue - T will be deduced as X const
+    template &lt;class T&gt;
+    X(T&amp; rhs, typename enable_if_same&lt;X const,T&gt;::type = 0)
+      : id(++cnt)
+      , owner(true)
+    {
+        std::cout &lt;&lt; "copy #" &lt;&lt; id &lt;&lt; " &lt;- #" &lt;&lt; rhs.id &lt;&lt; " (const)" &lt;&lt; std::endl;
+    }
+
+    ~X()
+    {
+        std::cout &lt;&lt; "destroy #" &lt;&lt; id &lt;&lt; (owner?"":" (EMPTY)") &lt;&lt; std::endl;
+    }
+
+ private:    // Move stuff
+    struct ref { ref(X*p) : p(p) {} X* p; };
+
+ public:    // Move stuff
+    operator ref() {
+        return ref(this);
+    }
+
+    // non-const rvalue
+    X(ref rhs)
+      : id(++cnt)
+      , owner(rhs.p-&gt;owner)
+    {
+        std::cout &lt;&lt; "MOVE #" &lt;&lt; id &lt;&lt; " &lt;== #" &lt;&lt; rhs.p-&gt;id &lt;&lt; std::endl;
+        rhs.p-&gt;owner = false;
+        assert(owner);
+    }
+
+ private:   // Data members
+    int id;
+    bool owner;
+};
+
+int X::cnt;
+
+
+X source()
+{
+    return X();
+}
+
+X const csource()
+{
+    return X();
+}
+
+void sink(X)
+{
+    std::cout &lt;&lt; "in rvalue sink" &lt;&lt; std::endl;
+}
+
+void sink2(X&amp;)
+{
+    std::cout &lt;&lt; "in non-const lvalue sink2" &lt;&lt; std::endl;
+}
+
+void sink2(X const&amp;)
+{
+    std::cout &lt;&lt; "in const lvalue sink2" &lt;&lt; std::endl;
+}
+
+void sink3(X&amp;)
+{
+    std::cout &lt;&lt; "in non-const lvalue sink3" &lt;&lt; std::endl;
+}
+
+template &lt;class T&gt;
+void tsink(T)
+{
+    std::cout &lt;&lt; "in templated rvalue sink" &lt;&lt; std::endl;
+}
+
+int main()
+{
+    std::cout &lt;&lt; " ------ test 1, direct init from rvalue ------- " &lt;&lt; std::endl;
+#ifdef __GNUC__ // GCC having trouble parsing the extra parens
+    X z2((0, X() ));
+#else
+    X z2((X()));
+#endif
+
+    std::cout &lt;&lt; " ------ test 2, copy init from rvalue ------- " &lt;&lt; std::endl;
+    X z4 = X();
+
+    std::cout &lt;&lt; " ------ test 3, copy init from lvalue ------- " &lt;&lt; std::endl;
+    X z5 = z4;
+
+    std::cout &lt;&lt; " ------ test 4, direct init from lvalue ------- " &lt;&lt; std::endl;
+    X z6(z4);
+
+    std::cout &lt;&lt; " ------ test 5, construct const ------- " &lt;&lt; std::endl;
+    X const z7;
+
+    std::cout &lt;&lt; " ------ test 6, copy init from lvalue ------- " &lt;&lt; std::endl;
+    X z8 = z7;
+
+    std::cout &lt;&lt; " ------ test 7, direct init from lvalue ------- " &lt;&lt; std::endl;
+    X z9(z7);
+
+    std::cout &lt;&lt; " ------ test 8, pass rvalue by-value ------- " &lt;&lt; std::endl;
+    sink(source());
+
+    std::cout &lt;&lt; " ------ test 9, pass const rvalue by-value ------- " &lt;&lt; std::endl;
+    sink(csource());
+
+    std::cout &lt;&lt; " ------ test 10, pass rvalue by overloaded reference ------- " &lt;&lt; std::endl;
+    // This one fails in Comeau's strict mode due to 8.5.3/5.  GCC 3.3.1 passes it.
+    sink2(source());
+
+    std::cout &lt;&lt; " ------ test 11, pass const rvalue by overloaded reference ------- " &lt;&lt; std::endl;
+    sink2(csource());
+
+#if 0    // These two correctly fail to compile, just as desired
+    std::cout &lt;&lt; " ------ test 12, pass rvalue by non-const reference ------- " &lt;&lt; std::endl;
+    sink3(source());
+
+    std::cout &lt;&lt; " ------ test 13, pass const rvalue by non-const reference ------- " &lt;&lt; std::endl;
+    sink3(csource());
+#endif
+
+    std::cout &lt;&lt; " ------ test 14, pass lvalue by-value ------- " &lt;&lt; std::endl;
+    sink(z5);
+
+    std::cout &lt;&lt; " ------ test 15, pass const lvalue by-value ------- " &lt;&lt; std::endl;
+    sink(z7);
+
+    std::cout &lt;&lt; " ------ test 16, pass lvalue by-reference ------- " &lt;&lt; std::endl;
+    sink2(z4);
+
+    std::cout &lt;&lt; " ------ test 17, pass const lvalue by const reference ------- " &lt;&lt; std::endl;
+    sink2(z7);
+
+    std::cout &lt;&lt; " ------ test 18, pass const lvalue by-reference ------- " &lt;&lt; std::endl;
+#if 0   // correctly fails to compile, just as desired
+    sink3(z7);
+#endif
+
+    std::cout &lt;&lt; " ------ test 19, pass rvalue by value to template param ------- " &lt;&lt; std::endl;
+    tsink(source());
+
+    std::cout &lt;&lt; " ------ test 20, direct initialize a const A with an A ------- " &lt;&lt; std::endl;
+    typedef X const XC;
+    sink2(XC(X()));
+}
+</PRE>
+
+<P><B>Proposed Resolution:</B></P>
+
+<P>(As proposed by N1610 section 5, with editing.)</P>
+
+<P>Change 8.5.3 [<A href="https://wg21.link/stmt.switch#5">stmt.switch</A>] paragraph 5, second bullet,
+first sub-bullet, second sub-sub-bullet as follows:</P>
+<BLOCKQUOTE>
+A temporary of type "<I>cv1</I> <TT>T2</TT>" [sic] is created<DEL>, and a
+constructor is called to copy the entire rvalue object into the temporary</DEL>
+<INS>via copy-initialization from the entire rvalue object</INS>.
+The  reference  is  bound  to  the  temporary or to a sub-object
+within the temporary.
+</BLOCKQUOTE>
+
+<P>The text immediately following that is changed as follows:</P>
+<BLOCKQUOTE>
+<DEL>The  constructor  that  would  be  used  to make the copy shall be
+callable whether or not the copy is actually done.</DEL>
+<INS>The constructor and any conversion function that would be used in the
+initialization shall be callable whether or not the temporary is
+actually created. </INS>
+</BLOCKQUOTE>
+
+<P>Note, however, that the way the core working group is leaning
+on <A HREF="391.html">issue 391</A> (i.e., requiring direct
+binding) would make this change unnecessary.</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>This issue is resolved by the resolution of <A HREF="391.html">issue 391</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

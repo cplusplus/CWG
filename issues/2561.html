@@ -1,0 +1,265 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2561</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2561"></A><H4>2561.
+  
+Conversion to function pointer for lambda with explicit object parameter
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-14
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>P0847R7 (Deducing this) (approved October, 2021) added
+explicit-object member functions. Consider:</P>
+
+<PRE>
+  struct C {
+    C(auto) { }
+  };
+
+  void foo() {
+    auto l = [](this C) { return 1; };
+    void (*fp)(C) = l;
+    fp(1); //<SPAN CLASS="cmnt"> same effect as </SPAN>decltype(l){}()<SPAN CLASS="cmnt"> or </SPAN>decltype(l){}(1)<SPAN CLASS="cmnt"> ?</SPAN>
+  }
+</PRE>
+
+<P>Subclause 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#8">expr.prim.lambda.closure</A>] paragraph 8 does not address
+explicit object member functions:</P>
+
+<BLOCKQUOTE>
+
+The closure type for a non-generic <I>lambda-expression</I> with
+no <I>lambda-capture</I> whose constraints (if any) are satisfied has
+a conversion function to pointer to function with C++ language linkage
+(9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) having the same parameter and return types
+as the closure type's function call operator. The conversion is to
+&#8220;pointer to noexcept function&#8221; if the function call
+operator has a non-throwing exception specification. The value
+returned by this conversion function is the address of a function F
+that, when invoked, has the same effect as invoking the closure type's
+function call operator on a default-constructed instance of the
+closure type. F is a constexpr function if...
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#8">expr.prim.lambda.closure</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The value returned by this conversion function is
+
+<UL>
+
+<LI><INS>for a <I>lambda-expression</I>
+whose <I>parameter-declaration-clause</I> has an explicit object
+parameter, the address of the function call operator
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>];</INS></LI>
+
+<LI>
+<INS>otherwise,</INS> the address of a
+function F that, when invoked, has the same effect as invoking the
+closure type's function call operator on a default-constructed
+instance of the closure type.</LI>
+
+</UL>
+
+F is a constexpr function if... is an immediate function.
+
+<P><INS>[ <I>Example</I>:</INS></P>
+
+<PRE>
+  struct C {
+    C(auto) { }
+  };
+
+  void foo() {
+    auto a = [](C) { return 0; };
+    int (*fp)(C) = a;   // OK
+    fp(1);              //<SPAN CLASS="cmnt"> same effect as </SPAN>decltype(a){}(1)
+    auto b = [](this C) { return 1; };
+    fp = b;             // OK
+    fp(1);              //<SPAN CLASS="cmnt"> same effect as </SPAN>(&amp;decltype(b)::operator())(1)
+  }
+</PRE>
+
+<P><INS>-- <I>end example</I> ]</INS></P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#11">expr.prim.lambda.closure</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value returned by any given specialization of this conversion
+function template is
+
+<UL>
+<LI>
+<INS>for a <I>lambda-expression</I>
+whose <I>parameter-declaration-clause</I> has an explicit object
+parameter, the address of the corresponding function call operator
+template specialization (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]);</INS>
+</LI>
+
+<LI>
+<INS>otherwise,</INS> the address of a function F that, when invoked,
+has the same effect as invoking the generic lambda's corresponding
+function call operator template specialization on a
+default-constructed instance of the closure type.
+</LI>
+</UL>
+
+F is a constexpr function if...
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-06-17</B></P>
+
+<P>
+Requesting guidance from EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1689">paper issue 1689</A>.</P>
+
+<P><B>Additional notes (October, 2023)</B></P>
+
+<P>Additional examples demonstrating implementation divergence between clang
+and MSVC:</P>
+
+<PRE>
+  struct Any { Any(auto) {} };
+  auto x = [](this auto self, int x) { return x; };
+  auto y = [](this Any self, int x) { return x; };
+  auto z = [](this int (*self)(int), int x) { return x; };
+  int main() {
+    x(1);
+    y(1);
+    z(1);
+    int (*px)(int) = +x; //<SPAN CLASS="cmnt"> MSVC</SPAN>
+    int (*py1)(int) = +y; //<SPAN CLASS="cmnt"> MSVC</SPAN>
+    int (*py2)(Any, int) = +y; //<SPAN CLASS="cmnt"> Clang</SPAN>
+    int (*pz1)(int) = +z; //<SPAN CLASS="cmnt"> MSVC</SPAN>
+    int (*pz2)(int (*)(int), int) = +z; //<SPAN CLASS="cmnt"> Clang</SPAN>
+  }
+</PRE>
+
+<P><B>Additional notes (November, 2023)</B></P>
+
+<P>Additional example:</P>
+
+<PRE>
+  auto c2 = [](this auto self) { return sizeof(self); };
+  struct Derived2 : decltype(c) { int value; } d2;
+  struct Derived3 : decltype(c) { int value[10]; } d3;
+</PRE>
+
+<P>For MSVC, <TT>d2() == 4</TT> and <TT>d3() == 40</TT>,
+but <TT>+d2</TT> and <TT>+d3</TT> both point to functions
+returning <TT>1</TT>.</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>Move forward with option 1 "punt" from D3031 for C++26.
+A future paper can explore other solutions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-04-19):</B></P>
+
+<OL>
+<LI>
+<P>Change the example in 7.5.6.1 [<A href="https://wg21.link/expr.prim.lambda.general#6">expr.prim.lambda.general</A>] paragraph 6 as follows:</P>
+
+<PRE>
+<DEL>  int i = [](int i, auto a) { return i; }(3, 4);  //<SPAN CLASS="cmnt"> OK, a generic lambda</SPAN>
+  int j = []&lt;class T&gt;(T t, int i) { return i; }(3, 4);  //<SPAN CLASS="cmnt"> OK, a generic lambda</SPAN></DEL>
+<INS>  auto x = [](int i, auto a) { return i; };             //<SPAN CLASS="cmnt"> OK, a generic lambda</SPAN>
+  auto y = [](this auto self, int i) { return i; };      //<SPAN CLASS="cmnt"> OK, a generic lambda</SPAN>
+  auto z = []&lt;class T&gt;(int i) { return i; };             //<SPAN CLASS="cmnt"> OK, a generic lambda</SPAN>
+</INS>
+</PRE>
+</LI>
+
+<LI>
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#9">expr.prim.lambda.closure</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+The closure type for a non-generic <I>lambda-expression</I> with
+no <I>lambda-capture</I> <INS>and no explicit object parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])</INS> whose constraints (if any) are
+satisfied has a conversion function to pointer to function with C++
+language linkage (9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) having the same parameter
+and return types as the closure type's function call operator. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure#10">expr.prim.lambda.closure</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+For a generic lambda with no <I>lambda-capture</I> <INS>and no
+explicit object parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])</INS>, the
+closure type has a conversion function template to pointer to
+function. ...
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-11-09</B></P>
+
+<P>Keeping in review status in anticipation of a paper proposing
+reasonable semantics for the function pointer conversions.</P>
+
+<P><B>EWG 2024-03-18</B></P>
+
+<P>Progress with option #1 of
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p3031r0.html">P3031R0</A>,
+affirming the direction of the proposed resolution.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

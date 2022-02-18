@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2917</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2917"></A><H4>2917.
+  
+Disallow multiple <I>friend-type-specifier</I>s for a friend template
+</H4>
+<B>Section: </B>13.1&#160; [<A href="https://wg21.link/temp.pre">temp.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ambrose T
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-30
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/586">#586</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/593">#593</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+struct C {
+  template &lt;typename&gt;
+  friend class Foo, int;
+};
+</PRE>
+
+<P>This is obviously nonsense, but is not prohibited by the wording.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct S {
+    template &lt;typename T&gt;
+    friend class Foo&lt;T&gt;::Nested;       //<SPAN CLASS="cmnt"> OK; see 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5</SPAN>
+
+    template &lt;typename ...Ts&gt;
+    friend class Foo&lt;Ts&gt;::Nested...;   //<SPAN CLASS="cmnt"> makes no sense</SPAN>
+  };
+</PRE>
+
+<P><U>Suggested resolution (2024-07-30):</U></P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#5">temp.pre</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a <I>template-declaration</I>, explicit specialization, or explicit
+instantiation, the <I>init-declarator-list</I> in the declaration
+shall contain at most one declarator. When such a declaration is used
+to declare a class template, no declarator is permitted.
+<INS>In a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>friend-type-declaration</I>, the
+<I>friend-type-specifier-list</I> shall consist of exactly
+one <I>friend-type-specifier</I>; if it is a pack expansion
+(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), any packs expanded by that pack
+expansion shall not have been introduced by the
+<I>template-declaration</I>. [ Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<P>The above resolution allows the following example:</P>
+
+<PRE>
+  template&lt;class ... Us&gt;
+  struct S {
+   template&lt;class T&gt;
+   friend class C&lt;T, Us&gt;::Nested...;
+  };
+</PRE>
+
+<P>CWG was not convinced the above example was intended to be
+supported by paper P2893R3, which introduced pack expansions for
+friend declarations.</P>
+
+<P><B>Proposed resolution (2024-08-16):</B></P>
+
+<P>(This is not a DR.)</P>
+
+<P>(<A HREF="2862.html">Issue 2862</A> modifies the same paragraph.)</P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#5">temp.pre</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a <I>template-declaration</I>, explicit specialization, or explicit
+instantiation, the <I>init-declarator-list</I> in the declaration
+shall contain at most one declarator. When such a declaration is used
+to declare a class template, no declarator is permitted.
+<INS>In a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>friend-type-declaration</I>,
+the <I>friend-type-specifier-list</I> shall consist of exactly
+one <I>friend-type-specifier</I> that is not a pack expansion.  [
+Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-08-16</B></P>
+
+<P>The proposed resolution above disallows a few examples from paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2893r3.html">P2893R3</A>
+(Variadic friends), such as
+</P>
+
+<PRE>
+  template&lt;class... Ts&gt;
+  struct VS {
+    template&lt;class U&gt;
+    friend class C&lt;Ts&gt;::Nested...; //<SPAN CLASS="cmnt"> now ill-formed</SPAN>
+  };
+</PRE>
+
+<P>The adopted wording for P2893R3 makes
+the <I>friend-type-specifier</I> (not the
+entire <I>template-declaration</I>) the pattern that is expanded by
+the pack expansion, leading to the expansion
+</P>
+
+<PRE>
+  struct VS&lt;T1, T2, T3&gt; {
+    template&lt;class U&gt;
+    friend class C&lt;T1&gt;::Nested, class C&lt;T2&gt;::Nested, class C&lt;T3&gt;::Nested;
+  };
+</PRE>
+
+<P>However, that violates the principle that
+a <I>template-declaration</I> declares exactly one entity
+(see <A HREF="2862.html">issue 2862</A>).</P>
+
+<P>As an aside, the paper as adopted misrepresents the status of
+members of dependent types, which are covered by
+13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5.</P>
+
+<P>CWG welcomes a paper making the template friend cases valid, but
+such a facility would appear to require substantial changes to the
+normative wording, which a core issue is not equipped for.</P>
+
+<P>CWG asks EWG to consent to the reduction in scope for the variadic
+friends facility, via paper issue
+<A HREF="https://github.com/cplusplus/papers/issues/2032">cplusplus/papers#2032</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

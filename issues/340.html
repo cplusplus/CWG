@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 340</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="340"></A><H4>340.
+  
+Unclear wording in disambiguation section </H4>
+<B>Section: </B>9.3.3&#160; [<A href="https://wg21.link/dcl.ambig.res">dcl.ambig.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bart v Ingen Schenau
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Feb 2002<BR>
+
+
+<P>Consider the following program:</P>
+<PRE>
+  struct Point
+  {
+    Point(int){}
+  };
+  struct Lattice
+  {
+    Lattice(Point, Point, int){}
+  };
+  int main(void)
+  {
+    int a, b;
+    Lattice latt(Point(a), Point(b), 3);   /* Line X */
+  }
+</PRE>
+
+<P>The problem concerns the line marked <TT>/* Line X */</TT>, which is an
+ambiguous declarations for either an object or a function.
+The clause that governs this ambiguity is 9.3.3 [<A href="https://wg21.link/dcl.ambig.res#1">dcl.ambig.res</A>] paragraph 1,
+ and reads:</P>
+<BLOCKQUOTE>
+The ambiguity arising from the similarity between a function-style
+cast and a declaration mentioned in 8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>]
+can also occur in the context
+of a declaration. In that context, the choice is between a function
+declaration with a redundant set of parentheses around a parameter
+name and an object declaration with a function-style cast as the
+initializer. Just as for the ambiguities mentioned in
+8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>], the
+resolution is to consider any construct that could possibly be a
+declaration a declaration. [Note: a declaration can be explicitly
+disambiguated by a nonfunction-style cast, by a <TT>=</TT> to indicate
+initialization or by removing the redundant parentheses around the
+parameter name. ]
+</BLOCKQUOTE>
+
+<P>Based on this clause there are two possible interpretations of the
+declaration in line X:</P>
+<OL>
+<LI>
+The declaration of latt declares a function with a return value of
+the type Lattice and taking three arguments. The type of the first two
+arguments is Point and each of these arguments is followed by a
+parameter name in redundant parentheses. The type of the third
+argument can not be determined, because it is a literal.
+This will result in a syntax error.
+</LI>
+<LI>
+The declaration of latt declares an object, because the other option
+(a function declaration) would result in a syntax error.
+</LI>
+</OL>
+
+<P>Note that the last sentence before the "[Note:" is not much help,
+because both options are declarations.</P>
+
+<P><I>Steve Adamczyk: a number of people replied to this posting
+on comp.std.c++ saying that they did not see a problem.  The
+original poster replied:</I></P>
+
+<P>I can't do anything but agree with your argumentation.
+So there is only one correct interpretation of
+9.3.3 [<A href="https://wg21.link/dcl.ambig.res#1">dcl.ambig.res</A>] paragraph 1, but I
+have to say that with some rewording, the clause can be made a lot
+clearer, like stating explicitly that the entire declaration must be
+taken into account and that function declarations are preferred over
+object declarations.</P>
+
+<P>I would like to suggest the following as replacement for the current
+9.3.3 [<A href="https://wg21.link/dcl.ambig.res#1">dcl.ambig.res</A>] paragraph 1:</P>
+<BLOCKQUOTE>
+The ambiguity arising from the similarity between a functionstyle
+cast and a declaration mentioned in
+8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>] can also occur in the context
+of a declaration. In that context, the choice is between a function
+declaration with a redundant set of parentheses around a parameter
+name and an object declaration with a function-style cast as the
+initializer. The resolution is to consider any construct that could
+possibly be a function declaration a function declaration. [Note: To
+disambiguate, the whole declaration might have to be examined to
+determine if it is an object or a function declaration.] [Note: a
+declaration can be explicitly disambiguated by a nonfunction-style
+cast, by a <TT>=</TT> to indicate initialization or by removing the redundant
+parentheses around the parameter name. ]
+</BLOCKQUOTE>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>The working group felt that the current wording is clear enough.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

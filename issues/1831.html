@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1831</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1831"></A><H4>1831.
+  
+Explicitly vs implicitly deleted move constructors
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-13<BR>
+
+
+
+
+<P>According to 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11,</P>
+
+<BLOCKQUOTE>
+
+A defaulted move constructor that is defined as deleted is
+ignored by overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>],
+12.3 [<A href="https://wg21.link/over.over">over.over</A>]).  [<I>Note:</I> A deleted move
+constructor would otherwise interfere with initialization
+from an rvalue which can use the copy constructor
+instead. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>Limiting this provision to defaulted move constructors
+introduces an unfortunate distinction between implicitly and
+explicitly deleted move constructors.  For example, given</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+  #include &lt;memory&gt;
+  using namespace std;
+
+  struct Expl {
+    Expl() = default;
+    Expl(const Expl &amp;) {
+      cout &lt;&lt; " Expl(const Expl &amp;)" &lt;&lt; endl;
+   }
+   Expl(Expl &amp;&amp;) = delete;
+  };
+
+  struct Impl : Expl {
+    Impl() = default;
+    Impl(const Impl &amp;) {
+      cout &lt;&lt; " Impl(const Impl &amp;)" &lt;&lt; endl;
+    }
+    Impl(Impl &amp;&amp;) = default;
+  };
+
+  struct Moveable {
+    Moveable() { }
+    Moveable(const Moveable &amp;) {
+      cout &lt;&lt; " Moveable(const Moveable &amp;)" &lt;&lt; endl;
+    }
+    Moveable(Moveable &amp;&amp;) {
+      cout &lt;&lt; " Moveable(Moveable &amp;&amp;)" &lt;&lt; endl;
+    }
+  };
+
+  template&lt;typename T&gt; struct Container {
+    Moveable moveable[2];
+    T t;
+  };
+
+  int main() {
+    cout &lt;&lt; "Expl:" &lt;&lt; endl;
+    Container&lt;Expl&gt; c1(move(Container&lt;Expl&gt;()));
+    cout &lt;&lt; "Impl:" &lt;&lt; endl;
+    Container&lt;Impl&gt; c2(move(Container&lt;Impl&gt;()));
+  }
+</PRE>
+
+<P>The output of this program is</P>
+
+<PRE>
+  Expl:
+   Moveable(const Moveable &amp;)
+   Moveable(const Moveable &amp;)
+   Expl(const Expl &amp;)
+  Impl:
+   Moveable(Moveable &amp;&amp;)
+   Moveable(Moveable &amp;&amp;)
+   Impl(const Impl &amp;)
+</PRE>
+
+<P>Should the specification be changed to allow overload resolution
+to ignore all deleted move constructors instead of only the defaulted
+ones?</P>
+
+<P>From one perspective, at least, the principal reason to delete a
+move constructor explicitly is to elicit an error if a move is
+attempted, and such a change would violate that intent.  On the
+other hand, minimizing the difference between explicit default and
+implicit default seems like an important goal.</P>
+
+<P><B>Rationale (February, 2014):</B></P>
+
+<P>The specification is as intended.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

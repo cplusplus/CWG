@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 990</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="990"></A><H4>990.
+  
+Value initialization with multiple initializer-list constructors
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 October, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting as part of document N3079.]</P>
+
+<P>It should always be possible to use the new brace syntax to
+value-initialize an object.  However, the current rules make the
+following example ill-formed because of ambiguity:</P>
+
+<PRE>
+    struct S {
+      S();
+      S(std::initializer_list&lt;int&gt;);
+      S(std::initializer_list&lt;double&gt;);
+    };
+    S s{};    //<SPAN CLASS="cmnt"> Ambiguous initializer-list constructor reference,</SPAN>
+              //<SPAN CLASS="cmnt"> not value initialization.</SPAN>
+</PRE>
+
+
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>List-initialization of an object or reference of type <TT>T</TT> is
+defined as follows:</P>
+
+<UL>
+<LI><P><INS>If the initializer list has no elements and <TT>T</TT> is
+a class type with a default constructor, the object is
+value-initialized.</INS></P></LI>
+
+<LI><P><INS>Otherwise, if the initializer list has no elements
+and <TT>T</TT> is an aggregate, the initializer list is used to
+initialize each of the members of
+<TT>T</TT>. [<I>Example:</I></INS></P></LI>
+
+<PRE>
+<INS>  struct A {
+    A(std::initializer_list&lt;int&gt;);  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+  struct B {
+    A a;
+  };
+  B b { };    //<SPAN CLASS="cmnt"> OK, uses #1</SPAN>
+  B b { 1 };  //<SPAN CLASS="cmnt"> error</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+<LI><P>
+<DEL>If</DEL> <INS>Otherwise, if</INS> <TT>T</TT> is an
+aggregate...</P></LI>
+
+<LI><P>...</P></LI>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  struct S {
+    S(std::initializer_list&lt;double&gt;);  //<SPAN CLASS="cmnt"> #1</SPAN>
+    S(std::initializer_list&lt;int&gt;);     //<SPAN CLASS="cmnt"> #2</SPAN>
+<INS>    S();                                     //<SPAN CLASS="cmnt"> #3</SPAN></INS>
+    // ...
+  };
+  S s1 = { 1.0, 2.0, 3.0 };            //<SPAN CLASS="cmnt"> invoke #1</SPAN>
+  S s2 = { 1, 2, 3 };                  //<SPAN CLASS="cmnt"> invoke #2</SPAN>
+<INS>  S s3 = { };                          //<SPAN CLASS="cmnt"> invoke #3 (for value-initialization; see above)</SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

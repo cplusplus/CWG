@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1877</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1877"></A><H4>1877.
+  
+Return type deduction from <TT>return</TT> with no operand
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-02-20<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+<P>Return type deduction from a <TT>return</TT> statement with no
+<I>expression</I> is described in 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7
+as follows:</P>
+
+<BLOCKQUOTE>
+
+When a variable declared using a placeholder type is initialized, or a
+<TT>return</TT> statement occurs in a function declared with a return type
+that contains a placeholder type, the deduced return type or variable type
+is determined from the type of its initializer. In the case of
+a <TT>return</TT> with no operand, the initializer is considered to
+be <TT>void()</TT>. Let <TT>T</TT> be the declared type of the variable or
+return type of the function. If the placeholder is
+the <TT>auto</TT> <I>type-specifier</I>, the deduced type is determined
+using the rules for template argument deduction. If the deduction is for
+a <TT>return</TT> statement and the initializer is
+a <I>braced-init-list</I> (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), the program is
+ill-formed. Otherwise, obtain <TT>P</TT> from <TT>T</TT> by replacing the
+occurrences of <TT>auto</TT> with either a new invented type template
+parameter <TT>U</TT> or, if the initializer is a <I>braced-init-list</I>,
+with <TT>std::initializer_list&lt;U&gt;</TT>. Deduce a value for <TT>U</TT>
+using the rules of template argument deduction from a function call
+(13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]), where <TT>P</TT> is a function template
+parameter type and the initializer is the corresponding argument.
+
+</BLOCKQUOTE>
+
+<P>However, this does not work: the deduction for an argument of
+<TT>void()</TT> would give a parameter type of <TT>void</TT> and
+be ill-formed.  It would be better simply to say that the deduced type
+in this case is <TT>void</TT>.</P>
+
+<P>In a related example, consider</P>
+
+<PRE>
+  decltype(auto) f(void *p) {
+    return *p;
+  }
+</PRE>
+
+<P>This is presumably an error because <TT>decltype(*p)</TT> would be
+<TT>void&amp;</TT>, which is ill-formed.  Perhaps this case should be
+mentioned explicitly.</P>
+
+<P><B>Notes from the June, 2014 meeting:</B></P>
+
+<P>The last part of the issue is not a defect, because the unary
+<TT>*</TT> operator requires its operand to be a pointer to an object
+or function type, and <TT>void</TT> is neither, so the expression is
+ill-formed and deduction does not occur for that case.</P>
+
+<P>It was also observed during the discussion that the same deduction
+problem occurs when returning an expression of type <TT>void</TT> as
+when the expression is omitted, so the resolution should cover both
+cases.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<P>Change 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#7">dcl.spec.auto</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a variable declared using a placeholder type is initialized,
+or a <TT>return</TT> statement occurs in a function declared with a return
+type that contains a placeholder type, the deduced return type or
+variable type is determined from the type of its initializer. In
+the case of a <TT>return</TT> with no operand <INS>or with an operand
+of type <TT>void</TT></INS>, the <DEL>initializer</DEL> <INS>declared
+return type shall be <TT>auto</TT> and the deduced return type</INS> is
+<INS><TT>void</TT></INS> <DEL>considered to
+be <TT>void()</TT></DEL>. <DEL>Let</DEL> <INS>Otherwise,
+let</INS> <TT>T</TT> be the declared type...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

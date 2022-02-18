@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 107</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="107"></A><H4>107.
+  
+Linkage of operator functions
+</H4>
+<B>Section: </B>9.11&#160; [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Stephen Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Apr 1999<BR>
+
+
+
+<P>[Picked up by evolution group at October 2002 meeting.]</P>
+
+
+
+<P>
+<U>Steve Clamage:</U>
+I can't find anything in the standard that prohibits a language
+linkage on an operator function.  For example:</P>
+<BLOCKQUOTE><PRE>
+extern "C" int operator+(MyInt, MyInt) { ... }
+</PRE></BLOCKQUOTE>
+<P>Clearly it is a bad idea, you could have only one <TT>operator+</TT>
+with "C" linkage in the entire program, and you can't call the function
+from C code.</P>
+
+<P>
+<U>Mike Miller:</U>
+Well, you can't <I>name</I> an operator function in C code, but if
+the arguments are compatible (e.g., not references), you <I>can</I>
+call it from C code via a pointer.  In fact, because the language
+linkage is part of the function type, you couldn't pass the
+address of an operator function into C code unless you could
+declare the function to be extern "C".</P>
+
+<P>
+<U>Fergus Henderson:</U>
+In the general case, for linkage to languages other than C,
+this could well make perfect sense.</P>
+
+<P><U>Steve Clamage:</U></P>
+<P>But is it disallowed (as opposed to being stupid), and if so, where
+in the standard does it say so?</P>
+
+<P>
+<U>Mike Miller:</U>
+I don't believe there's a restriction.  Whether that is because
+of the (rather feeble) justification of being able to call an
+operator from C code via a pointer, or whether it was simply
+overlooked, I don't know.</P>
+
+<P>
+<U>Fergus Henderson:</U>
+I don't think it is disallowed.  I also don't think there is any need
+to explicitly disallow it.</P>
+
+<P>
+<U>Steve Clamage</U>:
+I don't think the standard is clear enough on this point.  I'd
+like to see a clarification.</P>
+
+<P>I think either of these two clarifications would be appropriate:</P>
+
+<OL>
+<LI>
+A linkage specification on an operator function is ill-formed.</LI>
+
+<LI>
+A linkage specification on an operator function is
+well-formed, but the semantics (e.g.  name mangling) are
+implementation-defined.  In addition, the rule about multiple
+functions with the same name having "C" linkage applies.</LI>
+
+<PRE>
+    extern "C" T operator+(T,T); // ok
+    extern "C" T operator-(T,T); // ok
+    extern "C" U operator-(U);   // error, two extern "C" operator-
+</PRE>
+</OL>
+
+<P>
+<U>Mike Miller</U>:
+I think the point here is that something like</P>
+
+<PRE>
+    extern "xyzzy" bool operator&lt;(S&amp;,S&amp;)
+</PRE>
+
+could well make sense, if language xyzzy is sufficiently compatible with
+C++, and the one-function rule only applies to extern "C", not to other
+language linkages.  Given that it might make sense to have general
+language linkages for operators, is it worthwhile to make an exception
+to the general rule by saying that you can have any language linkage
+on an operator function except "C" linkage?  I don't like exceptions to
+general rules unless they're very well motivated, and I don't see
+sufficient motivation to make one here.
+
+<P>Certainly this capability isn't very useful.  There are lots
+of things in C++ that aren't very useful but just weren't
+worth special-casing out of the language.  I think this falls
+into the same category.</P>
+
+<P>
+<U>Mike Ball</U>:
+I DON'T want to forbid operator functions within an
+extern "C".  Rather I want to add operator functions to that sentence
+in paragraph 4 of
+9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]
+ which reads</P>
+
+<BLOCKQUOTE>
+A C language linkage is ignored for the names of class members and
+the member function type of class member functions.
+</BLOCKQUOTE>
+
+My reason is simple:  C linkage makes a total hash of scope. Any "C" functions
+declared with the same name in any namespace scope are the same function.
+In other words, namespaces are totally ignored.
+
+<P>This provision was added in toward the end of the standardization process,
+and was, I thought, primarily to make it possible to put the C library
+in namespace <TT>std</TT>.  Otherwise, it seems an unwarrented attack on the
+very concept of scope.  We (wisely) didn't force this on static member
+functions, since it would essentially promote them to the global scope.</P>
+
+<P>Now I think that programmers think of operator functions as essentially
+part of a class.  At least for one very common design pattern they are
+treated as part of the class interface.  This pattern is the reason we
+invented Koenig lookup for operator functions.</P>
+
+<P>What happens when such a class definition is included, deliberately or
+not, in an extern "C" declaration?  The member operators continue to
+work, but the non-member operators can suddenly get strange and
+hard to understand messages.  Quite possibly, they get the messages
+only when combined with other classes in other compilation units.
+You can argue that the programmer shouldn't put the class header
+in a linkage delaration in the first place, but I can still find books
+that recommend putting `extern "C"' around entire header files,
+so it's going to happen.</P>
+
+<P>I think that including operator functions in the general exclusion from
+extern "C" doesn't remove a capability, rather it ensurs a capability
+that programmers already think they have.</P>
+
+<P><B>Rationale (10/00):</B></P>
+
+<P>The benefits of creating an exception for operator functions
+were outweighed by the complexity of adding another special case
+to the rules.</P>
+
+<P><B>Note (March, 2008):</B></P>
+
+<P>The Evolution Working Group recommended closing this issue with
+no further consideration.  See paper J16/07-0033 = WG21 N2173.</P>
+<BR><BR>
+</BODY>
+</HTML>

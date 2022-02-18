@@ -1,0 +1,70 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 859</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="859"></A><H4>859.
+  
+Incomplete comment in <TT>late_check</TT> example
+</H4>
+<B>Section: </B>_N2960_.6.9&#160; [<A href="https://wg21.link/stmt.late">stmt.late</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 April, 2009<BR>
+
+
+
+
+<P>_N2960_.6.9 [<A href="https://wg21.link/stmt.late#2">stmt.late</A>] paragraph 2 consists of the following
+example:</P>
+
+<PRE>
+    concept Semigroup&lt;typename T&gt; {
+      T::T(const T&amp;);
+      T operator+(T, T);
+    }
+
+    concept_map Semigroup&lt;int&gt; {
+      int operator+(int x, int y) { return x * y; }
+    }
+
+    template&lt;Semigroup T&gt;
+    T add(T x, T y) {
+      T r = x + y; //<SPAN CLASS="cmnt"> uses </SPAN>Semigroup&lt;T&gt;::operator+
+      late_check {
+        r = x + y; //<SPAN CLASS="cmnt"> uses </SPAN>operator+<SPAN CLASS="cmnt"> found at instantiation time (not considering </SPAN>Semigroup&lt;T&gt;::operator+<SPAN CLASS="cmnt">)</SPAN>
+      }
+      return r;
+    }
+</PRE>
+
+<P>The second comment is correct but incomplete, because the assignment
+operator is also found at instantiation time.  The assignment would be
+ill-formed outside the <TT>late_check</TT> block, because the
+<TT>Semigroup</TT> concept has no copy assignment operator.  The comment
+should be extended accordingly.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

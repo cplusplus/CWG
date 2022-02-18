@@ -1,0 +1,151 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 543</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="543"></A><H4>543.
+  
+Value initialization and default constructors
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 October 2005<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting (resolution
+in paper N2762).]</P>
+
+<P>The wording resulting from the resolution of
+<A HREF="302.html">issue 302</A> does not quite implement the intent
+of the issue.  The revised wording of 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2
+is:</P>
+
+<BLOCKQUOTE>
+
+A default constructor for a class is used by default initialization or
+value initialization as specified in 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>].
+
+</BLOCKQUOTE>
+
+<P>This sounds as if 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] specifies how and
+under what circumstances value initialization uses a default
+constructor (which was, in fact, the case for default initialization
+in the original wording).  However, the normative text there makes it
+plain that value initialization does <I>not</I> call the default
+constructor (the permission granted to implementations to call the
+default constructor for value initialization is in a non-normative
+footnote).</P>
+
+<P>The example that occasioned this observation raises an
+additional question.  Consider:</P>
+
+<PRE>
+    struct POD {
+      const int x;
+    };
+
+    POD data = POD();
+</PRE>
+
+<P>According to the (revised) resolution of issue 302, this code is
+ill-formed because the implicitly-declared default constructor will
+be implicitly defined as a result of being used by value initialization
+(11.4.5 [<A href="https://wg21.link/class.ctor#7">class.ctor</A>] paragraph 7), and the implicitly-defined
+constructor fails to initialize a const-qualified member
+(11.9.3 [<A href="https://wg21.link/class.base.init#4">class.base.init</A>] paragraph 4).  This seems unfortunate,
+because the (trivial) default constructor of a POD class is otherwise
+not used &#8212; default initialization applies only to non-PODs
+&#8212; and it is not actually needed in value initialization.
+Perhaps value initialization should be defined to &#8220;use&#8221;
+the default constructor only for non-POD classes?  If so, both of
+these problems would be resolved by rewording the above-referenced
+sentence of 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 as:</P>
+
+<BLOCKQUOTE>
+
+A default constructor for a <INS>non-POD</INS> class is used by
+default initialization or value initialization <DEL>as specified in</DEL>
+<INS>(</INS>9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]<INS>)</INS>.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>The approach favored by the CWG was to leave 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+unchanged and to add normative wording to 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+indicating that it is unspecified whether the default constructor is
+called.</P>
+
+<P><B>Notes from the October, 2006 meeting:</B></P>
+
+<P>The CWG now prefers that it should not be left unspecified whether
+programs of this sort are well- or ill-formed; instead, the Standard
+should require that the default constructor be defined in such cases.
+Three possibilities of implementing this decision were discussed:</P>
+
+<OL>
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] to state flatly that the
+default constructor is used by value initialization (removing the
+implication that 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] determines the conditions
+under which it is used).</P></LI>
+
+<LI><P>Change 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] to specify that non-union
+class objects with no user-declared constructor are value-initialized
+by first zero-initializing the object and then calling the
+(implicitly-defined) default constructor, replacing the current
+specification of value-initializing each of its sub-objects.</P></LI>
+
+<LI><P>Add a normative statement to 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] that
+value-initialization causes the implicitly-declared default constructor
+to be implicitly defined, even if it is not called.</P></LI>
+
+</OL>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change the second bullet of the value-initialization definition
+in 9.4 [<A href="https://wg21.link/dcl.init#5">dcl.init</A>] paragraph 5 as follows:</P>
+
+<UL><LI><P>if <TT>T</TT> is a non-union class type without a
+user-provided constructor, then <DEL>every non-static data member and
+base-class component of <TT>T</TT> is value-initialized;
+[<I>Footnote:</I> Value-initialization for such a class object may be
+implemented by zero-initializing the object and then calling the
+default constructor. &#8212;<I>end footnote</I>]</DEL> <INS>the object is
+zero-initialized and the implicitly-defined default constructor is
+called;</INS>
+</P></LI></UL>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The resolution supplied in paper N2762 differs from the June,
+2008 proposed resolution in that the implicitly-declared default
+constructor is only called (and thus defined) if it is
+non-trivial, making the <TT>struct POD</TT> example above
+well-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

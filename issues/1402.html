@@ -1,0 +1,408 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1402</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1402"></A><H4>1402.
+  
+Move functions too often deleted
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-10-03<BR>
+
+
+<P>[Moved to DR status at the April, 2013 meeting as paper N3667.]</P>
+
+
+
+<P>Paragraphs 11 and 23 of 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] make a
+defaulted move constructor and assignment operator, respectively,
+deleted if there is a subobject with no corresponding move
+function and for which the copy operation is non-trivial.  This
+seems excessive and unnecessary.  For example:</P>
+
+<PRE>
+    template&lt;typename T&gt;
+     struct wrap
+     {
+      wrap() = default;
+
+    #ifdef USE_DEFAULTED_MOVE
+      wrap(wrap&amp;&amp;) = default;
+    #else
+      wrap(wrap&amp;&amp; w) : t(static_cast&lt;T&amp;&amp;&gt;(w.t)) { }
+    #endif
+
+      wrap(const wrap&amp;) = default;
+
+      T t;
+     };
+
+    struct S {
+      S(){}
+      S(const S&amp;){}
+      S(S&amp;&amp;){}
+    };
+
+    typedef wrap&lt;const S&gt; W;
+
+    W get() { return W(); }  //<SPAN CLASS="cmnt"> Error, if </SPAN>USE_DEFAULTED_MOVE<SPAN CLASS="cmnt"> is defined, else OK</SPAN>
+</PRE>
+
+<P>In this example the defaulted move constructor of
+<TT>wrap</TT> is selected by overload resolution, but this
+move-constructor is deleted, because <TT>S</TT> has no
+<I>trivial</I> copy-constructor.</P>
+
+<P>I think that we overshoot here with the delete rules: I see no
+problem for the defaulted move-constructor in this example. Our
+triviality-deduction rules already cover this case (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#12">class.copy.ctor</A>] paragraph 12: <TT>W::W(W&amp;&amp;)</TT> is not
+trivial) and our exception-specification rules (14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14) already correctly deduce a
+<TT>noexcept(false)</TT> specification for
+<TT>W::W(W&amp;&amp;)</TT>.</P>
+
+<P>It would still be OK to prevent that a move-constructor
+would be generated for the following example where no
+user-declared defaulted copy/move members are present:</P>
+
+<PRE>
+    template&lt;typename T&gt;
+     struct wrap_2
+     {
+      wrap_2() = default;
+      T t;
+     };
+
+    typedef wrap_2&lt;const S&gt; W2;
+
+    W2 get() { return W2(); }  //<SPAN CLASS="cmnt"> OK, selects copy constructor</SPAN>
+</PRE>
+
+<P>if we want. This would mean that we add a new bullet
+to 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#9">class.copy.ctor</A>] paragraph 9 and paragraph 20.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<OL>
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#9">class.copy.ctor</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the definition of a class <TT>X</TT> does not explicitly declare
+a move constructor, one will be implicitly declared as defaulted if
+and only if</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>X does not have a user-declared destructor, <DEL>and</DEL>
+</P></LI>
+
+<LI><P>the move constructor would not be implicitly defined as
+deleted<DEL>.</DEL><INS>, and</INS>
+</P></LI>
+
+<LI><P><INS>each of <TT>X</TT>'s non-static data members and direct or
+virtual base classes has a type that either has a move constructor or
+is trivially copyable.</INS></P></LI>
+
+</UL>
+
+<P>[<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An implicitly-declared copy/move constructor is an <TT>inline
+public</TT> member of its class. A defaulted copy/move constructor for
+a class <TT>X</TT> is defined as deleted (9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>])
+if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>any direct or virtual base class or non-static data member of a
+type with a destructor that is deleted or inaccessible from the
+defaulted constructor, <INS>or</INS>
+</P></LI>
+
+<LI><P>for the copy constructor, a non-static data member of rvalue
+reference type<INS>.</INS><DEL>, or</DEL>
+</P></LI>
+
+<LI><P><DEL>for the move constructor, a non-static data member or
+direct or virtual base class with a type that does not have a move
+constructor and is not trivially copyable.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#20">class.copy.ctor</A>] paragraph 20 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the definition of a class <TT>X</TT> does not explicitly declare
+a move assignment operator, one will be implicitly declared as
+defaulted if and only if</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared destructor,
+<DEL>and</DEL>
+</P></LI>
+
+<LI><P>the move assignment operator would not be implicitly defined as
+deleted<DEL>.</DEL><INS>,</INS>
+</P></LI>
+
+<LI><P><INS><TT>X</TT> has no direct or indirect virtual base class
+with a non-trivial move assignment operator, and</INS></P></LI>
+
+<LI><P><INS>each of <TT>X</TT>'s non-static data members and direct or
+virtual base classes has a type that either has a move assignment
+operator or is trivially copyable.</INS></P></LI>
+
+</UL>
+
+<P><I>Example:...</I></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#23">class.copy.ctor</A>] paragraph 23 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A defaulted copy/move assignment operator for class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a direct or virtual base class <TT>B</TT> that cannot be
+copied/moved because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]),
+as applied to <TT>B</TT>'s corresponding assignment operator, results
+in an ambiguity or a function that is deleted or inaccessible from the
+defaulted assignment operator<INS>.</INS><DEL>, or</DEL>
+</P></LI>
+
+<LI><P><DEL>for the move assignment operator, a non-static data member or
+direct base class with a type that does not have a move assignment
+operator and is not trivially copyable, or any direct or indirect
+virtual base class.</DEL></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional notes (August, 2012):</B></P>
+
+<P>The proposed resolution was extensively discussed  and additional alternatives were
+suggested.  A paper is being produced  for the October, 2012 meeting describing
+the various options, so the issue has been returned to "review" status
+to wait for the outcome of that deliberation.</P>
+
+<P>See also the discussion of <A HREF="1491.html">issue 1491</A> for
+additional considerations.</P>
+
+<P><B>Proposed resolution (December, 2012):</B></P>
+
+<OL>
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#9">class.copy.ctor</A>] paragraph 9 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the definition of a class <TT>X</TT> does not explicitly declare
+a move constructor, one will be implicitly declared as defaulted if
+and only if</P>
+
+<UL>
+<LI><P>
+<TT>X</TT> does not have a user-declared copy constructor,</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared copy assignment
+operator,</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared move assignment
+operator, <INS>and</INS>
+</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared
+destructor<INS>.</INS><DEL>, and</DEL>
+</P></LI>
+
+<LI><P><DEL>the move constructor would not be implicitly defined as
+deleted.</DEL></P></LI>
+
+</UL>
+
+<P>[<I>Note:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...A defaulted copy/move constructor for a class <TT>X</TT> is
+defined as deleted (9.5.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]) if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>a variant member with a non-trivial corresponding
+constructor and <TT>X</TT> is a union-like class,</P></LI>
+
+<LI><P>a non-static data member of class type <TT>M</TT> (or array
+thereof) that cannot be copied/moved because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s corresponding
+constructor, results in an ambiguity or a function that is deleted or
+inaccessible from the defaulted constructor,</P></LI>
+
+<LI><P>a direct or virtual base class <TT>B</TT> that cannot be
+copied/moved because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]),
+as applied to <TT>B</TT>'s corresponding constructor, results in an
+ambiguity or a function that is deleted or inaccessible from the
+defaulted constructor,</P></LI>
+
+<LI><P>any direct or virtual base class or non-static data member of a
+type with a destructor that is deleted or inaccessible from the
+defaulted constructor, <INS>or</INS>
+</P></LI>
+
+<LI><P>for the copy constructor, a non-static data member of rvalue
+reference type<INS>.</INS><DEL>, or</DEL>
+</P></LI>
+
+<LI><P><DEL>for the move constructor, a non-static data member or
+direct or virtual base class with a type that does not have a move
+constructor and is not trivially copyable.</DEL></P></LI>
+
+</UL>
+
+<P><INS>A defaulted move constructor that is defined as deleted is
+ignored by overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]).
+[<I>Note:</I> A deleted move constructor would otherwise interfere
+with initialization from an rvalue which can use the copy constructor
+instead. &#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#20">class.copy.ctor</A>] paragraph 20 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the definition of a class <TT>X</TT> does not explicitly declare
+a move assignment operator, one will be implicitly declared as
+defaulted if and only if</P>
+
+<UL>
+<LI><P>
+<TT>X</TT> does not have a user-declared copy
+constructor,</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared move
+constructor,</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared copy assignment
+operator, <INS>and</INS>
+</P></LI>
+
+<LI><P>
+<TT>X</TT> does not have a user-declared
+destructor<INS>.</INS><DEL>, and</DEL>
+</P></LI>
+
+<LI><P><DEL>the move assignment operator would not be implicitly
+defined as deleted.</DEL></P></LI>
+
+</UL>
+
+<P>[<I>Example:</I>...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#23">class.copy.ctor</A>] paragraph 23 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A defaulted copy/move assignment operator for class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has:</P>
+
+<UL>
+<LI><P>a variant member with a non-trivial corresponding assignment
+operator and <TT>X</TT> is a union-like class, or</P></LI>
+
+<LI><P>a non-static data member of const non-class type (or array
+thereof), or</P></LI>
+
+<LI><P>a non-static data member of reference type, or</P></LI>
+
+<LI><P>a non-static data member of class type <TT>M</TT> (or array
+thereof) that cannot be copied/moved because overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]), as applied to <TT>M</TT>'s corresponding
+assignment operator, results in an ambiguity or a function that is
+deleted or inaccessible from the defaulted assignment operator,
+or</P></LI>
+
+<LI><P>a direct or virtual base class <TT>B</TT> that cannot be
+copied/moved because overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]),
+as applied to <TT>B</TT>'s corresponding assignment operator, results
+in an ambiguity or a function that is deleted or inaccessible from the
+defaulted assignment operator<INS>.</INS><DEL>, or</DEL>
+</P></LI>
+
+<LI><P><DEL>for the move assignment operator, a non-static data member
+or direct base class with a type that does not have a move assignment
+operator and is not trivially copyable, or any direct or indirect
+virtual base class.</DEL></P></LI>
+
+</UL>
+
+<P><INS>A defaulted move assignment operator that is defined as deleted is
+ignored by overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>],
+12.3 [<A href="https://wg21.link/over.over">over.over</A>]).</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="1491.html">issue 1491</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

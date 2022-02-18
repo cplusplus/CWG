@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2850</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2850"></A><H4>2850.
+  
+Unclear storage duration for function parameter objects
+</H4>
+<B>Section: </B>6.7.6&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-03<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
+
+<P>Function parameter objects have automatic storage duration and are
+not temporary objects (see also <A HREF="2849.html">issue 2849</A>).  However, it is unclear how long the storage for
+function parameter objects lasts.</P>
+
+<P>Furthermore, for temporary objects that are destroyed at the end of
+the full-expression, it is unclear how the destruction is ordered with
+respect to temporary objects destroyed at the end of the
+full-expression.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in and combine 6.7.6.4 [<A href="https://wg21.link/basic.stc.auto#1">basic.stc.auto</A>] paragraph 1 and 2
+as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+Variables that belong to a block <DEL>or parameter</DEL> scope and are
+not explicitly declared static, thread_local, or extern have automatic
+storage duration. The storage for <DEL>these entities</DEL><INS>such
+variables</INS> lasts until the block in which they are created
+exits. [Note 1: These variables are initialized and destroyed as
+described in 8.8 [stmt.dcl]. -- end note]
+</P>
+
+<P class="ins">Variables that belong to a parameter scope also have automatic
+storage duration.  The storage for a function parameter lasts until
+immediately after its destruction (7.6.1.3 [expr.call]).
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#8">class.temporary</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The destruction of a temporary whose lifetime is not extended beyond
+the full-expression in which it was created is sequenced before the
+destruction of every temporary which is constructed earlier in the
+same full-expression.</DEL>
+<INS>Let <TT>x</TT> and <TT>y</TT> each be either a temporary object
+whose lifetime is not extended, or a function parameter. If the
+lifetimes of <TT>x</TT> and <TT>y</TT> end at the end of the same
+full-expression, and <TT>x</TT> is initialized
+before <TT>y</TT>, then the destruction of <TT>y</TT> is
+sequenced before that of <TT>x</TT>.</INS>
+If the lifetime of two or more temporaries with
+lifetimes extending beyond the full-expressions in which they were
+created ends at the same point, these temporaries are destroyed at
+that point in the reverse order of the completion of their
+construction. In addition, the destruction of such temporaries shall
+take into account the ordering of destruction of objects with static,
+thread, or automatic storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>],
+6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>], 6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]); that is,
+if obj1 is an object with the same storage duration as the temporary
+and created before the temporary is created the temporary shall be
+destroyed before obj1 is destroyed; if obj2 is an object with the same
+storage duration as the temporary and created after the temporary is
+created the temporary shall be destroyed after obj2 is destroyed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+... It is implementation-defined whether <DEL>the lifetime of</DEL> a parameter
+<DEL>ends</DEL> <INS>is destroyed</INS> when the function in which it
+is defined <DEL>returns</DEL> <INS>exits (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>],
+14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>])</INS> or at the end of the enclosing
+full-expression<INS>; parameters are always destroyed in the reverse
+order of their construction.</INS> The initialization and destruction
+of each parameter occurs within the context of the full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) where the function call appears.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.8 [<A href="https://wg21.link/stmt.dcl#2">stmt.dcl</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <INS>block</INS> variable with automatic storage duration
+(6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) is active everywhere in the scope to
+which it belongs after its <I>init-declarator</I> . Upon each transfer
+of control (including sequential execution of statements) within a
+function from point P to point Q, all <INS>block</INS> variables with
+automatic storage duration that are active at P and not at Q are
+destroyed in the reverse order of their construction. Then, all
+<INS>block</INS> variables with automatic storage duration that are
+active at Q but not at P are initialized in declaration order; unless
+all such variables have vacuous initialization
+(6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]), the transfer of control shall not be a
+jump. [ Footnote: ... ] When a <I>declaration-statement</I> is
+executed, P and Q are the points immediately before and after it; when
+a function returns, Q is after its body.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

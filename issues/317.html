@@ -1,0 +1,144 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 317</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="317"></A><H4>317.
+  
+Can a function be declared inline after it has been called?
+</H4>
+<B>Section: </B>9.2.3&#160; [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Oct 2001<BR>
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+
+
+<P>
+<U>Steve Clamage</U>:
+Consider this sequence of declarations:
+<PRE>
+  void foo() { ... }
+  inline void foo();
+</PRE>
+The non-inline definition of foo precedes the inline declaration.
+It seems to me this code should be ill-formed, but I could not find
+anything in the standard to cover the situation.</P>
+
+<P>
+<U>Bjarne Stroustrup</U>:
+Neither could I, so I looked in the ARM, which addressed this case (apparently
+for member function only) in some detail in 7.1.2 (pp103-104).</P>
+
+<P>The ARM allows declaring a function inline after its initial declaration,
+as long as it has not been called.</P>
+
+<P>
+<U>Steve Clamage</U>:
+If the above code is valid, how about this:</P>
+<PRE>
+  void foo() { ... }    // define foo
+  void bar() { foo(); } // use foo
+  inline void foo();    // declare foo inline
+</PRE>
+
+<P>
+<U>Bjarne Stroustrup</U>:
+... and [the ARM] disallows declaring a function inline after it
+has been called.</P>
+
+<P>This may still be a good resolution.</P>
+
+<P>
+<U>Steve Clamage</U>:
+But the situation in the ARM is the reverse:  Declare a function
+inline, and define it later (with no intervening call).  That's
+a long-standing rule in C++, and allows you to write member
+function definitions outside the class.</P>
+
+<P>In my example, the compiler could reasonably process the entire
+function as out-of-line, and not discover the inline declaration
+until it was too late to save the information necessary for inline
+generation.  The equivalent of another compiler pass would be needed
+to handle this situation.</P>
+
+<P>
+<U>Bjarne Stroustrup</U>:
+I see, and I think your argument it conclusive.</P>
+
+<P>
+<U>Steve Clamage</U>:
+I'd like to open a core issue on this point, and I recommend wording
+along the lines of:  "A function defined without an inline specifier
+shall not be followed by a declaration having an inline specifier."</P>
+
+<P>I'd still like to allow the common idiom</P>
+<PRE>
+  class T {
+    int f();
+  };
+  inline int T::f() { ... }
+</PRE>
+
+<P>
+<U>Martin Sebor</U>:
+Since the inline keyword is just a hint to the compiler, I don't see
+any harm in allowing the construct. Your hypothetical compiler can
+simply ignore the inline on the second declaration. On the other hand,
+I feel that adding another special rule will unnecessarily complicate
+the language.</P>
+
+<P>
+<U>Steve Clamage</U>:
+The inline specifier is more than a hint.  You can have multiple
+definitions of inline functions, but only one definition of a
+function not declared inline.  In particular, suppose the above
+example were in a header file, and included multiple times in
+a program.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>Add the indicated words to 9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4:
+</P>
+
+<BLOCKQUOTE>
+
+An inline function shall be defined in every translation unit in
+which it is used and shall have exactly the same definition in
+every case (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]). [<I>Note:</I> a call to
+the inline function may be encountered before its definition
+appears in the translation unit. &#8212;<I>end note</I>] <INS>If the
+definition of a function appears in a translation unit before its
+first declaration as inline, the program is ill-formed.</INS> If a
+function with external linkage is declared inline in one
+translation unit...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

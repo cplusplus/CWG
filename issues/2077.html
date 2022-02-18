@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2077</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2077"></A><H4>2077.
+  
+Overload resolution and invalid rvalue-reference initialization
+</H4>
+<B>Section: </B>12.2.4.2.5&#160; [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-01-29<BR>
+
+
+
+
+<P>The resolution of <A HREF="1604.html">issue 1604</A> broke
+the following example:</P>
+
+<PRE>
+  struct A {};
+  struct B { operator const A() const; };
+  void f(A const&amp;);
+  void f(A&amp;&amp;);
+
+  int main() {
+    B a;
+    f(a);
+  }
+</PRE>
+
+<P>Overload resolution selects the <TT>A&amp;&amp;</TT> overload,
+but then initialization fails. This seems like a major regression;
+we're now required to reject</P>
+
+<PRE>
+   std::vector&lt;A&gt; va;
+   B b;
+   va.push_back(b);
+</PRE>
+
+<P>Should we update 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>] to match
+the changes made to 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]?</P>
+
+<P>See also <A HREF="2108.html">issue 2108</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

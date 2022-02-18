@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2567</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2567"></A><H4>2567.
+  
+Operator lookup ambiguity
+</H4>
+<B>Section: </B>6.5.2&#160; [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-01<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct B1 {
+    bool operator==(B1 const&amp;) const;
+  };
+  struct B2 {
+    bool operator==(B2 const&amp;) const;
+  };
+  struct D: B1, B2 {} d;
+  bool operator==(D const&amp;, D const&amp;);
+
+  auto r = d == d; //<SPAN CLASS="cmnt"> ambiguous?</SPAN>
+</PRE>
+
+<P>There is implementation divergence in handling this example; some
+implementations select the non-member operator, others diagnose an
+ambiguous lookup.</P>
+
+<P>Member name lookup for <TT>operator==</TT> is ambiguous, making the
+program ill-formed per 6.5.2 [<A href="https://wg21.link/class.member.lookup#6">class.member.lookup</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+The result of the search is the declaration set of S(N, T). If it is
+an invalid set, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>There is no provision for simply failing if the lookup is invoked
+as part of some larger lookup, as in the case of a lookup for an
+overloaded operator (12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3):</P>
+
+<BLOCKQUOTE>
+
+For a unary operator @ with an operand of type cv1 T1, and for a
+binary operator @ with a left operand of type cv1 T1 and a right
+operand of type cv2 T2, four sets of candidate functions, designated
+<I>member candidates</I>, <I>non-member candidates</I>, <I>built-in
+candidates</I>, and <I>rewritten candidates</I>, are constructed as
+follows:
+
+<UL>
+<LI>If T1 is a complete class type or a class currently being defined,
+the set of member candidates is the result of a search
+for <TT>operator@</TT> in the scope of T1; otherwise, ....</LI>
+
+<LI>For the operators =, [], or -&gt;, the set of non-member
+candidates is empty; otherwise, it includes the result of unqualified
+lookup for <TT>operator@</TT> in the rewritten function call
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>], 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]), ignoring all
+member functions. ...</LI>
+
+<LI>For the operator <TT>,</TT>, the unary operator <TT>&amp;</TT>, or
+the operator <TT>-&gt;</TT>, the built-in candidates set is empty.
+For all other operators, the built-in candidates include all of the
+candidate operator functions defined in 12.5 [<A href="https://wg21.link/over.built">over.built</A>] that
+...</LI>
+
+<LI>The rewritten candidate set is determined as follows: ...</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>It is unclear whether that is intended or desirable.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.5.2 [<A href="https://wg21.link/class.member.lookup#6">class.member.lookup</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The result of the search is</DEL> <INS>If</INS> the declaration set of S(N, T)<DEL>. If it</DEL> is
+<DEL>an</DEL> invalid <DEL>set</DEL>, <DEL>the program is ill-formed</DEL>
+<INS>the result of the
+search is an empty set; otherwise, the result is that set.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>Rationale (CWG 2023-06-17)</B></P>
+
+<P>Changing the lookup rules to yield an empty set has undesirable
+effects on non-operator lookup, where fall-back to non-member lookup
+is actually desired.  The intended outcome for the example is as
+specified (i.e. the program is ill-formed).  The example can be
+addressed by making <TT>operator==</TT> a member of <TT>D</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

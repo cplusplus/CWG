@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1673</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1673"></A><H4>1673.
+  
+Clarifying overload resolution for the second step of copy-initialization
+</H4>
+<B>Section: </B>12.2.4.2&#160; [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vinny Romano
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-29<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA5">N3690 comment
+  CA&#160;5<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting as part of document N3914.]</P>
+
+
+
+<P>Currently, 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4 reads,</P>
+
+<BLOCKQUOTE>
+
+However, when considering the argument of a constructor or user-defined
+conversion function that is a candidate by 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]
+when invoked for the copying/moving of the temporary in the second step of
+a class copy-initialization, by 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when passing
+the initializer list as a single argument or when the initializer list has
+exactly one element and a conversion to some class <TT>X</TT> or reference
+to (possibly cv-qualified) <TT>X</TT> is considered for the first parameter
+of a constructor of <TT>X</TT>, or by 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] in all
+cases, only standard conversion sequences and ellipsis conversion sequences
+are considered.
+
+</BLOCKQUOTE>
+
+<P>This is cumbersome and hard to understand.  A possible improvement
+might be:</P>
+
+<BLOCKQUOTE>
+
+<P>However, only standard conversion sequences and ellipsis conversion
+sequences are considered if:</P>
+
+<UL>
+<LI><P>the parameter is the first parameter of a constructor of a
+class <TT>X</TT>, or</P></LI>
+
+<LI><P>the parameter is the implicit object parameter of a user-defined
+conversion function, and</P></LI>
+
+<LI><P>the constructor or user-defined conversion function is a candidate
+by:</P></LI>
+
+
+
+<P STYLE="margin-left:.35in;text-indent:-.35in">12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>]
+&#8212; when the argument is the temporary being copied/moved in the second
+step of a class copy-initialization.</P>
+
+<P STYLE="margin-left:.35in;text-indent:-.35in">12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] &#8212; in
+all cases.</P>
+
+<P STYLE="margin-left:.35in;text-indent:-.35in">12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+&#8212; during phase two, when the argument was the only element in the
+initializer list, and the parameter is of type <TT>X</TT> or reference to
+(possibly cv-qualified) <TT>X</TT>.</P>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>(Note that this rewording removes the restriction that applies
+during phase one of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>], as there is no
+longer any way to trigger it due to the fact that only
+initializer-list constructors are candidates.  See
+<A HREF="http://llvm.org/bugs/show_bug.cgi?id=12117">this bug report</A>
+for details.)</P>
+
+<P><B>Proposed resolution (September, 2013) [SUPERSEDED]:</B></P>
+
+<P>Change 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>However, <DEL>when considering the argument of a constructor or
+user-defined conversion function that is a candidate by
+12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>] when invoked for the copying/moving of the
+temporary in the second step of a class copy-initialization, by
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when passing the initializer list as a single
+argument or when the initializer list has exactly one element and a
+conversion to some class <TT>X</TT> or reference to (possibly
+cv-qualified) <TT>X</TT> is considered for the first parameter of a
+constructor of <TT>X</TT>, or by 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] in all
+cases, only standard conversion sequences and ellipsis conversion sequences
+are considered.</DEL> <INS>if the target is</INS>
+</P>
+
+<UL>
+<LI><P><INS>the first parameter of a constructor of a class <TT>X</TT>
+or</INS></P></LI>
+
+<LI><P><INS>the implicit object parameter of a user-defined conversion
+function,</INS></P></LI>
+
+</UL>
+
+<P><INS>and the constructor or user-defined conversion function is a
+candidate by</INS></P>
+
+<UL>
+<LI><P><INS>12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], when the argument is the
+temporary acting as the source in the second step of a class
+copy-initialization,</INS></P></LI>
+
+<LI><P><INS>12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or
+12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] (in all cases), or</INS></P></LI>
+
+<LI>
+
+<P><INS>the second phase of 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] when the
+initializer list has exactly one element, and the conversion is
+to <TT>X</TT> or reference to (possibly
+cv-qualified) <TT>X</TT>,</INS></P>
+</LI>
+
+</UL>
+
+<P><INS>user-defined conversion sequences are not
+considered. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  struct X { X(); };
+  struct B { operator X&amp;(); };
+  B b;
+  X x({b}); //<SPAN CLASS="cmnt"> error: </SPAN>B::operator X&amp;()<SPAN CLASS="cmnt"> is not a candidate</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (October, 2013):</B></P>
+
+<P>Questions have been raised about several of the bullets in the
+September, 2013 proposed resolution and whether a note would be
+preferable instead of or in addition to the example  .  The issue
+has been returned to "review" status to allow consideration of these
+questions.</P>
+
+<P><B>Additional note (January, 2014):</B></P>
+
+<P>It has also been observed  that the proposed resolution
+would make the following example ill-formed by preventing the
+consideration of <TT>B</TT>'s conversion function when
+initializing the first parameter of <TT>A</TT>'s copy constructor:</P>
+
+<PRE>
+  struct A {
+    A() {}
+    A(const A &amp;) {}
+  };
+
+  struct B {
+    operator A() { return A(); }
+  } b;
+  A a{b};
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

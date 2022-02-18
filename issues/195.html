@@ -1,0 +1,308 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 195</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="195"></A><H4>195.
+  
+Converting between function and object pointers
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 Jan 2000<BR>
+
+
+
+<P>[Voted into WP at April 2005 meeting.]</P>
+
+
+
+<P>It is currently not permitted to cast directly between a pointer to
+function type and a pointer to object type.  This conversion is not
+listed in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ and
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ and thus
+requires a diagnostic to be issued.  However, if a sufficiently long
+integral type exists (as is the case in many implementations), it is
+permitted to cast between pointer to function types and pointer to
+object types using that integral type as an intermediary.</P>
+
+<P>In C the cast results in undefined behavior and thus does not
+require a diagnostic, and Unix C compilers generally do not issue
+one.  This fact is used in the definition of the standard Unix
+function <TT>dlsym</TT>, which is declared to return <TT>void*</TT>
+but in fact may return either a pointer to a function or a pointer to
+an object.  The fact that C++ compilers are required to issue a
+diagnostic is viewed as a "competitive disadvantage" for the language.</P>
+
+<P>
+<B>Suggested resolution:</B> Add wording to
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ allowing
+conversions between pointer to function and pointer to object types,
+if the implementation has an integral data type that can be used as an
+intermediary.</P>
+
+<P>Several points were raised in opposition to this suggestion:</P>
+
+<BR><OL>
+<LI>Early C++ supported this conversion and it was deliberately
+removed during the standardization process.</LI>
+
+<LI>The existence of an appropriate integral type is irrelevant to
+whether the conversion is "safe."  The condition should be on whether
+information is lost in the conversion or not.</LI>
+
+<LI>There are numerous ways to address the problem at an
+implementation level rather than changing the language.  For example,
+the compiler could recognize the specific case of <TT>dlsym</TT> and
+omit the diagnostic, or the C++ binding to <TT>dlsym</TT> could be
+changed (using templates, for instance) to circumvent the violation.</LI>
+
+<LI>The conversion is, in fact, not supported by C; the <TT>dlsym</TT>
+function is simply relying on non-mandated characteristics of C
+implementations, and we would be going beyond the requirements of C
+compatibility in requiring (some) implementations to support the
+conversion.</LI>
+
+<LI>This issue is in fact not a defect (omitted or self-contradictory
+requirements) in the current Standard; the proposed change would
+actually be an extension and should not be considered until the full
+review of the IS.</LI>
+
+<LI>
+<TT>dlsym</TT> appears not to be used very widely, and the
+declaration in the header file is not problematic, only calls to it.
+Since C code generally requires some porting to be valid C++ anyway,
+this should be considered one of those items that requires porting.</LI>
+
+</OL>
+
+<P>Martin O'Riordan suggested an alternative approach:</P>
+
+<BR><UL>
+<LI>Do not allow the conversions to be performed via old-style casts.</LI>
+
+<LI>Allow <TT>reinterpret_cast</TT> to perform the conversions with
+the C-style semantics (undefined behavior if not supported).</LI>
+
+<LI>Allow <TT>dynamic_cast</TT> to perform the conversions with
+well-defined behavior: the result would be a null pointer if the
+implementation could not support the requested conversion.</LI>
+</UL>
+
+<P>The advantage of this approach is that it would permit writing
+portable, well-defined programs involving such conversions.  However,
+it breaks the current degree of compatibility between old and new
+casts, and it adds functionality to <TT>dynamic_cast</TT> which is not
+obviously related to its current meaning.</P>
+
+<P><U>Notes from 04/00 meeting:</U></P>
+
+<P>Andrew Koenig suggested yet another approach: specify that "no
+diagnostic is required" if the implementation supports the conversion.</P>
+
+<P><B>Later note:</B></P>
+
+<P>It was observed that conversion between function and data pointers
+is listed as a "common extension" in C99.  </P>
+
+<P><B>Notes on the 10/01 meeting:</B></P>
+
+<P>It was decided that we want the conversion defined in such a way that
+it always exists but is always undefined (as opposed to existing only
+when the size relationship is appropriate, and being implementation-defined
+in that case).  This would allow an implementation to issue an error
+at compile time if the conversion does not make sense.</P>
+
+<P>Bill Gibbons notes that the definitions of the other similar casts are
+inconsistent in this regard.  Perhaps they should be updated as well.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>After 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#6">expr.reinterpret.cast</A>] paragraph 6,
+ insert:</P>
+<BLOCKQUOTE>
+A pointer to a
+function can be explicitly converted to a pointer to a function of a different
+type. The effect of calling a function through a pointer to a function
+type (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])
+that is not the same as the type used in the definition of the function is
+undefined. Except that converting an rvalue of type ``pointer to <TT>T1</TT>''
+to the type ``pointer to <TT>T2</TT>'' (where <TT>T1</TT> and <TT>T2</TT> are
+function types) and back to its original type yields the original pointer
+value, the result of such a pointer conversion is unspecified. [Note: see
+also 7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>] for more details of pointer conversions. ]
+<INS>It is implementation defined whether a conversion from pointer to object to
+pointer to function and/or a conversion from pointer to function to pointer to
+object exist. </INS>
+</BLOCKQUOTE>
+and in paragraph 10:
+<BLOCKQUOTE>
+An lvalue expression of type <TT>T1</TT> can be cast to the type
+``reference to <TT>T2</TT>''
+if <INS><TT>T1</TT> and <TT>T2</TT> are object types and</INS> an expression of
+type ``pointer to <TT>T1</TT>'' can be explicitly converted to the type
+``pointer to <TT>T2</TT>'' using a reinterpret_cast. That is, a reference
+cast <TT>reinterpret_cast&lt; T&amp; &gt;(x)</TT> has the same effect
+as the conversion <TT>*reinterpret_cast&lt; T* &gt;(&amp;x)</TT> with
+the built-in <TT>&amp;</TT> and <TT>*</TT> operators.
+The result is an lvalue that refers to the same object as the source lvalue,
+but with a different type. No temporary is created, no copy is made, and
+constructors (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]) or conversion functions
+(11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]) are not called.
+</BLOCKQUOTE>
+<P><I>Drafting Note:</I></P>
+<P>If either conversion exists, the implementation already has to define the
+behavior (paragraph 3).</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>The new consensus is that if the implementation allows
+this cast, pointer-to-function converted to pointer-to-object converted
+back to the original pointer-to-function should work; anything else
+is undefined behavior.  If the implementation does not allow the cast,
+it should be ill-formed.</P>
+
+<P>Tom Plum is investigating a new concept, that of a
+"conditionally-defined" feature, which may be applicable here.</P>
+
+<P><B>Proposed Resolution (October, 2004):</B></P>
+
+<P>(See paper J16/04-0067 = WG21 N1627 for background material and
+rationale for this resolution.  The resolution proposed here differs
+only editorially from the one in the paper.)</P>
+
+<OL>
+
+<LI>
+<P>Insert the following into Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>] and renumber
+all following definitions accordingly:</P>
+
+<BLOCKQUOTE>
+<P><B>1.3.2&#160;&#160;conditionally-supported behavior</B></P>
+
+<P>behavior evoked by a program construct that is not a mandatory
+requirement of this International Standard. If a given implementation
+supports the construct, the behavior shall be as described herein;
+otherwise, the implementation shall document that the construct is not
+supported and shall treat a program containing an occurrence of the
+construct as ill-formed (Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>]).</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add the indicated words to 4.1 [<A href="https://wg21.link/intro.compliance#2">intro.compliance</A>] paragraph 2,
+bullet 2:</P>
+
+<UL><LI><P>If a program contains a violation of any diagnosable
+rule,<INS> or an occurrence of a construct described herein as
+&#8220;conditionally-supported&#8221; or as resulting in
+&#8220;conditionally-supported behavior&#8221; when the implementation
+does not in fact support that construct</INS>, a conforming
+implementation shall issue at least one diagnostic message, except
+that</P></LI></UL>
+
+</LI>
+
+<LI>
+<P>Insert the following as a new paragraph following 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+Converting a pointer to a function to a pointer to an object type or
+vice versa evokes conditionally-supported behavior. In any such
+conversion supported by an implementation, converting from an rvalue
+of one type to the other and back (possibly with different
+cv-qualification) shall yield the original pointer value; mappings
+between pointers to functions and pointers to objects are otherwise
+implementation-defined.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.10 [<A href="https://wg21.link/dcl.asm#1">dcl.asm</A>] paragraph 1 as indicated:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The meaning of an</DEL> <INS>An</INS> <TT>asm</TT> declaration <INS>evokes
+conditionally-supported behavior.  If supported, its meaning</INS> is
+implementation-defined.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 9.11 [<A href="https://wg21.link/dcl.link#2">dcl.link</A>] paragraph 2 as indicated:</P>
+
+<BLOCKQUOTE>
+
+The <I>string-literal</I> indicates the required language linkage. <DEL>The meaning of the
+string-literal is implementation-defined. A linkage-specification with a string that
+is unknown to the implementation is ill-formed.</DEL> <INS>This International Standard
+specifies the semantics of C and C++ language linkage. Other values of the
+<I>string-literal</I> evoke conditionally-supported behavior, with
+implementation-defined semantics. [<I>Note:</I> Therefore, a
+<I>linkage-specification</I> with a <I>string-literal</I> that is
+unknown to the implementation requires a diagnostic.</INS> <DEL>When the
+string-literal in a linkage-specification names a programming
+language, the spelling of the programming language's name is
+implementation-defined. [Note:</DEL> <INS>It</INS> is recommended that the
+spelling be taken from the document defining that language, for
+example <TT>Ada</TT> (not <TT>ADA</TT>) and <TT>Fortran</TT> or
+<TT>FORTRAN</TT> (depending on the vintage). <DEL>The semantics of a
+language linkage other than C++ or C are implementation-defined.</DEL> ]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change Clause 13 [<A href="https://wg21.link/temp#4">temp</A>] paragraph 4 as indicated:</P>
+
+<BLOCKQUOTE>
+
+A template, a template explicit specialization (13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), or a class template partial specialization shall
+not have C linkage. If the linkage of one of these is something other
+than C or C++, the <DEL>behavior is implementation-defined</DEL> <INS>result
+is conditionally-supported behavior, with implementation-defined
+semantics</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

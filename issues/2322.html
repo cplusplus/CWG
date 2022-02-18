@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2322</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2322"></A><H4>2322.
+  
+Substitution failure and lexical order
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Xiang Fan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-09-06<BR>
+
+
+<P>[Accepted as a DR at the June, 2018 (Rapperswil) meeting.]</P>
+
+
+
+<P>According to 13.10.3 [<A href="https://wg21.link/temp.deduct#7">temp.deduct</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+The substitution occurs in all types and expressions that are used in the
+function type and in template parameter declarations. The expressions
+include not only constant expressions such as those that appear in array
+bounds or as nontype template arguments but also general expressions (i.e.,
+non-constant expressions) inside <TT>sizeof</TT>, <TT>decltype</TT>, and
+other contexts that allow non-constant expressions. The substitution
+proceeds in lexical order and stops when a condition that causes deduction
+to fail is encountered.
+
+</BLOCKQUOTE>
+
+<P>However, the same type can be represented in different lexical orders.
+For example, there is implementation variance on the following example,
+presumably because of preferring different declarations:</P>
+
+<PRE>
+  template &lt;class T&gt; struct A { using X = typename T::X; };
+
+  template &lt;class T&gt; typename T::X f(typename A&lt;T&gt;::X);
+  template &lt;class T&gt; auto f(typename A&lt;T&gt;::X) -&gt; typename T::X;
+  template &lt;class T&gt; void f(...) { }
+
+  void h() {
+    f&lt;int&gt;(0);
+  }
+</PRE>
+
+<P><B>Proposed resolution, March, 2018:</B></P>
+
+<P>Change 13.10.3 [<A href="https://wg21.link/temp.deduct#7">temp.deduct</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The substitution occurs in all types and expressions that are used in
+the function type and in template parameter declarations. The expressions
+include not only constant expressions such as those that appear in array
+bounds or as nontype template arguments but also general expressions (i.e.,
+non-constant expressions) inside sizeof, decltype, and other contexts that
+allow non-constant expressions. The substitution proceeds in lexical order
+and stops when a condition that causes deduction to fail is
+encountered. <INS>If substitution into different declarations of the same
+function template would cause template instantiations to occur in a
+different order or not at all, the program is ill-formed; no diagnostic
+required.</INS> [<I>Note:</I> The equivalent substitution in exception
+specifications is done only when the <I>noexcept-specifier</I> is
+instantiated, at which point a program is ill-formed if the substitution
+results in an invalid type or expression. &#8212;<I>end note</I>]
+[<I>Example:</I>
+</P>
+
+<PRE>
+  template &lt;class T&gt; struct A { using X = typename T::X; };
+  template &lt;class T&gt; typename T::X f(typename A&lt;T&gt;::X);
+  template &lt;class T&gt; void f(...) { }
+  template &lt;class T&gt; auto g(typename A&lt;T&gt;::X) -&gt; typename T::X;
+  template &lt;class T&gt; void g(...) { }
+<INS>  template &lt;class T&gt; typename T::X h(typename A&lt;T&gt;::X);
+  template &lt;class T&gt; auto h(typename A&lt;T&gt;::X) -&gt; typename T::X; //<SPAN CLASS="cmnt"> redeclaration</SPAN>
+  template &lt;class T&gt; void h(...) { }</INS>
+
+  void <DEL>h</DEL> <INS>x</INS>() {
+    f&lt;int&gt;(0);    //<SPAN CLASS="cmnt"> OK, substituting return type causes deduction to fail</SPAN>
+    g&lt;int&gt;(0);    //<SPAN CLASS="cmnt"> error, substituting parameter type instantiates </SPAN>A&lt;int&gt;
+<INS>    h&lt;int&gt;(0);    //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required</SPAN></INS>
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

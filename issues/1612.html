@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1612</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1612"></A><H4>1612.
+  
+Implicit lambda capture and anonymous unions
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Wong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-31<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA17">N3690 comment
+  CA&#160;17<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>It is not clear from the description of capturing in
+7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>] whether an implicit capture resulting
+from the odr-use of a member of an anonymous union captures that
+member or the anonymous union, and there is implementation
+divergence.  For example,</P>
+
+<PRE>
+  int main() {
+    static int result;
+    struct A { int x; };
+    struct B { int y; };
+    union {
+      A a; B b;
+    };
+    a.x = 1;
+    [=]() mutable { a.x = 2; result = b.y; }();
+    if (result == 1) return 0;
+    throw 0;
+  }
+</PRE>
+
+<P><B>Notes from the April, 2013 meeting:</B></P>
+
+<P>CWG decided that an attempt to capture a member of an anonymous union
+should be ill-formed.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<OL>
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#15">expr.prim.lambda</A>] paragraph 15 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...An array of runtime bound (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]) <INS>or a member
+of an anonymous union</INS> shall not be captured by copy.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#16">expr.prim.lambda</A>] paragraph 16 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...It is unspecified whether additional unnamed non-static data members are
+declared in the closure type for entities captured by
+reference. <INS>A member of an anonymous union shall not be captured by
+reference.</INS> [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

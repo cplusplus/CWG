@@ -1,0 +1,168 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 252</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="252"></A><H4>252.
+  
+Looking up deallocation functions in virtual destructors
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Oct 2000<BR>
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+
+
+<P>There is a mismatch between 11.4.7 [<A href="https://wg21.link/class.dtor#11">class.dtor</A>] paragraph 11
+and 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4 regarding
+the lookup of deallocation functions in virtual destructors.
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>] says,</P>
+
+<BLOCKQUOTE>
+
+At the point of definition of a virtual destructor (including an
+implicit definition (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>])), non-placement
+operator delete shall be looked up in the scope of the destructor's
+class (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) and if found shall be accessible
+and unambiguous. [<I>Note</I>: this assures that an operator delete
+corresponding to the dynamic type of an object is available for the
+<I>delete-expression</I> (11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]). ]
+
+</BLOCKQUOTE>
+
+<P>The salient features to note from this description are:</P>
+
+<OL>
+
+<LI>The lookup is "in the scope of the destructor's class," which
+implies that only members are found (cf 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]).
+(The cross-reference would indicate otherwise, however, since it
+refers to the description of looking up unqualified names; this kind
+of lookup "spills over" into the surrounding scope.)</LI>
+
+<LI>Only non-placement operator delete is looked up.  Presumably
+this means that a placement operator delete is ignored in the
+lookup.</LI>
+
+</OL>
+
+<P>On the other hand, 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>] says,</P>
+
+<BLOCKQUOTE>
+
+If a <I>delete-expression</I> begins with a unary <TT>::</TT>
+operator, the deallocation function's name is looked up in global
+scope. Otherwise, if the <I>delete-expression</I> is used to
+deallocate a class object whose static type has a virtual destructor,
+the deallocation function is the one found by the lookup in the
+definition of the dynamic type's virtual destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). Otherwise, if the <I>delete-expression</I> is used to
+deallocate an object of class <TT>T</TT> or array thereof, the static
+and dynamic types of the object shall be identical and the
+deallocation function's name is looked up in the scope of
+<TT>T</TT>. If this lookup fails to find the name, the name is looked
+up in the global scope. If the result of the lookup is ambiguous or
+inaccessible, or if the lookup selects a placement deallocation
+function, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>Points of interest in this description include:</P>
+
+<OL>
+
+<LI>For a class type with a virtual destructor, the lookup is
+described as being "in the definition of the dynamic type's
+virtual destructor," rather than "in the scope of the dynamic
+type."  That is, the lookup is assumed to be an unqualified
+lookup, presumably terminating in the global scope.</LI>
+
+<LI>The assumption is made that the lookup in the virtual
+destructor was successful ("...the one found...", not "...the
+one found..., <B>if any"</B>).  This will not be the case if
+the deallocation function was not declared as a member somewhere
+in the inheritance hierarchy.</LI>
+
+<LI>The lookup in the non-virtual-destructor case <B>does</B>
+find placement deallocation functions and can fail as a result.</LI>
+
+</OL>
+
+<P>
+<B>Suggested resolution:</B> Change the description of the
+lookup in 11.4.7 [<A href="https://wg21.link/class.dtor#11">class.dtor</A>] paragraph 11 to match the
+one in 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<OL>
+
+<LI>
+<P>Replace 11.4.7 [<A href="https://wg21.link/class.dtor#11">class.dtor</A>] paragraph 11 with
+the following:</P>
+
+<BLOCKQUOTE>
+At the point of definition of a virtual destructor (including an
+implicit definition), the non-array deallocation function is looked up
+in the scope of the destructor's class (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]),
+and, if no declaration is found, the function is looked up in the
+global scope.  If the result of this lookup is ambiguous or
+inaccessible, or if the lookup selects a placement deallocation
+function, the program is ill-formed.  [<I>Note:</I> this assures that
+a deallocation function corresponding to the dynamic type of an object
+is available for the <I>delete-expression</I> (11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]).]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>In 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4, change</P>
+
+<BLOCKQUOTE>
+
+...the deallocation function is the one found by the lookup in
+the definition of the dynamic type's virtual destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+...the deallocation function is the one selected at the point of
+definition of the dynamic type's virtual destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

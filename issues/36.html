@@ -1,0 +1,191 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 36</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="36"></A><H4>36.
+  
+<I>using-declaration</I>s in multiple-declaration contexts
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrew Koenig
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Aug 1998<BR>
+
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>Section 9.9 [<A href="https://wg21.link/namespace.udecl#8">namespace.udecl</A>] paragraph 8
+says:</P>
+<BLOCKQUOTE>A <I>using-declaration</I> is a declaration and can therefore be used
+repeatedly where (and only where) multiple declarations are allowed.</BLOCKQUOTE>
+It contains the following example:
+<PRE>
+    namespace A {
+            int i;
+    }
+
+    namespace A1 {
+            using A::i;
+            using A::i;             // OK: double declaration
+    }
+
+    void f()
+    {
+            using A::i;
+            using A::i;             // error: double declaration
+    }
+</PRE>
+However, if "<TT>using A::i;</TT>" is really a declaration, and not a definition, it is far from clear that repeating it should be an error in either context.
+Consider:
+<PRE>
+    namespace A {
+            int i;
+            void g();
+    }
+
+    void f() {
+            using A::g;
+            using A::g;
+    }
+</PRE>
+Surely the definition of f should be analogous to
+<PRE>
+    void f() {
+            void g();
+            void g();
+    }
+</PRE>
+which is well-formed because "<TT>void g();</TT>" is a declaration and
+not a definition.
+
+<P>Indeed, if the double using-declaration for <TT>A::i</TT> is prohibited
+in <TT>f</TT>, why should it be allowed in namespace <TT>A1</TT>?</P>
+
+<P>
+<B>Proposed Resolution (04/99):</B>
+
+Change the comment "<TT>// error: double declaration</TT>" to
+"<TT>// OK: double declaration</TT>".
+
+(This should be reviewed against existing practice.)</P>
+
+<P><B>Notes from 04/00 meeting:</B></P>
+
+<P>The core language working group was unable to come to consensus
+over what kind of declaration a <I>using-declaration</I> should
+emulate.  In a straw poll, 7 members favored allowing
+<I>using-declaration</I>s wherever a non-definition declaration could
+appear, while 4 preferred to allow multiple <I>using-declaration</I>s
+only in namespace scope (the rationale being that the permission for
+multiple <I>using-declaration</I>s is primarily to support its use in
+multiple header files, which are seldom included anywhere other than
+namespace scope).  John Spicer pointed out that <TT>friend</TT>
+declarations can appear multiple times in class scope and asked if
+<I>using-declaration</I>s would have the same property under the "like
+a declaration" resolution.</P>
+
+<P>As a result of the lack of agreement, the issue was returned to
+"open" status.  </P>
+
+<P>See also issues
+<A HREF="56.html">56</A>, <A HREF="85.html">85</A>,
+and <A HREF="138.html">138</A>..</P>
+
+<P><B>Additional notes (January, 2005):</B></P>
+
+<P>Some related issues have been raised concerning the following
+example (modified from a C++ validation suite test):</P>
+
+<PRE>
+    struct A
+    {
+        int i;
+        static int j;
+    };
+
+    struct B : A { };
+    struct C : A { };
+
+    struct D : virtual B, virtual C
+    {
+        using B::i;
+        using C::i;
+        using B::j;
+        using C::j;
+    };
+</PRE>
+
+<P>Currently, it appears that the <I>using-declaration</I>s of
+<TT>i</TT> are ill-formed, on the basis of 9.9 [<A href="https://wg21.link/namespace.udecl#10">namespace.udecl</A>] paragraph 10:</P>
+
+<BLOCKQUOTE>
+
+Since a <I>using-declaration</I> is a declaration, the
+restrictions on declarations of the same name in the same
+declarative region (6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>]) also apply to
+<I>using-declaration</I>s.
+
+</BLOCKQUOTE>
+
+<P>Because the <I>using-declaration</I>s of <TT>i</TT> refer to
+different objects, declaring them in the same scope is not
+permitted under 6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>].  It might, however,
+be preferable to treat this case as many other ambiguities are:
+allow the declaration but make the program ill-formed if a name
+reference resolves to the ambiguous declarations.</P>
+
+<P>The status of the <I>using-declaration</I>s of <TT>j</TT>,
+however, is less clear.  They both declare the same entity and
+thus do not violate the rules of 6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>].
+This might (or might not) violate the restrictions of
+11.4 [<A href="https://wg21.link/class.mem#1">class.mem</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+Except when used to declare friends (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>])
+or to introduce the name of a member of a base class into a
+derived class (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>], _N3225_.11.3 [<A href="https://wg21.link/class.access.dcl">class.access.dcl</A>]), <I>member-declaration</I>s declare members of the
+class, and each such member-declaration shall declare at least
+one member name of the class. A member shall not be declared
+twice in the <I>member-specification</I>, except that a nested
+class or member class template can be declared and then later
+defined.
+
+</BLOCKQUOTE>
+
+<P>Do the <I>using-declaration</I>s of <TT>j</TT> repeatedly
+declare the same member?  Or is the preceding sentence an
+indication that a <I>using-declaration</I> is not a declaration
+of a member?</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

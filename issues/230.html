@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 230</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="230"></A><H4>230.
+  
+Calls to pure virtual functions
+</H4>
+<B>Section: </B>11.7.4&#160; [<A href="https://wg21.link/class.abstract">class.abstract</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim Hill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 May 2000<BR>
+
+
+<P>According to 11.7.4 [<A href="https://wg21.link/class.abstract#6">class.abstract</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+Member functions can be called from a constructor (or destructor) of
+an abstract class; the effect of making a virtual call (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) to a pure virtual function directly or indirectly for
+the object being created (or destroyed) from such a constructor (or
+destructor) is undefined.
+
+</BLOCKQUOTE>
+
+<P>This prohibition is unnecessarily restrictive.  It should not apply
+to cases in which the pure virtual function has been defined.</P>
+
+<P>Currently the "pure" specifier for a virtual member function has
+two meanings that need not be related:</P>
+
+<OL>
+
+<LI>A pure virtual function need not be defined.</LI>
+
+<LI>A pure virtual function must be overridden in any concrete derived
+class.</LI>
+
+</OL>
+
+<P>The prohibition of virtual calls to pure virtual functions arises
+from the first meaning and unnecessarily penalizes those who only need
+the second.</P>
+
+<P>For example, consider a scenario such as the following.  A class
+<TT>B</TT> is defined containing a (non-pure) virtual function
+<TT>f</TT> that provides some initialization and is thus called from
+the base class constructor.  As time passes, a number of classes are
+derived from <TT>B</TT> and it is noticed that each needs to override
+<TT>f</TT>, so it is decided to make <TT>B::f</TT> pure to enforce
+this convention while still leaving the original definition of
+<TT>B::f</TT> to perform its needed initialization.  However, the act
+of making <TT>B::f</TT> pure means that every reference to <TT>f</TT>
+that might occur during the execution of one of <TT>B</TT>'s
+constructors must be tracked down and edited to be a qualified
+reference to <TT>B::f</TT>.  This process is tedious and error-prone:
+needed edits might be overlooked, and calls that actually should be
+virtual when the containing function is called other than during
+construction/destruction might be incorrectly changed.</P>
+
+<P>
+<B>Suggested resolution:</B> Allow virtual calls to pure virtual
+functions if the function has been defined.</P>
+
+<P><B>Rationale (February, 2012):</B></P>
+
+<P>In light of the nontrivial implementation issues such a change
+would raise, as well as the fact that this restriction has been
+accepted into the C++ design lexicon for many years, CWG decided not
+to make a change at this point.  Further consideration, if any,
+should occur within EWG.</P>
+
+<P><B>Rationale (February, 2014):</B></P>
+
+<P>EWG determined that no action should be taken on this issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

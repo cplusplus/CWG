@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2138</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2138"></A><H4>2138.
+  
+Explicit member specialization vs implicit instantiation
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-11<BR>
+
+
+
+
+<P>It is not clear whether the following common practice is valid
+by the current rules:</P>
+
+<PRE>
+   //<SPAN CLASS="cmnt"> foo.h</SPAN>
+   template&lt;typename T&gt; struct X {
+    int f(); //<SPAN CLASS="cmnt"> never defined</SPAN>
+   };
+
+   //<SPAN CLASS="cmnt"> foo.cc</SPAN>
+   #include "foo.h"
+   template&lt;&gt; int X&lt;int&gt;::f() { return 123; }
+
+   //<SPAN CLASS="cmnt"> main.cc</SPAN>
+   #include "foo.h"
+   int main() { return X&lt;int&gt;().f(); }
+</PRE>
+
+<P>Relevant rules include Clause 13 [<A href="https://wg21.link/temp#6">temp</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+A function template, member function of a class template,
+variable template, or static data member of a class template
+shall be defined in every translation unit in which it is
+implicitly instantiated (13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>]) unless
+the corresponding specialization is explicitly instantiated
+(13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) in some translation unit; no
+diagnostic is required.
+
+</BLOCKQUOTE>
+
+<P>13.9.2 [<A href="https://wg21.link/temp.inst#2">temp.inst</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+Unless a member of a class template or a member template has
+been explicitly instantiated or explicitly specialized, the
+specialization of the member is implicitly instantiated when
+the specialization is referenced in a context that requires
+the member definition to exist...
+
+</BLOCKQUOTE>
+
+<P>and 13.9.4 [<A href="https://wg21.link/temp.expl.spec#6">temp.expl.spec</A>] paragraph 6:
+
+<BLOCKQUOTE>
+
+If a template, a member template or a member of a class
+template is explicitly specialized then that specialization
+shall be declared before the first use of that
+specialization that would cause an implicit instantiation to
+take place, in every translation unit in which such a use
+occurs; no diagnostic is required. If the program does not
+provide a definition for an explicit specialization and
+either the specialization is used in a way that would cause
+an implicit instantiation to take place or the member is a
+virtual member function, the program is ill-formed, no
+diagnostic required. An implicit instantiation is never
+generated for an explicit specialization that is declared
+but not defined.
+
+</BLOCKQUOTE>
+</P>
+
+<P>The intent appears to be that the reference in
+<TT>main.cc</TT> violates two rules: it implicitly instantiates
+something for which no definition is provided and that is not
+explicitly instantiated elsewhere, and it also causes an
+implicit instantiation of something explicitly specialized
+in another translation unit without a declaration of the
+explicit specialization.</P>
+
+<P><B>Rationale (March, 2016):</B></P>
+
+<P>As stated in the analysis, the intent is for the example to be
+ill-formed, no diagnostic required.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2778</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2778"></A><H4>2778.
+  
+Trivial destructor does not imply constant destruction
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-27<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Foo {};
+  struct Bar {
+    mutable Foo f;
+  };
+  constexpr Bar b{};     //<SPAN CLASS="cmnt"> #1</SPAN>
+</PRE>
+
+<P>In C++20, Foo and Bar are literal types, and #1 is well-formed.  In
+C++23, the requirement for the variable <TT>b</TT> changed to
+"constant destruction".  However, <TT>Bar</TT> does not have constant
+destruction, because its mutable member violates
+7.7 [<A href="https://wg21.link/expr.const#5.17">expr.const</A>] bullet 5.17:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+an invocation of a destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) or a
+function call whose <I>postfix-expression</I> names a
+pseudo-destructor (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), in either case for
+an object whose lifetime did not begin within the evaluation of E;
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This is because the mutable member is considered to have its
+lifetime begin outside of E per 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+An object a is said to have constant destruction if:
+<UL>
+<LI>it is not
+of class type nor (possibly multidimensional) array thereof, or
+</LI>
+<LI>
+it is of class type or (possibly multidimensional) array thereof, that
+class type has a constexpr destructor, and for a hypothetical
+expression E whose only effect is to destroy a, E would be a core
+constant expression if the lifetime of a and its non-mutable
+subobjects (but not its mutable subobjects) were considered to start
+within E.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-03-01):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#10">expr.const</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+An object a is said to have constant destruction if:
+<UL>
+<LI>it is not
+of class type nor (possibly multidimensional) array thereof, or
+</LI>
+<LI>
+it is of class type or (possibly multidimensional) array thereof, that
+class type has a constexpr destructor, and for a hypothetical
+expression E whose only effect is to destroy a, E would be a core
+constant expression
+<INS>if any invocation of a trivial destructor for a mutable subobject
+is ignored and</INS> if the lifetime of a and its non-mutable
+subobjects (but not its mutable subobjects) were considered to start
+within E.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1828</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1828"></A><H4>1828.
+  
+<I>nested-name-specifier</I> ambiguity
+</H4>
+<B>Section: </B>6.5.5&#160; [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-08<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>
+<A HREF="125.html">Issue 125</A> concerned an example like</P>
+
+<PRE>
+  friend A::B::C();
+</PRE>
+
+<P>which might be parsed as either</P>
+
+<PRE>
+  friend A (::B::C)();
+</PRE>
+
+<P>or</P>
+
+<PRE>
+  friend A::B (::C)();
+</PRE>
+
+<P>Its resolution attempted to make such constructs unambiguously
+ill-formed by allowing any identifier, not just namespaces and types,
+to appear in a <I>nested-name-specifier</I>, apparently on the
+assumption that <TT>C</TT> in this case would become part of an
+ill-formed <I>nested-name-specifier</I> instead of being taken as
+the <I>unqualified-id</I> in a <I>qualified-id</I>.  Unfortunately,
+the current specification does not implement that intent, leaving
+both parses as valid possibilities.</P>
+
+<P>A different approach might be to adjust the specification of the
+lookup of names appearing in <I>nested-name-specifier</I>s from</P>
+
+<BLOCKQUOTE>
+
+If a <TT>::</TT> scope resolution operator in
+a <I>nested-name-specifier</I> is not preceded by
+a <I>decltype-specifier</I>, lookup of the name preceding
+that <TT>::</TT> considers only namespaces, types, and templates
+whose specializations are types.  If the name found does not
+designate a namespace or a class, enumeration, or dependent
+type, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+
+Lookup of an <I>identifier</I> followed by a <TT>::</TT>
+scope resolution operator considers only namespaces, types, and
+templates whose specializations are types.  If an <I>identifer</I>,
+<I>template-id</I>, or <I>decltype-specifier</I> is followed by
+a <TT>::</TT> scope resolution operator, the name shall designate
+a namespace, class, enumeration, or dependent type, and shall form
+part of a <I>nested-name-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P>This approach would also remove the need for deferred lookup
+for <I>template-id</I>s and thus resolve
+<A HREF="1771.html">issue 1771</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

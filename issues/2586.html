@@ -1,0 +1,259 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2586</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2586"></A><H4>2586.
+  
+Explicit object parameter for assignment and comparison
+</H4>
+<B>Section: </B>11.10.1&#160; [<A href="https://wg21.link/class.compare.default">class.compare.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-07
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted at the July, 2022 meeting.]</P>
+
+
+
+<P>"Deducing this" allows to declare assignment and comparison
+operator functions as explicit object member functions.</P>
+
+<P>However, such an assignment operator can never be a copy or move
+assignment operator, which means it always conflicts with the
+implicitly-defined one:</P>
+
+<PRE>
+  struct C {
+    C&amp; operator=(this C&amp;, C const&amp;); //<SPAN CLASS="cmnt"> error: can't overload with the copy assignment operator</SPAN>
+  };
+</PRE>
+
+<P>Similarly, <TT>operator==</TT> or <TT>operator&lt;=&gt;</TT> can be
+declared with an explicit object parameter, but they cannot be
+defaulted:</P>
+
+<PRE>
+  struct D {
+    bool operator==(this D const&amp;, D const&amp;) = default; //<SPAN CLASS="cmnt"> error: not a kind of comparison that can be defaulted</SPAN>
+  };
+</PRE>
+
+<P>There seems to be no reason to disallow that, for people who prefer
+writing all of their members with explicit object parameters.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#1">class.copy.assign</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A user-declared copy assignment operator <TT>X::operator=</TT> is a
+non-static non-template member function of class <TT>X</TT> with exactly one
+<INS>non-object</INS> parameter of
+type <TT>X</TT>, <TT>X&amp;</TT>, <TT>const X&amp;</TT>, <TT>volatile
+X&amp;</TT>, or <TT>const volatile X&amp;</TT>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#3">class.copy.assign</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A user-declared move assignment operator <TT>X::operator=</TT> is a
+non-static non-template member function of class <TT>X</TT> with
+exactly one <INS>non-object</INS> parameter of
+type <TT>X&amp;&amp;</TT>, <TT>const X&amp;&amp;</TT>, <TT>volatile
+X&amp;&amp;</TT>, or <TT>const volatile X&amp;&amp;</TT>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.10.1 [<A href="https://wg21.link/class.compare.default#1">class.compare.default</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted comparison operator function (12.4.3 [<A href="https://wg21.link/over.binary">over.binary</A>])
+for some class C shall be a non-template function that is
+
+<UL>
+<LI>a non-static <DEL>const non-volatile</DEL> member <DEL>of C having
+one parameter
+of type const C&amp; and either no <I>ref-qualifier</I> or
+the <I>ref-qualifier</I> &amp;, or</DEL>
+<INS>or friend of C and</INS>
+</LI>
+
+<LI>
+<DEL>a friend of C having</DEL> either <INS>has</INS> two
+parameters of type <TT>const C&amp;</TT> or two parameters of
+type <TT>C</TT>
+<INS>, where the implicit object
+parameter (if any) is considered to be the first parameter.</INS>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (May, 2022):</B></P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1235">paper issue 1235</A>,
+by decision of the CWG chair.
+</P>
+
+<P><B>Approved by EWG telecon 2022-06-09 and EWG 2022-06 electronic poll.</B></P>
+<P>See
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1018r17.html#CWG2586">vote</A>.</P>
+
+
+<P><B>Additional notes (July, 2022):</B></P>
+
+
+
+<P>The suggested resolution makes the following a copy assignment
+operator, suppressing the implicitly-declared one, which is
+surprising:</P>
+
+<PRE>
+  struct B {
+    B &amp;operator =(this int, const B &amp;); //<SPAN CLASS="cmnt"> copy assignment operator</SPAN>
+  };
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2022-07-15):</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.5.2 [<A href="https://wg21.link/dcl.fct.def.default#2">dcl.fct.def.default</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The type T1 of an</DEL> <INS>An</INS> explicitly defaulted special member
+function <DEL>F</DEL> <INS>F1 with type T1</INS> is allowed to differ from the
+<INS>corresponding special member function F2 with</INS>
+type T2 <DEL>it would have had if it were</DEL>
+<INS>that would have been</INS> implicitly declared, as follows:
+<UL>
+<LI>T1 and T2 may have differing <I>ref-qualifier</I>s;</LI>
+<LI><INS>if F2 has an implicit object parameter of type "reference
+to <TT>C</TT>", F1 may be an explicit object member function whose
+explicit object parameter is of type "reference
+to <TT>C</TT>";</INS></LI>
+<LI>T1 and T2 may have differing exception specifications; and</LI>
+<LI>if <DEL>T2</DEL> <INS>F2</INS> has a <INS>non-object</INS>
+parameter of type <TT>const C&amp;</TT>, the
+corresponding <INS>non-object</INS> parameter
+of <DEL>T1</DEL> <INS>F1</INS> may be of type <TT>C&amp;</TT>.</LI>
+</UL>
+If T1 differs from T2 in <DEL>any other</DEL> <INS>a</INS>
+way <INS>other than as allowed by the preceding rules</INS>,
+then:
+<UL>
+<LI>if <DEL>F</DEL> <INS>F1</INS> is an assignment operator, and the
+return type of T1 differs from the return type of T2 or
+<DEL>T1</DEL> <INS>F1</INS>'s <INS>non-object</INS> parameter type is
+not a reference, the program is ill-formed;</LI>
+<LI>
+otherwise, if <DEL>F</DEL> <INS>F1</INS> is explicitly defaulted on its
+first declaration, it is defined as deleted;</LI>
+<LI>otherwise, the program is ill-formed.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#1">class.copy.assign</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A user-declared copy assignment operator <TT>X::operator=</TT> is a
+non-static non-template member function of class <TT>X</TT> with
+
+exactly one
+<INS>non-object</INS> parameter of
+type <TT>X</TT>, <TT>X&amp;</TT>, <TT>const X&amp;</TT>, <TT>volatile
+X&amp;</TT>, or <TT>const volatile X&amp;</TT>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#3">class.copy.assign</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A user-declared move assignment operator <TT>X::operator=</TT> is a
+non-static non-template member function of class <TT>X</TT> with
+
+exactly one <INS>non-object</INS> parameter of
+type <TT>X&amp;&amp;</TT>, <TT>const X&amp;&amp;</TT>, <TT>volatile
+X&amp;&amp;</TT>, or <TT>const volatile X&amp;&amp;</TT>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.10.1 [<A href="https://wg21.link/class.compare.default#1">class.compare.default</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted comparison operator function (12.4.3 [<A href="https://wg21.link/over.binary">over.binary</A>])
+for some class C shall be a non-template function that is
+
+<UL>
+<LI>a non-static <DEL>const non-volatile</DEL> member <DEL>of C having
+one parameter
+of type const C&amp; and either no <I>ref-qualifier</I> or
+the <I>ref-qualifier</I> &amp;, or</DEL>
+<INS>or friend of C and</INS>
+</LI>
+
+<LI>
+<DEL>a friend of C having</DEL> either <INS>has</INS> two
+parameters of type <TT>const C&amp;</TT> or two parameters of
+type <TT>C</TT>
+<INS>, where the implicit object
+parameter (if any) is considered to be the first parameter.</INS>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

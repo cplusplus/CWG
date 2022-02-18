@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2409</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2409"></A><H4>2409.
+  
+Explicit specializations of constexpr static data members
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-04-29<BR>
+
+
+<P>The status of an example like the following is not clear:</P>
+
+<PRE>
+  struct S {
+    template &lt;int N&gt; static constexpr inline int m = N;
+  };
+  template &lt;&gt; constexpr inline int S::m&lt;5&gt;;
+</PRE>
+
+<P>Some implementations accept this, apparently on the basis
+of allowing and ignoring a redeclaration of a constexpr
+static data member outside its class, although there is
+implementation divergence. Most or all implementations,
+however, diagnose an attempt to use such a specialization in
+a constant context.</P>
+
+<P>Should it be required to have a definition of the explicit
+specialization in order to declare it outside the class in such
+cases?</P>
+
+<P>In addition, most or all implementations accept a version
+of the example in which the explicit specialization contains an
+initializer, including allowing its use in constant contexts:</P>
+
+<PRE>
+  template &lt;&gt; constexpr inline int S::m&lt;5&gt; = 2;
+</PRE>
+
+<P>This would seem to be disallowed both by
+11.4.9.3 [<A href="https://wg21.link/class.static.data#3">class.static.data</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+An inline static data member may be defined in the class
+definition and may specify
+a <I>brace-or-equal-initializer</I>.  If the member is
+declared with the <TT>constexpr</TT> specifier, it may be
+redeclared in namespace scope with no initializer (this
+usage is deprecated; see _N4778_.D.4 [<A href="https://wg21.link/depr.static_constexpr">depr.static_constexpr</A>]).
+
+</BLOCKQUOTE>
+
+<P>which prohibits an initializer, and
+13.9.4 [<A href="https://wg21.link/temp.expl.spec#2">temp.expl.spec</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+An explicit specialization may be declared in any scope in
+which the corresponding primary template may be defined
+(_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>], 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>],
+13.7.3 [<A href="https://wg21.link/temp.mem">temp.mem</A>]).
+
+</BLOCKQUOTE>
+
+<P>since the definition of a constexpr static data member is
+inside the class.</P>
+
+<P><B>Notes from the May, 2019 teleconference:</B></P>
+
+<P>These examples should behave in the same way as if the class were
+templated: instantiate the declaration and the definition of the
+static data member separately. The first example should be ill-formed,
+because the explicit specializaation does not have an initializer.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

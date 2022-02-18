@@ -1,0 +1,228 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1471</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1471"></A><H4>1471.
+  
+Nested type of non-dependent base
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Johannes Schaub
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-02-26<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>Even though <TT>A::C</TT> is a nested type and member of the current
+instantiation, and thus dependent by the rules of
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#8">temp.dep.type</A>] paragraph 8, there does not seem to be a
+good reason for making it so:</P>
+
+<PRE>
+  struct B {
+   struct C { };
+  };
+
+  template&lt;typename T&gt; struct A : B {
+   A::C c;
+  };
+</PRE>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<P><I>[Some existing uses of the term &#8220;member of the current
+instantiation&#8221; are consistent with the definition in
+13.8.3.2 [<A href="https://wg21.link/temp.dep.type#4">temp.dep.type</A>] paragraph 4; others are intended to
+refer to members of the &#8220;current instantiation,&#8221; as
+defined in paragraph 1.  The following resolution changes the
+latter to use the phrase &#8220;member of a class that is the
+current instantiation.&#8221;]</I></P>
+
+<OL>
+<LI><P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#4">temp.dep.type</A>] paragraph 4 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A name is a <I>member of the current instantiation</I> if it is</P>
+
+<UL>
+<LI><P>An unqualified name that, when looked up, refers to at
+least one member of <INS>a class that is</INS> the current
+instantiation or a non-dependent base class thereof. [<I>Note:</I>
+This can only occur when looking up a name in a scope enclosed by the
+definition of a class template.  &#8212;<I>end note</I>]</P></LI>
+
+<LI><P>A <I>qualified-id</I> in which the <I>nested-name-specifier</I>
+refers to the current instantiation and that, when looked up, refers
+to at least one member of <INS>a class that is</INS> the current
+instantiation or a non-dependent base class thereof.  [<I>Note:</I> if
+no such member is found, and the current instantiation has any
+dependent base classes, then the <I>qualified-id</I> is a member of an
+unknown specialization; see below.  &#8212;<I>end note</I>]</P></LI>
+
+<LI><P>An <I>id-expression</I> denoting the member in a class member access
+expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) for which the type of the
+object expression is the current instantiation, and the
+<I>id-expression</I>, when looked up (_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]),
+refers to at least one member of <INS>a class that is</INS> the
+current instantiation or a non-dependent base class
+thereof. [<I>Note:</I> if no such member is found, and the current
+instantiation has any dependent base classes, then the
+<I>id-expression</I> is a member of an unknown specialization; see
+below.  &#8212;<I>end note</I>]</P></LI>
+
+</UL>
+
+<P>[<I>Example:</I> ... &#8212;<I>end example</I>]</P>
+
+<P><INS>A name is a <I>dependent member of the current instantiation</I>
+if it is a member of the current instantiation which, when looked up,
+refers to at least one member of a class that is the current
+instantiation.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#5">temp.dep.type</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A name is a <I>member of an unknown specialization</I> if it is</P>
+
+<UL>
+<LI><P>A <I>qualified-id</I> in which the
+<I>nested-name-specifier</I> names a dependent type that is not the
+current instantiation.</P></LI>
+
+<LI><P>A <I>qualified-id</I> in which the <I>nested-name-specifier</I>
+refers to the current instantiation, the current instantiation has at
+least one dependent base class, and name lookup of the
+<I>qualified-id</I> does not find any member of <INS>a class that
+is</INS> the current instantiation or a non-dependent base class
+thereof.</P></LI>
+
+<LI><P>An <I>id-expression</I> denoting the member in a class member access
+expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) in which either</P></LI>
+
+<UL>
+<LI><P>the type of the object expression is the current
+instantiation, the current instantiation has at least one dependent
+base class, and name lookup of the <I>id-expression</I> does not find
+a member of <INS>a class that is</INS> the current instantiation or a
+non-dependent base class thereof; or</P></LI>
+
+<LI><P>the type of the object expression is dependent and is not the
+current instantiation.</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#8">temp.dep.type</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A type is dependent if it is</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>a nested class or enumeration that is a <INS>dependent</INS>
+member of the current instantiation,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is type-dependent if it contains</P>
+
+<UL><LI><P>...</P></LI></UL>
+
+<P>or if it names a <DEL>static data</DEL> <INS>dependent</INS> member
+of the current instantiation that <DEL>has</DEL> <INS>is a static data
+member of</INS> type &#8220;array of unknown bound of
+<TT>T</TT>&#8221; for some <TT>T</TT> (13.7.2.5 [<A href="https://wg21.link/temp.static">temp.static</A>]). Expressions of the following forms...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows
+(assumes the base text is as modified by <A HREF="1413.html">issue 1413</A>):</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is value-dependent if:</P>
+
+<UL>
+<LI><P>it is a name declared with a dependent type,</P></LI>
+
+<LI><P>it is the name of a non-type template parameter,</P></LI>
+
+<LI><P>it names a member of an unknown specialization,</P></LI>
+
+<LI><P>it names a static data member <DEL>of the current
+instantiation</DEL> that is <INS>a dependent member of the current
+instantiation and is</INS> not initialized in a
+<I>member-declarator</I>,</P></LI>
+
+<LI><P>it names a static member function that is a
+<INS>dependent</INS> member of the current instantiation, or</P></LI>
+
+<LI><P>it is a constant with literal type and is initialized with an
+expression that is value-dependent.</P></LI>
+
+</UL>
+
+<P>Expressions of the following form...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#5">temp.dep.constexpr</A>] paragraph 5 as follows
+(assumes the base text is as modified by <A HREF="1413.html">issue 1413</A>):</P></LI>
+
+<BLOCKQUOTE>
+
+An expression of the form <TT>&amp;</TT><I>qualified-id</I> where the
+<I>qualified-id</I><DEL>'s <I>nested-name-specifier</I></DEL> names
+<INS>a dependent member of</INS> the current instantiation is
+value-dependent.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

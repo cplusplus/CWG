@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 43</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="43"></A><H4>43.
+  
+Copying base classes (PODs) using memcpy
+</H4>
+<B>Section: </B>6.8&#160; [<A href="https://wg21.link/basic.types">basic.types</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Myers
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 Sep 1998<BR>
+
+
+
+
+
+<P>Can you use memcpy on non-member POD subobjects of non-POD objects?</P>
+
+<P>In 6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]
+paragraphs 2 and 3 we have:</P>
+<BLOCKQUOTE>For any complete POD object type <TT>T</TT>, whether or not the object
+holds a valid value of type <TT>T</TT>, the underlying bytes
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]
+) making
+up the object can be copied into an array of <TT>char</TT>
+or <TT>unsigned char</TT>*. If the content of
+the array of <TT>char</TT> or <TT>unsigned char</TT> is copied back into the object, the
+object shall subsequently hold its original value. <I>[Example elided]</I>
+<BLOCKQUOTE>*[<I>Footnote:</I> By using, for example, the library functions
+(16.4.2.3 [<A href="https://wg21.link/headers">headers</A>]
+)
+<TT>memcpy</TT> or <TT>memmove</TT>. <I>end footnote</I>]</BLOCKQUOTE>
+For any POD type <TT>T</TT>, if two pointers to <TT>T</TT> point
+to distinct <TT>T</TT> objects <TT>obj1</TT>
+and <TT>obj2</TT>, if the value of <TT>obj1</TT> is copied into
+<TT>obj2</TT>, using the <TT>memcpy</TT> library
+function, <TT>obj2</TT> shall subsequently hold the same value as
+<TT>obj1</TT>.</BLOCKQUOTE>
+Paragraph 3 doesn't repeat the restriction of paragraph 2. Should it be
+assumed? Otherwise only complete POD types are copyable to an array of
+<TT>char</TT> and back, but scribbling over subobjects is OK.
+(Or perhaps a "distinct <TT>T</TT> object" is a complete object...)
+
+<P>
+<B>Proposed Resolution (04/99):</B>
+Change the text in 6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]
+
+paragraph 2 from:</P>
+<BLOCKQUOTE>For any complete POD object type <TT>T</TT>, ...</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>For any object (other than a base class subobject) of POD type
+<TT>T</TT>, ...</BLOCKQUOTE>
+Change the text in 6.8 [<A href="https://wg21.link/basic.types#3">basic.types</A>] paragraph 3
+from:
+<BLOCKQUOTE>For any POD type <TT>T</TT>, if two pointers to <TT>T</TT>
+point to distinct <TT>T</TT> objects <TT>obj1</TT> and <TT>obj2</TT>,</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>For any POD type <TT>T</TT>, if two pointers to <TT>T</TT>
+point to distinct <TT>T</TT> objects <TT>obj1</TT> and <TT>obj2</TT>,
+where neither <TT>obj1</TT> nor <TT>obj2</TT> is a base class subobject,
+...</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,126 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 556</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="556"></A><H4>556.
+  
+Conflicting requirements for acceptable aliasing
+</H4>
+<B>Section: </B>7.6.19&#160; [<A href="https://wg21.link/expr.ass">expr.ass</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 January 2006<BR>
+
+
+<P>[Voted into the WP at the March, 2009 meeting.]</P>
+
+<P>There appear to be two different specifications for when aliasing
+is permitted.  One is in 7.2.1 [<A href="https://wg21.link/basic.lval#15">basic.lval</A>] paragraph 15:</P>
+
+<BLOCKQUOTE>
+
+<P>If a program attempts to access the stored value of an object through
+an lvalue of other than one of the following types the behavior is
+undefined</P>
+
+<UL>
+<LI><P>the dynamic type of the object,</P></LI>
+
+<LI><P>a cv-qualified version of the dynamic type of the
+object,</P></LI>
+
+<LI><P>a type similar (as defined in 7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to
+the dynamic type of the object,</P></LI>
+
+<LI><P>a type that is the signed or unsigned type corresponding to the
+dynamic type of the object,</P></LI>
+
+<LI><P>a type that is the signed or unsigned type corresponding to a
+cv-qualified version of the dynamic type of the object,</P></LI>
+
+<LI><P>an aggregate or union type that includes one of the
+aforementioned types among its members (including, recursively, a
+member of a subaggregate or contained union),</P></LI>
+
+<LI><P>a type that is a (possibly cv-qualified) base class type of the
+dynamic type of the object,</P></LI>
+
+<LI><P>a <TT>char</TT> or <TT>unsigned char</TT> type.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>There is also a much more restrictive specification in
+7.6.19 [<A href="https://wg21.link/expr.ass#8">expr.ass</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+If the value being stored in an object is accessed from another object
+that overlaps in any way the storage of the first object, then the
+overlap shall be exact and the two objects shall have the same type,
+otherwise the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>This affects, for example, the definedness of operations
+on union members: when may a value be stored into one union
+member and accessed via another.</P>
+
+<P>It should be noted that this conflict existed in C90 and is
+unchanged in C99 (see, for example, section 6.5 paragraph 7 and
+section 6.5.16.1 paragraph 3 of ISO/IEC 9899:1999, which directly
+parallel the sections cited above).</P>
+
+<P><B>Notes from the October, 2006 meeting:</B></P>
+
+<P>This issue is based on a misunderstanding of the intent of the
+wording in 7.6.19 [<A href="https://wg21.link/expr.ass#8">expr.ass</A>] paragraph 8.  Instead of
+being a general statement about aliasing, it's describing the
+situation in which the source of the value being assigned is storage
+that overlaps the storage of the target object.  The proposed
+resolution should make that clearer rather than changing the
+specification.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Add the following note at the end of 7.6.19 [<A href="https://wg21.link/expr.ass#8">expr.ass</A>] paragraph 8:
+</P>
+
+<BLOCKQUOTE>
+
+If the value being stored in an object is accessed from another object
+that overlaps in any way the storage of the first object, then the
+overlap shall be exact and the two objects shall have the same type,
+otherwise the behavior is undefined. <INS>[<I>Note:</I> This restriction
+applies to the relationship between the left and right sides of the
+assignment operation; it is not a statement about how the target of
+the assignment may be aliased in general. See 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

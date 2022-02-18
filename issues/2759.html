@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2759</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2759"></A><H4>2759.
+  
+[[no_unique_address] and common initial sequence
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-11-10<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>The interaction of [[no_unique_address]] and the definition of
+common initial sequence is still problematic.  Subclause
+11.4.1 [<A href="https://wg21.link/class.mem.general#23.3">class.mem.general</A>] bullet 23.3 specifies that corresponding
+members in a common initial sequence are not allowed to differ with
+respect to the presence or absence of a [[no_unique_address]]
+attribute.  However, the Itanium ABI will not allocate two successive
+data members of the same empty class type at the same address, causing
+non-conforming behavior for the following example:</P>
+
+<PRE>
+  struct A {};
+  struct B {};
+
+  struct C {
+   [[no_unique_address]] A a;
+   [[no_unique_address]] B b;
+  };
+
+  struct D {
+   [[no_unique_address]] A a1;
+   [[no_unique_address]] A a2;
+  };
+
+  static_assert(offsetof(C, b) == offsetof(D, a2));
+</PRE>
+
+<P>See <A HREF="https://github.com/itanium-cxx-abi/cxx-abi/issues/108">Itanium
+ABI issue 108</A>.</P>
+
+<P>Since "common initial sequence" and "layout compatible" are
+concepts mostly used for C compatibility, but [[no_unique_address]]
+does not exist in C, it seems reasonable to terminate a common initial
+sequence at the first data member that is declared
+[[no_unique_address]].</P>
+
+<P>Another concern is the behavior
+of <TT>std::is_layout_compatible</TT> on implementations that ignore
+[[no_unique_address]]. On such an implementation, the following
+example would be considered layout-compatible, although it actually is
+not:</P>
+
+<PRE>
+  struct E {};
+
+  struct A {
+    E e;
+    int i;
+  };
+
+  struct B {
+    [[no_unique_address]] E e;
+    int i;
+  };
+
+  static_assert(
+    std::is_layout_compatible_v&lt;A, B&gt;
+  );
+</PRE>
+
+
+<P><U>Alternative possible resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#23">class.mem.general</A>] paragraph 23 as follows:</P>
+
+<BLOCKQUOTE>
+
+The common initial sequence of two standard-layout struct
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types is the longest sequence of
+non-static data members and bit-fields in declaration order, starting
+with the first such entity in each of the structs, such that
+<UL>
+<LI>corresponding entities have layout-compatible types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]),</LI>
+
+<LI>corresponding entities have the same alignment requirements
+(6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]),</LI>
+
+<LI>
+<DEL>either both entities are declared with the no_unique_address
+attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]) or neither is,</DEL>
+<INS>neither entity is declared with the <TT>no_unique_address</TT>
+attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]),</INS> and</LI>
+
+<LI>either both entities are bit-fields with the same width or neither
+is a bit-field.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-08-25):</B></P>
+
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#23">class.mem.general</A>] paragraph 23 as follows:</P>
+
+<BLOCKQUOTE>
+
+The common initial sequence of two standard-layout struct
+(11.2 [<A href="https://wg21.link/class.prop">class.prop</A>]) types is the longest sequence of
+non-static data members and bit-fields in declaration order, starting
+with the first such entity in each of the structs, such that
+<UL>
+<LI>corresponding entities have layout-compatible types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]),</LI>
+
+<LI>corresponding entities have the same alignment requirements
+(6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]),</LI>
+
+<LI>
+<DEL>either both entities are declared with the no_unique_address
+attribute (9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]) or neither is,</DEL>
+<INS>if a <I>has-attribute-expression</I> (15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>])
+is not 0 for the <TT>no_unique_address</TT> attribute, then neither
+entity is declared with the <TT>no_unique_address</TT> attribute
+(9.12.12 [<A href="https://wg21.link/dcl.attr.nouniqueaddr">dcl.attr.nouniqueaddr</A>]),</INS> and</LI>
+
+<LI>either both entities are bit-fields with the same width or neither
+is a bit-field.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

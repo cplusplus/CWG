@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2227</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2227"></A><H4>2227.
+  
+Destructor access and default member initializers
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-02-01<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>There is implementation divergence on the validity of the following:</P>
+
+<PRE>
+   class X { ~X(); };
+   struct Y { X x = {}; };
+</PRE>
+
+<P>Should <TT>X</TT>'s destructor be potentially invoked by this attempt
+to initialize an <TT>X</TT> object? Or,</P>
+
+<PRE>
+   auto *y = new Y {};
+</PRE>
+
+<P>No constructor for <TT>Y</TT> is used, because this is aggregate
+initialization, and a destructor for <TT>X</TT> is not strictly necessary
+as there is no later initialization that might throw, but in the
+corresponding default constructor case we do require that the destructor
+be valid.</P>
+
+<P>Perhaps the most consistent answer is that the default member
+initializer should not potentially invoke the destructor unless it's used
+(for symmetry with default arguments), but that aggregate initialization
+should potentially invoke the destructors of all subobjects (including the
+final one - exceptions could theoretically be thrown between the completion
+of the construction of the final aggregate element and the notional
+completion of the construction of the aggregate itself.</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<OL>
+<LI><P>Add the following as a new paragraph following
+9.4.2 [<A href="https://wg21.link/dcl.init.aggr#7">dcl.init.aggr</A>] paragraph 7:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An aggregate that is a class can also be initialized with a single
+expression not enclosed in braces, as described in
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>].</P>
+
+<P><INS>The destructor for each element of class type is potentially
+invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) from the context where the aggregate
+initialization occurs. [<I>Note:</I> This provision ensures that
+destructors can be called for fully-constructed subobjects in case an
+exception is thrown (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]). &#8212;<I>end
+note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI>
+<P>Change 11.4.7 [<A href="https://wg21.link/class.dtor#12">class.dtor</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+...A destructor is <I>potentially invoked</I> if it is invoked or as
+specified in
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], <INS>9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>],</INS>
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>], and 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]. A program is
+ill-formed if a destructor that is potentially invoked is deleted or not
+accessible from the context of the invocation.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

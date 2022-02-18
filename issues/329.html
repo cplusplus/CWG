@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 329</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="329"></A><H4>329.
+  
+Evaluation of friends of templates
+</H4>
+<B>Section: </B>13.7.5&#160; [<A href="https://wg21.link/temp.friend">temp.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>19 Dec 2001<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5 says:</P>
+<BLOCKQUOTE>
+When a function is defined in a friend function declaration in a class
+template, the function is defined at each instantiation of  the  class
+template.  The function is defined even if it is never used.  The same
+restrictions on multiple declarations and definitions which  apply  to
+non-template function declarations and definitions also apply to these
+implicit definitions.  [Note: if the function definition is ill-formed
+for  a  given specialization of the enclosing class template, the program
+is ill-formed even if the function is never used.  ]
+</BLOCKQUOTE>
+
+<P>This means that the following program is invalid, even without the call
+of <TT>f(ai)</TT>:</P>
+<PRE>
+  template &lt;class T&gt; struct A {
+    friend void f(A a) {
+      g(a);
+    }
+  };
+  int main()
+  {
+    A&lt;int&gt; ai;
+  // f(ai);  // Error if f(ai) is actually called
+  }
+</PRE>
+<P>The EDG front end issues an error on this case even if <TT>f(ai)</TT>
+is never
+called.  Of the compilers I tried (g++, Sun, Microsoft, Borland) we
+are the only ones to issue such an error.</P>
+
+<P>This issue came up because there is a library that either deliberately or
+accidentally makes use of friend functions that are not valid for certain
+instantiations.</P>
+
+<P>The wording in the standard is the result of a deliberate decision made
+long ago, but given the fact that most implementations do otherwise it
+raises the issue of whether we did the right thing.</P>
+
+<P>Upon further investigation, the current rule was adopted as the resolution
+to issue 6.47 in my series of template issue papers.  At the time the
+issue was discussed (7/96) most compilers did evaluate such friends.
+So it seems that a number of compilers have changed their behavior
+since then.</P>
+
+<P>Based on current practice, I think the standard should be changed to
+evaluate such friends only when used.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>Change section 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5
+from:
+<BLOCKQUOTE>
+When a function is defined
+in a friend function declaration in a class template,
+the function is defined at each instantiation of the class template.
+The function is defined even if it is never used.
+The same restrictions on multiple declarations and definitions
+which apply to non-template function declarations and definitions
+also apply to these implicit definitions.
+[<I>Note:</I>
+if the function definition is ill-formed for a given specialization of the
+enclosing class template, the program is ill-formed even if the function
+is never used.
+]
+</BLOCKQUOTE>
+to:
+<BLOCKQUOTE>
+When a function is defined
+in a friend function declaration in a class template,
+the function is instantiated when the function is used.
+The same restrictions on multiple declarations and definitions
+that apply to non-template function declarations and definitions
+also apply to these implicit definitions.
+</BLOCKQUOTE>
+Note the change from "which" to "that" in the last sentence.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

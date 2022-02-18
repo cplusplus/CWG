@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 258</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="258"></A><H4>258.
+  
+<I>using-declaration</I>s and cv-qualifiers
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Liam Fitzpatrick
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2 Nov 2000<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+
+
+<P>According to 9.9 [<A href="https://wg21.link/namespace.udecl#12">namespace.udecl</A>] paragraph 12,</P>
+
+<BLOCKQUOTE>
+
+When a <I>using-declaration</I> brings names from a base class into a
+derived class scope, member functions in the derived class override
+and/or hide member functions with the same name and parameter types in
+a base class (rather than conflicting).
+
+</BLOCKQUOTE>
+
+<P>Note that this description says nothing about the cv-qualification
+of the hiding and hidden member functions.  This means, for instance,
+that a non-const member function in the derived class hides a const
+member function with the same name and parameter types instead of
+overloading it in the derived class scope.  For example,</P>
+
+<PRE>
+    struct A {
+      virtual int f() const;
+      virtual int f();
+    };
+    struct B: A {
+      B();
+      int f();
+      using A::f;
+    };
+
+    const B cb;
+    int i = cb.f(); // ill-formed: A::f() const hidden in B
+
+</PRE>
+
+<P>The same terminology is used in 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2:
+</P>
+
+<BLOCKQUOTE>
+
+If a virtual member function <TT>vf</TT> is declared in a class
+<TT>Base</TT> and in a class <TT>Derived</TT>, derived directly or
+indirectly from <TT>Base</TT>, a member function <TT>vf</TT> with the
+same name and same parameter list as <TT>Base::vf</TT> is declared,
+then <TT>Derived::vf</TT> is also virtual (whether or not it is so
+declared) and it overrides <TT>Base::vf</TT>.
+
+</BLOCKQUOTE>
+
+<P><B>Notes on the 04/01 meeting:</B></P>
+
+<P> The hiding and overriding should
+be on the basis of the function signature, which includes any
+cv-qualification on the function.</P>
+
+<P><B>Proposed resolution (04/02):</B></P>
+
+<P>In 9.9 [<A href="https://wg21.link/namespace.udecl#12">namespace.udecl</A>] paragraph 12 change:
+<BLOCKQUOTE>
+When a <I>using-declaration</I> brings names from a base class into a
+derived class scope, member functions in the derived class override and/or
+hide member functions with the same name and parameter types in a base
+class (rather than conflicting).
+</BLOCKQUOTE>
+to read:
+<BLOCKQUOTE>
+When a <I>using-declaration</I> brings names from a base class into a
+derived class scope, member functions and member function templates in
+the derived class override and/or hide member functions and member
+function templates with the same name, parameter-type-list
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]),
+and <I>cv</I>-qualification in a base class (rather than conflicting).
+</BLOCKQUOTE>
+</P>
+<P>
+In 11.7.3 [<A href="https://wg21.link/class.virtual#2">class.virtual</A>] paragraph 2 change:
+<BLOCKQUOTE>
+If a virtual member function <TT>vf</TT> is declared in a class
+<TT>Base</TT> and in a class <TT>Derived</TT>, derived directly or
+indirectly from <TT>Base</TT>, a member function <TT>vf</TT> with the
+same name and same parameter list as <TT>Base::vf</TT> is declared,
+then <TT>Derived::vf</TT> is also virtual (whether or not it is so
+declared) and it overrides <TT>Base::vf</TT>.
+</BLOCKQUOTE>
+to read:
+<BLOCKQUOTE>
+If a virtual member function <TT>vf</TT> is declared in a class
+<TT>Base</TT> and in a class <TT>Derived</TT>, derived directly or
+indirectly from <TT>Base</TT>, a member function <TT>vf</TT> with the
+same name, parameter-type-list (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and
+<I>cv</I>-qualification as <TT>Base::vf</TT>
+is declared, then <TT>Derived::vf</TT> is also virtual (whether or not
+it is so declared) and it overrides <TT>Base::vf</TT>.
+</BLOCKQUOTE>
+</P>
+
+<P>See <A HREF="140.html">issue 140</A> for the definition of
+<I>parameter-type-list</I>.</P>
+<BR><BR>
+</BODY>
+</HTML>

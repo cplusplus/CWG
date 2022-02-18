@@ -1,0 +1,191 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 529</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="529"></A><H4>529.
+  
+Use of <TT>template&lt;&gt;</TT> with &#8220;explicitly-specialized&#8221; class templates
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 August 2005<BR>
+
+
+<P>Paragraph 17 of 13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>] says,</P>
+
+<BLOCKQUOTE>
+
+A member or a member template may be nested within many enclosing
+class templates. In an explicit specialization for such a member, the
+member declaration shall be preceded by a <TT>template&lt;&gt;</TT>
+for each enclosing class template that is explicitly specialized.
+
+</BLOCKQUOTE>
+
+<P>This is curious, because paragraph 3 only allows explicit
+specialization of members of implicitly-instantiated class
+specializations, not explicit specializations.  Furthermore,
+paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+Definitions of members of an explicitly specialized class are defined
+in the same manner as members of normal classes, and not using the
+explicit specialization syntax.
+
+</BLOCKQUOTE>
+
+<P>Paragraph 18 provides a clue for resolving the apparent
+contradiction:</P>
+
+<BLOCKQUOTE>
+
+In an explicit specialization declaration for a member of a class
+template or a member template that appears in namespace scope, the
+member template and some of its enclosing class templates may remain
+unspecialized, except that the declaration shall not explicitly
+specialize a class member template if its enclosing class templates
+are not explicitly specialized as well. In such explicit
+specialization declaration, the keyword <TT>template</TT> followed by
+a <I>template-parameter-list</I> shall be provided instead of
+the <TT>template&lt;&gt;</TT> preceding the explicit specialization
+declaration of the member.
+
+</BLOCKQUOTE>
+
+<P>It appears from this and the following example that the phrase
+&#8220;explicitly specialized&#8221; in paragraphs 17 and 18, when
+referring to enclosing class templates, does not mean that explicit
+specializations have been declared for them but that their names in
+the <I>qualified-id</I> are followed by template argument lists.  This
+terminology is confusing and should be changed.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<OL>
+<LI><P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec#17">temp.expl.spec</A>] paragraph 17 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+A member or a member template may be nested within many enclosing
+class templates. In an explicit specialization for such a member, the
+member declaration shall be preceded by a <TT>template&lt;&gt;</TT>
+for each enclosing class template <DEL>that is explicitly specialized</DEL>
+<INS>specialization</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec#18">temp.expl.spec</A>] paragraph 18 as
+indicated:</P></LI>
+
+<BLOCKQUOTE>
+
+In an explicit specialization declaration for a member of a class
+template or a member template that appears in namespace scope, the
+member template and some of its enclosing class templates may remain
+unspecialized, <DEL>except that the declaration shall not explicitly
+specialize a class member template if its enclosing class templates
+are not explicitly specialized as well</DEL> <INS>that is, the
+<I>template-id</I> naming the template may be composed of template
+parameter names rather than <I>template-argument</I>s</INS>. <DEL>In</DEL>
+<INS>For each unspecialized template in</INS> such <INS>an</INS> explicit
+specialization declaration, the keyword <TT>template</TT> followed by
+a <I>template-parameter-list</I> shall be provided instead of
+the <TT>template&lt;&gt;</TT> preceding the <DEL>explicit
+specialization</DEL> declaration of the member. The types of
+the <I>template-parameter</I>s in the <I>template-parameter-list</I>
+shall be the same as those specified in the primary template
+definition. <INS>In such declarations, an unspecialized <I>template-id</I>
+shall not precede the name of a template specialization in the
+<I>qualified-id</I> naming the member.</INS> [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the April, 2006 meeting:</B></P>
+
+<P>The revised wording describing &#8220;unspecialized&#8221; templates
+needs more work to ensure that the parameter names in the
+<I>template-id</I> are in the correct order; the distinction between
+template arguments and parameters is also probably not clear enough.  It
+might be better to replace this paragraph completely and avoid the
+&#8220;unspecialized&#8221; wording altogether.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<OL>
+<LI><P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec#17">temp.expl.spec</A>] paragraph 17 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A member or a member template may be nested within many enclosing
+class templates.  In an explicit specialization for such a
+member, the member declaration shall be preceded by a
+<TT>template&lt;&gt;</TT> for each enclosing class template
+<DEL>that is explicitly specialized</DEL>
+<INS>specialization</INS>. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.9.4 [<A href="https://wg21.link/temp.expl.spec#18">temp.expl.spec</A>] paragraph 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In an explicit specialization declaration for a member of a
+class template or a member template that appears in namespace
+scope, the member template and some of its enclosing class
+templates may remain unspecialized, <DEL>except that the declaration
+shall not explicitly specialize a class member template if its
+enclosing class templates are not explicitly specialized as well.
+In such explicit specialization declaration, the keyword
+<TT>template</TT> followed by a <I>template-parameter-list</I>
+shall be provided instead of the <TT>template&lt;&gt;</TT>
+preceding the explicit specialization declaration of the member.
+The types of the <I>template-parameter</I>s in the
+<I>template-parameter-list</I> shall be the same as those
+specified in the primary template definition.</DEL> <INS>that is,
+the corresponding template prefix may specify a
+<I>template-parameter-list</I> instead of <TT>template&lt;&gt;</TT>
+and the <I>template-id</I> naming the template be written using
+those <I>template-parameter</I>s as <I>template-argument</I>s.
+In such a declaration, the number, kinds, and types of the
+<I>template-parameter</I>s shall be the same as those specified in
+the primary template definition, and the <I>template-parameter</I>s
+shall be named in the <I>template-id</I> in the same order that they
+appear in the <I>template-parameter-list</I>.  An unspecialized
+<I>template-id</I> shall not precede the name of a template
+specialization in the <I>qualified-id</I> naming the member.</INS>
+[<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

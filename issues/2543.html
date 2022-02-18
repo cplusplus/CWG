@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2543</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2543"></A><H4>2543.
+  
+<TT>constinit</TT> and optimized dynamic initialization
+</H4>
+<B>Section: </B>9.2.7&#160; [<A href="https://wg21.link/dcl.constinit">dcl.constinit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Zhihao Yuan
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-01
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Subclause 9.2.7 [<A href="https://wg21.link/dcl.constinit#2">dcl.constinit</A>] paragraph 2 states:</P>
+
+<BLOCKQUOTE>
+
+If a variable declared with the <TT>constinit</TT> specifier has
+dynamic initialization (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]), the program is
+ill-formed.  [ <I>Note</I>: The constinit specifier ensures that the
+variable is initialized during static initialization
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>Subclause 6.9.3.2 [<A href="https://wg21.link/basic.start.static#3">basic.start.static</A>] paragraph 3 gives permission
+for an implementation to perform static initialization in lieu of
+dynamic initialization:</P>
+
+<BLOCKQUOTE>
+
+An implementation is permitted to perform the initialization of a
+variable with static or thread storage duration as a static
+initialization even if such initialization is not required to be done
+statically, provided that ...
+
+</BLOCKQUOTE>
+
+<P>
+<TT>constinit</TT> will assuredly not give a diagnostic for
+variables that are constant initialized (7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2), because those are required to be statically initialized
+and thus will never be dynamically initialized.  Conversely,
+<TT>constinit</TT> is guaranteed to give a diagnostic for variables
+that cannot be statically initialized, for example those with an
+initializer whose value depends on runtime conditions.</P>
+
+<P>Between those boundaries, it is unclear whether <TT>constinit</TT>
+ought to give a diagnostic for variables whose initializer does
+not satisfy the constraints of constant-initialized, yet the
+implementation takes advantage of the permission to turn dynamic
+initialization into static initialization.  For example,</P>
+
+<PRE>
+  float f;
+  constinit int * pi = (int*) &amp;f;    // reinterpret_cast<SPAN CLASS="cmnt">, not constant-initialized</SPAN>
+</PRE>
+
+<P>The current wording seems to imply that <TT>constinit</TT>
+accurately reflects whether dynamic initialization was turned into
+static initialization by the implementation.  However, that is
+impossible to implement, because such decisions are often made by the
+optimizer, which runs later than the compiler front-end
+interpreting the program text containing <TT>constinit</TT>.</P>
+
+<P>There is value in permitting <TT>constinit</TT> not to diagnose
+some of the dynamic initializations that are turned into static
+initializations.</P>
+
+<P>There is also value in having portable semantics of <TT>constinit</TT>.</P>
+
+<P>See also <A HREF="2536.html">issue 2536</A>.</P>
+
+<P><B>Notes from the November, 2022 meeting</B></P>
+
+<P>CWG seeks the advice of EWG how to proceed with this issue,
+via
+<A HREF="https://github.com/cplusplus/papers/issues/1379">cplusplus/papers#1379</A>.
+</P>
+
+<P><B>EWG 2023-01-19</B></P>
+
+<P>EWG resolved to desire portable, guaranteed semantics
+for <TT>constinit</TT>.  That means, <TT>constinit</TT> should produce
+a diagnostic if de-jure dynamic initialization is turned into de-facto
+static initialization as permitted by
+6.9.3.2 [<A href="https://wg21.link/basic.start.static#3">basic.start.static</A>] paragraph 3.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-06):</B></P>
+
+<P>Change in 9.2.7 [<A href="https://wg21.link/dcl.constinit#2">dcl.constinit</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a variable declared with the <TT>constinit</TT> specifier has
+dynamic initialization (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]), the program is
+ill-formed<INS>, even if the implementation would perform that
+initialization as a static initialization
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>])</INS>.  [Note 1: The constinit
+specifier ensures that the variable is initialized during static
+initialization <DEL>(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>])</DEL>. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

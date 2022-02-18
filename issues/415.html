@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 415</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="415"></A><H4>415.
+  
+Template deduction does not cause instantiation
+</H4>
+<B>Section: </B>13.10.4&#160; [<A href="https://wg21.link/temp.over">temp.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 May 2003<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+
+
+<P>
+<U>Mike Miller:</U>
+In fact, now that I've looked more closely, that appears not to be the
+case.  (At least, it's not the error I get when I compile his example.)
+Here's a minimal extract (without the inflammatory using-directive :-)
+that illustrates what I think is going on:</P>
+<PRE>
+  template &lt;typename _Iterator&gt;
+  struct iterator_traits {
+    typedef typename _Iterator::difference_type difference_type;
+  };
+
+  template &lt;typename _InputIterator&gt;
+  inline typename iterator_traits&lt;_InputIterator&gt;::difference_type
+  distance(_InputIterator, _InputIterator);
+
+  double distance(const int&amp;, const int&amp;);
+
+  void f() {
+    int i = 0;
+    int j = 0;
+    double d = distance(i, j);
+  }
+</PRE>
+<P>What happens is that <TT>iterator_traits&lt;int&gt;</TT>
+is instantiated as part of
+type deduction for the function template <TT>distance</TT>,
+ and the instantiation
+fails.  (Note that it can't be instantiation of <TT>distance&lt;int&gt;</TT>,
+as I had originally posited, because in this case only a declaration, not a
+definition, of that template is in scope.)</P>
+
+<P>
+<U>John Spicer:</U> Yes, I believe that is what is going on.</P>
+
+<P>
+<U>Mike Miller:</U>
+I seem to recall that there was some discussion of questions related
+to this during the core meetings in Oxford.  I think Steve Adamczyk
+said something to the effect that it's infeasible to suppress all
+instantiation errors during template type deduction and simply call
+any such errors a deduction failure.  (I could be misremembering, and
+I could be misapplying that comment to this situation.)</P>
+
+<P>
+<U>John Spicer</U>:
+Regardless of other conditions in which this may apply, I don't think
+it would be reasonable for compilers to have to do "speculative
+instantiations" during template argument deduction.  One class
+instantiation could kick off a series of other instantiations, etc.</P>
+
+<P>
+<U>Mike Miller:</U>
+I don't see anything in the Standard that tells me whether it's
+legitimate or not to report an error in this case.  I hope John or
+another template expert can enlighten me on that.</P>
+
+<P>
+<U>John Spicer:</U>
+My opinion is that, because this case is not among those enumerated
+that cause deduction failure (rather than being ill-formed) that
+reporting an error is the right thing to do.</P>
+
+<P>
+<U>Mike Miller:</U>
+I am still interested, though, in the question of why
+13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>] says that
+viable function template specializations are instantiated, even if they
+are not selected by overload resolution.</P>
+
+<P>
+<U>John Spicer:</U>
+I believe the wording in
+13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>] is incorrect.  I researched this and
+found that a change was made during the clause 14 restructuring that
+was incorporated in March of 1996.  The prior wording was "the deduced
+template arguments are used to generate a single template function".
+This was changed to "deduced template arguments are used to
+instantiate a single function template specialization".  I believe
+this resulted from what was basically a global replace of "generate"
+with "instantiate" and of "template function" with "function template
+specialization".  In this case, the substitution changed the meaning.
+This paragraph needs reworking.</P>
+
+<P><B>Proposed resolution (April, 2006):</B></P>
+
+<P>Change 13.10.4 [<A href="https://wg21.link/temp.over#1">temp.over</A>] paragraph 1 as indicated:</P>
+
+<BLOCKQUOTE>
+
+...For each function template, if the argument deduction and checking
+succeeds, the <I>template-argument</I>s (deduced and/or explicit) are used to
+<DEL>instantiate</DEL> <INS>synthesize the declaration of</INS> a single
+function template specialization which is added to the candidate
+functions set to be used in overload resolution. If, for a given
+function template, argument deduction fails, no such function is added
+to the set of candidate functions for that template. The complete set
+of candidate functions includes all the <DEL>function templates
+instantiated in this way</DEL> <INS>synthesized declarations</INS> and all
+of the non-template overloaded functions of the same name. The
+<DEL>function template specializations</DEL> <INS>synthesized
+declarations</INS> are treated like any other functions in the remainder
+of overload resolution, except as explicitly noted in 12.2.4 [<A href="https://wg21.link/over.match.best">over.match.best</A>].
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

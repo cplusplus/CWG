@@ -1,0 +1,278 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1138</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1138"></A><H4>1138.
+  
+Rvalue-ness check for rvalue reference binding is wrong
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-02<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#US48">N3092 comment
+  US&#160;48<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#GB37">N3092 comment
+  GB&#160;37<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#DE10">N3092 comment
+  DE&#160;10<BR></A>
+
+<P>The requirement that an rvalue reference must be bound to an rvalue
+is found in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.2">dcl.init.ref</A>] bullet 5.2:</P>
+
+<UL><LI><P>Otherwise, the reference shall be an lvalue
+reference to a non-volatile const type (i.e., <I>cv1</I> shall be
+<TT>const</TT>), or the reference shall be an rvalue reference and
+the initializer expression shall be an rvalue or have a
+function type.</P></LI></UL>
+
+<P>This is not quite correct, as it is phrased in terms of the value
+category of the initializer expression itself rather than that of
+the result of any conversions applied to the initializer.  It should
+be permitted to bind an rvalue reference to a temporary created from
+an lvalue, for instance, or to the rvalue result of a conversion
+function for an lvalue object of class type.  Also, it should <I>not</I>
+be permitted to bind an rvalue reference to the lvalue result of a
+conversion function for a class rvalue.</P>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221;
+is initialized by an expression of type &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; as follows:</P>
+
+<UL>
+<LI><P>If the reference is an lvalue reference and the
+initializer expression</P></LI>
+
+<UL>
+<LI><P>is an lvalue (but is not a bit-field), and
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible
+with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type),
+where <TT>T1</TT> is not reference-related to <TT>T2</TT>,
+and can be implicitly converted to an lvalue of type
+&#8220;<I>cv3</I> <TT>T3</TT>,&#8221; where
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible
+with &#8220;<I>cv3</I> <TT>T3</TT>&#8221;<SUP>105</SUP>
+(this conversion is selected by enumerating the applicable
+conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and
+choosing the best one through overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>])),</P></LI>
+
+</UL>
+
+<P>then the reference is bound to the initializer expression
+lvalue in the first case and to the lvalue result of the
+conversion in the second case (or, in either case, to the
+appropriate base class subobject of the object).
+[<I>Note:</I> the usual lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),
+and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard
+conversions are not needed, and therefore are suppressed,
+when such direct bindings to lvalues are done. &#8212;<I>end
+note</I>]</P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  double d = 2.0;
+  double&amp; rd = d;          //<SPAN CLASS="cmnt"> </SPAN>rd<SPAN CLASS="cmnt"> refers to </SPAN>d
+  const double&amp; rcd = d;   //<SPAN CLASS="cmnt"> </SPAN>rcd<SPAN CLASS="cmnt"> refers to </SPAN>d
+  struct A { };
+  struct B : A { <INS>operator int&amp;();</INS> } b;
+  A&amp; ra = b;               //<SPAN CLASS="cmnt"> </SPAN>ra<SPAN CLASS="cmnt"> refers to </SPAN>A<SPAN CLASS="cmnt"> subobject in </SPAN>b
+  const A&amp; rca = b;        //<SPAN CLASS="cmnt"> </SPAN>rca<SPAN CLASS="cmnt"> refers to </SPAN>A<SPAN CLASS="cmnt"> subobject in </SPAN>b
+<INS>  int&amp; ir = B();           //<SPAN CLASS="cmnt"> </SPAN>ir<SPAN CLASS="cmnt"> refers to the result of </SPAN>B::operator int&amp;</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<LI><P>Otherwise, the reference shall be an lvalue reference
+to a non-volatile const type (i.e., <I>cv1</I> shall be
+<TT>const</TT>), or the reference shall be an rvalue
+reference <DEL>and the initializer expression shall be an rvalue
+or have a function type</DEL>. [<I>Example:</I>
+</P></LI>
+
+<PRE>
+  double&amp; rd2 = 2.0;       //<SPAN CLASS="cmnt"> error: not an lvalue and reference not </SPAN>const
+  int  i = 2;
+  double&amp; rd3 = i;         //<SPAN CLASS="cmnt"> error: type mismatch and reference not </SPAN>const
+<DEL>  double&amp;&amp; rd4 = i;        //<SPAN CLASS="cmnt"> error: rvalue reference cannot bind to lvalue</SPAN></DEL>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<UL>
+<LI><P><INS>If the initializer expression</INS></P></LI>
+
+<UL>
+<LI><P><INS>is an xvalue, class prvalue, array prvalue or
+function lvalue and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221;, or</INS></P></LI>
+
+<LI><P><INS>has a class type (i.e., <TT>T2</TT> is a class type),
+where <TT>T1</TT> is not reference-related to <TT>T2</TT>,
+and can be implicitly converted to an xvalue, class prvalue,
+or function lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>,&#8221; where &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv3</I> <TT>T3</TT>&#8221;,</INS></P></LI>
+
+</UL>
+
+<P><INS>then the reference is bound to the value of the
+initializer expression in the first case and to the result
+of the conversion in the second case (or, in either case, to
+an appropriate base class subobject). In the second case, if
+the reference is an rvalue reference and the second standard
+conversion sequence of the user-defined conversion sequence
+includes an lvalue-to-rvalue conversion, the program is
+ill-formed.</INS></P>
+
+</UL>
+
+<UL>
+<LI><P><DEL>If <TT>T1</TT> is a function type, then</DEL></P></LI>
+
+<UL>
+<LI><P><DEL>if <TT>T2</TT> is the same type as <TT>T1</TT>,
+the reference is bound to the initializer expression
+lvalue;</DEL></P></LI>
+
+<LI><P><DEL>if <TT>T2</TT> is a class type and the initializer
+expression can be implicitly converted to an lvalue of type
+<TT>T1</TT> (this conversion is selected by enumerating the
+applicable conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and choosing the best one through overload
+resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>])), the reference is
+bound to the function lvalue that is the result of the
+conversion;</DEL></P></LI>
+
+<LI><P><DEL>otherwise, the program is ill-formed.</DEL></P></LI>
+
+</UL>
+
+<LI><P><DEL>Otherwise, if <TT>T2</TT> is a class type and</DEL></P></LI>
+
+<UL>
+<LI><P><DEL>the initializer expression is an rvalue and
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible
+with &#8220;<I>cv2</I> <TT>T2</TT>&#8221;, or</DEL></P></LI>
+
+<LI><P><DEL><TT>T1</TT> is not reference-related to <TT>T2</TT>
+and the initializer expression can be implicitly converted
+to an rvalue of type &#8220;<I>cv3</I> <TT>T3</TT>&#8221;
+(this conversion is selected by enumerating the applicable
+conversion functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and
+choosing the best one through overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>])),</DEL></P></LI>
+
+</UL>
+
+<P><DEL>then the reference is bound to the initializer expression
+rvalue in the first case and to the object that is the
+result of the conversion in the second case (or, in either
+case, to the appropriate base class subobject of the
+object).</DEL></P>
+
+<P>[<I>Example:</I>
+</P>
+
+<PRE>
+  struct A { };
+  struct B : A { } b;
+  extern B f();
+  const A&amp; rca = f();      //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the </SPAN>B<SPAN CLASS="cmnt"> rvalue.</SPAN>
+  A&amp;&amp; <DEL>rcb</DEL> <INS>rra</INS> = f();       //<SPAN CLASS="cmnt"> same as above</SPAN>
+  struct X {
+  operator B();
+<INS>  operator int&amp;();</INS>
+  } x;
+  const A&amp; r = x;                     //<SPAN CLASS="cmnt"> bound to the </SPAN>A<SPAN CLASS="cmnt"> subobject of the result of the conversion</SPAN>
+<INS>  int&amp;&amp; rri = static_cast&lt;int&amp;&amp;&gt;(i);  //<SPAN CLASS="cmnt"> bound directly to </SPAN>i
+  B&amp;&amp; rrb = x;                        //<SPAN CLASS="cmnt"> bound directly to the result of </SPAN>operator B
+  int&amp;&amp; rri2 = X();                   //<SPAN CLASS="cmnt"> error: lvalue-to-rvalue conversion applied to result of </SPAN>operator int&amp;</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<LI><P><DEL>If the initializer expression is an rvalue, with
+<TT>T2</TT> an array type, and &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv2</I> <TT>T2</TT>,&#8221; the reference is bound
+to the object represented by the rvalue (see 7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]).</DEL></P></LI>
+
+<LI><P>Otherwise, a temporary of type &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is created and initialized from the
+initializer expression using the rules for a non-reference
+copy-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).  The
+reference is then bound to the temporary.  If <TT>T1</TT> is
+reference-related to <TT>T2</TT>, <I>cv1</I> <DEL>must</DEL>
+<INS>shall</INS> be the same cv-qualification as, or greater
+cv-qualification than, <I>cv2</I><DEL>; otherwise, the
+program is ill-formed</DEL>. <INS>If <TT>T1</TT> is
+reference-related to <TT>T2</TT> and the reference is an
+rvalue reference, the initializer expression shall not be an
+lvalue.</INS> [<I>Example:</I>
+</P></LI>
+
+<PRE>
+  const double&amp; rcd2 = 2;     //<SPAN CLASS="cmnt"> </SPAN>rcd2<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  double&amp;&amp; <DEL>rcd3</DEL> <INS>rrd</INS> = 2;      //<SPAN CLASS="cmnt"> </SPAN><DEL>rcd3</DEL> <INS>rrd</INS><SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+  const volatile int cvi = 1;
+  const int&amp; r = cvi;         //<SPAN CLASS="cmnt"> error: type qualifiers dropped</SPAN>
+<INS>  double&amp;&amp; rrd2 = d;          //<SPAN CLASS="cmnt"> error: copying lvalue of related type</SPAN>
+  double&amp;&amp; rrd3 = i;          //<SPAN CLASS="cmnt"> </SPAN>rrd3<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0</INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+</UL>
+
+<P>In all cases except the last (i.e., creating and
+initializing a temporary from the initializer expression),
+the reference is said to <I>bind directly</I> to the
+initializer expression.</P>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="1139.html">issue 1139</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2885</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2885"></A><H4>2885.
+  
+Non-eligible trivial default constructors
+</H4>
+<B>Section: </B>11.4.5.2&#160; [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Roy Jacobson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-11-26
+  &#160;&#160;&#160;
+  <B>Liaison: </B>LWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/521">#521</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;class T&gt;
+  struct A {
+    A() requires (false) = default;
+    A() : t(42) {}
+    T t;
+  };
+
+  struct B : A&lt;int&gt; {};
+</PRE>
+
+<P>According to the current wording, class <TT>B</TT> has a trivial
+default constructor, which is undesirable.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-31):</B></P>
+
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#3">class.default.ctor</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A default constructor <INS>for class <TT>X</TT></INS> is <I>trivial</I>
+if it is not user-provided and if:
+<UL>
+<LI>
+<DEL>its class</DEL> <INS><TT>X</TT></INS> has no virtual
+functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes
+(11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]), and</LI>
+<LI>no non-static data member of <DEL>its
+class</DEL> <INS><TT>X</TT></INS> has a default member initializer
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), and</LI>
+<LI class="del">all the direct base classes of its class have trivial
+default constructors, and</LI>
+<LI class="ins">the constructor selected to default-initialize each
+direct base class subobject of <TT>X</TT> is trivial,</LI>
+<LI class="del">for all the non-static data members of its class that are of
+class type (or array thereof), each such class has a trivial default
+constructor.</LI>
+<LI class="ins">for each direct non-static data member of <TT>X</TT>
+that is of class type (or array thereof), the constructor selected to
+default-initialize that member (or an array element of that member) is
+trivial.</LI>
+
+</UL>
+Otherwise, the default constructor is <I>non-trivial</I>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

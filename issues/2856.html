@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2856</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2856"></A><H4>2856.
+  
+Copy-list-initialization with explicit default constructors
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-09<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/486">#486</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+     explicit A(int = 10);
+     A() = default;   // <SPAN CLASS="cmnt">converting constructor (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1)</SPAN>
+  };
+
+  A a = {};       // <SPAN CLASS="cmnt">#1, copy-initialization</SPAN>
+  
+  int f(A);
+  int x = f({});  // <SPAN CLASS="cmnt">#2</SPAN>
+
+  A b;            // <SPAN CLASS="cmnt">#3</SPAN>
+</PRE>
+
+<P>#1 and #2 are accepted by MSVC and EDG, but considered ambiguous by
+gcc and clang.  #3 is rejected as ambiguous by all major
+implementations.</P>
+
+<P>#1 is copy-list-initialization (9.4.5 [<A href="https://wg21.link/dcl.init.list#1">dcl.init.list</A>] paragraph 1), and <TT>A</TT> has a default constructor, thus <TT>a</TT>
+is value-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list#3.4">dcl.init.list</A>] bullet 3.4).  The
+default constructors are user-provided, thus <TT>a</TT> is
+default-initialized (9.4.1 [<A href="https://wg21.link/dcl.init.general#8.1">dcl.init.general</A>] bullet 8.1,
+9.4.1 [<A href="https://wg21.link/dcl.init.general#7.1">dcl.init.general</A>] bullet 7.1).  Overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For copy-initialization (including default initialization in the
+context of copy-initialization), the candidate functions are all the
+converting constructors (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, the explicit constructor is not a candidate; #1 chooses the
+converting constructor.</P>
+
+<P>In contrast, #2 uses the special rules for forming a
+list-initialization sequence (12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7), which perform overload resolution according to
+12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1, which considers all
+constructors for overload resolution (and makes the program ill-formed
+if an explicit constructor is chosen).  For the example, overload
+resolution is ambiguous.</P>
+
+<P>#3 performs default-initialization, and overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For direct-initialization or default-initialization that is not in the
+context of copy-initialization, the candidate functions are all the
+constructors of the class of the object being initialized. ...
+
+</BLOCKQUOTE>
+
+<P>In this case, the overload resolution is ambiguous.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change in 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), copy-initialized from an expression of the
+same or a derived class type (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or
+default-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload resolution
+selects the constructor. For direct-initialization or
+default-initialization <DEL>that is not in the context of
+copy-initialization</DEL> <INS>(including default-initialization in
+the context of copy-list-initialization)</INS>, the candidate
+functions are all the constructors of the class of the object being
+initialized. <DEL>For copy-initialization (including default
+initialization in the context of
+copy-initialization)</DEL> <INS>Otherwise</INS>, the candidate
+functions are all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument list is
+the <I>expression-list</I> or <I>assignment-expression</I> of the
+initializer. <INS>For default-initialization in the context of
+copy-list-initialization, if an explicit constructor is chosen, the
+initialization is ill-formed.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-02-16</B></P>
+
+<P>The fact that #2 considers all constructors was discussed (and
+established) in the C++11 timeframe when brace-initialization was
+first introduced.  #1 should be consistent with that, even though
+the <TT>=</TT> is usually a clear sign that explicit constructors are
+not considered.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

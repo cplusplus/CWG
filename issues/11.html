@@ -1,0 +1,189 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 11</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="11"></A><H4>11.
+  
+How do the keywords typename/template interact with using-declarations?
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bill Gibbons
+ &#160;&#160;&#160;
+
+ <B>Date: </B>unknown<BR>
+
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P><B><U>Issue 1:</U></B></P>
+
+<P>The working paper is not clear about how the typename/template keywords
+interact with using-declarations:</P>
+<PRE>
+     template&lt;class T&gt; struct A {
+         typedef int X;
+     };
+
+     template&lt;class T&gt; void f() {
+         typename A&lt;T&gt;::X a;      // OK
+         using typename A&lt;T&gt;::X;  // OK
+         typename X b;  // ill-formed; X must be qualified
+         X c;  // is this OK?
+     }
+</PRE>
+When the rules for <TT>typename</TT> and the similar use of <TT>template</TT>
+were decided, we chose to require that they be used at every reference.
+The way to avoid <TT>typename</TT> at every use is to declare a typedef;
+then the typedef name itself is known to be a type. For <I>using-declaration</I>s,
+we decided that they do not introduce new declarations but rather are aliases
+for existing declarations, like symbolic links. This makes it unclear whether
+the declaration "<TT>X c;</TT>" above should be well-formed, because there
+is no new name declared so there is no declaration with a "this is a type"
+attribute. (The same problem would occur with the <TT>template</TT> keyword
+when a member template of a dependent class is used). I think these are
+the main options:
+<OL>
+<LI>
+Continue to allow <TT>typename</TT> in <I>using-declaration</I>s, and <TT>template</TT>
+(for member templates) too. Attach the "is a type" or "is a template"
+attribute to the placeholder name which the using-declaration "declares"</LI>
+
+<LI>
+Disallow <TT>typename</TT> and <TT>template</TT> in <I>using-declaration</I>s
+(just as <I>class-key</I>s are disallowed now). Allow <TT>typename</TT>
+and <TT>template</TT> before unqualified names which refer to dependent
+qualified names through <I>using-declaration</I>s.</LI>
+
+<LI>
+Document that this is broken.</LI>
+</OL>
+<B>Suggested Resolution:</B>
+
+<P>The core WG already resolved this issue according to (1), but the wording
+does not seem to have been added to the standard. New wording needs to
+be drafted.</P>
+
+<P><B><U>Issue 2:</U></B></P>
+
+<P>Either way, one more point needs clarification. If the first option
+is adopted:</P>
+<PRE>
+     template&lt;class T&gt; struct A {
+         struct X { };
+     };
+
+     template&lt;class T&gt; void g() {
+         using typename A&lt;T&gt;::X;
+         X c;    // if this is OK, then X by itself is a  type
+         int X;  // is this OK?
+     }
+</PRE>
+When "<TT>g</TT>" is instantiated, the two declarations of <TT>X</TT> are compatible
+(9.9 [<A href="https://wg21.link/namespace.udecl#10">namespace.udecl</A>] paragraph 10)
+.
+But there is no way to know this when the definition of "<TT>g</TT>" is
+compiled. I think this case should be ill-formed under the first option.
+(It cannot happen under the second option.) If the second option is adopted:
+<PRE>
+     template&lt;class T&gt; struct A {
+         struct X { };
+     };
+
+     template&lt;class T&gt; void g() {
+         using A&lt;T&gt;::X;
+         int X;  // is this OK?
+     }
+</PRE>
+Again, the instantiation would work but there is no way to know that in
+the template definition. I think this case should be ill-formed under the
+second option. (It would already be ill-formed under the first option.)
+
+<P>From John Spicer:</P>
+<BLOCKQUOTE>The "not a new declaration" decision is more of a guiding principle
+than a hard and fast rule. For example, a name introduced in a
+<I>using-declaration</I>
+can have different access than the original declaration.
+
+<P>Like symbolic links, a <I>using-declaration</I> can be viewed as a declaration
+that declares an alias to another name, much like a typedef.</P>
+
+<P>In my opinion, "<TT>X c;</TT>" is already well-formed. Why would we permit
+<TT>typename</TT> to be used in a <I>using-declaration</I> if not to permit this
+precise usage?</P>
+
+<P>In my opinion, all that needs to be done is to clarify that the "typeness"
+or "templateness" attribute of the name referenced in the <I>using-declaration</I>
+is attached to the alias created by the <I>using-declaration</I>. This is
+solution #1.</P>
+</BLOCKQUOTE>
+<B>Tentative Resolution:</B>
+
+<P>The rules for multiple declarations with the same name in the same scope
+should treat a <I>using-declaration</I> which names a type as a typedef,
+just as a typedef of a class name is treated as a class declaration. This
+needs drafting work. Also see <A HREF="36.html">Core issue 36</A>.</P>
+
+<P>
+<B>Rationale (04/99):</B> Any semantics associated with the
+<TT>typename</TT> keyword in <I>using-declaration</I>s should be considered an
+extension.</P>
+
+<P><B>Notes from the April 2003 meeting:</B></P>
+
+<P>This was reopened because we are now considering extensions again.
+We agreed that it is desirable for the typename to be "sticky" on
+a using-declaration, i.e., references to the name introduced by
+the using-declaration are known to be type names without the use
+of the typename keyword (which can't be specified on an unqualified
+name anyway, as of now).  The related issue with the template keyword
+already has a separate issue <A HREF="109.html">109</A>.</P>
+
+<P>Issue 2 deals with the "struct hack."
+There is an example in 9.9 [<A href="https://wg21.link/namespace.udecl#10">namespace.udecl</A>] paragraph 10
+that shows a use of using-declarations to import two names that
+coexist because of the "struct hack."  After some deliberation,
+we decided that the template-dependent using-declaration case is
+different enough that we did not have to support the "struct hack"
+in that case.
+A name introduced in such a case is like a typedef, and no other
+hidden type can be accessed through an elaborated type specifier.</P>
+
+<P><B>Proposed resolution (April 2003, revised October 2003):</B></P>
+
+<P>Add a new paragraph to the bottom of 9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]:</P>
+
+<BLOCKQUOTE>
+If a <I>using-declaration</I> uses
+the keyword <TT>typename</TT> and specifies a dependent name
+(13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]), the
+name introduced by the <I>using-declaration</I> is treated as a
+<I>typedef-name</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]).
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

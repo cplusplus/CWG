@@ -1,0 +1,255 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2504</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2504"></A><H4>2504.
+  
+Inheriting constructors from virtual base classes
+</H4>
+<B>Section: </B>11.9.4&#160; [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-11-03<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>According to 11.9.4 [<A href="https://wg21.link/class.inhctor.init#1">class.inhctor.init</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+When a constructor for type <TT>B</TT> is invoked to
+initialize an object of a different type <TT>D</TT> (that
+is, when the constructor was inherited
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])), initialization proceeds as if a
+defaulted default constructor were used to initialize
+the <TT>D</TT> object and each base class subobject from
+which the constructor was inherited, except that
+the <TT>B</TT> subobject is initialized by the invocation of
+the inherited constructor. The complete initialization is
+considered to be a single function call; in particular, the
+initialization of the inherited constructor's parameters is
+sequenced before the initialization of any part of the <TT>D</TT>object.
+
+</BLOCKQUOTE>
+
+<P>First, this assumes that the base class constructor will
+be invoked from the derived class constructor, which will not
+be true if the base is virtual and initialized by a
+more-derived constructor.</P>
+
+<P>If the call to the virtual base constructor is omitted,
+the last sentence is unclear whether the initialization of
+the base class constructor's parameters by the inheriting
+constructor occurs or not.  There is implementation
+divergence in the initialization of <TT>V</TT>'s parameter
+in the following example:</P>
+
+<PRE>
+  struct NonTriv {
+    NonTriv(int);
+    ~NonTriv();
+  };
+  struct V { V() = default; V(NonTriv); };
+  struct Q { Q(); };
+  struct A : virtual V, Q {
+    using V::V;
+    A() : A(42) { }
+  };
+  struct B : A { };
+  void foo() { B b; }
+</PRE>
+
+<P><B>CWG telecon 2022-09-23:</B></P>
+
+<P>Inheriting constructors from a virtual base class ought to be
+ill-formed.  Inform EWG accordingly.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#3">namespace.udecl</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If a <I>using-declarator</I> names a constructor,
+its <I>nested-name-specifier</I> shall name a
+direct <INS>non-virtual</INS> base class of the current class. If the
+immediate (class) scope is associated with a class template, it shall
+derive from the specified base class or have at least one dependent
+base class.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change the example in 11.9.4 [<A href="https://wg21.link/class.inhctor.init#1">class.inhctor.init</A>] paragraph 1 as follows:</P>
+
+<PRE>
+D2 f(1.0);  //<SPAN CLASS="cmnt"> error: </SPAN>B1<SPAN CLASS="cmnt"> has <DEL>a deleted</DEL> <INS>no</INS> default constructor</SPAN>
+
+<DEL>struct W { W(int); };
+struct X : virtual W { using W::W; X() = delete; };
+struct Y : X { using X::X; };
+struct Z : Y, virtual W { using Y::Y; };
+Z z(0);  //<SPAN CLASS="cmnt"> OK, initialization of Y does not invoke default constructor of X</SPAN></DEL>
+</PRE>
+</LI>
+
+<LI>
+<P>Change the example in 11.9.4 [<A href="https://wg21.link/class.inhctor.init#2">class.inhctor.init</A>] paragraph 2 as follows:</P>
+
+<PRE>
+<DEL>struct V1 : virtual B { using B::B; };
+struct V2 : virtual B { using B::B; };
+
+struct D2 : V1, V2 {
+  using V1::V1;
+  using V2::V2;
+};</DEL>
+D1 d1(0);  //<SPAN CLASS="cmnt"> error: ambiguous</SPAN>
+<DEL>D2 d2(0);  //<SPAN CLASS="cmnt"> OK, initializes virtual B base class, which initializes the A base class</SPAN>
+           //<SPAN CLASS="cmnt"> then initializes the V1 and V2 base classes as if by a defaulted default constructor</SPAN></DEL>
+</PRE>
+</LI>
+
+</OL>
+
+<P><B>CWG telecon 2022-10-07:</B></P>
+
+<P>Given that there are examples that discuss inheriting constructors
+from virtual base classes and given the existing normative wording,
+making it clear that <TT>NonTriv</TT> is not constructed, CWG felt
+that the implementation divergence is best addressed by amending the
+examples.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Add another example before 11.9.4 [<A href="https://wg21.link/class.inhctor.init#2">class.inhctor.init</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">[ Example:</P>
+
+<PRE class="ins">
+struct NonTriv {
+  NonTriv(int);
+  ~NonTriv();
+};
+struct V { V() = default; V(NonTriv); };
+struct Q { Q(); };
+struct A : virtual V, Q {
+  using V::V;
+  A() : A(42) { }    //<SPAN CLASS="cmnt"> #1, </SPAN>A(42)<SPAN CLASS="cmnt"> is equivalent to </SPAN>V(42)
+};
+struct B : A { };
+void foo() { B b; }
+</PRE>
+<P class="ins">
+In this example, the <TT>V</TT> subobject of <TT>b</TT> is constructed
+using the defaulted default constructor.  The <I>mem-initializer</I>
+naming the constructor inherited from <TT>V</TT> at #1 is not
+evaluated and thus no object of type <TT>NonTriv</TT> is constructed.
+-- end example ]</P>
+
+<P>
+If the constructor was inherited from multiple base class subobjects of type B, the program is ill-formed.
+</P>
+
+</BLOCKQUOTE>
+
+
+
+<P><B>Proposed resolution (approved by CWG 2023-11-06):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 11.9.4 [<A href="https://wg21.link/class.inhctor.init#1">class.inhctor.init</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a constructor for type <TT>B</TT> is invoked to initialize an
+object of a different type <TT>D</TT> (that is, when the constructor
+was inherited (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])), initialization proceeds as
+if a defaulted default constructor were used to initialize
+the <TT>D</TT> object and each base class subobject from which the
+constructor was inherited, except that the <TT>B</TT>
+subobject is initialized by <DEL>the invocation of</DEL> the inherited
+constructor <INS>if the base class subobject were to be
+initialized as part of the <TT>D</TT> object
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])</INS>. <INS>The invocation of the inherited constructor,
+including the evaluation of any arguments, is omitted if
+the <TT>B</TT> subobject is not to be initialized as part of
+the <TT>D</TT> object.</INS> The complete initialization is considered
+to be a single function call; in particular, <INS>unless
+omitted,</INS> the initialization of the inherited constructor's
+parameters is sequenced before the initialization of any part of
+the <TT>D</TT>object.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add another example before 11.9.4 [<A href="https://wg21.link/class.inhctor.init#2">class.inhctor.init</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">[ Example:</P>
+
+<PRE class="ins">
+struct V { V() = default; V(int); };
+struct Q { Q(); };
+struct A : virtual V, Q {
+  using V::V;
+  A() = delete;
+};
+int bar() { return 42; }
+struct B : A {
+  B() : A(bar()) {}  //<SPAN CLASS="cmnt"> ok</SPAN>
+};
+struct C : B {};
+void foo() { C c; } // bar<SPAN CLASS="cmnt"> is not invoked, because the</SPAN> V <SPAN CLASS="cmnt">subobject is not initialized as part of</SPAN> B
+</PRE>
+
+<P class="ins">-- end example ]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG telecon 2022-10-21:</B></P>
+
+<P>This is an ABI break for implementations when transitioning to the
+C++17 model for inheriting constructors.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

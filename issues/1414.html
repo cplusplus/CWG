@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1414</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1414"></A><H4>1414.
+  
+Binding an rvalue reference to a reference-unrelated lvalue
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-11-09<BR>
+
+
+
+
+<P>Currently an attempt to bind an rvalue reference to a
+reference-unrelated lvalue succeeds, binding the reference to a
+temporary initialized from the lvalue by copy-initialization.  This
+appears to be intentional, as the accompanying example contains the
+lines</P>
+
+<PRE>
+    int i3 = 2;
+    double&amp;&amp; rrd3 = i3;  //<SPAN CLASS="cmnt"> </SPAN>rrd3<SPAN CLASS="cmnt"> refers to temporary with value </SPAN>2.0
+</PRE>
+
+<P>This violates the expectations of some who expect that rvalue
+references can be initialized only with rvalues.  On the other
+hand, it is parallel with the handling of an lvalue
+reference-to-const (and is handled by the same wording).  It also
+can add efficiency without requiring existing code to be rewritten:
+the implicitly-created temporary can be moved from, just as if the
+call had been rewritten to create a prvalue temporary from the
+lvalue explicitly.</P>
+
+<P>On a related note, assuming the binding is permitted, the intent of
+the overload tiebreaker found in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3
+is not clear:</P>
+
+<UL>
+<LI><P>Standard conversion sequence <TT>S1</TT> is a better conversion
+sequence than standard conversion sequence <TT>S2</TT> if</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and neither refers to an implicit
+object parameter of a non-static member function declared without
+a <I>ref-qualifier</I>, and <TT>S1</TT> binds an rvalue reference
+to an rvalue and <TT>S2</TT> binds an lvalue reference.</P></LI>
+
+</UL>
+
+</UL>
+
+<P>At question is what &#8220;to an rvalue&#8221; means here.  If it
+is referring to the value category of the initializer itself,
+before conversions, then the supposed performance advantage of
+the binding under discussion does not occur because the competing
+rvalue and lvalue reference overloads will be ambiguous:</P>
+
+<PRE>
+    void f(int&amp;&amp;);    //<SPAN CLASS="cmnt"> #1</SPAN>
+    void f(const int&amp;);
+    void g(double d) {
+        f(d);         //<SPAN CLASS="cmnt"> ambiguous: #1 does not bind to an rvalue</SPAN>
+    }
+</PRE>
+
+<P>On the other hand, if &#8220;to an rvalue&#8221; refers to the
+actual object to which the reference is bound, i.e., to the temporary
+in the case under discussion, the phrase would seem to be vacuous because
+an rvalue reference can never bind directly to an lvalue.</P>
+
+<P><B>Notes from the February, 2012 meeting:</B></P>
+
+<P>CWG agreed that the binding rules are correct, allowing creation of
+a temporary when binding an rvalue reference to a non-reference-related
+lvalue.  The phrase &#8220;to an rvalue&#8221; in
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3 is a leftover from before
+binding an rvalue reference to an lvalue was prohibited and should be
+removed. A change is also needed to handle the following case:</P>
+
+<PRE>
+    void f(const char (&amp;)[1]);         //<SPAN CLASS="cmnt"> #1</SPAN>
+    template&lt;typename T&gt; void f(T&amp;&amp;);  //<SPAN CLASS="cmnt"> #2</SPAN>
+    void g() {
+      f("");                           //<SPAN CLASS="cmnt">calls #2, should call #1</SPAN>
+    }
+</PRE>
+
+<P><B>Additional note (October, 2012):</B></P>
+
+<P>Removing &#8220;to an rvalue,&#8221; as suggested, would have the
+effect of negating the preference for binding a function lvalue to an
+lvalue reference instead of an rvalue reference because the case would
+now fall under the preceding bullet of 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+bullet 3.1, sub-bullets 4 and 5:</P>
+
+<BLOCKQUOTE>
+
+<P>Two implicit conversion sequences of the same form are
+indistinguishable conversion sequences unless one of the following
+rules applies:</P>
+
+<UL>
+<LI><P>Standard conversion sequence <TT>S1</TT> is a better conversion sequence than
+standard conversion sequence <TT>S2</TT> if</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and neither refers to an implicit object
+parameter of a non-static member function declared without a
+<I>ref-qualifier</I>, and <TT>S1</TT> binds an rvalue reference to an
+rvalue and <TT>S2</TT> binds an lvalue reference... or, if not that,</P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> are reference bindings
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) and <TT>S1</TT> binds an lvalue reference
+to a function lvalue and <TT>S2</TT> binds an rvalue reference to a
+function lvalue.</P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Presumably if the suggested resolution is adopted, the order of these
+two bullets should be inverted.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

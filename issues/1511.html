@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1511</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1511"></A><H4>1511.
+  
+<TT>const volatile</TT> variables and the one-definition rule
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-06-18<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>One of the criteria in 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6 for
+when a entity is allowed to have multiple definitions is:</P>
+
+<BLOCKQUOTE>
+
+in each definition of <TT>D</TT>, corresponding names, looked up
+according to 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>], shall refer to an entity
+defined within the definition of <TT>D</TT>, or shall refer to the
+same entity, after overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) and
+after matching of partial template specialization (13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]), except that a name can refer to a <TT>const</TT>
+object with internal or no linkage if the object has the same literal
+type in all definitions of <TT>D</TT>, and the object is initialized
+with a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), and the value
+(but not the address) of the object is used, and the object has the
+same value in all definitions of <TT>D</TT>; and
+
+</BLOCKQUOTE>
+
+<P>This wording is possibly not sufficiently clear for an example like:</P>
+
+<PRE>
+  const volatile int n = 0;
+  inline int get() { return n; }
+</PRE>
+
+<P>Presumably this code could not appear in multiple translation units,
+because the requirement that <TT>n</TT> &#8220;has the same value in
+all definitions&#8221; cannot be satisfied (the value of a volatile
+variable can change &#8220;by means undetectable by the
+implementation,&#8221; per 9.2.9.2 [<A href="https://wg21.link/dcl.type.cv#7">dcl.type.cv</A>] paragraph 7,
+so the value of <TT>n</TT> might be different in each translation
+unit).  However, it might be good to make it explicit that &#8220;a
+<TT>const</TT> object&#8221; is not intended to apply to a
+volatile-qualified object.</P>
+
+<P>Other points that were raised during the discussion of this issue
+were that it would probably be better to rephrase &#8220;the value
+(but not the address) of the object is used&#8221; in terms of the
+odr-use of the object, as well as questioning why a <TT>const
+volatile</TT> variable implicitly has internal linkage.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<OL>
+<LI><P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>There can be more than one definition...</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, corresponding names, looked
+up according to 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>], shall refer to an entity
+defined within the definition of <TT>D</TT>, or shall refer to the
+same entity, after overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) and
+after matching of partial template specialization (13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]), except that a name can refer to a
+<INS>non-volatile</INS> <TT>const</TT> object with internal or no
+linkage if the object has the same literal type in all definitions of
+<TT>D</TT>, and the object is initialized with a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), and <DEL>the value (but not the address)
+of</DEL> the object is <DEL>used</DEL> <INS>not odr-used</INS>, and
+the object has the same value in all definitions of <TT>D</TT>;
+and</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.6 [<A href="https://wg21.link/basic.link#3">basic.link</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A name having namespace scope (6.4.6 [<A href="https://wg21.link/basic.scope.namespace">basic.scope.namespace</A>]) has
+internal linkage if it is the name of</P>
+
+<UL>
+<LI><P>a variable, function or function template that is
+explicitly declared <TT>static</TT>; or,</P></LI>
+
+<LI><P>a <INS>non-volatile</INS> variable that is explicitly declared
+<TT>const</TT> or <TT>constexpr</TT> and neither explicitly declared
+<TT>extern</TT> nor previously declared to have external linkage;
+or</P></LI>
+
+<LI><P>a data member of an anonymous union.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

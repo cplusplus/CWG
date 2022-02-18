@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2158</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2158"></A><H4>2158.
+  
+Polymorphic behavior during destruction
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-07-13<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  #include &lt;stdio.h&gt;
+  struct Base {
+    Base *p;
+    virtual void f() { puts("base"); }
+    ~Base() {
+      p-&gt;f();
+    }
+  };
+  struct Derived : Base {
+    Derived() { p = this; }
+    void f() { puts("derived"); }
+    void g() {
+      p-&gt;f();
+      delete this;
+    }
+  };
+  void h() {
+    Derived *p = new Derived;
+    p-&gt;g();
+  }
+</PRE>
+
+<P>Should this have defined behavior? On the one hand, the
+<TT>Derived</TT> object is in its period of destruction, so
+the behavior of the <TT>p-&gt;f()</TT> call in
+the <TT>Base</TT> destructor should be to
+call <TT>Base::f()</TT>. On the other hand, <TT>p</TT> is a
+pointer to a <TT>Derived</TT> object whose lifetime has
+ended, and the rules in 6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>] don't
+appear to allow the call. (Calling <TT>this-&gt;f()</TT>
+from the <TT>Base</TT> destructor would be OK &#8212; the
+question is whether you can do that for a pointer that used
+to point to the derived object, or if you can only do it for
+a pointer that was &#8220;created&#8221; after the dynamic
+type of the object changed to be <TT>Base</TT>.)</P>
+
+<P>If the above is valid, it has severe implications for
+devirtualization. The purpose of 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7
+appears to be to allow an implementation to
+assume that if it will perform two loads of a constant field
+(for instance, a const member, the implicit pointer for a
+reference member, or a vptr), and the two loads are
+performed on the &#8220;same pointer value&#8221;, then
+they load the same value.</P>
+
+<P>Should there be a rule for destructors similar to that
+of 11.4.5 [<A href="https://wg21.link/class.ctor#12">class.ctor</A>] paragraph 12?</P>
+
+<BLOCKQUOTE>
+
+During the construction of a const object, if the value of
+the object or any of its subobjects is accessed through a
+glvalue that is not obtained, directly or indirectly, from
+the constructor's this pointer, the value of the object or
+subobject thus obtained is unspecified.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

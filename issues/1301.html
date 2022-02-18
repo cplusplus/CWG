@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1301</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1301"></A><H4>1301.
+  
+Value initialization of union
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-04-18<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>According to 9.4 [<A href="https://wg21.link/dcl.init#7">dcl.init</A>] paragraph 7,</P>
+
+<BLOCKQUOTE>
+
+<P>To <I>value-initialize</I> an object of type <TT>T</TT> means:</P>
+
+<UL>
+<LI><P>if <TT>T</TT> is a (possibly cv-qualified) class type
+(Clause 11 [<A href="https://wg21.link/class">class</A>]) with a user-provided constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), then the default constructor for
+<TT>T</TT> is called (and the initialization is ill-formed if
+<TT>T</TT> has no accessible default constructor);
+</P></LI>
+
+<LI><P>if <TT>T</TT> is a (possibly cv-qualified) non-union class type
+without a user-provided constructor, then the object is
+zero-initialized and, if <TT>T</TT>'s implicitly-declared default
+constructor is non-trivial, that constructor is called.
+</P></LI>
+
+<LI><P>if <TT>T</TT> is an array type, then each element is
+value-initialized;
+</P></LI>
+
+<LI><P>otherwise, the object is zero-initialized.
+</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This suggests that for</P>
+
+<PRE>
+  struct A { A() = delete; };
+  union B { A a };
+  int main()
+  {
+    B();
+  }
+</PRE>
+
+<P>a <TT>B</TT> temporary is created and zero-initialized, even though
+its default constructor is deleted.  We should strike "non-union" and
+also the "if...non-trivial" condition, since we can have a trivial
+deleted constructor.
+</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<OL>
+<LI><P>Change 9.4 [<A href="https://wg21.link/dcl.init#7">dcl.init</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>To <I>value-initialize</I> an object of type <TT>T</TT> means:</P>
+
+<UL>
+<LI><P>if <TT>T</TT> is a (possibly cv-qualified) class type
+(Clause 11 [<A href="https://wg21.link/class">class</A>]) with <INS>either no default
+constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]) or</INS> a <INS>default
+constructor that is</INS> user-provided <INS>or deleted</INS>
+<DEL>constructor (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>])</DEL>, then the
+<INS>object is default-initialized</INS> <DEL>default constructor for
+<TT>T</TT> is called (and the initialization is ill-formed if
+<TT>T</TT> has no accessible default constructor)</DEL>;</P></LI>
+
+<LI><P>if <TT>T</TT> is a (possibly cv-qualified) non-union class type
+without a user-provided <INS>or deleted default</INS> constructor,
+then the object is zero-initialized and, if <DEL><TT>T</TT>'s
+implicitly-declared default constructor is</DEL> <INS><TT>T</TT> has
+a</INS> non-trivial <INS>default constructor</INS>, <DEL>that
+constructor is called.</DEL> <INS>default-initialized;</INS>
+</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.4.5 [<A href="https://wg21.link/dcl.init.list#3">dcl.init.list</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>List-initialization of an object or reference of type <TT>T</TT> is
+defined as follows:</P>
+
+<UL>
+<LI><P><DEL>If the initializer list has no elements and <TT>T</TT>
+is a class type with a default constructor, the object is
+value-initialized.</DEL></P></LI>
+
+<LI><P>
+<DEL>Otherwise, if</DEL> <INS>If</INS> <TT>T</TT> is an
+aggregate, aggregate initialization is performed (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]). [<I>Example:</I>...</P></LI>
+
+<LI><P><INS>Otherwise, if the initializer list has no elements and
+<TT>T</TT> is a class type with a default constructor, the object is
+value-initialized.</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="1324.html">1324</A>
+and <A HREF="1368.html">1368</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

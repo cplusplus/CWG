@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 440</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="440"></A><H4>440.
+  
+Allow implicit pointer-to-member conversion on nontype template argument
+</H4>
+<B>Section: </B>13.4&#160; [<A href="https://wg21.link/temp.arg">temp.arg</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>David Abrahams
+ &#160;&#160;&#160;
+
+ <B>Date: </B>13 Nov 2003<BR>
+
+
+<P>None of my compilers accept this, which surprised me a little.  Is
+the base-to-derived member function conversion considered to be a
+runtime-only thing?</P>
+<PRE>
+  template &lt;class D&gt;
+  struct B
+  {
+      template &lt;class X&gt; void f(X) {}
+      template &lt;class X, void (D::*)(X) = &amp;B&lt;D&gt;::f&lt;X&gt; &gt;
+      struct row {};
+  };
+  struct D : B&lt;D&gt;
+  {
+      void g(int);
+      row&lt;int,&amp;D::g&gt; r1;
+      row&lt;char*&gt; r2;
+  };
+</PRE>
+<P>
+<U>John Spicer</U>:
+This is not among the permitted conversions listed in 14.3.</P>
+
+<P>I'm not sure there is a terribly good reason for that.  Some of the
+template argument rules for external entities were made conservatively
+because of concerns about issues of mangling template argument names.</P>
+
+<P>
+<U>David Abrahams</U>:
+I'd really like to see that restriction loosened.  It is a serious
+inconvenience because there appears to be no way to supply a usable
+default in this case.  Zero would be an OK default if I could use the
+function pointer's equality to zero as a compile-time switch to
+choose an empty function implementation:</P>
+<PRE>
+  template &lt;bool x&gt; struct tag {};
+
+  template &lt;class D&gt;
+  struct B
+  {
+      template &lt;class X&gt; void f(X) {}
+
+      template &lt;class X, void (D::*pmf)(X) = 0 &gt;
+      struct row {
+          void h() { h(tag&lt;(pmf == 0)&gt;(), pmf); }
+          void h(tag&lt;1&gt;, ...) {}
+          void h(tag&lt;0&gt;, void (D::*q)(X)) { /*something*/}
+      };
+  };
+
+  struct D : B&lt;D&gt;
+  {
+      void g(int);
+      row&lt;int,&amp;D::g&gt; r1;
+      row&lt;char*&gt; r2;
+  };
+</PRE>
+
+<P>But there appears to be no way to get that effect either.  The result
+is that you end up doing something like:</P>
+<PRE>
+      template &lt;class X, void (D::*pmf)(X) = 0 &gt;
+      struct row {
+          void h() { if (pmf) /*something*/ }
+      };
+</PRE>
+
+<P>which invariably makes compilers warn that you're switching on a
+constant expression.</P>
+
+<P><B>Additional notes (February, 2023)</B></P>
+
+<P>Even the following simple case fails on all major implementations:</P>
+
+<PRE>
+  struct B { void f(); };
+  struct D : B {};
+
+  template&lt;void (D::*)()&gt;
+  int g();
+
+  int x = g&lt;&amp;D::f&gt;();
+</PRE>
+
+<P>Subclause 7.7 [<A href="https://wg21.link/expr.const#12">expr.const</A>] paragraph 12 is unambiguous that
+the code is ill-formed, but that seems unfortunate.</P>
+
+<P><B>CWG 2023-06-15</B></P>
+
+<P>CWG noted that the derived-to-base conversion is also not allowed
+for arguments for non-type template parameters.  Permitting such
+conversions is an extension, not a defect.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

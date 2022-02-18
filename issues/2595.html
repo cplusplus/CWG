@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2595</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2595"></A><H4>2595.
+  
+"More constrained" for eligible special member functions
+</H4>
+<B>Section: </B>11.4.4&#160; [<A href="https://wg21.link/special">special</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-08<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;type_traits&gt;
+
+  template&lt;typename T&gt;
+  concept Int = std::is_same_v&lt;T, int&gt;;
+
+  template&lt;typename T&gt;
+  concept Float = std::is_same_v&lt;T, float&gt;;
+
+  template&lt;typename T&gt;
+  struct Foo {
+    Foo() requires Int&lt;T&gt; = default; //<SPAN CLASS="cmnt"> #1</SPAN>
+    Foo() requires Int&lt;T&gt; || Float&lt;T&gt; = default; //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+</PRE>
+
+<P>Per the wording, #1 is not eligible for <TT>Foo&lt;float&gt;</TT>,
+because the constraints are not satisfied.  But #2 also is not
+eligible, because #1 is more constrained than #2.  The intent is that
+#2 is eligible.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-17):</B></P>
+
+<P>Change in 11.4.4 [<A href="https://wg21.link/special#6">special</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>eligible special member function</I> is a special member function for
+which:
+<UL>
+<LI>the function is not deleted,</LI>
+
+<LI>the associated constraints (13.5 [<A href="https://wg21.link/temp.constr">temp.constr</A>]), if any,
+are satisfied, and</LI>
+
+<LI>no special member function of the same kind <INS>whose associated
+constraints, if any, are satisfied</INS> is more constrained
+(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

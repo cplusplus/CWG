@@ -1,0 +1,137 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2835</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2835"></A><H4>2835.
+  
+Name-independent declarations
+</H4>
+<B>Section: </B>6.4.1&#160; [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jel&#237;nek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-30<BR>
+
+
+<P>The wording for name-independent declarations applied by P2169R4 (A
+nice placeholder with no name) apparently fails to implement the
+intent.</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void foo () { auto c = [_ = 2, _ = 3] () {}; }   // <SPAN CLASS="cmnt">duplicate identifier in lambda-capture</SPAN>
+
+  struct S { int _; int _; };  // <SPAN CLASS="cmnt">repeated member declaration</SPAN>
+
+  void f() {
+    if (int _ = 5) {    // <SPAN CLASS="cmnt">#1</SPAN>
+      int _ = 6;        // <SPAN CLASS="cmnt">#2</SPAN>
+      int k = _;        // <SPAN CLASS="cmnt">ambiguous lookup despite #1 and #2 in different scopes?</SPAN>
+    } else {
+       int _ = 7;
+    }
+  }
+</PRE>
+
+<P><U>Possible resolution (first two issues):</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture#2">expr.prim.lambda.capture</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... <INS>A <I>capture name</I> is an <I>identifier</I>
+or <TT>this</TT>.</INS> Ignoring appearances in initializers
+of <I>init-capture</I>s, <DEL>an identifier or <TT>this</TT> shall not
+appear more than once</DEL> <INS>the program is ill formed if the
+appearance of a capture name precedes another appearance of the
+same capture name </INS>in a <I>lambda-capture</I><INS>, and the
+latter is not a name-independent declaration
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</INS>.
+
+[ Example 1:
+
+<PRE>
+  struct S2 { void f(int i); };
+  void S2::f(int i) {
+    [&amp;, i]{ };  //<SPAN CLASS="cmnt"> OK</SPAN>
+    [&amp;, this, i]{ }; //<SPAN CLASS="cmnt"> OK, equivalent to [&amp;, i]</SPAN>
+    [&amp;, &amp;i]{ };      //<SPAN CLASS="cmnt"> error: i preceded by &amp; when &amp; is the default</SPAN>
+    [=, *this]{ };   //<SPAN CLASS="cmnt"> OK</SPAN>
+    [=, this]{ };    //<SPAN CLASS="cmnt"> OK, equivalent to [=]</SPAN>
+    [i, i]{ };       //<SPAN CLASS="cmnt"> error: i repeated</SPAN>
+<INS>    int _ = 17;
+    [_, _ = 42]{ };      //<SPAN CLASS="cmnt"> OK</SPAN></INS>
+    [this, *this]{ }; //<SPAN CLASS="cmnt"> error: this appears twice</SPAN>
+  }
+</PRE>
+--end example ]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#5">class.mem.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A member shall not be declared twice in the <I>member-specification</I>,
+except that
+<UL>
+<LI>a nested class or member class template can be declared and then
+later defined, and
+</LI>
+<LI>
+an enumeration can be introduced with
+an <I>opaque-enum-declaration</I> and later redeclared with
+an <I>enum-specifier</I>.
+</LI>
+</UL>
+
+[<I>Note 3:</I> A single name can denote several member functions
+provided their types are sufficiently different
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]). <INS>Repeated name-independent
+declarations declare different members.</INS> &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2023-12-15</B></P>
+
+<P>Having a lookup ambiguity for the third case (<TT>int k = _;</TT>)
+seems consistent with the idea that #1 and #2 are considered to be in
+the same scope as far as name conflict detection is concerned.
+However, that would need new rules, given that name lookup does not
+proceed to outer scopes when a name is found in an inner scope.
+Similar lookup ambiguities across nested scopes can arise among lambda
+captures, template parameters of a lambda, lambda function parameters,
+and declartions in the outermost block scope of a lambda.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 295</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="295"></A><H4>295.
+  
+cv-qualifiers on function types
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 Jun 2001<BR>
+
+
+<P>[Moved to DR at October 2002 meeting.]</P>
+
+<P>This concerns the inconsistent treatment of cv qualifiers on
+reference types and function types. The problem originated with
+GCC bug report c++/2810. The bug report is available at
+<A HREF="http://gcc.gnu.org/cgi-bin/gnatsweb.pl?cmd=view&amp;pr=2810&amp;database=gcc">
+http://gcc.gnu.org/cgi-bin/gnatsweb.pl?cmd=view&amp;pr=2810&amp;database=gcc
+</A>
+</P>
+
+<P>9.3.4.3 [<A href="https://wg21.link/dcl.ref">dcl.ref</A>] describes references. Of interest is
+the statement (my emphasis)</P>
+<BLOCKQUOTE>
+Cv-qualified references are ill-formed <B>except</B> when
+the cv-qualifiers are introduced through the use of a typedef
+or of a template type argument, in which case the cv-qualifiers
+are ignored.
+</BLOCKQUOTE>
+<P>Though it is strange to ignore 'volatile' here, that is not the point
+of this defect report. 9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] describes function types.
+Paragraph 4 states,</P>
+<BLOCKQUOTE>
+In fact, if at any time in the determination of a type a
+cv-qualified function type is formed, the program is ill-formed.
+</BLOCKQUOTE>
+<P>No allowance for typedefs or template type parameters is
+made here, which is inconsistent with the equivalent reference case.</P>
+
+<P>The GCC bug report was template code which attempted to do,</P>
+<PRE>
+    template &lt;typename T&gt; void foo (T const &amp;);
+    void baz ();
+    ...
+    foo (baz);
+</PRE>
+
+<P>in the instantiation of foo, <TT>T</TT> is `<TT>void ()</TT>' and an attempt
+is made to const qualify that, which is ill-formed. This is a surprise.</P>
+
+<P><B>Suggested resolution:</B></P>
+
+<P>Replace the quoted sentence from paragraph 4 in
+9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] with</P>
+<BLOCKQUOTE>
+cv-qualified functions are ill-formed, except when the
+cv-qualifiers are introduced through the use of a typedef or of
+a template type argument, in which case the cv-qualifiers are
+ignored.
+</BLOCKQUOTE>
+<P>Adjust the example following to reflect this.</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P>In 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4, replace
+<BLOCKQUOTE>
+The effect of a <I>cv-qualifier-seq</I> in a function declarator is
+not the same as adding cv-qualification on top of the function type,
+i.e., it does not create a cv-qualified function type.  In fact, if at
+any time in the determination of a type a cv-qualified function type
+is formed, the program is ill-formed. [<I>Example:
+</I>
+<PRE>
+  typedef void F();
+  struct S {
+    const F f;          // ill-formed
+  };
+</PRE>
+<I>-- end example</I>]
+</BLOCKQUOTE>
+by
+<BLOCKQUOTE>
+The effect of a <I>cv-qualifier-seq</I> in a function declarator is
+not the same as adding cv-qualification on top of the function type.
+In the latter case, the cv-qualifiers are ignored.  [<I>Example:
+</I>
+<PRE>
+  typedef void F();
+  struct S {
+    const F f;          // ok; equivalent to void f();
+  };
+</PRE>
+<I>-- end example</I>]
+</BLOCKQUOTE>
+</P>
+
+<P>Strike the last bulleted item in 13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2,
+ which reads
+<BLOCKQUOTE>
+Attempting to create a cv-qualified function type.
+</BLOCKQUOTE>
+</P>
+
+<P>
+<U>Nathan Sidwell</U> comments (18 Dec 2001
+):
+The proposed resolution simply states attempts to add cv qualification
+on top of a function type are ignored.  There is no mention of whether
+the function type was introduced via a typedef or template type parameter.
+This would appear to allow
+<PRE>
+  void (const *fptr) ();
+</PRE>
+but, that is not permitted by the grammar.  This is inconsistent
+with the wording of adding cv qualifiers to a reference type, which does
+mention typedefs and template parameters, even though
+<PRE>
+  int &amp;const ref;
+</PRE>
+is also not allowed by the grammar.</P>
+
+<P>Is this difference intentional? It seems needlessly confusing.</P>
+
+<P><B>Notes from 4/02 meeting:</B></P>
+
+<P>Yes, the difference is intentional.  There is no way to add cv-qualifiers
+other than those cases.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>Nathan Sidwell pointed out that some libraries use the inability to
+add const to a type T as a way of testing that T is a function
+type.  He will get back to us if he has a proposal for a change.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

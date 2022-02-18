@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 294</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="294"></A><H4>294.
+  
+Can <TT>static_cast</TT> drop exception specifications?
+</H4>
+<B>Section: </B>7.6.1.9&#160; [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Jun 2001<BR>
+
+
+<P>[Picked up by evolution group at October 2002 meeting.]</P>
+
+<P>Is it okay for a <TT>static_cast</TT> to drop exception
+specifications?</P>
+<PRE>
+    void f() throw(int);
+    int main () {
+      static_cast&lt;void (*)() throw()&gt;(f);  // Okay?
+      void (*p)() throw() = f;  // Error
+    }
+</PRE>
+
+<P>The fact that a <TT>static_cast</TT> is defined, more or less,
+as an initialization suggests that a check ought to be made.</P>
+
+<P>One tricky point: this is another case where the general rule that
+the reverse of an implicit cast is allowed as a <TT>static_cast</TT>
+bites you -- the reverse conversion doesn't drop exception
+specifications, and so is okay.  Perhaps this should be treated
+like casting away constness.</P>
+
+<P>
+<U>Mike Miller</U> comments
+:
+I don't think that case can arise.  According to 14.5 [<A href="https://wg21.link/except.spec">except.spec</A>],
+</P>
+<BLOCKQUOTE>
+An exception-specification shall appear only on a function
+declarator in a function, pointer, reference, or pointer to
+member declaration or definition.
+</BLOCKQUOTE>
+<P>We strengthened that in <A HREF="87.html">issue 87</A>
+(voted to DR status in Copenhagen) to</P>
+<BLOCKQUOTE>
+An exception-specification shall appear only on a function
+declarator for a function type, pointer to function type,
+reference to function type, or pointer to member function
+type that is the top-level type of a declaration or
+definition, or on such a type appearing as a parameter or
+return type in a function declarator.
+</BLOCKQUOTE>
+<P>As I read that, you can't put an exception-specification on the
+type-id in a static_cast, which means that a static_cast can
+only weaken, not strengthen, the exception specification.</P>
+
+<P>The core WG discussed this at the 10/01 meeting and agreed.</P>
+
+<P><B>Note (March, 2008):</B></P>
+
+<P>The Evolution Working Group recommended closing this issue with no
+further consideration.  See paper J16/07-0033 = WG21 N2173.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

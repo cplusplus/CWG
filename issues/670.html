@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 670</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="670"></A><H4>670.
+  
+Copy initialization via derived-to-base conversion in the second step
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 December 2007<BR>
+
+
+<P>[Accepted at the June, 2016 meeting as part of paper P0135R1.]</P>
+
+
+
+<P>In this example:</P>
+
+<PRE>
+    struct A {};
+
+    struct B: A {
+       B(int);
+       B(B&amp;);
+       B(A);
+    };
+
+    void foo(B);
+
+    void bar() {
+       foo(0);
+    }
+</PRE>
+
+<P>we are copy-initializing a <TT>B</TT> from <TT>0</TT>. So by
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>] we consider all the converting
+constructors of <TT>B</TT>, and choose <TT>B(int)</TT> to create
+a <TT>B</TT>.  Then, by 9.4 [<A href="https://wg21.link/dcl.init#15">dcl.init</A>] paragraph 15, we
+direct-initialize the parameter from that temporary <TT>B</TT>.  By
+12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>] we consider all constructors.  The copy
+constructor cannot be called with a temporary, but <TT>B(A)</TT> is
+callable.</P>
+
+<P>As far as I can tell, the Standard says that this example is
+well-formed, and calls <TT>B(A)</TT>.  EDG and G++ have rejected this
+example with a message about the copy constructor not being callable,
+but I have been unsuccessful in finding anything in the Standard that
+says that we only consider the copy constructor in the second step of
+copy-initialization.  I wouldn't mind such a rule, but it doesn't seem
+to be there.  And implementing <A HREF="391.html">issue 391</A>
+causes G++ to start accepting the example.</P>
+
+<P>This question came up before in
+<A href="http://gcc.gnu.org/bugzilla/show_bug.cgi?id=17431">a GCC bug
+report</A>; in the discussion of that bug Nathan Sidwell said that
+some EDG folks explained to him why the testcase is ill-formed, but
+unfortunately didn't provide that explanation in the bug report.
+</P>
+
+<P>I think the resolution of <A HREF="391.html">issue 391</A>
+makes this example well-formed; it was previously ill-formed because
+in order to bind the temporary <TT>B(0)</TT> to the argument of
+<TT>A(const A&amp;)</TT> we needed to make another
+temporary <TT>B</TT>, and that's what made the example ill-formed.  If
+we want this example to stay ill-formed, we need to change something
+else.</P>
+
+<P><U>Steve Adamczyk:</U></P>
+
+<P>I tracked down my response to Nathan at the time, and it related to
+my paper N1232 (on the <TT>auto_ptr</TT> problem).  The change that
+came out of that paper is in 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>] paragraph
+4:</P>
+
+<BLOCKQUOTE>
+
+However, when considering the argument of a user-defined conversion
+function that is a candidate by 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>] when
+invoked for the copying of the temporary in the second step of a class
+copy-initialization, or by 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>], or 12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>] in all cases, only
+standard conversion sequences and ellipsis conversion sequences are
+allowed.
+
+</BLOCKQUOTE>
+
+<P>This is intended to prevent use of more than one implicit user-
+defined conversion in an initialization.</P>
+
+<P>I told Nathan <TT>B(A)</TT> can't be called because its argument
+would require yet another user-defined conversion, but I was wrong.  I
+saw the conversion from <TT>B</TT> to <TT>A</TT> and immediately
+thought &#8220;user-defined,&#8221; but in fact because <TT>B</TT> is
+a derived class of <TT>A</TT> the conversion according to 12.2.4.2 [<A href="https://wg21.link/over.best.ics#6">over.best.ics</A>] paragraph 6 is a derived-to-base Conversion (even
+though it will be implemented by calling a copy constructor).</P>
+
+<P>So I agree with you: with the analysis above and the change for
+<A HREF="391.html">issue 391</A> this example is well-formed.  We
+should discuss whether we want to make a change to keep it
+ill-formed.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

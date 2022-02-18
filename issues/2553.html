@@ -1,0 +1,220 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2553</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2553"></A><H4>2553.
+  
+Restrictions on explicit object member functions
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-12-10<BR>
+
+
+
+
+<P>Subclause 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 specifies</P>
+
+<BLOCKQUOTE>
+
+A <I>member-declarator</I> with
+an <I>explicit-object-parameter-declaration</I> shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared <TT>static</TT> or <TT>virtual</TT>.
+
+</BLOCKQUOTE>
+
+<P>This does not address the situation when an explicit object member
+function becomes implicitly virtual by overriding an implicit object
+member function.  That should be prevented.</P>
+
+<P>This also does not address class-specific allocation and
+deallocation functions, which are implicitly <TT>static</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-15) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>member-declarator</I> with
+an <I>explicit-object-parameter-declaration</I> shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared <TT>static</TT> <DEL>or <TT>virtual</TT></DEL>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#7">dcl.fct</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+... An <I>implicit object member function</I> is a non-static member
+function without an explicit object parameter.
+<INS>[ <I>Note:</I> An explicit object member function cannot be
+virtual (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]). -- <I>end note</I> ]</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add a new paragraph before 11.7.3 [<A href="https://wg21.link/class.virtual#7">class.virtual</A>] paragraph 7 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P><INS>A virtual function shall not be an explicit object member
+function (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]).</INS></P>
+
+<P><INS>[ <I>Example:</I></INS></P>
+<PRE class="ins">
+  struct B {
+    virtual void g(); // #1
+  };
+  struct D : B {
+    virtual void f(this D&amp;);  //<SPAN CLASS="cmnt"> error: explicit object member function cannot be virtual</SPAN>
+    void g(this D&amp;);          //<SPAN CLASS="cmnt"> error: overrides #1; explicit object member function cannot be virtual</SPAN>
+  };
+</PRE>
+<P><INS>-- <I>end example</I>]</INS></P>
+
+<P>The <I>ref-qualifier</I>, or lack thereof, ...</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2023-07-14):</B></P>
+
+<OL>
+<LI>
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>member-declarator</I> with
+an <I>explicit-object-parameter-declaration</I> shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared <TT>static</TT> <DEL>or <TT>virtual</TT></DEL>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#7">dcl.fct</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+... An <I>implicit object member function</I> is a non-static member
+function without an explicit object parameter.
+<INS>[ <I>Note:</I> An explicit object member function cannot be
+virtual (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]). -- <I>end note</I> ]</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.11 [<A href="https://wg21.link/class.free#1">class.free</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Any allocation function for a class T is a static member (even if not
+explicitly declared static)<INS>; it shall not have an explicit object
+parameter</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.11 [<A href="https://wg21.link/class.free#3">class.free</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Any deallocation function for a class T is a static member (even if not
+explicitly declared static)<INS>; it shall not have an explicit object
+parameter</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>[ Note:</INS> Since member allocation and deallocation functions
+are static they cannot be virtual. <INS>-- end note ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 11.7.3 [<A href="https://wg21.link/class.virtual#7">class.virtual</A>] paragraph 7 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P><INS>A virtual function shall not be an explicit object member
+function (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]).</INS></P>
+
+<P><INS>[ <I>Example:</I></INS></P>
+<PRE class="ins">
+  struct B {
+    virtual void g(); // #1
+  };
+  struct D : B {
+    virtual void f(this D&amp;);  //<SPAN CLASS="cmnt"> error: explicit object member function cannot be virtual</SPAN>
+    void g(this D&amp;);          //<SPAN CLASS="cmnt"> error: overrides #1; explicit object member function cannot be virtual</SPAN>
+  };
+</PRE>
+<P><INS>-- <I>end example</I>]</INS></P>
+
+<P>The <I>ref-qualifier</I>, or lack thereof, ...</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-11-09</B></P>
+
+<P>Progress of this issue is blocked on <A HREF="2554.html">issue 2554</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

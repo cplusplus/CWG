@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 166</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="166"></A><H4>166.
+  
+Friend declarations of <I>template-id</I>s
+</H4>
+<B>Section: </B>_N4868_.9.8.2.3&#160; [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 Sep 1999<BR>
+
+
+
+
+
+<P>
+<U>John Spicer</U>:
+I believe the standard is not clear with respect to this example:</P>
+
+<PRE>
+    namespace N {
+      template &lt;class T&gt; void f(T);
+      namespace M {
+        struct A {
+          friend void f&lt;int&gt;(int);  // okay - refers to N::f
+        };
+      }
+    }
+</PRE>
+
+At issue is whether the friend declaration refers to <TT>N::f</TT>, or
+whether it is invalid.
+
+<P>A note in
+6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#6">basic.scope.pdecl</A>] paragraph 6
+says</P>
+
+<BLOCKQUOTE>
+friend declarations refer to functions or classes
+that are members of the nearest enclosing namespace ...
+</BLOCKQUOTE>
+
+I believe it
+is intended to mean <I>unqualified</I> friend declarations.  Certainly
+<TT>friend void A::B()</TT> need not refer
+to a member of the nearest enclosing
+namespace.  Only when the declarator is unqualified (i.e., it is a declaration
+and not a reference) does this rule need to apply.  The presence of an
+explicit template argument list requires
+that a previous declaration be visible and renders this a reference and not
+a declaration that is subject to this rule.
+
+<P>
+<U>Mike Miller</U>:
+_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3
+says,</P>
+
+<BLOCKQUOTE>
+When looking for a prior declaration of a
+class or a function declared as a friend, scopes outside the
+innermost enclosing namespace scope are not considered.
+</BLOCKQUOTE>
+
+On the other hand, the friend declaration would be a syntax
+error if <TT>f</TT> weren't declared as a template name; it would
+seem very strange not to find the declaration that made the
+friend declaration syntactically correct.
+
+However, it also seems strange to treat this case differently
+from ordinary functions and from templates:
+
+<PRE>
+    namespace N {
+      template &lt;class T&gt; void f(T);
+      void g();
+      namespace M {
+        struct A {
+          friend void f&lt;int&gt;(int);               // N::f
+          template &lt;class T&gt; friend void f(T);   // M::f
+          friend void g();                       // M::g
+        };
+      }
+    }
+</PRE>
+
+<P>
+<U>John Spicer</U>:
+This section refers to "looking for a prior declaration".  This
+gets back to an earlier discussion we've had about the difference between
+matching two declarations of the same name and doing name lookup.  I would
+maintain that in <TT>f&lt;int&gt;</TT>
+the <TT>f</TT> is looked up using a normal lookup.  In
+practice, this is really how it has to be done because the declaration
+could actually be <TT>f&lt;int&gt;::x</TT>.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>In
+_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3,
+ change</P>
+
+<BLOCKQUOTE>
+When looking for a prior declaration of a class or a function declared
+as a friend, scopes outside the innermost enclosing namespace scope are
+not considered.
+</BLOCKQUOTE>
+
+to
+
+<BLOCKQUOTE>
+When looking for a prior declaration of a class or a function declared
+as a friend, and when the name of the friend class or function is
+neither a qualified name nor a <I>template-id</I>, scopes outside the
+innermost enclosing namespace scope are not considered.
+</BLOCKQUOTE>
+
+Also, change the example in that paragraph as follows:
+
+<PRE>
+    void h(int);
+    template &lt;class T&gt; void f2(T);
+    namespace A {
+        class X {
+            friend void f(X);       // A::f(X) is a friend
+            friend void f2&lt;&gt;(int);  // ::f2&lt;&gt;(int) is a friend
+    ...
+</PRE>
+
+<P>(See also issues
+<A HREF="95.html">95</A>,
+<A HREF="136.html">136</A>,
+<A HREF="138.html">138</A>,
+<A HREF="139.html">139</A>,
+<A HREF="143.html">143</A>, and
+<A HREF="165.html">165</A>.)</P>
+<BR><BR>
+</BODY>
+</HTML>

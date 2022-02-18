@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 478</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="478"></A><H4>478.
+  
+May a function parameter be an array of an abstract class type?
+</H4>
+<B>Section: </B>9.3.4.5&#160; [<A href="https://wg21.link/dcl.array">dcl.array</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Sep 2004<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    struct S {
+      virtual void v() = 0;
+    };
+
+    void f(S sa[10]);     // permitted?
+</PRE>
+
+<P>9.3.4.5 [<A href="https://wg21.link/dcl.array#1">dcl.array</A>] paragraph 1 says that a
+declaration like that of <TT>sa</TT> is ill-formed:</P>
+
+<BLOCKQUOTE>
+
+<TT>T</TT> is called the array <I>element type</I>; this type
+shall not be a reference type, the (possibly cv-qualified) type
+<TT>void</TT>, a function type or an abstract class type.
+
+</BLOCKQUOTE>
+
+<P>On the other hand, 9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3
+says that the type of <TT>sa</TT> is adjusted to <TT>S*</TT>,
+which would be permitted:</P>
+
+<BLOCKQUOTE>
+
+The type of each parameter is determined from its own
+<I>decl-specifier-seq</I> and <I>declarator</I>. After
+determining the type of each parameter, any parameter of type
+&#8220;array of <TT>T</TT>&#8221; or &#8220;function returning
+<TT>T</TT>&#8221; is adjusted to be &#8220;pointer to
+<TT>T</TT>&#8221; or &#8220;pointer to function returning
+<TT>T</TT>,&#8221; respectively.
+
+</BLOCKQUOTE>
+
+<P>It is not clear whether the parameter adjustment trumps the
+prohibition on declaring an array of an abstract class type or
+not.  Implementations differ in this respect: EDG 2.4.2 and
+MSVC++ 7.1 reject the example, while g++ 3.3.3 and Sun Workshop 8
+accept it.</P>
+
+<P><B>Rationale (April, 2005):</B></P>
+
+<P>The prohibition in 9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>] is absolute
+and does not allow for exceptions.  Even though such a type in a
+parameter declaration would decay to an allowed type, the prohibition
+applies to the type before the decay.</P>
+
+<P>This interpretation is consistent with the resolution of
+<A HREF="337.html">issue 337</A>, which causes template type
+deduction to fail if such types are deduced.  It was also observed
+that pointer arithmetic on pointers to abstract classes is very
+likely to fail, and the fact that the programmer used array notation
+to declare the pointer type is a strong indication that he/she
+expected to use subscripting.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

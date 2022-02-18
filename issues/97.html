@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 97</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="97"></A><H4>97.
+  
+Use of bool constants in integral constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andy Koenig
+ &#160;&#160;&#160;
+
+ <B>Date: </B>18 Feb 1999<BR>
+
+
+
+
+
+<P>Consider:</P>
+<PRE>
+    int* p = false;         // Well-formed?
+    int* q = !1;            // What about this?
+</PRE>
+
+&gt;From 6.8.2 [<A href="https://wg21.link/basic.fundamental#6">basic.fundamental</A>] paragraph 6:
+
+"As described below, <TT>bool</TT> values behave as integral types."
+
+<P>From 7.3.12 [<A href="https://wg21.link/conv.ptr#1">conv.ptr</A>] paragraph 1:
+ "A null
+pointer constant is an integral constant expression rvalue of integer
+type that evaluates to zero."</P>
+
+<P>From 7.7 [<A href="https://wg21.link/expr.const#1">expr.const</A>] paragraph 1:
+ "An
+<I>integral constant-expression</I> can involve only literals,
+enumerators, const variables or static members of integral or
+enumeration types initialized with constant expressions, ..."</P>
+
+<P>In 5.13.2 [<A href="https://wg21.link/lex.icon">lex.icon</A>]
+: No mention of
+<TT>true</TT> or <TT>false</TT> as an integer literal.</P>
+
+<P>From 5.13.7 [<A href="https://wg21.link/lex.bool">lex.bool</A>]
+: <TT>true</TT> and
+<TT>false</TT> are Boolean literals.</P>
+
+<P>So the definition of <TT>q</TT> is certainly valid, but the
+validity of <TT>p</TT> depends on how the sentence in
+7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]
+ is parsed. Does it mean
+<UL>{literals, enumerators, const variables, or static members} of
+integral of integral or enumeration types...</UL> Or does it mean
+<UL>literals (of any type), enumerators, const variables, or {static
+members of integral or enumeration types}</UL> Or something else?</P>
+
+<P>If the latter, then <TT>(3.0 &lt; 4.0)</TT> is a constant expression,
+which I don't think we ever wanted. If the former, though, we have the
+anomalous notion that <TT>true</TT> and <TT>false</TT> are not constant
+expressions.</P>
+
+<P>Now, you may argue that you shouldn't be allowed to convert
+<TT>false</TT> to a pointer. But what about this?</P>
+
+<PRE>
+    static const bool debugging = false;
+
+    // ...
+
+    int table[debugging? n+1: n];
+</PRE>
+
+Whether the definition of table is well-formed hinges on whether
+<TT>false</TT> is an integral constant expression.
+
+<P>I think that it should be, and that failure to make it so was just
+an oversight.</P>
+
+<P>
+<B>Rationale (04/99):</B> A careful reading of
+7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]
+ indicates that all types of
+literals can appear in integral constant expressions, but
+floating-point literals must immediately be cast to an integral type.</P>
+<BR><BR>
+</BODY>
+</HTML>

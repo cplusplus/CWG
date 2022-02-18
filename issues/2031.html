@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2031</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2031"></A><H4>2031.
+  
+Missing incompatibility for <TT>&amp;&amp;</TT>
+</H4>
+<B>Section: </B>C.6.3&#160; [<A href="https://wg21.link/diff.cpp03.expr">diff.cpp03.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Melissa Mears
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-10-31<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+<P>The introduction of rvalue references in C++11 changed the
+interpretation of some previously well-formed examples such as
+the following:</P>
+
+<PRE>
+  struct Struct { template &lt;typename T&gt; operator T(); };
+  bool example_1 = new int &amp;&amp; false;               //<SPAN CLASS="cmnt"> #1</SPAN>
+  bool example_2 = &amp;Struct::operator int &amp;&amp; false; //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>Previously the <TT>&amp;&amp;</TT> was interpreted as an operator,
+while it is now part of a <I>type-name</I>.  However, this change is
+not mentioned in Annex Clause Annex C [<A href="https://wg21.link/diff">diff</A>].</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<P>Add the following as a new subsection in C.6.3 [<A href="https://wg21.link/diff.cpp03.expr">diff.cpp03.expr</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>7.6.15 [<A href="https://wg21.link/expr.log.or">expr.log.or</A>]<BR>
+<B>Change:</B> <TT>&amp;&amp;</TT> is valid in a <I>type-name</I><BR>
+<B>Rationale:</B> Required for new features<BR>
+<B>Effect on original feature:</B> Valid C++ 2003 code may fail to
+compile or produce different results in this International
+Standard, as the following example illustrates:</P>
+
+<PRE>
+  bool b1 = new int &amp;&amp; false;           //<SPAN CLASS="cmnt"> previously </SPAN>false<SPAN CLASS="cmnt">, now ill-formed</SPAN>
+  struct S { operator int(); };
+  bool b2 = &amp;S::operator int &amp;&amp; false;  //<SPAN CLASS="cmnt"> previously </SPAN>false<SPAN CLASS="cmnt">, now ill-formed</SPAN>
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

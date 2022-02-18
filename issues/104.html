@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 104</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="104"></A><H4>104.
+  
+Destroying the exception temp when no handler is found
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Schilling
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Mar 1999<BR>
+
+
+
+
+
+<P>Questions regarding when a throw-expression temporary object is destroyed.</P>
+<P>
+Section 14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]
+
+paragraph 4 describes when the temporary is destroyed when a handler is found.
+But what if no handler is found:</P>
+<PRE>
+    struct A {
+        A() { printf ("A() \n"); }
+        A(const A&amp;) { printf ("A(const A&amp;)\n"); }
+        ~A() { printf ("~A() \n"); }
+    };
+
+    void t() { exit(0); }
+
+    int main() {
+        std::set_terminate(t);
+        throw A();
+    }
+</PRE>
+Does <TT>A::~A()</TT> ever execute here?
+(Or, in case two constructions are done,
+are there two destructions done?)  Is it implementation-defined, analogously
+to whether the stack is unwound before <TT>terminate()</TT> is called
+(14.4 [<A href="https://wg21.link/except.handle#9">except.handle</A>] paragraph 9)
+?
+<P>
+Or what if an exception specification is violated?  There are several
+different scenarios here:</P>
+<PRE>
+    int glob = 0; // or 1 or 2 or 3
+
+    struct A {
+        A() { printf ("A() \n"); }
+        A(const A&amp;) { printf ("A(const A&amp;)\n"); }
+        ~A() { printf ("~A() \n"); }
+    };
+
+    void u() {
+        switch (glob) {
+        case 0:  exit(0);
+        case 1:  throw "ok";
+        case 2:  throw 17;
+        default: throw;
+        }
+    }
+
+    void foo() throw(const char*, std::bad_exception) {
+        throw A();
+    }
+
+    int main() {
+        std::set_unexpected(u);
+        try {
+            foo();
+        }
+        catch (const char*) { printf("in handler 1\n"); }
+        catch (std::bad_exception) { printf("in handler 2\n"); }
+    }
+</PRE>
+The case where <TT>u()</TT> exits is presumably similar to the <TT>terminate()</TT> case.
+But in the cases where the program goes on, <TT>A::~A()</TT> should be called
+for the thrown object at some point.  But where does this happen?
+The standard doesn't really say.  Since an exception is defined to
+be "finished" when the <TT>unexpected()</TT> function exits, it seems to me that
+is where <TT>A::~A()</TT> should be called &#8212; in this case, as the throws of
+new (or what will become new) exceptions are made out of <TT>u()</TT>.
+Does this make sense?
+
+<P>
+<B>Rationale (10/99):</B> Neither <TT>std::exit(int)</TT> nor
+<TT>std::abort()</TT> destroys temporary objects, so the exception
+temporary is not destroyed when no handler is found.  The original
+exception object is destroyed when it is replaced by an
+<TT>unexpected()</TT> handler.  The Standard is sufficiently clear
+on these points.</P>
+<BR><BR>
+</BODY>
+</HTML>

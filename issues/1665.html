@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1665</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1665"></A><H4>1665.
+  
+Declaration matching in explicit instantiations
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-19<BR>
+
+
+
+
+<P>Consider a case like</P>
+
+<PRE>
+  struct X {
+    template&lt;typename T&gt; void f(T);
+    void f(int);
+  };
+  template void X::f(int);
+</PRE>
+
+<P>or</P>
+
+<PRE>
+  template&lt;typename T&gt; void f(T) {}
+  void f(int);
+  template void f(int);
+</PRE>
+
+<P>Presumably in both these cases the explicit instantiation should
+refer to the template and not to the non-template; however,
+13.7.3 [<A href="https://wg21.link/temp.mem#2">temp.mem</A>] paragraph 2 says,</P>
+
+<BLOCKQUOTE>
+
+A normal (non-template) member function with a given name and type and a
+member function template of the same name, which could be used to generate
+a specialization of the same type, can both be declared in a class. When
+both exist, a use of that name and type refers to the non-template member
+unless an explicit template argument list is supplied.
+
+</BLOCKQUOTE>
+
+<P>This would appear to give the wrong answer for the first example.
+It's not clearly stated, but consistency would suggest a similar wrong
+answer for the second.  Presumably a statement is needed somewhere that
+an explicit instantiation directive applies to a template and not a
+non-template function if both are visible.</P>
+
+<P><B>Additional note, January, 2014:</B></P>
+
+<P>A related example has been raised:</P>
+
+<PRE>
+  template&lt;typename T&gt; class Matrix {
+  public:
+    Matrix(){}
+    Matrix(const Matrix&amp;){}
+    template&lt;typename U&gt;
+      Matrix(const Matrix&lt;U&gt;&amp;);
+  };
+
+  template Matrix&lt;int&gt;::Matrix(const Matrix&amp;);
+
+  Matrix&lt;int&gt; m;
+  Matrix&lt;int&gt; mm(m);
+</PRE>
+
+<P>If the explicit instantiation directive applies to the
+constructor template, there is no way to explicitly instantiate
+the copy constructor.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

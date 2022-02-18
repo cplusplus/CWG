@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2617</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2617"></A><H4>2617.
+  
+Default template arguments for template members of non-template classes
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-08-22<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+struct S {
+  template&lt;typename&gt; void f();
+};
+
+template&lt;typename = int&gt; void S::f() { }   // ok?
+</PRE>
+
+<P>There is implementation divergence in the treatment of this
+example. The relevant wording appears to be 13.2 [<A href="https://wg21.link/temp.param#12">temp.param</A>] paragraph 12:</P>
+
+<BLOCKQUOTE>
+
+A default <I>template-argument</I> shall not be specified in
+the <I>template-parameter-list</I>s of the definition of a member of a
+class template that appears outside of the member's class.
+
+</BLOCKQUOTE>
+
+<P>However, the example above deals with a member of an ordinary
+class, not a class template, but it is not clear why there should be a
+difference between a member template of a class template and a member
+template of a non-template class.</P>
+
+<P>Alternatively, it is not clear why the example above should be
+treated differently from a non-member function template, e.g.,</P>
+
+<PRE>
+template&lt;typename&gt; void f();
+template&lt;typename = int&gt; void f() { }
+</PRE>
+
+<P>which is explicitly permitted.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 13.2 [<A href="https://wg21.link/temp.param#10">temp.param</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+... A default <I>template-argument</I> may be specified in a template
+declaration.  A default <I>template-argument</I> shall not be
+specified in the <I>template-parameter-list</I>s of the definition of
+a member of a <DEL>class template</DEL> <INS>templated class C</INS>
+that appears outside of the <DEL>member's class</DEL>
+<INS><I>class-specifier</I> of C</INS>.  A default
+<I>template-argument</I> shall not be specified in a friend class
+template declaration. If a friend function template declaration D
+specifies a default <I>template-argument</I>, that declaration shall
+be a definition and there shall be no other declaration of the
+function template which is reachable from D or from which D is
+reachable.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

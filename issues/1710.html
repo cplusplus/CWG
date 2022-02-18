@@ -1,0 +1,320 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1710</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1710"></A><H4>1710.
+  
+Missing <TT>template</TT> keyword in <I>class-or-decltype</I>
+</H4>
+<B>Section: </B>11.7&#160; [<A href="https://wg21.link/class.derived">class.derived</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-03<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+<P>A <I>class-or-decltype</I> is used as a <I>base-specifier</I> and
+as a <I>mem-initializer-id</I> that names a base class.  It is
+specified in 11.7 [<A href="https://wg21.link/class.derived#1">class.derived</A>] paragraph 1 as:</P>
+
+<UL>
+<I>class-or-decltype:</I>
+<UL>
+<I>nested-name-specifier<SUB>opt</SUB> class-name</I><BR>
+<I>decltype-specifier</I>
+
+</UL>
+
+</UL>
+
+<P>Consequently, a declaration like</P>
+
+<PRE>
+  template&lt;typename T&gt; struct D : T::template B&lt;int&gt;::template C&lt;int&gt; {};
+</PRE>
+
+<P>is ill-formed, although most implementations accept it; some actually
+require the use of the <TT>template</TT> keyword, although the relevant
+wording in 13.3 [<A href="https://wg21.link/temp.names#4">temp.names</A>] paragraph 4 only requires it in a
+<I>qualified-id</I>, not in a <I>class-or-decltype</I>.  It would
+probably be good to add a production like</P>
+
+<UL><UL>
+<I>nested-name-specifier</I> <TT>template</TT> <I>simple-template-id</I>
+</UL></UL>
+
+<P>to the definition of <I>class-or-decltype</I> and explicitly mention
+those contexts in 13.3 [<A href="https://wg21.link/temp.names">temp.names</A>] as not requiring use of the
+<TT>template</TT> keyword.</P>
+
+<P><B>Additional note (January, 2014):</B></P>
+
+<P>This is effectively issues <A HREF="314.html">314</A> and
+<A HREF="343.html">343</A>.</P>
+
+<P>See also <A HREF="1812.html">issue 1812</A>.</P>
+
+<P><B>Proposed resolution (February, 2014) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI><P>Change Clause 11 [<A href="https://wg21.link/class#3">class</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a class is marked with the <I>class-virt-specifier</I> <TT>final</TT>
+and it appears as
+a <DEL><I>base-type-specifier</I></DEL> <INS><I>class-or-decltype</I></INS>
+in a <I>base-clause</I> (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), the program is
+ill-formed. Whenever a <I>class-key</I> is followed...
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar in 11.7 [<A href="https://wg21.link/class.derived#1">class.derived</A>] paragraph 1 as
+follows:</P></LI>
+
+<UL>
+<I>base-specifier:</I>
+<UL>
+<I>attribute-specifier-seq<SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I><BR>
+<I>attribute-specifier-seq<SUB>opt</SUB></I> <TT>virtual</TT> <I>access-specifier<SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I><BR>
+<I>attribute-specifier-seq<SUB>opt</SUB> access-specifier</I> <TT>virtual</TT><I><SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I>
+</UL>
+<I>class-or-decltype:</I>
+<UL>
+<I>nested-name-specifier<SUB>opt</SUB> class-name</I><BR>
+<INS><I>nested-name-specifier</I> <TT>template</TT> <I>simple-template-id</I></INS><BR>
+<I>decltype-specifier</I>
+</UL>
+<DEL><I>base-type-specifier:</I></DEL>
+<UL>
+<DEL><I>class-or-decltype</I></DEL>
+</UL>
+<I>access-specifier:</I>
+<UL>...</UL>
+</UL>
+
+<LI><P>Delete paragraph 4 and change paragraph 5 of
+13.3 [<A href="https://wg21.link/temp.names">temp.names</A>] as follows, splitting paragraph 5 into two
+paragraphs and moving the example from paragraph 4 into paragraph
+5:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>When the name of a member template specialization appears after
+<TT>.</TT> or <TT>-&gt;</TT> in a <I>postfix-expression</I> or after
+a <I>nested-name-specifier</I> in a <I>qualified-id</I>, and the object
+expression of the <I>postfix-expression</I> is type-dependent or
+the <I>nested-name-specifier</I> in the <I>qualified-id</I> refers to a
+dependent type, but the name is not a member of the current instantiation
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the member template name must be prefixed
+by the keyword <TT>template</TT>.  Otherwise the name is assumed to name a
+non-template. [<I>Example:</I> ... &#8212;<I>end example</I>]</DEL></P>
+
+<P>A name prefixed by the keyword <TT>template</TT> shall be
+a <I>template-id</I> or the name shall refer to a class template
+<INS>or alias template</INS>.  [<I>Note:</I> The keyword <TT>template</TT>
+may not be applied to non-template members of class
+templates. &#8212;<I>end note</I>] <INS>The <I>nested-name-specifier</I>
+(_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]) of</INS>
+</P>
+
+<UL>
+<LI><P><INS>a <I>class-head-name</I> (Clause 11 [<A href="https://wg21.link/class">class</A>])
+or <I>enum-head</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) (if any) or</INS></P></LI>
+
+<LI><P><INS>a <I>qualified-id</I> in a <I>declarator-id</I>
+(9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]),</INS></P></LI>
+
+</UL>
+
+<P><INS>or a <I>nested-name-specifier</I> directly contained in such a
+<I>nested-name-specifier</I> (recursively), shall not be of the form</INS></P>
+
+<UL><INS><I>nested-name-specifier</I> <TT>template</TT> <I>simple-template-id</I> <TT>::</TT></INS></UL>
+
+<P><INS>[<I>Note:</I> That is, a <I>simple-template-id</I> shall not be
+prefixed by the keyword <TT>template</TT> in these cases. &#8212;<I>end
+note</I>]</INS></P>
+
+<P><INS>The keyword <TT>template</TT> is optional in a
+<I>typename-specifier</I> (13.8 [<A href="https://wg21.link/temp.res">temp.res</A>]),
+<I>elaborated-type-specifier</I> (9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]),
+<I>using-declaration</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]), or
+<I>class-or-decltype</I> (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), and in
+recursively directly-contained <I>nested-name-specifier</I>s thereof.
+In these contexts, a <TT>&lt;</TT> token is always assumed to introduce
+a <I>template-argument-list</I>. [<I>Note:</I> Thus, if the preceding
+name is not a <I>template-name</I>, the program is ill-formed.
+&#8212;<I>end note</I>] In other contexts, when the name of a member
+template specialization appears after a <I>nested-name-specifier</I> that
+denotes a dependent type, but the name is not a member of the current
+instantiation, the member template name shall be prefixed by the
+keyword <TT>template</TT>.  Similarly, when the name of a member
+template specialization appears after <TT>.</TT> or <TT>-&gt;</TT>
+in a <I>postfix-expression</I> (7.6.1 [<A href="https://wg21.link/expr.post">expr.post</A>]) and the
+object expression of the <I>postfix-expression</I> is type-dependent,
+but the name is not a member of the current instantiation
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the member template name shall be
+prefixed by the keyword <TT>template</TT>. Otherwise, the name is
+assumed to name a non-template. [<I>Example:</I></INS></P>
+
+<PRE>
+    <I>&lt;From original paragraph 4&gt;</I>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example]</I></INS> [<I>Note:</I> As is the case with
+the <TT>typename</TT> prefix...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves issues <A HREF="314.html">314</A>,
+<A HREF="343.html">343</A>, <A HREF="1794.html">1794</A>, and
+<A HREF="1812.html">1812</A>.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>Concerns have been expressed over the clarity and organization of
+the proposed resolution, so the issue has been moved back to "review"
+status to allow CWG to address these concerns.</P>
+
+<P><B>Proposed resolution, March, 2017:</B></P>
+
+<OL>
+<LI><P>Change Clause 11 [<A href="https://wg21.link/class#3">class</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+If a class is marked with the <I>class-virt-specifier</I> <TT>final</TT>
+and it appears as a <DEL><I>base-type-specifier</I></DEL>
+<INS><I>class-or-decltype</I></INS> in a <I>base-clause</I> (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), the program is ill-formed. Whenever
+a <I>class-key</I> is followed by a <I>class-head-name</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change the grammar in 11.7 [<A href="https://wg21.link/class.derived#1">class.derived</A>] paragraph 1 as
+follows:</P></LI>
+
+<UL>
+<I>base-specifier:</I>
+<UL>
+<I>attribute-specifier-seq<SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I><BR>
+<I>attribute-specifier-seq<SUB>opt</SUB></I> <TT>virtual</TT> <I>access-specifier<SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I><BR>
+<I>attribute-specifier-seq<SUB>opt</SUB> access-specifier</I> <TT>virtual</TT><I><SUB>opt</SUB> <DEL>base-type-specifier</DEL> <INS>class-or-decltype</INS></I>
+</UL>
+<BR>
+<I>class-or-decltype:</I>
+<UL>
+<I>nested-name-specifier<SUB>opt</SUB> class-name</I><BR>
+<INS><I>nested-name-specifier</I> <TT>template</TT> <I>simple-template-id</I><BR></INS>
+<I>decltype-specifier</I>
+</UL>
+<BR>
+<DEL><I>base-type-specifier:</I></DEL>
+<UL>
+<DEL><I>class-or-decltype</I></DEL>
+</UL>
+</UL>
+
+<LI><P>Change 11.7 [<A href="https://wg21.link/class.derived#2">class.derived</A>] paragraph 2 as followx:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The type denoted by a <I>base-type-specifier</I></DEL>
+<INS>A <I>class-or-decltype</I></INS> shall <DEL>be</DEL>
+<INS>denote</INS> a class type that is not an incompletely defined class
+(Clause 11 [<A href="https://wg21.link/class">class</A>])<DEL>; this</DEL><INS>. The</INS>
+class <INS>denoted by the <I>class-or-decltype</I> of
+a <I>base-specifier</I></INS> is called a <I>direct base class</I> for the
+class being defined. During the lookup for a base class name...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.3 [<A href="https://wg21.link/temp.names">temp.names</A>] paragraphs 4 and 5 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>When the name of a member template specialization appears after
+. or -&gt; in a <I>postfix-expression</I> or after
+a <I>nested-name-specifier</I> in a <I>qualified-id</I>, and the object
+expression of the <I>postfix-expression</I> is type-dependent or
+the <I>nested-name-specifier</I> in the <I>qualified-id</I> refers to a
+dependent type, but the name is not a member of the current
+instantiation</DEL> <INS>The keyword <TT>template</TT> is said to appear
+at the top level in a <I>qualified-id</I> if it appears outside of a
+<I>template-argument-list</I> or <I>decltype-specifier</I>. In a
+<I>qualified-id</I> of a <I>declarator-id</I> or in a
+<I>qualified-id</I> formed by a <I>class-head-name</I> (
+Clause 11 [<A href="https://wg21.link/class">class</A>]) or <I>enum-head-name</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]),
+the keyword <TT>template</TT> shall not appear at the top level. In a
+<I>qualified-id</I> used as the name in a <I>typename-specifier</I>
+(13.8 [<A href="https://wg21.link/temp.res">temp.res</A>]), <I>elaborated-type-specifier</I>
+(9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]), <I>using-declaration</I>
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]), or <I>class-or-decltype</I> (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), an optional keyword <TT>template</TT> appearing
+at the top level is ignored. In these contexts, a <TT>&lt;</TT> token is
+always assumed to introduce a <I>template-argument-list</I>. In all other
+contexts, when naming a template specialization of a member of an unknown
+specialization</INS> (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the member template
+name <DEL>must</DEL> <INS>shall</INS> be prefixed by the
+keyword <TT>template</TT>. <DEL>Otherwise the name is assumed to name a
+non-template.</DEL> [<I>Example:</I>...</P>
+
+<P>A name prefixed by the keyword <TT>template</TT> shall be
+a <I>template-id</I> or the name shall refer to a class template <INS>or an
+alias template</INS>.  [<I>Note:</I> The keyword <TT>template</TT> may not
+be applied to non-template members of class templates. &#8212;<I>end
+note</I>]...</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.8 [<A href="https://wg21.link/temp.res#5">temp.res</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A qualified name used as the name in a <DEL><I>mem-initializer-id</I>,
+a <I>base-specifier</I>,</DEL> <INS><I>class-or-decltype</I> (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>])</INS> or an <I>elaborated-type-specifier</I> is
+implicitly assumed to name a type, without the use of the <TT>typename</TT>
+keyword. In a <I>nested-name-specifier</I> that immediately contains
+a <I>nested-name-specifier</I> that depends on a template parameter, the
+identifier or <I>simple-template-id</I> is implicitly assumed to name a
+type, without the use of the <TT>typename</TT> keyword. [<I>Note:</I> The
+<TT>typename</TT> keyword is not permitted by the syntax of these
+constructs. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

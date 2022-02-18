@@ -1,0 +1,195 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2753</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2753"></A><H4>2753.
+  
+Storage reuse for string literal objects and backing arrays
+</H4>
+<B>Section: </B>6.7.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-29<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Subclause 6.7.2 [<A href="https://wg21.link/intro.object#9">intro.object</A>] paragraph 9 specifies the general
+principle that two objects with overlapping lifetimes have
+non-overlapping storage, which can be observed by comparing
+addresses:</P>
+
+<BLOCKQUOTE>
+
+Unless an object is a bit-field or a subobject of zero size, the
+address of that object is the address of the first byte it
+occupies. Two objects with overlapping lifetimes that are not
+bit-fields may have the same address if one is nested within the
+other, or if at least one is a subobject of zero size and they are of
+different types; otherwise, they have distinct addresses and occupy
+disjoint bytes of storage.
+
+</BLOCKQUOTE>
+
+<P>After P2752, there are two exceptions: string literal objects and
+backing arrays for initializer lists.</P>
+
+<P>Subclause 5.13.5 [<A href="https://wg21.link/lex.string#9">lex.string</A>] paragraph 9 specifies:</P>
+
+<BLOCKQUOTE>
+
+Evaluating a <I>string-literal</I> results in a string literal object
+with static storage duration (6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]). Whether
+all <I>string-literal</I>s are distinct (that is, are stored in
+nonoverlapping objects) and whether successive evaluations of
+a <I>string-literal</I> yield the same or a different object is
+unspecified.
+
+</BLOCKQUOTE>
+
+<P>Subclause 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5, after application of P2752R3 (approved in June, 2023), specifies:</P>
+
+<BLOCKQUOTE>
+
+Whether all backing arrays are distinct (that is, are stored in
+non-overlapping objects) is unspecified.
+
+</BLOCKQUOTE>
+
+<P>It is unclear whether a backing array can overlap with a string
+literal object.</P>
+
+<P>Furthermore, it is unclear whether any such object can overlap with
+named objects or temporaries, for example:</P>
+
+<PRE>
+  const char (&amp;r) [] = "foo";
+  const char a[] = {'f', 'o', 'o', '\0'};
+
+  int main() {  
+    assert(&amp;r == &amp;a);   // allowed not to fail?
+  }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-09):</B></P>
+
+<OL>
+
+<LI>
+<P>Add a new paragraph before 6.7.2 [<A href="https://wg21.link/intro.object#9">intro.object</A>] paragraph 9 and
+change the latter as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An object is a <I>potentially non-unique object</I> if it is a string literal
+object (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]), the backing array of an
+initializer list (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), or a subobject thereof.
+</P>
+
+<P>Unless an object is a bit-field or a subobject of zero size, the
+address of that object is the address of the first byte it
+occupies. Two objects with overlapping lifetimes that are not
+bit-fields may have the same address if one is nested within the
+other, or if at least one is a subobject of zero size and they are of
+different types<INS>, or if they are both potentially non-unique objects</INS>;
+otherwise, they have distinct addresses and occupy disjoint bytes of
+storage.</P>
+
+<P>[Example 2:</P>
+
+<PRE>
+  static const char test1 = 'x';
+  static const char test2 = 'x';
+  const bool b = &amp;test1 != &amp;test2;  //<SPAN CLASS="cmnt"> always true</SPAN>
+
+<INS>  static const char (&amp;r) [] = "x";
+  static const char *s = "x";  
+  static std::initializer_list&lt;char&gt; il = { 'x' };
+  const bool b2 = r != il.begin();        //<SPAN CLASS="cmnt"> unspecified result</SPAN>
+  const bool b3 = r != s;                 //<SPAN CLASS="cmnt"> unspecified result</SPAN>
+  const bool b4 = il.begin() != &amp;test1;   //<SPAN CLASS="cmnt"> always </SPAN>true
+  const bool b5 = r != &amp;test1;            //<SPAN CLASS="cmnt"> always </SPAN>true</INS>
+</PRE>
+<P> -- end example]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in subclause 5.13.5 [<A href="https://wg21.link/lex.string#9">lex.string</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+Evaluating a <I>string-literal</I> results in a string literal object
+with static storage duration (6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>]). <INS>[
+Note: String literal objects are potentially non-unique
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).</INS> Whether
+<DEL>all <I>string-literal</I>s are distinct (that is, are stored in
+nonoverlapping objects) and whether</DEL> successive evaluations of
+a <I>string-literal</I> yield the same or a different object
+is unspecified. <INS>-- end note ]</INS>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in subclause 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5, after
+application of P2752R3 (approved in June, 2023), as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Whether all backing arrays are distinct (that is, are stored in
+non-overlapping objects) is unspecified.</DEL> <INS>[ Note: Backing
+arrays are potentially non-unique objects (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]). -- end
+note ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-07-14</B></P>
+
+<P>CWG resolved that a named or temporary object is always disjoint
+from any other object, and thus cannot overlap with a string literal
+object or a backing array.  The lines <TT>b4</TT> and <TT>b5</TT> in the example
+highlight that outcome.</P>
+
+<P>Backing arrays and string literals can arbitrarily overlap among
+themselves; CWG believes the proposed wording achieves that
+outcome.</P>
+
+<P>The ancillary question how address comparisons between potentially
+non-unique objects are treated during constant evaluation is handled
+in <A HREF="2765.html">issue 2765</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

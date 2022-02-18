@@ -1,0 +1,233 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1168</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1168"></A><H4>1168.
+  
+Additional reasons to call <TT>std::terminate</TT>
+</H4>
+<B>Section: </B>14.6.2&#160; [<A href="https://wg21.link/except.terminate">except.terminate</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>GB
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-08-03<BR><BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2011/n3296.html#GB47">N3092 comment
+  GB&#160;47<BR></A>
+
+<P>The list of reasons for which <TT>std::terminate</TT> is called
+needs to be extended to cover several additional cases in
+C++0x:</P>
+
+<UL>
+<LI><P>when function
+<TT>std::nested_exception::rethrow_nested</TT> is called for
+an object that stores a null exception pointer.</P></LI>
+
+<LI><P>when execution of a function registered with
+<TT>std::at_quick_exit</TT> exits using an exception.</P></LI>
+
+<LI><P>when the destructor or a copy constructor of class
+<TT>std::thread</TT> is called for the object that is
+joinable.</P></LI>
+
+</UL>
+
+<P><B>Proposed resolution (August, 2010):</B></P>
+
+<OL>
+<LI><P>Change 14.6.2 [<A href="https://wg21.link/except.terminate#1">except.terminate</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>In <DEL>the following</DEL> <INS>some</INS> situations
+exception handling must be abandoned for less subtle error
+handling techniques<DEL>:</DEL><INS>. [<I>Note:</I> These
+situations are:</INS>
+</P>
+
+<UL>
+<LI><P>when the exception handling mechanism, after
+completing evaluation of the expression to be thrown but
+before the exception is caught (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]),
+calls a function that exits via an <DEL>uncaught</DEL>
+exception, <DEL>[<I>Footnote:</I> For example, if the object
+being thrown is of a class with a copy constructor,
+std::terminate() will be called if that copy constructor
+exits with an exception during a throw. &#8212;<I>end
+footnote</I>]</DEL> <INS>or</INS>
+</P></LI>
+
+<LI><P>when the exception handling mechanism cannot find a
+handler for a thrown exception (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]),
+or</P></LI>
+
+<LI><P>when the search for a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) encounters the outermost block of a function
+with a <I>noexcept-specification</I> that does not allow the
+exception (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), or</P></LI>
+
+<LI><P>when the destruction of an object during stack
+unwinding (15.2) terminates by throwing an exception,
+or</P></LI>
+
+<LI><P>when initialization of a non-local variable with
+static or thread storage duration (6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]<DEL>, 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]</DEL>)
+<DEL>terminates by throwing</DEL> <INS>exits via</INS> an
+exception, or</P></LI>
+
+<LI><P>when destruction of an object with static or thread
+storage duration exits <DEL>using</DEL> <INS>via</INS> an
+exception (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]), or</P></LI>
+
+<LI><P>when execution of a function registered with
+<TT>std::atexit</TT> <INS>or
+<TT>std::at_quick_exit</TT></INS> exits <DEL>using</DEL>
+<INS>via</INS> an exception (17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]),
+or</P></LI>
+
+<LI><P>when a <I>throw-expression</I> with no operand
+attempts to rethrow an exception and no exception is being
+handled (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), or</P></LI>
+
+<LI><P>when <TT>std::unexpected</TT> throws an exception
+which is not allowed by the previously violated
+<I><INS>dynamic-</INS>exception-specification</I>, and
+<TT>std::bad_exception</TT> is not included in that
+<I><INS>dynamic-</INS>exception-specification</I>
+(_N4606_.15.5.2 [<A href="https://wg21.link/except.unexpected">except.unexpected</A>]), or</P></LI>
+
+<LI><P>when the implementation's default unexpected
+exception handler is called (_N4606_.D.6.1 [<A href="https://wg21.link/unexpected.handler">unexpected.handler</A>])<DEL>.</DEL><INS>, or</INS>
+</P></LI>
+
+<LI><P><INS>when the function
+<TT>std::nested_exception::rethrow_nested</TT> is called for
+an object that has captured no exception (17.9.8 [<A href="https://wg21.link/except.nested">except.nested</A>]), or</INS></P></LI>
+
+<LI><P><INS>when execution of the initial function of a thread
+exits via an exception (32.4.3.3 [<A href="https://wg21.link/thread.thread.constr">thread.thread.constr</A>]),
+or</INS></P></LI>
+
+<LI><P><INS>when the destructor or the copy assignment operator
+is invoked on a <TT>std::thread</TT> object that refers to a
+joinable thread (32.4.3.4 [<A href="https://wg21.link/thread.thread.destr">thread.thread.destr</A>], 32.4.3.5 [<A href="https://wg21.link/thread.thread.assign">thread.thread.assign</A>]).</INS></P></LI>
+
+</UL>
+
+<P><INS>&#8212;<I>end note</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Insert the following as a new paragraph following
+14.2 [<A href="https://wg21.link/except.throw#6">except.throw</A>] paragraph 6:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An exception is considered caught...</P>
+
+<P><INS>If the exception handling mechanism, after
+completing evaluation of the expression to be thrown but
+before the exception is caught, calls a function that exits
+via an exception, <TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>    struct C {
+      C() { }
+      C(const C&amp;) { throw 0; }
+    };
+
+    int main() {
+      try {
+        throw C();   //<SPAN CLASS="cmnt"> calls </SPAN>std::terminate()
+      } catch(C) { }
+    }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 14.3 [<A href="https://wg21.link/except.ctor#3">except.ctor</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The process of calling destructors for automatic objects
+constructed on the path from a try block to a
+<I>throw-expression</I> is called &#8220;<I>stack
+unwinding</I>.&#8221; <DEL>[<I>Note:</I></DEL> If a
+destructor called during stack unwinding exits with an
+exception, <TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). <INS>[<I>Note:</I></INS> So destructors
+should generally catch exceptions and not let them propagate
+out of the destructor.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.9.3.2 [<A href="https://wg21.link/basic.start.static#6">basic.start.static</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note:</I></DEL> If the initialization of a
+non-local variable with static or thread storage duration
+<DEL>terminates by throwing</DEL> <INS>exits via</INS> an
+exception, <TT>std::terminate</TT> is called (<DEL>see</DEL>
+14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). <DEL>&#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#1">basic.start.dynamic</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>[<I>Note:</I></DEL> If the destruction of <DEL>a
+non-local</DEL> <INS>an</INS> object with static or thread
+storage duration <DEL>terminates by throwing</DEL>
+<INS>exits via</INS> an exception, <TT>std::terminate</TT>
+is called (<DEL>see</DEL> 14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). <DEL>&#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 17.5 [<A href="https://wg21.link/support.start.term#8.1">support.start.term</A>] bullet 8.1 as
+follows:</P></LI>
+
+<UL>
+<LI>
+<P>First, objects with thread storage duration...</P>
+
+<P>If control leaves a registered function called by
+<TT>exit</TT> because the function does not provide a
+handler for a thrown exception, <TT>terminate()</TT> shall
+be called <INS>(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>])</INS>.</P>
+
+</LI>
+
+</UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

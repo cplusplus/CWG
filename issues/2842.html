@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2842</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2842"></A><H4>2842.
+  
+Preferring an <TT>initializer_list</TT> over a single value
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-10<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;initializer_list&gt;
+  struct A { A(int) {} };
+  void f(int) = delete;
+  void f(std::initializer_list&lt;A&gt;) {}   // <SPAN CLASS="cmnt">#1</SPAN>
+  int main() { f({10}); }
+</PRE>
+
+<P>The intent of <A HREF="1467.html">issue 1467</A> was to make
+this example well-formed by choosing #1, according to this rule and a
+corresponding example in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.1">over.ics.rank</A>] bullet 3.1:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>List-initialization sequence L1 is a better conversion sequence than
+list-initialization sequence L2 if
+<UL>
+<LI>L1 converts to std::initializer_list&lt;X&gt; for some X and L2
+does not, or, if not that,</LI>
+<LI>...</LI>
+</UL>
+even if one of the other rules in this paragraph would otherwise
+apply.
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>See also <A HREF="2137.html">issue 2137</A> and
+<A HREF="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64665">gcc issue 64665</A>.
+</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Move 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#2">over.ics.rank</A>] paragraph 2 into paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="del">
+When comparing the basic forms of implicit conversion sequences (as
+defined in 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>])
+<UL class="del">
+<LI>a standard conversion sequence (12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>])
+is a better conversion sequence than a user-defined conversion
+sequence or an ellipsis conversion sequence, and</LI>
+<LI>a user-defined conversion sequence
+(12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]) is a better conversion sequence than
+an ellipsis conversion sequence
+(12.2.4.2.4 [<A href="https://wg21.link/over.ics.ellipsis">over.ics.ellipsis</A>]).</LI>
+</UL>
+</P>
+
+<P>
+Two implicit conversion sequences <DEL>of the same form</DEL> are
+indistinguishable conversion sequences unless one of the following
+rules applies:
+<UL>
+<LI>List-initialization sequence L1 is a better conversion sequence than
+list-initialization sequence L2 if
+<UL>
+<LI>L1 converts to std::initializer_list&lt;X&gt; for some X and L2
+does not, or, if not that,</LI>
+<LI>...</LI>
+</UL>
+<DEL>even if one of the other rules in this paragraph would otherwise
+apply</DEL>.
+</LI>
+
+<LI class="ins">
+Otherwise, a standard conversion sequence (12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>])
+is a better conversion sequence than a user-defined conversion
+sequence or an ellipsis conversion sequence, and</LI>
+<LI class="ins">a user-defined conversion sequence
+(12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]) is a better conversion sequence than
+an ellipsis conversion sequence
+(12.2.4.2.4 [<A href="https://wg21.link/over.ics.ellipsis">over.ics.ellipsis</A>]).</LI>
+
+<LI>Standard conversion sequence S1 is a better conversion sequence
+than ...</LI>
+</UL>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

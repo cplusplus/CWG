@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1388</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1388"></A><H4>1388.
+  
+Missing non-deduced context following a function parameter pack
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-09-02<BR>
+
+
+<P>[Moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>Presumably 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5">temp.deduct.type</A>] paragraph 5 should include a
+bullet for a function parameter or function parameter pack that follows a
+function parameter pack.</P>
+
+<P><B>Proposed resolution (February, 2012):</B></P>
+
+<P>Change 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...<DEL>For a function parameter pack that does not occur at the end of
+the <I>parameter-declaration-list</I>, the type of the parameter pack is a
+non-deduced context.</DEL> <INS>When a function parameter pack appears in a
+non-deduced context (13.10.3.6 [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]), the type of that
+parameter pack is never deduced.</INS> [<I>Example:</I>
+</P>
+
+<PRE>
+  template&lt;class ... Types&gt; void f(Types&amp; ...);
+  template&lt;class T1, class ... Types&gt; void g(T1, Types ...);
+<INS>  template&lt;class T1, class ... Types&gt; void g1(Types ..., T1);</INS>
+
+  void h(int x, float&amp; y) {
+    const int z = x;
+    f(x, y, z);                  //<SPAN CLASS="cmnt"> </SPAN>Types<SPAN CLASS="cmnt"> is deduced to </SPAN>int, float, const int
+    g(x, y, z);                  //<SPAN CLASS="cmnt"> </SPAN>T1<SPAN CLASS="cmnt"> is deduced to </SPAN>int<SPAN CLASS="cmnt">; </SPAN>Types<SPAN CLASS="cmnt"> is deduced to </SPAN>float, int
+<INS>    g1(x, y, z);                 //<SPAN CLASS="cmnt"> error: </SPAN>Types<SPAN CLASS="cmnt"> is not deduced</SPAN>
+    g1&lt;int, int, int&gt;(x, y, z);  //<SPAN CLASS="cmnt"> OK, no deduction occurs</SPAN></INS>
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="1399.html">issue 1399</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

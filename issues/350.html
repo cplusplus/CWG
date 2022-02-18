@@ -1,0 +1,408 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 350</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="350"></A><H4>350.
+  
+<TT>signed char</TT> underlying representation for objects
+</H4>
+<B>Section: </B>6.8&#160; [<A href="https://wg21.link/basic.types">basic.types</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Noah Stein
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 April 2002
+  &#160;&#160;&#160;
+  <B>Liaison: </B>WG14<BR>
+
+
+<P>Sent in by David Abrahams:</P>
+
+<P>Yes, and to add to this tangent, 6.8.2 [<A href="https://wg21.link/basic.fundamental#1">basic.fundamental</A>] paragraph 1
+states "Plain char, signed char, and unsigned char are
+three distinct types."  Strangely, 6.8 [<A href="https://wg21.link/basic.types#2">basic.types</A>] paragraph 2
+talks about how "... the underlying bytes making up
+the object can be copied into an array of char or unsigned char.
+If the content of the array of char or unsigned char is copied back
+into the object, the object shall subsequently hold its original
+value."  I guess there's no requirement that this copying
+work properly with signed chars!</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>We should do whatever C99 does.  6.5p6 of the C99 standard says
+"array of character type", and "character type" includes signed
+char (6.2.5p15), and 6.5p7 says "character type".
+But see also 6.2.6.1p4, which mentions (only) an array of unsigned char.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>Change 6.7.4 [<A href="https://wg21.link/basic.life#5.3">basic.life</A>] bullet 5.3 from</P>
+
+<UL>
+<LI>
+the pointer is used as the operand of a
+<TT>static_cast</TT>
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>])
+(except when the conversion is to
+<TT>void*</TT>,
+or to
+<TT>void*</TT>
+and subsequently to
+<TT>char*</TT>,
+or
+<TT>unsigned</TT>
+<TT>char*</TT>).
+</LI>
+</UL>
+
+<P>to</P>
+
+<UL>
+<LI>
+the pointer is used as the operand of a
+<TT>static_cast</TT>
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>])
+(except when the conversion is to
+<TT>void*</TT>,
+or to
+<TT>void*</TT>
+and subsequently to a pointer to byte-character type).
+</LI>
+</UL>
+
+<P>Change 6.7.4 [<A href="https://wg21.link/basic.life#6.3">basic.life</A>] bullet 6.3 from </P>
+<UL>
+<LI>
+the lvalue is used as the operand of a
+<TT>static_cast</TT>
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>])
+(except when the conversion is ultimately to
+<TT>char&amp;</TT>
+or
+<TT>unsigned</TT>
+<TT>char&amp;</TT>),
+or
+</LI>
+</UL>
+<P>to</P>
+<UL>
+<LI>
+the lvalue is used as the operand of a
+<TT>static_cast</TT>
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>])
+(except when the conversion is ultimately to a reference to
+byte-character type),
+or
+</LI>
+</UL>
+
+<P>Change the beginning of 6.8 [<A href="https://wg21.link/basic.types#2">basic.types</A>] paragraph 2 from</P>
+<BLOCKQUOTE>
+For any object (other than a base-class subobject) of POD type
+<TT>T</TT>,
+whether or not the object holds a valid value of type
+<TT>T</TT>,
+the underlying bytes (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>])
+making up the object can be copied
+into an array of
+<TT>char</TT>
+or
+<TT>unsigned</TT>
+<TT>char</TT>.
+</BLOCKQUOTE>
+<P>to</P>
+<BLOCKQUOTE>
+For any object (other than a base-class subobject) of POD type
+<TT>T</TT>,
+whether or not the object holds a valid value of type
+<TT>T</TT>,
+the underlying bytes (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>])
+making up the object can be copied
+into an array of byte-character type.
+</BLOCKQUOTE>
+
+<P>Add the indicated text to 6.8.2 [<A href="https://wg21.link/basic.fundamental#1">basic.fundamental</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+Objects declared as characters
+(<TT>char</TT>)
+shall be large enough to store any member of
+the implementation's basic character set.
+If a character from this set is stored in a character object,
+the integral value of that character object
+is equal to
+the value of the single character literal form of that character.
+It is implementation-defined whether a
+<TT>char</TT>
+object can hold negative values.
+Characters can be explicitly declared
+<TT>unsigned</TT>
+or
+<TT>signed</TT>.
+Plain
+<TT>char</TT>,
+<TT>signed char</TT>,
+and
+<TT>unsigned char</TT>
+are three distinct types<INS>, called the <I>byte-character types</I></INS>.
+A
+<TT>char</TT>,
+a
+<TT>signed char</TT>,
+and an
+<TT>unsigned char</TT>
+occupy the same amount of storage and have the same alignment requirements
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]); that is, they have the
+same object representation.
+For <INS>byte-</INS>character types, all bits of the object representation participate in
+the value representation.
+For unsigned <INS>byte-</INS>character types, all possible bit
+patterns of the value representation represent numbers.
+These requirements
+do not hold for other types.
+In any particular implementation, a plain
+<TT>char</TT>
+object can take on either the same values as a
+<TT>signed char</TT>
+or an
+<TT>unsigned char</TT>;
+which one is implementation-defined.
+</BLOCKQUOTE>
+
+<P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#15">basic.lval</A>] paragraph 15 last bullet from</P>
+<UL>
+<LI>
+a
+<TT>char</TT>
+or
+<TT>unsigned</TT>
+<TT>char</TT>
+type.
+</LI>
+</UL>
+<P>to</P>
+<UL>
+<LI>
+a byte-character type.
+</LI>
+</UL>
+
+<P><B>Notes from October 2003 meeting:</B></P>
+
+<P>It appears that in C99 signed char may have padding bits but no trap
+representation, whereas in C++ signed char has no padding bits but
+may have -0.  A memcpy in C++ would have to copy the array preserving
+the actual representation and not just the value.</P>
+
+<P>March 2004: The liaisons to the C committee have been asked to tell us
+whether this change would introduce any unnecessary incompatibilities
+with C.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>The C99 Standard appears to be inconsistent in its
+requirements.  For example, 6.2.6.1 paragraph 4 says:</P>
+
+<BLOCKQUOTE>
+
+The value may be copied into an object of type
+<TT>unsigned&#160;char&#160;[</TT><I>n</I><TT>]</TT> (e.g., by
+<TT>memcpy</TT>); the resulting set of bytes is called the
+<I>object representation</I> of the value.
+
+</BLOCKQUOTE>
+
+<P>On the other hand, 6.2 paragraph 6 says,</P>
+
+<BLOCKQUOTE>
+
+If a value is copied into an object having no declared type using
+<TT>memcpy</TT> or <TT>memmove</TT>, or is copied as an array of
+character type, then the effective type of the modified object
+for that access and for subsequent accesses that do not modify
+the value is the effective type of the object from which the
+value is copied, if it has one.
+
+</BLOCKQUOTE>
+
+<P>Mike Miller will investigate further.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<OL>
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#5.4">basic.life</A>] bullet 5.4 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...The program has undefined behavior if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>the pointer is used as the operand of a
+<TT>static_cast</TT> (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]) (except when
+the conversion is to <INS><I>cv</I></INS> <TT>void*</TT>, or to
+<INS><I>cv</I></INS> <TT>void*</TT> and subsequently to
+<DEL><TT>char*</TT>, or <TT>unsigned char*</TT></DEL> <INS>a
+pointer to a cv-qualified or cv-unqualified byte-character type
+(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])</INS>), or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.4 [<A href="https://wg21.link/basic.life#6.4">basic.life</A>] bullet 6.4 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...The program has undefined behavior if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>the lvalue is used as the operand of a
+<TT>static_cast</TT> (7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]) except when the
+conversion is ultimately to <DEL><I>cv</I> <TT>char&amp;</TT> or
+<I>cv</I> <TT>unsigned char&amp;</TT></DEL> <INS>a reference to a
+cv-qualified or cv-unqualified byte-character type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) or an array thereof</INS>, or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8 [<A href="https://wg21.link/basic.types#2">basic.types</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For any object (other than a base-class subobject) of trivially
+copyable type <TT>T</TT>, whether or not the object holds a valid
+value of type <TT>T</TT>, the underlying bytes (6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) making up the object can be copied into an array of
+<DEL><TT>char</TT> or <TT>unsigned char</TT></DEL> <INS>a
+byte-character type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])</INS>.<SUP>39</SUP> If the content of
+<DEL>the</DEL> <INS>that</INS> array <DEL>of <TT>char</TT> or
+<TT>unsigned char</TT></DEL> is copied back into the object, the
+object shall subsequently hold its original
+value. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.8.2 [<A href="https://wg21.link/basic.fundamental#1">basic.fundamental</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Characters can be explicitly declared <TT>unsigned</TT> or
+<TT>signed</TT>.  Plain <TT>char</TT>, <TT>signed char</TT>, and
+<TT>unsigned char</TT> are three distinct types<INS>, called the
+<I>byte-character types</I></INS>.  A <TT>char</TT>, a <TT>signed
+char</TT>, and an <TT>unsigned char</TT> occupy the same amount
+of storage and have the same alignment requirements (6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]); that is, they have the same object
+representation. For <INS>byte-</INS>character types, all bits of
+the object representation participate in the value
+representation.  For <DEL>unsigned character types</DEL>
+<INS><TT>unsigned char</TT></INS>, all possible bit patterns of
+the value representation represent numbers...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.2.1 [<A href="https://wg21.link/basic.lval#15">basic.lval</A>] paragraph 15 final bullet
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a program attempts to access the stored value of an object
+through an lvalue of other than one of the following types the
+behavior is undefined <SUP>52</SUP>
+</P>
+
+<UL>
+
+<LI><P>...</P></LI>
+
+<LI><P>a <DEL><TT>char</TT> or <TT>unsigned char</TT></DEL>
+<INS>byte-character</INS> type <INS>(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])</INS>.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.3 [<A href="https://wg21.link/basic.align#6">basic.align</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The alignment requirement of a complete type can be queried using
+an <TT>alignof</TT> expression (7.6.2.6 [<A href="https://wg21.link/expr.alignof">expr.alignof</A>]).
+Furthermore, the <INS>byte-character</INS> types
+<INS>(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])</INS> <DEL><TT>char</TT>,
+<TT>signed char</TT>, and <TT>unsigned char</TT></DEL> shall have
+the weakest alignment requirement.  [<I>Note:</I> this enables
+the <INS>byte-</INS>character types to be used as the underlying
+type for an aligned memory area (9.12.2 [<A href="https://wg21.link/dcl.align">dcl.align</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#10">expr.new</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...For arrays of <DEL><TT>char</TT> and <TT>unsigned
+char</TT></DEL> <INS>a byte-character type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])</INS>, the difference between the result of the
+<I>new-expression</I> and the address returned by the allocation
+function shall be an integral multiple of the strictest
+fundamental alignment requirement (6.7.3 [<A href="https://wg21.link/basic.align">basic.align</A>]) of
+any object type whose size is no greater than the size of the
+array being created. [<I>Note:</I> Because allocation functions
+are assumed to return pointers to storage that is appropriately
+aligned for objects of any type with fundamental alignment, this
+constraint on array allocation overhead permits the common idiom
+of allocating <INS>byte-</INS>character arrays into which objects
+of other types will later be placed. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the March, 2010 meeting:</B></P>
+
+<P>The CWG was not convinced that there was a need to change the
+existing specification at this time.  Some were concerned that there
+might be implementation difficulties with giving <TT>signed char</TT>
+the requisite semantics; implementations for which that is true can
+currently make <TT>char</TT> equivalent to <TT>unsigned char</TT> and
+avoid those problems, but the suggested change would undermine that
+strategy.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>There is now the term &#8220;narrow character type&#8221; that
+should be used instead of &#8220;byte-character type&#8221;.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,211 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2533</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2533"></A><H4>2533.
+  
+Storage duration of implicitly created objects
+</H4>
+<B>Section: </B>6.7.6&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-17<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>In subclause 6.7.2 [<A href="https://wg21.link/intro.object#10">intro.object</A>] paragraph 10,
+operations implicitly creating objects are defined:</P>
+
+<BLOCKQUOTE>
+
+Some operations are described as <I>implicitly creating objects</I>
+within a specified region of storage. For each operation that is
+specified as implicitly creating objects, that operation implicitly
+creates and starts the lifetime of zero or more objects of
+implicit-lifetime types (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) in its specified
+region of storage if...
+
+</BLOCKQUOTE>
+
+<P>However, the standard does not specify the storage duration that
+such an implicitly-created object has; this new method of object
+creation is not mentioned in 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#2">basic.stc.general</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+Static, thread, and automatic storage durations are associated with
+objects introduced by declarations (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]) and
+implicitly created by the implementation
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). The dynamic storage duration is
+associated with objects created by a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]).
+
+</BLOCKQUOTE>
+
+<P>With the exception of <TT>malloc</TT>, the storage duration should
+probably be that of the object providing storage (if any), similar to
+the provision for subobjects in 6.7.6.1 [<A href="https://wg21.link/basic.stc.general">basic.stc.general</A>]:</P>
+
+<BLOCKQUOTE>
+
+The storage duration of subobjects and reference members is that of
+their complete object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).
+
+</BLOCKQUOTE>
+
+<P>The storage duration of an object created by a non-allocating form
+of an allocation function (17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]) should be
+treated similarly.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.2 [<A href="https://wg21.link/intro.object#13">intro.object</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+Any implicit or explicit invocation of a function named <TT>operator
+new</TT> or <TT>operator new[]</TT> implicitly creates
+objects <INS>with dynamic storage duration</INS> in the returned
+region of storage and returns a pointer to a suitable created object.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#2">basic.stc.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Static, thread, and automatic storage durations are associated with
+objects introduced by declarations (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]) and
+implicitly created by the implementation
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). The dynamic storage duration is
+associated with objects created <DEL>by a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>])</DEL> <INS>in storage returned by an
+allocation function (6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>]) other than a
+non-allocating form (17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]) or by C library
+memory allocation (20.2.12 [<A href="https://wg21.link/c.malloc">c.malloc</A>])</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#3">basic.stc.dynamic.allocation</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For an allocation function <DEL>other than a reserved placement
+allocation function</DEL> <INS>other than a non-allocating form</INS>
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]), the pointer returned on a successful
+call shall represent the address of storage that is aligned as
+follows:
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#1">basic.stc.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The storage duration of <DEL>subobjects and</DEL> reference members is
+that of their complete object<INS>. The storage duration of an object
+nested within another object <I>x</I> is the storage duration
+of <I>x</I></INS> (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#9">expr.new</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>An object created by a <I>new-expression</I> that invokes an
+allocation function with a non-allocating form (see below) has the
+storage duration of the object that used to occupy the region of
+storage where the new object is created.</INS>
+
+<DEL>Objects</DEL> <INS>Any other object</INS> created by
+a <I>new-expression</I> <DEL>have</DEL> <INS>has</INS>
+dynamic storage duration (6.7.6.5 [<A href="https://wg21.link/basic.stc.dynamic">basic.stc.dynamic</A>]).  [<I>Note
+5:</I> The lifetime of such an object is not necessarily restricted to
+the scope in which it is created. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 20.2.12 [<A href="https://wg21.link/c.malloc#4">c.malloc</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+These functions implicitly create objects (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])
+<INS>with dynamic storage duration</INS> in the returned region of
+storage and return a pointer to a suitable created object. In the case
+of calloc and realloc, the objects are created before the storage is
+zeroed or copied, respectively.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional note (December, 2023)</B></P>
+
+<P>The approach outlined above is incomplete and the wrong direction.
+The concept of storage duration determines when an object is created
+and destroyed; for dynamic storage duration, the object is created and
+destroyed by explicit program action.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-01-19):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#2">basic.stc.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Static, thread, and automatic storage durations are associated with
+objects introduced by declarations (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]) and
+<DEL>implicitly created by the implementation</DEL> <INS>with
+temporary objects</INS> (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). The dynamic
+storage duration is associated with objects created by
+a <I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) <INS>or with
+implicitly created objects (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])</INS>.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

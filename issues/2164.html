@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2164</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2164"></A><H4>2164.
+  
+Name hiding and <I>using-directive</I>s
+</H4>
+<B>Section: </B>_N4868_.6.4.10&#160; [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-07-26<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+   const int i = -1;
+   namespace T {
+     namespace N { const int i = 1; }
+     namespace M {
+       using namespace N;
+       int a[i];
+     }
+   }
+</PRE>
+
+<P>According to 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>], lookup for
+<TT>i</TT> finds <TT>T::N::i</TT> and stops.  However,
+according to _N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding#1">basic.scope.hiding</A>] paragraph 1,
+the appearance of <TT>T::N::i</TT> in namespace <TT>T</TT>
+does <I>not</I> hide <TT>::i</TT>, so both declarations of
+<TT>i</TT> are visible in the declaration of <TT>a</TT>.</P>
+
+<P>It seems strange that we specify this name hiding rule
+in two different ways in two different places, but they
+should at least be consistent.</P>
+
+<P>On a related note, the wording in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#2">basic.lookup.unqual</A>] paragraph 2,
+ &#8220;as if they were declared in the nearest
+enclosing namespace...&#8221; could be confusing with regard to
+the &#8220;declared in the same scope&#8221; provisions of
+_N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>].</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<P>Change _N4868_.6.4.10 [<A href="https://wg21.link/basic.scope.hiding">basic.scope.hiding</A>] paragraphs 1 and 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>A name can be hidden by an explicit declaration of that same name
+in a nested declarative region or derived class
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>])</DEL> <INS>A declaration of a name in a nested
+declarative region hides a declaration of the same name in an enclosing
+declarative region; see _N4868_.6.4.1 [<A href="https://wg21.link/basic.scope.declarative">basic.scope.declarative</A>] and
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]</INS>.</P>
+
+<P>
+<DEL>A class name (11.3 [<A href="https://wg21.link/class.name">class.name</A>]) or enumeration name
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be hidden by the name of a variable, data
+member, function, or enumerator declared in the same scope.</DEL> If a
+class <INS>name (11.3 [<A href="https://wg21.link/class.name">class.name</A>])</INS> or enumeration
+name <INS>(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>])</INS> and a variable, data member,
+function, or enumerator are declared in the same <DEL>scope</DEL>
+<INS>declarative region</INS> (in any order) with the same
+name <INS>(excluding declarations made visible via <I>using-directive</I>s
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]))</INS>, the class or enumeration name is
+hidden wherever the variable, data member, function, or enumerator name is
+visible.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

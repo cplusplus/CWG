@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 464</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="464"></A><H4>464.
+  
+Wording nit on lifetime of temporaries to which references are bound
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Allan Odgaard
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Feb 2004<BR>
+
+
+<P>[Voted into WP at April, 2006 meeting.]</P>
+
+<P>Section 6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5 ends with this "rule":</P>
+<BLOCKSCOPE>
+    [...] if obj2 is an object with static or automatic
+    storage  duration created  after  the temporary  is
+    created,  the temporary  shall  be destroyed  after
+    obj2 is destroyed.
+</BLOCKSCOPE>
+<P>For the temporary to be destroyed after obj2 is destroyed, when obj2 has
+static storage, I would say that the reference to the temporary should
+also have static storage, but that is IMHO not clear from the
+paragraph.</P>
+
+<P>Example:</P>
+<PRE>
+    void f ()
+    {
+       const T1&amp; ref = T1();
+       static T2 obj2;
+       ...
+    }
+</PRE>
+<P>Here the temporary would be destoyed <I>before</I> obj2, contrary to the
+rule above.</P>
+
+<P>
+<U>Steve Adamczyk:</U> I agree there's a minor issue here.  I think
+the clause quoted above meant for obj1 and obj2 to have the same storage
+duration.  Replacing "obj2 is an object with static or automatic
+storage duration" by "obj2 is an object with the same storage duration as
+obj1" would, I believe, fix the problem.</P>
+
+<P><B>Notes from October 2004 meeting:</B></P>
+
+<P>We agreed with Steve Adamczyk's suggestion.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<P>Change 6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+... In addition, the destruction of temporaries bound to references
+shall take into account the ordering of destruction of objects with
+static or automatic storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>],
+6.7.6.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]); that is, if <TT>obj1</TT> is an object
+<DEL>with static or automatic storage duration</DEL> created before the
+temporary is created <INS>with the same storage duration as the
+temporary</INS>, the temporary shall be destroyed before <TT>obj1</TT>
+is destroyed; if <TT>obj2</TT> is an object <DEL>with static or
+automatic storage duration</DEL> created after the temporary is
+created <INS>with the same storage duration as the temporary</INS>, the
+temporary shall be destroyed after <TT>obj2</TT> is destroyed...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

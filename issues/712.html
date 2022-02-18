@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 712</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="712"></A><H4>712.
+  
+Are integer constant operands of a <I>conditional-expression</I> &#8220;used?&#8221;
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 September, 2008<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+<P>In describing static data members initialized inside the class
+definition, 11.4.9.3 [<A href="https://wg21.link/class.static.data#3">class.static.data</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+The member shall still be defined in a namespace scope if it is
+used in the program...
+
+</BLOCKQUOTE>
+
+<P>The definition of &#8220;used&#8221; is in 6.3 [<A href="https://wg21.link/basic.def.odr#1">basic.def.odr</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+
+An object or non-overloaded function whose name appears as a
+potentially-evaluated expression is <I>used</I> unless it is an
+object that satisfies the requirements for appearing in a
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and the
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is
+immediately applied.
+
+</BLOCKQUOTE>
+
+<P>Now consider the following example:</P>
+
+<PRE>
+    struct S {
+      static const int a = 1;
+      static const int b = 2;
+    };
+    int f(bool x) {
+      return x ? S::a : S::b;
+    }
+</PRE>
+
+<P>According to the current wording of the Standard, this example
+requires that <TT>S::a</TT> and <TT>S::b</TT> be defined in a
+namespace scope.  The reason for this is that, according to
+7.6.16 [<A href="https://wg21.link/expr.cond#4">expr.cond</A>] paragraph 4, the result of this
+<I>conditional-expression</I> is an lvalue and the
+lvalue-to-rvalue conversion is applied to that, not directly
+to the object, so this fails the &#8220;immediately applied&#8221;
+requirement.  This is surprising and unfortunate, since only the
+values and not the addresses of the static data members are used.
+(This problem also applies to the proposed resolution of
+<A HREF="696.html">issue 696</A>.)</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<P>Divide 6.3 [<A href="https://wg21.link/basic.def.odr#2">basic.def.odr</A>] paragraph 2 into two paragraphs
+and change as follows:</P>
+
+<P>An expression is <I>potentially evaluated</I> unless it is an
+unevaluated operand (Clause 5) or a subexpression thereof. <INS>The
+<I>set of potential results</I> of an expression <TT>e</TT> is defined
+as:</INS>
+</P>
+
+<UL>
+<LI><P><INS>if <TT>e</TT> is an <I>id-expression</I>
+(_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general">expr.prim.general</A>]), the set whose sole member is
+<TT>e</TT>,</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a class member access
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), the set of potential results of the
+object expression,</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a pointer-to-member expression
+(7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]) whose second operand is a constant
+expression, the set of potential results of the object
+expression,</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> has the form <TT>(e1)</TT>, the set of
+potential results of <TT>e1</TT>,</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a glvalue conditional expression
+(7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]), the union of the sets of potential
+results of the second and third operands,</INS></P></LI>
+
+<LI><P><INS>if <TT>e</TT> is a comma expression
+(7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]), the set of potential results of the
+right operand,</INS></P></LI>
+
+<LI><P><INS>otherwise, the empty set.</INS></P></LI>
+
+</UL>
+
+<P>A variable <INS><TT>x</TT></INS> whose name appears as a
+potentially-evaluated expression <INS><TT>ex</TT></INS> is
+<I>odr-used</I> unless <DEL>it</DEL> <INS><TT>x</TT></INS> is an
+object that satisfies the requirements for appearing in a constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) and <INS><TT>ex</TT> is an
+element of the set of potential results of an expression <TT>e</TT>,
+where either</INS> the lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is <DEL>immediately</DEL> applied <INS>to <TT>e</TT>, or
+<TT>e</TT> is a discarded-value expression (Clause 7 [<A href="https://wg21.link/expr">expr</A>])</INS>. <TT>this</TT> is odr-used...</P>
+
+<I>[Drafting note: this wording requires <TT>S::a</TT> to be defined
+if it is used in an expression like <TT>*&amp;S::a</TT>.]</I>
+
+<BR><BR>
+</BODY>
+</HTML>

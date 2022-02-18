@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1847</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1847"></A><H4>1847.
+  
+Clarifying compatibility during partial ordering
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-01-30<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>There is implementation divergence in the handling of an example
+like</P>
+
+<PRE>
+  template&lt;typename D&gt; struct A { };
+  template&lt;typename T&gt; struct Wrap1 { typedef T type; };
+  template&lt;typename T&gt; struct Wrap2 { typedef T type; };
+
+  template&lt;typename T1&gt;
+  A&lt;typename Wrap1&lt;T1&gt;::type&gt;
+  fn(const A&lt;T1&gt;&amp; x, const A&lt;T1&gt;&amp; y);
+
+  template&lt;typename T2, typename U&gt;
+  A&lt;typename Wrap2&lt;T2&gt;::type&gt;
+  fn(const A&lt;T2&gt;&amp; x, const A&lt;U&gt;&amp; y);
+
+  A&lt;int&gt; (*p)(const A&lt;int&gt;&amp;, const A&lt;int&gt;&amp;) = fn;
+</PRE>
+
+<P>The implementations that accept this example do so by not
+comparing the return types of the two templates during
+partial ordering, which seems to make sense given that partial
+ordering would not have been performed if the candidate
+specializations were not indistinguishable from the perspective of
+overload resolution.  However, the existing wording is not clear
+that that is how such types are be handled.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1391.html">issue 1391</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

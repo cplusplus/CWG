@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 150</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="150"></A><H4>150.
+  
+Template template parameters and default arguments
+</H4>
+<B>Section: </B>13.4.4&#160; [<A href="https://wg21.link/temp.arg.template">temp.arg.template</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 Aug 1999<BR>
+
+
+
+<P>[Moved to DR at the November, 2016 meeting as paper P0522R0.]</P>
+
+<P>[Picked up by evolution group at October 2002 meeting.]</P>
+
+
+
+<P>How are default template arguments handled with respect to template
+template parameters?  Two separate questions have been raised:</P>
+
+<OL>
+<LI>
+Do default template arguments allow a template argument to match a
+template parameter with fewer template parameters, and can the
+template template parameter be specialized using the smaller number of
+template arguments?  For example,
+
+<PRE>
+    template &lt;class T, class U = int&gt;
+    class ARG { };
+
+    template &lt;class X, template &lt;class Y&gt; class PARM&gt;
+    void f(PARM&lt;X&gt;) { }    // specialization permitted?
+
+    void g() {
+        ARG&lt;int&gt; x;        // actually ARG&lt;int, int&gt;
+        f(x);              // does ARG (2 parms, 1 with default)
+                           // match PARM (1 parm)?
+</PRE>
+
+Template template parameters are deducible
+(13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#9">temp.deduct.type</A>] paragraph 9)
+,
+but 13.4.4 [<A href="https://wg21.link/temp.arg.template">temp.arg.template</A>]
+ does not
+specify how matching is done.
+
+<P>
+<U>Jack Rouse</U>:
+I implemented template template parameters assuming template signature
+matching is analogous to function type matching.  This seems like the
+minimum reasonable implementation.  The code in the example would not
+be accepted by this compiler.  However, template default arguments are
+compile time entities so it seems reasonable to relax the matching
+rules to allow cases like the one in the example.  But I would
+consider this to be an extension to the language.</P>
+
+<P>
+<U>Herb Sutter</U>:
+An open issue in the LWG is that the standard
+doesn't explicitly permit or forbid implementations' adding additional
+<I>template-parameter</I>s
+to those specified by the standard, and the LWG may be
+leaning toward explicitly permitting this.
+[Under this interpretation,]
+if the standard is ever modified to allow additional
+<I>template-parameter</I>s,
+then writing "a template that takes a standard library template as a
+template template parameter" won't be just ugly because you have to mention
+the defaulted parameters; it would not be (portably) possible at all except
+possibly by defining entire families of overloaded templates to account for
+all the possible numbers of parameters
+<TT>vector&lt;&gt;</TT> (or anything else) might
+actually have. That seems unfortunate.</P>
+</LI>
+
+<LI>
+Are default arguments permitted in the template parameter list of a
+template template parameter?  For example,
+
+<PRE>
+    template &lt;template &lt;class T, class U = int&gt; class PARM&gt;
+    class C {
+        PARM&lt;int&gt; pi;
+    };
+</PRE>
+
+<P>
+<U>Jack Rouse</U>:
+I decided they could not in the compiler I support.  This continues
+the analogy with function type matching.  Also, I did not see a strong
+need to allow default arguments in this context.</P>
+
+<P>A class template used as a template template argument can have default
+template arguments from its declarations.  How are the two sources of
+default arguments to be reconciled?  The default arguments from the
+template template formal could override.  But it could be cofusing if
+a <I>template-id</I> using the argument template, <TT>ARG&lt;int&gt;</TT>, behaves
+differently from a <I>template-id</I> using the template formal name,
+<TT>FORMAL&lt;int&gt;</TT>.</P>
+</LI>
+
+</OL>
+
+<P>
+<B>Rationale (10/99):</B> Template template parameters are intended
+to be handled analogously to function function parameters.  Thus the
+number of parameters in a template template argument must match the
+number of parameters in a template template parameter, regardless of
+whether any of those paramaters have default arguments or not.  Default
+arguments are allowed for the parameters of a template template
+parameter, and those default arguments alone will be considered in
+a specialization of the template template parameter within a template
+definition; any default arguments for the parameters of a template
+template argument are ignored.</P>
+
+<P><B>Note (Mark Mitchell, February, 2006):</B></P>
+
+<P>Perhaps it is already obvious to all, but it seems worth noting that
+this extension would change the meaning of conforming programs:</P>
+
+<PRE>
+    struct Dense { static const unsigned int dim = 1; };
+
+    template &lt;template &lt;typename&gt; class View,
+              typename Block&gt;
+    void operator+(float, View&lt;Block&gt; const&amp;);
+
+    template &lt;typename Block,
+              unsigned int Dim = Block::dim&gt;
+    struct Lvalue_proxy { operator float() const; };
+
+    void test_1d (void) {
+        Lvalue_proxy&lt;Dense&gt; p;
+        float b;
+        b + p;
+    }
+</PRE>
+
+<P>If <TT>Lvalue_proxy</TT> is allowed to bind to <TT>View</TT>, then the
+template <TT>operator+</TT> will be used to perform addition; otherwise,
+<TT>Lvalue_proxy</TT>'s implicit conversion to float, followed by the
+built-in addition on floats will be used.</P>
+
+<P><B>Note (March, 2008):</B></P>
+
+<P>The Evolution Working Group has accepted the intent of this issue
+and referred it to CWG for action (not for C++0x).  See paper
+J16/07-0033 = WG21 N2173.</P>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>The CWG decided to take no action on this issue until an interested
+party produces a paper with analysis and a proposal.</P>
+<BR><BR>
+</BODY>
+</HTML>

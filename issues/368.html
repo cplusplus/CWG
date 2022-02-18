@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 368</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="368"></A><H4>368.
+  
+Uses of non-type parameters that should cause deduction to fail
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Shirk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>29 July 2002<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>I understand the rules in 13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2
+are meant to be an exhaustive list of what can cause type deduction to
+fail.</P>
+
+<P>Consider:</P>
+<PRE>
+  template&lt;typename U,U u&gt; struct wrap_t;
+
+  template&lt;typename U&gt; static yes check( wrap_t&lt;U,U(0)&gt;* );
+
+  struct X { X(int); };
+  int main() {
+    check&lt;X&gt;(0);
+  }
+</PRE>
+<P>I can see 2 reasons this might cause type deduction to fail:</P>
+<UL>
+<LI>
+Conversion is not a compile time constant.
+</LI>
+<LI>
+Non-type parameter is a class type.
+</LI>
+</UL>
+<P>Neither case is mentioned in 13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2,
+nor do I see a DR mentioning these.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>Add after the fourth-to-last bullet of
+13.10.3 [<A href="https://wg21.link/temp.deduct#2">temp.deduct</A>] paragraph 2:</P>
+<BLOCKQUOTE>
+<UL>
+<LI>
+Attempting to give an invalid type to a nontype template parameter.
+[<I>Example:</I>
+<PRE>
+  template &lt;class T, T&gt; struct S {};
+  template &lt;class T&gt; int f(S&lt;T, T()&gt;*);
+  struct X {};
+  int i0 = f&lt;X&gt;(0);
+</PRE>
+]
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

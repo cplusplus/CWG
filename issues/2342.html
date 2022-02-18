@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2342</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2342"></A><H4>2342.
+  
+Reference <TT>reinterpret_cast</TT> and pointer-interconvertibility
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-04-07<BR>
+
+
+<P>[Accepted as a DR at the November, 2017 meeting.]</P>
+
+
+
+<P>The changes from document P0137 make it clear that this is valid:</P>
+
+<PRE>
+  struct A { int n; } a;
+  int *p = reinterpret_cast&lt;int*&gt;(&amp;a); //<SPAN CLASS="cmnt"> ok, </SPAN>a<SPAN CLASS="cmnt"> and </SPAN>a.n<SPAN CLASS="cmnt"> are pointer-interconvertible</SPAN>
+  int m = *p;                          //<SPAN CLASS="cmnt"> ok, </SPAN>p<SPAN CLASS="cmnt"> points to </SPAN>a.n
+</PRE>
+
+<P>but the handling for that case does not extend to this one:</P>
+
+<PRE>
+  int &amp;r = reinterpret_cast&lt;int&amp;&gt;(a);
+  int n = r;
+</PRE>
+
+<P>The relevant rule is 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#11">expr.reinterpret.cast</A>] paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+A glvalue expression of type <TT>T1</TT> can be cast to the type
+&#8220;reference to <TT>T2</TT>&#8221; if an expression of type
+&#8220;pointer to <TT>T1</TT>&#8221; can be explicitly converted to the
+type &#8220;pointer to <TT>T2</TT>&#8221; using a
+<TT>reinterpret_cast</TT>. The result refers to the same object as the
+source glvalue, but with the specified type. [<I>Note:</I> That is, for
+lvalues, a reference cast <TT>reinterpret_cast&lt;T&amp;&gt;(x)</TT> has
+the same effect as the
+conversion <TT>*reinterpret_cast&lt;T*&gt;(&amp;x)</TT> with the
+built-in <TT>&amp;</TT> and <TT>*</TT> operators (and similarly for
+<TT>reinterpret_cast&lt;T&amp;&amp;&gt;(x)</TT>). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>Note that the normative rule and the note specify different
+rules: under the rule described in the note, the result would be a
+reference to the object <TT>a.n</TT>. According to the normative
+rule, however, we get a reference to the object <TT>a</TT> with type
+<TT>n</TT>.</P>
+
+<P><B>Proposed resolution (July, 2017):</B></P>
+
+<P>Change 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#11">expr.reinterpret.cast</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A glvalue expression of type <TT>T1</TT><INS>, designating an object
+<TT>x</TT>,</INS> can be cast to the type &#8220;reference
+to <TT>T2</TT>&#8221; if an expression of type &#8220;pointer
+to <TT>T1</TT>&#8221; can be explicitly converted to the type
+&#8220;pointer to <TT>T2</TT>&#8221; using a
+<TT>reinterpret_cast</TT>. The result <DEL>refers to the same object as the
+source glvalue, but with the specified type</DEL>
+<INS>is that of <TT>*reinterpret_cast&lt;T2 *&gt;(p)</TT> where
+<TT>p</TT> is a pointer to <I>x</I> of type &#8220;pointer to
+<TT>T1</TT>&#8221;</INS>. <DEL>[<I>Note:</I> That is, for
+lvalues, a reference cast <TT>reinterpret_cast&lt;T&amp;&gt;(x)</TT> has
+the same effect as the
+conversion <TT>*reinterpret_cast&lt;T*&gt;(&amp;x)</TT> with the
+built-in <TT>&amp;</TT> and <TT>*</TT> operators (and similarly for
+<TT>reinterpret_cast&lt;T&amp;&amp;&gt;(x)</TT>). &#8212;<I>end
+note</I>]</DEL> No temporary is created, no copy is made, and constructors
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]) or conversion functions
+(11.4.8 [<A href="https://wg21.link/class.conv">class.conv</A>]) are not called. [<I>Footnote:</I> This is
+sometimes referred to as a <I>type pun</I> <INS>when the result refers to
+the same object as the source glvalue</INS>. &#8212;<I>end footnote</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

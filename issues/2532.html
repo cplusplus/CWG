@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2532</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2532"></A><H4>2532.
+  
+Kind of pointer value returned by <TT>new T[0]</TT>
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrey Erokhin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-02-17<BR>
+
+
+
+
+<P>A pointer value must have one of the kinds specified in
+6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+Every value of pointer type is one of the following:
+
+<UL>
+<LI>a pointer to an object or function (the pointer is said to point
+to the object or function), or</LI>
+
+<LI>a pointer past the end of an object (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]), or</LI>
+
+<LI>the null pointer value for that type, or</LI>
+
+<LI>an invalid pointer value.</LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>When allocating an array with no elements,
+7.6.2.8 [<A href="https://wg21.link/expr.new#10">expr.new</A>] paragraph 10 is silent on the kind of
+pointer value returned:</P>
+
+<BLOCKQUOTE>
+
+When the allocated type is &#8220;array of <TT>N T</TT>&#8221; (that is,
+the <I>noptr-new-declarator</I> syntax is used or
+the <I>new-type-id</I> or <I>type-id</I> denotes an array type),
+the <I>new-expression</I> yields a prvalue of type &#8220;pointer to
+<TT>T</TT>&#8221; that points to the initial element (if any) of the
+array. Otherwise, let <TT>T</TT> be the allocated type;
+the <I>new-expression</I> is a prvalue of type &#8220;pointer to
+<TT>T</TT>&#8221; that points to the object created.
+
+</BLOCKQUOTE>
+
+<P>Related to that, are <TT>p</TT> and <TT>q</TT> allowed to compare
+equal in the following example?</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+T *p = new T[0];
+T *q = new T;
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>Some implementations return a pointer past the array cookie for
+empty arrays, which can compare equal to a pointer to an object
+obtained from an unrelated allocation.  However, if <TT>new T[0]</TT>
+is specified to yield a pointer to an object, this behavior violates
+the rule that pointers to disjoint objects with overlapping lifetimes
+must not compare equal.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

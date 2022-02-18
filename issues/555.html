@@ -1,0 +1,206 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 555</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="555"></A><H4>555.
+  
+Pseudo-destructor name lookup
+</H4>
+<B>Section: </B>6.5&#160; [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krzysztof Zelechowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 January 2006<BR>
+
+
+<P>[Adopted at the November, 2018 meeting as part of paper P1131R2.]</P>
+
+<P>The Standard does not completely specify how to look up the
+<I>type-name</I>(s) in a <I>pseudo-destructor-name</I> (7.6.1 [<A href="https://wg21.link/expr.post#1">expr.post</A>] paragraph 1, _N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>]), and what
+information it does have is incorrect and/or in the wrong place.
+Consider, for instance, _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>] paragraphs
+2-3:</P>
+
+<BLOCKQUOTE>
+
+<P>If the <I>id-expression</I> in a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) is an <I>unqualified-id</I>, and the type of the
+object expression is of a class type <TT>C</TT> (or of pointer to a
+class type <TT>C</TT>), the <I>unqualified-id</I> is looked up in the scope
+of class <TT>C</TT>. If the type of the object expression is of pointer to
+scalar type, the <I>unqualified-id</I> is looked up in the context of the
+complete <I>postfix-expression</I>.</P>
+
+<P>If the <I>unqualified-id</I> is <TT>~</TT><I>type-name</I>, and the
+type of the object expression is of a class type <TT>C</TT> (or of
+pointer to a class type <TT>C</TT>), the <I>type-name</I> is looked up
+in the context of the entire <I>postfix-expression</I> and in the
+scope of class <TT>C</TT>. The <I>type-name</I> shall refer to
+a <I>class-name</I>. If <I>type-name</I> is found in both contexts,
+the name shall refer to the same class type. If the type of the object
+expression is of scalar type, the <I>type-name</I> is looked up in the
+scope of the complete <I>postfix-expression</I>.</P>
+
+</BLOCKQUOTE>
+
+<P>There are at least three things wrong with this passage with
+respect to pseudo-destructors:</P>
+
+<OL>
+
+<LI><P>A pseudo-destructor call (_N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>]) is not
+a &#8220;class member access&#8221;, so the statements about scalar
+types in the object expressions are vacuous: the object expression in
+a class member access is required to be a class type or pointer to
+class type (7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2).</P></LI>
+
+<LI><P>On a related note, the lookup for the <I>type-name</I>(s) in a
+pseudo-destructor name should not be described in a section entitled
+&#8220;Class member access.&#8221;</P></LI>
+
+<LI><P>Although the class member access object expressions are
+carefully allowed to be either a class type or a pointer to a class
+type, paragraph 2 mentions only a &#8220;pointer to scalar type&#8221;
+(disallowing references) and paragraph 3 deals only with a
+&#8220;scalar type,&#8221; presumably disallowing pointers (although
+it could possibly be a very subtle way of referring to both non-class
+pointers and references to scalar types at once).</P></LI>
+
+</OL>
+
+<P>The other point at which lookup of pseudo-destructors is
+mentioned is 6.5.5 [<A href="https://wg21.link/basic.lookup.qual#5">basic.lookup.qual</A>] paragraph 5:</P>
+
+<BLOCKQUOTE>
+
+If a <I>pseudo-destructor-name</I> (_N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>])
+contains a <I>nested-name-specifier</I>, the <I>type-name</I>s are
+looked up as types in the scope designated by the
+<I>nested-name-specifier</I>.
+
+</BLOCKQUOTE>
+
+<P>Again, this specification is in the wrong location (a
+<I>pseudo-destructor-name</I> is not a <I>qualified-id</I> and
+thus should not be treated in the &#8220;Qualified name lookup&#8221;
+section).</P>
+
+<P>Finally, there is no place in the Standard that describes the
+lookup for pseudo-destructor calls of the form
+<TT>p-&gt;T::~T()</TT> and <TT>r.T::~T()</TT>, where <TT>p</TT>
+and <TT>r</TT> are a pointer and reference to scalar, respectively.
+To the extent that it gives any guidance at all,
+_N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>] deals only with the case where the
+<TT>~</TT> immediately follows the <TT>.</TT> or <TT>-&gt;</TT>, and
+6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] deals only with the case where the
+<I>pseudo-destructor-name</I> contains
+a <I>nested-name-specifier</I> that designates a scope in which
+names can be looked up.</P>
+
+<P>See document J16/06-0008 = WG21 N1938 for further discussion of
+this and related issues, including <A HREF="244.html">244</A>,
+<A HREF="305.html">305</A>, <A HREF="399.html">399</A>,
+and <A HREF="414.html">414</A>.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<OL>
+<LI><P>Add a new paragraph following 7.6.1 [<A href="https://wg21.link/expr.post#2">expr.post</A>] paragraph 2
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+When a <I>postfix-expression</I> is followed by a dot <TT>.</TT> or
+arrow <TT>-&gt;</TT> operator, the interpretation depends on the type
+<TT>T</TT> of the expression preceding the operator. If the operator
+is <TT>.</TT>, <TT>T</TT> shall be a scalar type or a complete class
+type; otherwise, <TT>T</TT> shall be a pointer to a scalar type or a
+pointer to a complete class type. When <TT>T</TT> is a (pointer to) a
+scalar type, the <I>postfix-expression</I> to which the operator
+belongs shall be a pseudo-destructor call (_N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo">expr.pseudo</A>]); otherwise, it shall be a class member access
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).
+
+</BLOCKQUOTE>
+
+<LI><P>Change _N4778_.7.6.1.4 [<A href="https://wg21.link/expr.pseudo#2">expr.pseudo</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The left-hand side of the dot operator shall be of scalar type. The
+left-hand side of the arrow operator shall be of pointer to scalar
+type. This scalar type</DEL> <INS>The type of the expression preceding the dot
+operator, or the type to which the expression preceding the arrow
+operator points,</INS> is the object type...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For the first option (dot) the type of the first expression (the
+object expression) <DEL>shall be &#8220;class object&#8221; (of a
+complete type)</DEL> <INS>is a class type</INS>. For the second option
+(arrow) the type of the first expression (the pointer expression)
+<DEL>shall be &#8220;pointer to class object&#8221; (of a complete
+type)</DEL> <INS>is a pointer to a class type</INS>. In these cases, the
+<I>id-expression</I> shall name a member of the class or of one of its
+base classes.
+
+</BLOCKQUOTE>
+
+<LI><P>Add a new paragraph following 6.5 [<A href="https://wg21.link/basic.lookup#2">basic.lookup</A>] paragraph 2
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In a <I>pseudo-destructor-name</I> that does not include a
+<I>nested-name-specifier</I>, the <I>type-name</I>s are looked up as
+types in the context of the complete expression.
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the last sentence of _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#2">basic.lookup.classref</A>] paragraph 2:
+</P></LI>
+
+<BLOCKQUOTE>
+
+If the <I>id-expression</I> in a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) is an <I>unqualified-id</I>, and the type of the object
+expression is of a class type <TT>C</TT>, the
+<I>unqualified-id</I> is looked up in the scope of class
+<TT>C</TT>. <DEL>If the type of the object expression is of pointer to
+scalar type, the <I>unqualified-id</I> is looked up in the
+context of the complete <I>postfix-expression</I>.</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the August, 2011 meeting:</B></P>
+
+<P>The proposed resolution must be updated with respect to the current
+wording of the WP.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

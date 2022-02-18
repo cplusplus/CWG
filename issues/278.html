@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 278</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="278"></A><H4>278.
+  
+External linkage and nameless entities
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>12 Apr 2000<BR>
+
+
+
+
+<P>It is unclear to what extent entities without names match
+across translation units.  For example,</P>
+
+<PRE>
+    struct S {
+       int :2;
+       enum { a, b, c } x;
+       static class {} *p;
+    };
+</PRE>
+
+<P>If this declaration appears in multiple translation units, are
+all these members "the same" in each declaration?</P>
+
+<P>A similar question can be asked about non-member declarations:</P>
+
+<PRE>
+    // Translation unit 1:
+    extern enum { d, e, f } y;
+
+    // Translation unit 2:
+    extern enum { d, e, f } y;
+
+    // Translation unit 3:
+    enum { d, e, f } y;
+</PRE>
+
+<P>Is this valid C++?  Is it valid C?</P>
+
+<P>
+<U>James Kanze</U>: <TT>S::p</TT> cannot be defined, because to
+do so requires a type specifier and the type cannot be named.
+<TT>::y</TT> is valid C because C only requires compatible, not
+identical, types.  In C++, it appears that there is a new type in
+each declaration, so it would not be valid.  This differs from
+<TT>S::x</TT> because the unnamed type is part of a named type
+&#8212; but I don't know where or if the Standard says that.</P>
+
+<P>
+<U>John Max Skaller</U>:
+It's not valid C++, because the type is a synthesised, unique name
+for the enumeration type which differs across translation units, as if:</P>
+
+<PRE>
+    extern enum _synth1 { d,e,f} y;
+    ..
+    extern enum _synth2 { d,e,f} y;
+</PRE>
+
+<P>had been written.</P>
+
+<P>However, within a class, the ODR implies the types are the same:</P>
+
+<PRE>
+    class X { enum { d } y; };
+</PRE>
+
+<P>in two translation units ensures that the type of member <TT>y</TT>
+is the same: the two <TT>X</TT>'s obey the ODR and so denote the same class,
+and it follows that there's only one member <TT>y</TT> and one type that it
+has.</P>
+
+<P>(See also issues <A HREF="132.html">132</A> and
+<A HREF="216.html">216</A>.)</P>
+
+<P><B>Rationale (February, 2021):</B></P>
+
+<P>The resolution of <A HREF="2300.html">issue 2300</A>
+and paper P2115R0 have resolved these questions.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,167 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1607</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1607"></A><H4>1607.
+  
+Lambdas in template parameters
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-19<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA3">N3690 comment
+  CA&#160;3<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>Lambda expressions cannot appear in unevaluated operands nor in
+evaluated portions of constant expressions.  However, the following
+example appears to circumvent those restrictions:</P>
+
+<PRE>
+  template &lt;bool&gt; struct BoolSink { typedef void type; };
+
+  template &lt;typename T, typename U&gt;
+  struct AddRvalueReferenceImpl { typedef T type; };
+
+  template &lt;typename T&gt;
+  struct AddRvalueReferenceImpl&lt;T, typename BoolSink&lt;false &amp;&amp;
+     [] {
+       extern T &amp;&amp;tref;
+     }&gt;::type&gt; {
+    typedef T &amp;&amp;type;
+  };
+
+  template &lt;typename T&gt;
+  struct AddRvalueReference : AddRvalueReferenceImpl&lt;T, void&gt; { };
+
+  namespace ImplHelpers {
+    template &lt;typename T&gt;
+    typename AddRvalueReference&lt;T&gt;::type create(void) { }
+  }
+
+  template &lt;typename T, typename U, typename ...Args&gt;
+  struct IsConstructibleImpl { enum { value = 0 }; };
+
+  template &lt;typename T, typename ...Args&gt;
+  struct IsConstructibleImpl&lt;T, typename BoolSink&lt;false &amp;&amp;
+     [] {
+       T t( ::ImplHelpers::create&lt;Args&gt;() ...);
+     }&gt;::type, Args ...&gt; {
+    enum { value = 1 };
+  };
+
+  template &lt;typename T, typename ...Args&gt;
+  struct IsConstructible : IsConstructibleImpl&lt;T, void, Args ...&gt; { };
+
+  struct DestroyMe {
+    ~DestroyMe() = delete;
+  };
+
+  static_assert(+IsConstructible&lt;int&gt;::value, "error");
+  static_assert(!IsConstructible&lt;void&gt;::value, "error");
+  static_assert(+IsConstructible&lt;int [1]&gt;::value, "error");
+  static_assert(!IsConstructible&lt;DestroyMe&gt;::value, "error");
+  static_assert(!IsConstructible&lt;int *, char *&gt;::value, "error");
+
+  static_assert(+IsConstructible&lt;int &amp;&amp;, int&gt;::value, "error");
+  static_assert(!IsConstructible&lt;int &amp;&amp;, int &amp;&gt;::value, "error");
+  static_assert(+IsConstructible&lt;int &amp;&amp;, int &amp;&amp;&gt;::value, "error");
+</PRE>
+
+<P>Is this intended?</P>
+
+<P><B>Additional notes, April, 2013:</B></P>
+
+<P>Further discussion has arisen
+regarding <I>lambda-expression</I>s in function template
+signatures.   Although the
+restriction that <I>lambda-expression</I>s cannot appear as
+unevaluated operands (7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>] paragraph
+2) was intended to avert the need to deal with them in
+function template signatures, the fact that
+7.7 [<A href="https://wg21.link/expr.const">expr.const</A>] treats unevaluated
+subexpressions separately from unevaluated operands opens
+another avenue for <I>lambda-expression</I>s in template
+signatures, e.g.,</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  void f(int [(0 &amp;&amp; [] { for (auto x : T()) {} }, 1)]);
+</PRE>
+
+<P>Four possible approaches for dealing with this issue have been
+suggested:</P>
+
+<OL>
+<LI><P>Allow <I>lambda-expression</I>s in function
+template signatures.  This would be costly in some
+implementations.</P></LI>
+
+<LI><P>Give a function template internal linkage if its
+signature includes a <I>lambda-expression</I>.  This would
+allow SFINAE and redeclaration to work without requiring
+that <I>lambda-expression</I>s be mangled.</P></LI>
+
+<LI><P>Specify that a function signature containing a
+<I>lambda-expression</I> is not a redeclaration of any other
+function template, which would allow SFINAE to work but not
+require declaration matching and mangling.</P></LI>
+
+<LI><P>Do not allow <I>lambda-expression</I>s in function
+template signatures.</P></LI>
+
+</OL>
+
+<P>If any of these approaches were adopted, the rationale for
+disallowing <I>lambda-expression</I>s in unevaluated operands would
+be removed, so it might make sense to remove the restriction at the
+same time.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#2">expr.prim.lambda</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...A <I>lambda-expression</I> shall not appear in an unevaluated operand
+(Clause 7 [<A href="https://wg21.link/expr">expr</A>])<INS>, in a <I>template-argument</I>, in
+an <I>alias-declaration</I>, in a typedef declaration, or in the
+declaration of a function or function template outside its function body
+and default arguments. [<I>Note:</I> The intention is to prevent lambdas
+from appearing in a signature &#8212;<I>end note</I>]</INS>. [<I>Note:</I>
+A closure object behaves like a function object
+(22.10 [<A href="https://wg21.link/function.objects">function.objects</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

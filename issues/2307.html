@@ -1,0 +1,188 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2307</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2307"></A><H4>2307.
+  
+Unclear definition of &#8220;equivalent to a nontype template parameter&#8221;
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-07-21<BR>
+
+
+<P>[Accepted as a DR at the November, 2017 meeting.]</P>
+
+
+
+<P>The description of whether a template argument is equivalent to a
+template parameter in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#3">temp.dep.type</A>] paragraph 3 is
+unclear as it applies to non-type template parameters:</P>
+
+<BLOCKQUOTE>
+
+A template argument that is equivalent to a template parameter (i.e., has
+the same constant value or the same type as the template parameter) can be
+used in place of that template parameter in a reference to the current
+instantiation. In the case of a non-type template argument, the argument
+must have been given the value of the template parameter and not an
+expression in which the template parameter appears as a subexpression.
+
+</BLOCKQUOTE>
+
+<P>For example:</P>
+
+<PRE>
+  template&lt;int N&gt; struct A {
+    typedef int T[N];
+    static const int AlsoN = N;
+    A&lt;AlsoN&gt;::T s; //<SPAN CLASS="cmnt"> #0, clearly supposed to be OK </SPAN>
+    static const char K = N;
+    A&lt;K&gt;::T t;     //<SPAN CLASS="cmnt"> #1, OK? </SPAN>
+    static const long L = N;
+    A&lt;L&gt;::T u;     //<SPAN CLASS="cmnt"> #2, OK? </SPAN>
+    A&lt;(N)&gt;::T v;   //<SPAN CLASS="cmnt"> #3, OK? </SPAN>
+    static const int M = (N);
+    A&lt;M&gt;::T w;     //<SPAN CLASS="cmnt"> #4, OK? </SPAN>
+  };
+</PRE>
+
+<P>#1 narrows the template argument. This obviously should not be the
+injected-class-name, because <TT>A&lt;257&gt;::T</TT> may well
+be <TT>int[1]</TT> not <TT>int[257]</TT> .  However, the wording above
+seems to treat it as the injected-class-name.</P>
+
+<P>#2 is questionable: there is potentially a narrowing conversion here, but
+it doesn't actually narrow any values for the original template parameter.</P>
+
+<P>#3 is hard to decipher. On the one hand, this is an expression involving
+the template parameter. On the other hand, a parenthesized expression is
+specified as being equivalent to its contained expression.</P>
+
+<P>#4 should presumably go the same way that #3 does.</P>
+
+<P><B>Proposed resolution (August, 2017):</B></P>
+
+<P>Change 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#3">temp.dep.type</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+
+<P>A template argument that is equivalent to a template
+parameter <DEL>(i.e., has the same constant value or the same type as the
+template parameter)</DEL> can be used in place of that template parameter
+in a reference to the current instantiation. <INS>For a template
+<I>type-parameter</I>, a template argument is equivalent to a template
+parameter if it denotes the same type. For a non-type template parameter,
+a template argument is equivalent to a template parameter if it is an
+<I>identifier</I> that names a variable that is equivalent to the
+template parameter. A variable is equivalent to a template parameter
+if</INS>
+</P>
+<UL>
+<LI><P><INS>it has the same type as the template parameter (ignoring
+cv-qualification) and</INS></P></LI>
+
+<LI><P><INS>its initializer consists of a single <I>identifier</I> that
+names the template parameter or, recursively, such a variable.</INS></P></LI>
+
+</UL>
+
+<P>
+<INS>[<I>Note:</I> Using a parenthesized variable name breaks the
+equivalence. &#8212;<I>end note</I>]</INS>
+<DEL>In the case of a non-type
+template argument, the argument must have been given the value of the
+template parameter and not an expression in which the template parameter
+appears as a subexpression.</DEL> [<I>Example:</I>
+</P>
+
+<PRE>
+  template &lt;class T&gt; class A {
+    A* p1;                   //<SPAN CLASS="cmnt"> </SPAN>A<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+    A&lt;T&gt;* p2;                //<SPAN CLASS="cmnt"> </SPAN>A&lt;T&gt;<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+    A&lt;T*&gt; p3;                //<SPAN CLASS="cmnt"> </SPAN>A&lt;T*&gt;<SPAN CLASS="cmnt"> is not the current instantiation</SPAN>
+    ::A&lt;T&gt;* p4;              //<SPAN CLASS="cmnt"> </SPAN>::A&lt;T&gt;<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+    class B {
+      B* p1;                 //<SPAN CLASS="cmnt"> </SPAN>B<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+      A&lt;T&gt;::B* p2;           //<SPAN CLASS="cmnt"> </SPAN>A&lt;T&gt;::B<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+      typename A&lt;T*&gt;::B* p3; //<SPAN CLASS="cmnt"> </SPAN>A&lt;T*&gt;::B<SPAN CLASS="cmnt"> is not the current instantiation</SPAN>
+    };
+  };
+
+  template &lt;class T&gt; class A&lt;T*&gt; {
+    A&lt;T*&gt;* p1;               //<SPAN CLASS="cmnt"> </SPAN>A&lt;T*&gt;<SPAN CLASS="cmnt"> is the current instantiation</SPAN>
+    A&lt;T&gt;* p2;                //<SPAN CLASS="cmnt"> </SPAN>A&lt;T&gt;<SPAN CLASS="cmnt"> is not the current instantiation</SPAN>
+  };
+
+  template &lt;class T1, class T2, int I&gt; struct B {
+    B&lt;T1, T2, I&gt;* b1;        //<SPAN CLASS="cmnt"> refers to the current instantiation</SPAN>
+    B&lt;T2, T1, I&gt;* b2;        //<SPAN CLASS="cmnt"> not the current instantiation</SPAN>
+    typedef T1 my_T1;
+    static const int my_I = I;
+    static const int my_I2 = I+0;
+    static const int my_I3 = my_I;
+<INS>    static const long my_I4 = I;
+    static const int my_I5 = (I);</INS>
+    B&lt;my_T1, T2, my_I&gt;* b3;   //<SPAN CLASS="cmnt"> refers to the current instantiation</SPAN>
+    B&lt;my_T1, T2, my_I2&gt;* b4;  //<SPAN CLASS="cmnt"> not the current instantiation</SPAN>
+    B&lt;my_T1, T2, my_I3&gt;* b5;  //<SPAN CLASS="cmnt"> refers to the current instantiation</SPAN>
+<INS>    B&lt;my_T1, T2, my_I4&gt;* b6;  //<SPAN CLASS="cmnt"> not the current instantiation</SPAN>
+    B&lt;my_T1, T2, my_I5&gt;* b7;  //<SPAN CLASS="cmnt"> not the current instantiation</SPAN></INS>
+  };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</BLOCKQUOTE>
+
+<P><B>Additional note (November, 2017):</B></P>
+
+<P>It was observed that the proposed resolution does not address partial
+specializations, which also depend on the definition of equivalence.
+ For example:</P>
+
+<PRE>
+  template &lt;typename T, unsigned N&gt; struct A;
+  template &lt;typename T&gt; struct A&lt;T, 42u&gt; {
+    typedef int Ty;
+    static const unsigned num = 42u;
+    static_assert(!A&lt;T, num&gt;::Ty(), "");
+  };
+  A&lt;int, 42u&gt; a; //<SPAN CLASS="cmnt"> GCC, MSVC, ICC accepts; Clang rejects </SPAN>
+</PRE>
+
+<P>The issue is being returned to "review" status in order to consider
+these additional questions.</P>
+
+<P><B>Notes from the November, 2017 (Albuquerque) meeting:</B></P>
+
+<P>CWG decided to proceed with this resolution and deal with
+partial specialization in a separate issue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

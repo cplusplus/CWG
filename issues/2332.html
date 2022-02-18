@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2332</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2332"></A><H4>2332.
+  
+<I>template-name</I> as <I>simple-type-name</I> vs injected-class-name
+</H4>
+<B>Section: </B>9.2.9.3&#160; [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-12-10<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+<P>Paper <A HREF="http://open-std.org/JTC1/SC22/WG21/docs/papers/2016/p0091r3.html">P0091R3</A>
+has the following example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct X {
+    template&lt;typename Iter&gt;
+    X(Iter b, Iter e) { /* ... */ }
+
+    template&lt;typename Iter&gt;
+    auto foo(Iter b, Iter e) {
+      return X(b, e); //<SPAN CLASS="cmnt"> </SPAN>X&lt;U&gt;<SPAN CLASS="cmnt"> to avoid breaking change</SPAN>
+    }
+
+    template&lt;typename Iter&gt;
+    auto bar(Iter b, Iter e) {
+      return X&lt;Iter::value_type&gt;(b, e); //<SPAN CLASS="cmnt"> Must specify what we want</SPAN>
+    }
+  };
+</PRE>
+
+<P>The intent was presumably to avoid breaking existing code,
+but the new wording in 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#2">dcl.type.simple</A>] paragraph 2
+appears to make the expression <TT>X(b, e)</TT> ill-formed:</P>
+
+<BLOCKQUOTE>
+
+A <I>type-specifier</I> of the form
+<TT>typename</TT><I><SUB>opt</SUB></I>
+<I>nested-name-specifier<SUB>opt</SUB> template-name</I> is a
+placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]). The <I>template-name</I> shall
+name a class template that is not an injected-class-name.
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Deleting the wording in question and replacing it with a
+cross-reference to 13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>], which makes it
+clear that the injected-class-name is a <I>type-name</I> and
+not a <I>template-name</I> in this context, would seem to address
+the problem adequately.</P>
+
+<P><B>Proposed resolution (November, 2018):</B></P>
+
+<P>Change 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#2">dcl.type.simple</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>simple-type-specifier</I> <TT>auto</TT>
+is a placeholder for a
+type to be deduced
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]). A <I>type-specifier</I> of
+the form <TT>typename</TT><SUB><I>opt</I></SUB>
+<I>nested-name-specifier<SUB>opt</SUB> template-name</I> is a placeholder for a
+deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]). The <I>template-name</I>
+shall name a class template <DEL>that is not
+an <I>injected-class-name</I></DEL>. <INS>[<I>Note:</I> An
+injected-class-name is never interpreted as
+a <I>template-name</I> in contexts where
+a <I>type-specifier</I> may appear
+(13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]). &#8212;<I>end note</I>]</INS>
+The other <I>simple-type-specifier</I>s specify...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,160 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 672</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="672"></A><H4>672.
+  
+Sequencing of initialization in <I>new-expression</I>s
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Clark Nelson
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 January, 2008<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>Consider the following code, which uses double-checked locking
+(DCL):</P>
+
+<PRE>
+    Widget* Widget::Instance() {
+      if (pInstance == 0) {           //<SPAN CLASS="cmnt"> 1: first check</SPAN>
+        lock&lt;mutex&gt; hold(mutW);       //<SPAN CLASS="cmnt"> 2: acquire lock</SPAN>
+        if (pInstance == 0) {         //<SPAN CLASS="cmnt"> 3: second check</SPAN>
+          pInstance = new Widget();   //<SPAN CLASS="cmnt"> 4: create and assign</SPAN>
+        }
+      }                               //<SPAN CLASS="cmnt"> 5: release lock</SPAN>
+    }
+</PRE>
+
+<P>We want this to be fully correct when <TT>pInstance</TT> is an
+atomic pointer to <TT>Widget</TT>. To get that result, we have to
+disallow any assignment to <TT>pInstance</TT> until after the new
+object is fully constructed. In other words, we want this to be an
+invalid transformation of line 4:</P>
+
+<PRE>
+    pInstance = operator new(sizeof(Widget));
+    new (pInstance) Widget;
+</PRE>
+
+<P>I don't think it would be surprising if this were disallowed. For
+example, if the constructor were to throw an exception, I think many
+people would expect the variable not to be modified. I think the
+question is whether it's sufficiently clearly disallowed.</P>
+
+<P>This could be clarified by stating (somewhere appropriate &#8212;
+probably either in 7.6.2.8 [<A href="https://wg21.link/expr.new#16">expr.new</A>] paragraph 16 or
+paragraph 22) that the initialization of the allocated object is
+sequenced before the value computation of the <I>new-expression</I>.
+Then by 7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1 (&#8220;In all cases,
+the assignment is sequenced after the value computation of the right
+and left operands, and before the value computation of the assignment
+expression.&#8221;), the initialization would have to be sequenced
+before the assignment.</P>
+
+<P>This is probably not a problem for <TT>atomic&lt;Widget*&gt;</TT>
+because its <TT>operator=</TT> is a function, and function calls
+provide the necessary guarantees.  But for the plain pointer
+assignment case, there's still a question about whether the sequencing
+of side effects is constrained as tightly as it should be. In fact,
+you don't even have to throw an exception from the constructor for
+there to be a question.</P>
+
+<PRE>
+    struct X {
+        static X* p;
+        X();
+    };
+
+    X* X::p = new X;
+</PRE>
+
+<P>When the constructor for <TT>X</TT> is invoked by this
+<I>new-expression</I>, would it be valid for <TT>X::p</TT> to be
+non-null? If the answer is supposed to be &#8220;no,&#8221; then I
+think the Standard should express that intent more clearly.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#22">expr.new</A>] paragraph 22 as indicated:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Whether</DEL> <INS>Initialization of the allocated object is sequenced
+before the value computation of the <I>new-expression</I>.  It is
+unspecified whether</INS> the allocation function is called before
+evaluating the constructor arguments or after evaluating the
+constructor arguments but before entering the constructor<DEL> is
+unspecified</DEL>. It is also unspecified whether the arguments to a
+constructor are evaluated if the allocation function returns the null
+pointer or exits using an exception.
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: The editor may wish to move paragraph 22 up to
+immediately follow paragraph 16 or 17.  The paragraphs numbered 18-21
+deal with the case where deallocation is done because initialization
+terminates with an exception, whereas paragraph 22 applies more to the
+initialization itself, described in paragraph 16.]</I></P>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The proposed wording does not (but should) allow the call to
+the allocation function to occur in the middle of evaluating
+arguments for the constructor call.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new#21">expr.new</A>] paragraph 21 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Whether the allocation function is called before evaluating the
+constructor arguments or after evaluating the constructor arguments
+but before entering the constructor is unspecified.</DEL> <INS>The
+invocation of the allocation function is indeterminately sequenced
+with respect to the evaluations of expressions in the
+<I>new-initializer</I>. Initialization of the allocated object is
+sequenced before the value computation of the
+<I>new-expression</I>.</INS> It is <DEL>also</DEL> unspecified whether
+<DEL>the arguments to a constructor</DEL> <INS>expressions in the
+<I>new-initializer</I></INS> are evaluated if the allocation function
+returns the null pointer or exits using an exception.
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: the editor may wish to consider moving this
+paragraph to follow paragraph 15 or 16.  Paragraphs 17-19 deal with
+the case where deallocation is done because initialization terminates
+with an exception, whereas this paragraph applies more to the
+initialization itself (described in paragraph 15).]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

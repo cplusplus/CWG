@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2073</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2073"></A><H4>2073.
+  
+Allocating memory for exception objects
+</H4>
+<B>Section: </B>6.7.6.5.2&#160; [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Wakely
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-01-20<BR>
+
+
+
+
+<P>According to 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#4">basic.stc.dynamic.allocation</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> In particular, a global allocation function is
+not called to allocate storage for objects with static
+storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]), for objects
+or references with thread storage duration
+(6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]), for objects of type
+<TT>std::type_info</TT> (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), or for an
+exception object (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P>The restriction against allocating exception objects on the
+heap was intended to ensure that heap exhaustion could be reported
+by throwing an exception, i.e., that obtaining storage for
+<TT>std::bad_alloc</TT> could not fail because the heap was full.
+However, this implicitly relied on the assumption of a single
+thread and does not scale to large numbers of threads, so the
+restriction should be lifted and another mechanism found for
+guaranteeing the ability to throw <TT>std::bad_alloc</TT>.</P>
+
+<P><B>Notes from the February, 2016 meeting:</B></P>
+
+<P>The prohibition of using an allocation function appears only in a
+note, although there is a normative reference to the rule in
+14.2 [<A href="https://wg21.link/except.throw#4">except.throw</A>] paragraph 4. CWG was in favor of
+retaining the prohibition of using a C++ allocation function for
+the memory of an exception object, with the implicit understanding
+that use of <TT>malloc</TT> would be permitted.  The resolution
+for this issue should delete the note and move the prohibition to
+normative text in the relevant sections.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

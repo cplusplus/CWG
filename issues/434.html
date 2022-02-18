@@ -1,0 +1,114 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 434</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="434"></A><H4>434.
+  
+Unclear suppression of standard conversions while binding reference to lvalue
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Bronek Kozicki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 September 2003<BR>
+
+
+<P>In section 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>], paragraph 5, there is
+following note:</P>
+<BLOCKQUOTE>
+Note: the usual lvalue-to-rvalue (4.1), array-to-pointer (4.2), and
+function-to-pointer (4.3) standard conversions are not needed, and
+therefore are suppressed, when such direct bindings to lvalues are done.
+</BLOCKQUOTE>
+
+<P>I believe that this note is misleading. There should be either:</P>
+<UL>
+<LI>no note, and leave this issue to be explained in section 4 only </LI>
+<LI>explicit list of all suppressed conversions (including pointer
+qualification conversion, as covered in section 4.4)</LI>
+<LI>reminder that result of all standard conversions is never an lvalue,
+thus these conversions are suppressed when binding reference to lvalue</LI>
+</UL>
+
+<P>The problem:</P>
+<OL>
+<LI>
+under current wording it's unclear if following code is legal, or
+not:
+<PRE>
+int main()
+{
+  const int ci = 10;
+  int * pi = NULL;
+  const int * &amp; rpci = pi;
+  rpci = &amp;ci;
+  *pi = 12; // circumvent constness of "ci"
+}
+</PRE>
+</LI>
+<LI>
+it is also unclear what behaviour should following program expose:
+<PRE>
+int main()
+{
+  int * pi = NULL;
+  const int * const &amp; rcpci = pi; // 1
+  int i = 0;
+  pi = &amp;i; // 2
+  if (pi == rcpci)
+    std::cout &lt;&lt; "bound to lvalue" &lt;&lt; std::endl;
+  else
+    std::cout &lt;&lt; "bound to temporary rvalue" &lt;&lt; std::endl;
+}
+</PRE>
+</LI>
+</OL>
+<P>There has been discussion on this issue on comp.lang.c++.moderated month
+ago, see
+<A HREF="http://groups.google.pl/groups?threadm=9bed99bb.0308041153.1c79e882%40posting.google.com">
+http://groups.google.pl/groups?threadm=9bed99bb.0308041153.1c79e882%40posting.google.com</A>
+and there seems to be some confusion about it. I understand that note is
+not normative, but apparently even some compiler writers are misled (try
+above code snippets on few different compilers, and using different
+compilation options - notably GCC 3.2.3 with -Wall -pedantic), thus it
+should be cleared up.</P>
+
+<P>My proposal is to change wording of discussed note to:</P>
+<BLOCKQUOTE>
+Note: result of every standard conversion is never an lvalue, and
+therefore all standard conversions (clause 4) are suppressed, when such
+direct bindings to lvalues are done.
+</BLOCKQUOTE>
+
+<P><B>Rationale (April, 2005):</B></P>
+
+<P>As acknowledged in the description of the issue, the referenced
+text is only a note and has no normative impact.  Furthermore, the
+examples cited do not involve the conversions mentioned in the note,
+and the normative text is already sufficiently clear that the types in
+the examples are not reference-compatible.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

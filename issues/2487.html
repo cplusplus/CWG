@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2487</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2487"></A><H4>2487.
+  
+Type dependence of function-style cast to incomplete array type
+</H4>
+<B>Section: </B>13.8.3.3&#160; [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-03-12<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  using T = int[];
+  using U = int[2];
+  template&lt;auto M, int ...N&gt; void f() {
+    auto &amp;&amp;arr1 = T(N...);
+    auto &amp;&amp;arr2 = T{N...};
+    auto &amp;&amp;arr3 = U(M, M);
+    auto &amp;&amp;arr4 = U{M, M};
+  };
+</PRE>
+
+<P>I think here <TT>T(N...)</TT> is not type-dependent, per
+13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3, but should be. (I
+think <TT>T{N...}</TT> is type-dependent.)  Conversely, I
+think <TT>U{M, M}</TT> is type-dependent, per
+13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#6">temp.dep.expr</A>] paragraph 6, but should not
+be. (<TT>U(M, M)</TT> is not type-dependent.)</P>
+
+<P>I think we should say that</P>
+
+<UL>
+<I>simple-type-specifier</I> <TT>(</TT> <I>expression-list<SUB>opt</SUB></I> <TT>)</TT><BR>
+<I>typename-specifier</I> <TT>(</TT> <I>expression-list<SUB>opt</SUB></I> <TT>)</TT><BR>
+<I>simple-type-specifier braced-init-list</I><BR>
+<I>typename-specifier braced-init-list</I>
+</UL>
+
+<P>are type-dependent if the type specifier names a
+dependent type, or if it names an array of unknown bound and
+the <I>braced-init-list</I> or <I>expression-list</I> is
+type-dependent.</P>
+
+<P>(I think we could be a little more precise than that in
+the case where there is no top-level pack
+expansion: <TT>T{M, M}</TT> needs to be type-dependent for a
+general array of unknown bound <TT>T</TT> due to brace
+elision, but not in the case where the array element type is
+a scalar type. And <TT>T(M, M)</TT> does not need to be
+type-dependent because direct aggregate initialization can't
+perform brace elision. But I think the simpler rule is
+probably good enough.)</P>
+
+<P><B>Notes from the August, 2021 teleconference:</B></P>
+
+<P>CWG agreed with the suggested change. There was some
+support for the &#8220;more precise&#8221; approach
+mentioned in the description.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

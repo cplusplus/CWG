@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 324</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="324"></A><H4>324.
+  
+Can "<TT>&amp;</TT>" be applied to assignment to bit-field?
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alasdair Grant
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 Nov 2001<BR>
+
+
+<P>[Voted into WP at October 2003 meeting.]</P>
+
+<P>An assignment returns an lvalue for its left operand.  If that
+operand refers to a bit field, can the "<TT>&amp;</TT>" operator be
+applied to the assignment?  Can a reference be bound to it?</P>
+<PRE>
+  struct S { int a:3; int b:3; int c:3; };
+
+  void f()
+  {
+    struct S s;
+    const int *p = &amp;(s.b = 0);     // (a)
+    const int &amp;r = (s.b = 0);      // (b)
+          int &amp;r2 = (s.b = 0);     // (c)
+  }
+</PRE>
+
+<P><B>Notes from the 4/02 meeting:</B></P>
+
+<P>The working group agreed that this should be an error.</P>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P>
+In 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr#1">expr.pre.incr</A>] paragraph 1
+(prefix "<TT>++</TT>" and "<TT>--</TT>" operators), change
+<BLOCKQUOTE>
+The value is the new value of the operand; it is an lvalue.
+</BLOCKQUOTE>
+to
+<BLOCKQUOTE>
+The result is the updated operand; it is an lvalue, and it is a
+bit-field if the operand is a bit-field.
+</BLOCKQUOTE>
+</P>
+
+<P>
+In 7.6.16 [<A href="https://wg21.link/expr.cond#4">expr.cond</A>] paragraph 4
+("<TT>?</TT>" operator), add the indicated text:
+<BLOCKQUOTE>
+If the second and third operands are lvalues and have
+the same type, the result is of that type and is an lvalue<INS>
+and it is a bit-field if the second or the third
+operand is a bit-field, or if both are bit-fields.</INS>
+</BLOCKQUOTE>
+</P>
+
+<P>
+In 7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1 (assignment operators)
+add the indicated text (the original text is
+as updated by issue 221, which is DR but not in TC1):
+<BLOCKQUOTE>
+The assignment operator (<TT>=</TT>) and the compound assignment
+operators all group right-to-left.  All require a modifiable lvalue as
+their left operand and return an lvalue with the type and value of
+the left operand after the assignment has taken place. <INS>The result
+in all cases is a bit-field if the left operand is a bit-field.</INS>
+</BLOCKQUOTE>
+</P>
+
+<P>
+Note that issue 222 adds (non-conflicting) text at the end of
+this same paragraph (7.6.19 [<A href="https://wg21.link/expr.ass#1">expr.ass</A>] paragraph 1).
+</P>
+
+<P>
+In 7.6.20 [<A href="https://wg21.link/expr.comma#1">expr.comma</A>] paragraph 1 (comma operator), change:
+<BLOCKQUOTE>
+The type and value of the result are the type and value of the right
+operand; the result is an lvalue if its right operand is.
+</BLOCKQUOTE>
+to
+<BLOCKQUOTE>
+The type and value of the result are the type and value of the right
+operand; the result is an lvalue if the right operand is an lvalue,
+and is a bit-field if the right operand is an lvalue and a bit-field.
+</BLOCKQUOTE>
+</P>
+
+<P>Relevant related text (no changes required):</P>
+
+<P>
+7.6.2.2 [<A href="https://wg21.link/expr.unary.op#4">expr.unary.op</A>] paragraph 4:
+<BLOCKQUOTE>
+The operand of <TT>&amp;</TT> shall not be a bit-field.
+</BLOCKQUOTE>
+</P>
+
+<P>
+9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5,
+ bullet 1, sub-bullet 1 (regarding binding
+a reference to an lvalue):
+<BLOCKQUOTE>
+... is an lvalue (but is not a bit-field) ...
+</BLOCKQUOTE>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

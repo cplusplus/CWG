@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 83</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="83"></A><H4>83.
+  
+Overloading and deprecated conversion of string literal
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Jan 1999<BR>
+
+
+
+<P>In
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+, we have</P>
+<UL><LI>
+<TT>S1</TT> and <TT>S2</TT> differ only in their
+qualification conversion and
+yield similar types <TT>T1</TT> and <TT>T2</TT>
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+),
+respectively, and the cv-qualification signature of type <TT>T1</TT>
+is a proper
+subset of the cv-qualification signature of type <TT>T2</TT>,
+[<I>Example:</I>
+<PRE>
+    int f(const int *);
+    int f(int *);
+    int i;
+    int j = f(&amp;i); // <I>Calls</I> f(int *)
+</PRE>
+&#8212;<I>end example</I>] or, if not that,</LI></UL>
+This does not work right with respect to the deprecated conversion from
+string literal to "<TT>char *</TT>". Consider
+<PRE>
+    void f(char *);
+    void f(const char *);
+
+    f("abc");
+</PRE>
+The two conversion sequences differ only in their qualification conversions,
+and the destination types are similar. The cv-qualification signature of
+"<TT>char *</TT>", is a proper subset of the cv-qualification signature
+of "<TT>const char *</TT>", so <TT>f(char *)</TT> is chosen, which is wrong.
+The rule should be like the one for conversion to bool &#8212; the deprecated
+conversion should be worse than another exact match that is not the deprecated
+conversion.
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Change
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ bullet 3.1
+sub-bullet 3 from</P>
+<BLOCKQUOTE>
+<TT>S1</TT> and <TT>S2</TT> differ only in their qualification
+conversion and yield similar types <TT>T1</TT> and <TT>T2</TT>
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+), respectively, and the
+cv-qualification signature of type <TT>T1</TT> is a proper subset of
+the cv-qualification signature of type <TT>T2</TT>.
+</BLOCKQUOTE>
+to
+<BLOCKQUOTE>
+<TT>S1</TT> and <TT>S2</TT> differ only in their qualification
+conversion and yield similar types <TT>T1</TT> and <TT>T2</TT>
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+), respectively, and the
+cv-qualification signature of type <TT>T1</TT> is a proper subset of
+the cv-qualification signature of type <TT>T2</TT>, and <TT>S1</TT> is
+not the deprecated string literal array-to-pointer conversion
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]
+).
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,218 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 736</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="736"></A><H4>736.
+  
+Is the <TT>&amp;</TT> <I>ref-qualifier</I> needed?
+</H4>
+<B>Section: </B>9.3&#160; [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alberto Ganesh Barbati
+ &#160;&#160;&#160;
+
+ <B>Date: </B>16 October, 2008<BR>
+
+
+
+
+<P>Do we really need the <TT>&amp;</TT> <I>ref-qualifier</I>?  We
+could get the same behavior without it if we relaxed the restriction
+on ref-qualified and non-ref-qualified overloads in the same set:</P>
+
+<UL>
+<TABLE WIDTH="85%">
+<TR>
+<TD>
+<B>with the <TT>&amp;</TT> <I>ref-qualifier</I></B>
+</TD>
+<TD>
+<B>without the <TT>&amp;</TT> <I>ref-qualifier</I></B>
+</TD>
+</TR>
+<TR>
+<TD>
+<PRE>
+    struct S {
+      void f();
+    };
+</PRE>
+</TD>
+<TD>
+<PRE>
+    struct S {
+      void f();
+    };
+</PRE>
+</TD>
+</TR>
+<TR>
+<TD>
+<PRE>
+    struct S {
+      void f() &amp;;
+    };
+
+</PRE>
+</TD>
+<TD>
+<PRE>
+    struct S {
+      void f();
+      void f() &amp;&amp; = delete;
+    };
+</PRE>
+</TD>
+</TR>
+<TR>
+<TD>
+<PRE>
+    struct S {
+      void f() &amp;&amp;;
+    };
+</PRE>
+</TD>
+<TD>
+<PRE>
+    struct S {
+      void f() &amp;&amp;;
+    };
+</PRE>
+</TD>
+</TR>
+<TR>
+<TD>
+<PRE>
+    struct S {
+      void f() &amp;;
+      void f() &amp;&amp;;
+    };
+</PRE>
+</TD>
+<TD>
+<PRE>
+    struct S {
+      void f();
+      void f() &amp;&amp;;
+    };
+</PRE>
+</TD>
+</TR>
+</TABLE>
+</UL>
+
+<P>The main objection I can see to this change is that we would lose
+the notational convenience of the <TT>&amp;</TT> <I>ref-qualifier</I>,
+which would need to be replaced by a pair of declarations.  We might
+overcome this by still allowing a single <TT>&amp;</TT> on a function
+(although it would not be a <I>ref-qualifier</I>) as a synonym to a
+non-ref-qualified declaration plus a deleted ref-qualified declaration.
+</P>
+
+<P>The biggest asymmetry between the implicit object parameter and
+regular parameters is not in reference binding but in type deduction.
+Consider:</P>
+
+<PRE>
+    template &lt;class R, class C, class A&gt; void f(R (C::*p)(A));
+</PRE>
+
+<P>With these members:</P>
+
+<PRE>
+    struct S {
+       void mv(std::string);
+       void mr(std::string&amp;);
+       void ml(std::string&amp;&amp;);
+    };
+</PRE>
+
+<P>then</P>
+
+<PRE>
+    f(&amp;S::mv); // deduces A = string
+    f(&amp;S::mr); // deduces A = string&amp;
+    f(&amp;S::ml); // deduces A = string&amp;&amp;
+</PRE>
+
+<P>On the other hand, with these members:</P>
+
+<PRE>
+    struct S {
+       void mv(std::string);
+       void mr(std::string) &amp;;
+       void ml(std::string) &amp;&amp;
+    };
+</PRE>
+
+<P>then</P>
+
+<PRE>
+  f(&amp;S::mv); // deduces C = S
+  f(&amp;S::mr); // illegal
+  f(&amp;S::ml); // illegal
+</PRE>
+
+<P>To make template <TT>f</TT> work with any pointer to member
+function, I need three overloads of <TT>f</TT>.  Add cv-qualifiers
+and it's twelve overloads!</P>
+
+<P>And then there is the interaction with concepts.  Consider this
+type:</P>
+
+<PRE>
+    struct Value {
+        Value&amp; operator=(const Value&amp;) &amp;;
+    };
+</PRE>
+
+<P>Is it, say, <TT>Regular</TT>?  If so, will the following compile,
+and what is the outcome?</P>
+
+<PRE>
+    template &lt;Regular T&gt; void f() {
+      T() = T();
+    }
+
+    void g() {
+      f&lt;Value&gt;();
+    }
+</PRE>
+
+<P>If <TT>Value</TT> is not <TT>Regular</TT>, that is a good
+motivation to avoid ever using <TT>&amp;</TT> <I>ref-qualifier</I>s
+on <TT>operator=</TT> (and probably on any member functions).</P>
+
+<P>If <TT>Value</TT> is <TT>Regular</TT>, then either
+<TT>f&lt;Value&gt;()</TT> doesn't compile, violating one of the
+principal motivations for concepts, or it calls <TT>Value::operator=</TT>
+on an rvalue, which was explicitly prohibited.</P>
+
+<P><B>Rationale, March, 2009:</B></P>
+
+<P>The CWG did not feel that the suggested change was a signficant
+improvement over the existing specification.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

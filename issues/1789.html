@@ -1,0 +1,128 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1789</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1789"></A><H4>1789.
+  
+Array reference vs array decay in overload resolution
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Faisal Vali
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-10-01<BR>
+
+
+
+
+<P>The current rules make an example like</P>
+
+<PRE>
+  template&lt;class T, size_t N&gt; void foo(T (&amp;)[N]);
+  template&lt;class T&gt; void foo(T *t);
+
+  int arr[3]{1, 2, 3};
+  foo(arr);
+</PRE>
+
+<P>ambiguous, even though the first is an identity match and the
+second requires an lvalue transformation.  Is this desirable?</P>
+
+<P><B>Proposed resolution (June, 2021):</B></P>
+
+<P>Add the following as a new bullet following 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+bullet 3.2.6:</P>
+
+<BLOCKQUOTE>
+
+<P>Two implicit conversion sequences of the same form are
+indistinguishable conversion sequences unless one of the
+following rules applies:</P>
+
+<UL>
+<LI><P>List-initialization sequence <TT>L1</TT> is a
+better conversion sequence...</P></LI>
+
+<LI><P>Standard conversion sequence <TT>S1</TT> is a better
+conversion sequence than standard conversion
+sequence <TT>S2</TT> if</P></LI>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<TT>S1</TT> and <TT>S2</TT> include reference
+bindings (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), and the types to
+which the references refer are the same type except for
+top-level cv-qualifiers, and the type to which the reference
+initialized by <TT>S2</TT> refers is more cv-qualified than
+the type to which the reference initialized by <TT>S1</TT>
+refers. [<I>Example 6:</I>...</P></LI>
+
+<LI>
+<P><INS><TT>S1</TT> is a reference binding to an array
+and <TT>S2</TT> is an array-to-pointer conversion
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]). [<I>Example  7:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;class T, unsigned N&gt; void f(T (&amp;)[N]); //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;class T&gt; void f(T *t);                 //<SPAN CLASS="cmnt"> #2</SPAN>
+  int r[3]{1, 2, 3};
+  void g() {
+    f(r);    //<SPAN CLASS="cmnt"> OK: calls #1</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+</LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-02-06</B></P>
+
+<P>The proposed resolution prefers the <TT>T&amp;</TT> overload over
+the <TT>T*</TT> overload in the example below, which is undesirable.
+The wording needs to be amended to limit the tiebreaker to situations
+where the array declarator appears in the signature.</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+template&lt;class T&gt;
+int f(T&amp;);
+template&lt;class T&gt;
+int f(T*);
+int x[5];
+int z = f(x);
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

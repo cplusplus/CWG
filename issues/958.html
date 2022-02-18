@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 958</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="958"></A><H4>958.
+  
+Lambdas and <TT>decltype</TT>
+</H4>
+<B>Section: </B>7.5.6&#160; [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 August, 2009<BR>
+
+
+
+
+<P>The following case is ill-formed:</P>
+
+<PRE>
+    int f (int&amp;);
+    void* f (const int&amp;);
+
+    int main()
+    {
+       int i;
+       [=] ()-&gt; decltype(f(i)) { return f(i); };
+    }
+</PRE>
+
+<P>The <TT>decltype(f(i))</TT> is not of the form
+<TT>decltype((x))</TT>, and also not within the body of the lambda, so
+the special rewriting rule doesn't apply. So, the call in the decltype
+selects the first overload, and the call in the body selects the
+second overload, and there's no conversion from <TT>void*</TT> to
+<TT>int</TT>, so the return-statement is ill-formed.</P>
+
+<P>This pattern is likely to arise frequently because of the
+retrictions on deducing the return type from the body of the lambda.</P>
+
+<P>
+<U>Daveed Vandevoorde</U>: The pattern may be common, but it
+probably doesn't matter much in practice.  It's most likely that
+overloaded functions that differ only in the cv-qualification of their
+parameters will have related return types.</P>
+
+<P><B>Rationale (October, 2009):</B></P>
+
+<P>The consensus of the CWG was that this is not a sufficiently
+important problem to warrant changing the existing specification.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

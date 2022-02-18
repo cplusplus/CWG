@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2505</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2505"></A><H4>2505.
+  
+Nested unnamed namespace of inline unnamed namespace
+</H4>
+<B>Section: </B>9.8.2.2&#160; [<A href="https://wg21.link/namespace.unnamed">namespace.unnamed</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-11-22<BR>
+
+
+<P>According to 9.8.2.2 [<A href="https://wg21.link/namespace.unnamed#1">namespace.unnamed</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>unnamed-namespace-definition</I> behaves as if it
+were replaced by</P>
+
+<UL>
+<TT>inline</TT><SUB><I>opt</I></SUB> <TT>namespace</TT> <I><B>unique</B></I> <TT>{ /* empty body */ }</TT><BR>
+<TT>using namespace</TT> <I><B>unique</B></I> <TT>;</TT><BR>
+<TT>namespace</TT> <I><B>unique</B></I> <TT>{</TT> <I>namespace-body</I> <TT>}</TT>
+</UL>
+
+<P>where <TT>inline</TT> appears if and only if it appears
+in the <I>unnamed-namespace-definition</I> and all
+occurrences of <I><B>unique</B></I> in a translation unit are
+replaced by the same identifier, and this identifier differs
+from all other identifiers in the translation unit.</P>
+
+</BLOCKQUOTE>
+
+<P>The use of a single identifier for all occurrences
+of <I><B>unique</B></I> within a translation unit leads to problems
+when an inline unnamed namespace contains a nested unnamed
+namespace, e.g.,</P>
+
+<PRE>
+    inline namespace {
+      namespace { }
+    }
+</PRE>
+
+<P>In this case, the unnamed namespace cannot be reopened
+because the lookup for <I><B>unique</B></I> finds both the
+outer and inner namespaces and is thus ambiguous.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change 9.8.2.2 [<A href="https://wg21.link/namespace.unnamed#1">namespace.unnamed</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+...where <TT>inline</TT> appears if and only if it appears
+in the <I>unnamed-namespace-definition</I> and all
+occurrences of <I><B>unique</B></I> <INS>in each scope</INS>
+in a translation unit are replaced by the
+same <INS>scope-specific</INS> identifier, and this
+identifier differs from all other identifiers in the
+translation unit.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the December, 2021 teleconference:</B></P>
+
+<P>The suggested resolution deals specifically with unnamed
+namespaces, but there are related examples that do not
+involve unnamed namespaces. The problem needs to be solved
+more generally in the specification of lookup.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,253 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2863</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2863"></A><H4>2863.
+  
+Unclear synchronization requirements for object lifetime rules
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/507">#507</A>.)</P>
+
+<P>Subclause 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+Before the lifetime of an object has started but after the storage
+which the object will occupy has been allocated [ Footnote: ... ] or,
+after the lifetime of an object has ended and before the storage which
+the object occupied is reused or released, ...
+
+</BLOCKQUOTE>
+
+<P>"Before" and "after" are intended to refer to the "happens before"
+relation (which is not a total order), but the specific use here does
+not properly handle evaluations racing with the start of the lifetime
+of an object.</P>
+
+<P><U>Possible resolution (option 1) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#4">basic.life</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The properties ascribed to objects and references throughout this
+document apply for a given object or reference only during its
+lifetime.  [<I>Note 2:</I> In particular, <DEL>before the lifetime of
+an object starts and after its lifetime ends</DEL> there are
+significant restrictions on the use of <DEL>the</DEL> <INS>an</INS>
+object <INS>not within its lifetime</INS>, as described below, in
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>], and in 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. Also,
+the behavior of an object under construction and destruction can
+differ from the behavior of an object whose lifetime has started and
+not ended. 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] and 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]
+describe the behavior of an object during its periods of construction
+and destruction. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Before the lifetime of an object has started but</DEL> <INS>In an
+evaluation that occurs</INS> after the storage
+which <DEL>the</DEL> <INS>an</INS> object will occupy has been
+allocated [ Footnote: ... ] <INS>but not after the lifetime of the
+object has started</INS> or, <INS>in an evaluation that occurs not before</INS>
+<DEL>after</DEL> the lifetime of an object has ended and before the
+storage which the object occupied is reused or released, any pointer
+that represents the address of the storage location where the object
+will be or was located may be used but only in limited ways. For an
+object under construction or destruction, see
+11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+Similarly, <DEL>before the lifetime of an object has started but</DEL>
+<INS>in an evaluation that occurs</INS> after the storage
+which <DEL>the</DEL> <INS>an</INS> object will occupy has been
+allocated <INS>but not after the lifetime of the object has
+started</INS> or, <INS>in an evaluation that occurs not
+before</INS> <DEL>after</DEL> the lifetime of an object has ended and
+before the storage which the object occupied is reused or released,
+any glvalue that refers to the original object may be used but only in
+limited ways.  For an object under construction or destruction, see
+11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If, <INS>in an evaluation that occurs not before</INS>
+<DEL>after</DEL> the lifetime of an object has ended and
+before the storage which the object occupied is reused or released, a
+new object is created at the storage location which the original
+object occupied, a pointer that pointed to the original object, a
+reference that referred to the original object, or the name of the
+original object will automatically refer to the new object and, once
+the lifetime of the new object has started, can be used to manipulate
+the new object, if the original object is transparently replaceable
+(see below) by the new object. ...
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2024-04-19) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#4">basic.life</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The properties ascribed to objects and references throughout this
+document apply for a given object or reference only during its
+lifetime.  [<I>Note 2:</I> In particular, <DEL>before the lifetime of
+an object starts and after its lifetime ends</DEL> there are
+significant restrictions on the use of <DEL>the</DEL> <INS>an</INS>
+object <INS>not within its lifetime</INS>, as described below, in
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>], and in 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. Also,
+the behavior of an object under construction and destruction can
+differ from the behavior of an object whose lifetime has started and
+not ended. 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>] and 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]
+describe the behavior of an object during its periods of construction
+and destruction. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add a new paragraph before 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 as
+follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+An evaluation E is said to be in a <I>storage-only phase</I> of an
+object O if
+<UL>
+<LI>E happens after the storage which O will occupy is
+allocated and E does not happen after the lifetime of O starts; or</LI>
+<LI>E does not happen before the lifetime of O ends and E happens
+before the storage which O occupied is reused or released.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#6">basic.life</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>Before the lifetime of an object has started but after the
+storage which theobject will occupy has been allocated [ Footnote:
+... ] but not after the lifetime of the object has started or, after
+the lifetime of an object has ended and before the storage which the
+object occupied is reused or released,</DEL>
+<INS>In an evaluation that is in a storage-only phase of an
+object,</INS> any pointer that represents the address of the storage
+location where the object will be or was located may be used but only
+in limited ways. For an object under construction or destruction, see
+11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+Similarly, <DEL>before the lifetime of an object has started but
+after the storage
+which the object will occupy has been
+allocated  or, after the lifetime of an object has ended and
+before the storage which the object occupied is reused or released,</DEL>
+<INS>in an evaluation that is in a storage-only phase of an
+object,</INS>
+any glvalue that refers to the <DEL>original</DEL> object may be
+used but only in limited ways.  For an object under construction or
+destruction, see 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If, <INS>in an evaluation that is in a storage-only phase of an object
+and where the evaluation does not happen before</INS>
+<DEL>after</DEL> the lifetime of <DEL>an</DEL> <INS>the</INS> object
+<INS>ends</INS> <DEL>has ended and before the storage which the object
+occupied is reused or released</DEL>, a new object is created at the
+storage location which the original object occupied, a pointer that
+pointed to the original object, a reference that referred to the
+original object, or the name of the original object will automatically
+refer to the new object and, once the lifetime of the new object has
+started, can be used to manipulate the new object, if the original
+object is transparently replaceable (see below) by the new object. ...
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>Additional notes (April, 2024)</B></P>
+
+<P>Concerning the proposed change to 6.7.4 [<A href="https://wg21.link/basic.life#8">basic.life</A>] paragraph 8, it was noted that (for example) a common non-allocating placement new does not happen before the storage is reused.
+
+</P>
+<BR><BR>
+</BODY>
+</HTML>

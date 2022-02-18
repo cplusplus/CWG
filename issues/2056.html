@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2056</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2056"></A><H4>2056.
+  
+Member function calls in partially-initialized class objects
+</H4>
+<B>Section: </B>11.9.3&#160; [<A href="https://wg21.link/class.base.init">class.base.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-12-11<BR>
+
+
+
+
+<P>According to 11.9.3 [<A href="https://wg21.link/class.base.init#16">class.base.init</A>] paragraph 16,</P>
+
+<BLOCKQUOTE>
+
+Member functions (including virtual member functions,
+11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) can be called for an object under
+construction.  Similarly, an object under construction can
+be the operand of the <TT>typeid</TT> operator
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]) or of a <TT>dynamic_cast</TT>
+(7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]). However, if these operations
+are performed in a <I>ctor-initializer</I> (or in a function
+called directly or indirectly from
+a <I>ctor-initializer</I>) before all
+the <I>mem-initializer</I>s for base classes have completed,
+the result of the operation is undefined.
+
+</BLOCKQUOTE>
+
+<P>The example in that paragraph reads, in significant part,</P>
+
+<PRE>
+  class B {
+  public:
+    int f();
+  };
+
+  class C {
+  public:
+    C(int);
+  };
+
+  class D : public B, C {
+  public:
+    D() : C(f())  //<SPAN CLASS="cmnt"> undefined: calls member function</SPAN>
+                  //<SPAN CLASS="cmnt"> but base \tcode{C} not yet initialized</SPAN>
+    {}
+  };
+</PRE>
+
+<P>However, the construction of <TT>B</TT>, the object for which the
+member function is being called) has completed its construction, so
+it is not clear why this should be undefined behavior.</P>
+
+<P>(See also <A HREF="1517.html">issue 1517</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,201 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 589</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="589"></A><H4>589.
+  
+Direct binding of class and array rvalues in reference initialization
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 July 2006<BR>
+
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+<P>The resolutions of issues <A HREF="391.html">391</A> and
+<A HREF="450.html">450</A> say that the reference is
+&#8220;bound to&#8221; the class or array rvalue, but it does not
+say that the reference &#8220;binds directly&#8221; to the
+initializer, as it does for the cases that fall under the first
+bullet in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5.  However,
+this phrasing is important in determining the implicit
+conversion sequence for an argument passed to a parameter with
+reference type (12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref">over.ics.ref</A>]), where
+paragraph 2 says,</P>
+
+<BLOCKQUOTE>
+
+When a parameter of reference type is not bound directly to an
+argument expression, the conversion sequence is the one required
+to convert the argument expression to the underlying type of the
+reference according to 12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]. Conceptually, this conversion sequence
+corresponds to copy-initializing a temporary of the underlying
+type with the argument expression.
+
+</BLOCKQUOTE>
+
+<P>The above-mentioned issue resolutions stated that no copy
+is to be made in such reference initializations, so the
+determination of the conversion sequence does not reflect the
+initialization semantics.</P>
+
+<P>Simply using the &#8220;binds directly&#8221; terminology in
+the new wording may not be the right approach, however, as there
+are other places in the Standard that also give special treatment
+to directly-bound references.  For example, the first bullet of
+7.6.16 [<A href="https://wg21.link/expr.cond#3">expr.cond</A>] paragraph 3 says,</P>
+
+<BLOCKQUOTE>
+
+If <TT>E2</TT> is an lvalue: <TT>E1</TT> can be converted to
+match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) to the type &#8220;reference to
+<TT>T2</TT>,&#8221; subject to the constraint that in the
+conversion the reference must bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to <TT>E1</TT>.
+
+</BLOCKQUOTE>
+
+<P>The effect of simply saying that a reference &#8220;binds
+directly&#8221; to a class rvalue can be seen in this example:</P>
+
+<PRE>
+    struct B { };
+    struct D: B { };
+    D f();
+    void g(bool x, const B&amp; br) {
+        x ? f() : br;   //<SPAN CLASS="cmnt"> result would be lvalue</SPAN>
+    }
+</PRE>
+
+<P>It is not clear that treating this conditional expression as an
+lvalue is a desirable outcome, even if the result of <TT>f()</TT>
+were to &#8220;bind directly&#8221; to the <TT>const B&amp;</TT>
+reference.</P>
+
+<P><B>Proposed resolution (June, 2009):</B></P>
+
+<OL>
+<LI><P>Change 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5">dcl.init.ref</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A reference to type &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+initialized by an expression of type &#8220;<I>cv2</I>
+<TT>T2</TT>&#8221; as follows:</P>
+
+<UL>
+<LI><P>If the reference is an lvalue reference and the initializer
+expression</P></LI>
+
+<UL>
+<LI><P>is an lvalue (but is not a bit-field), and
+&#8220;<I>cv1</I> <TT>T1</TT>&#8221; is reference-compatible with
+&#8220;<I>cv2</I> <TT>T2</TT>,&#8221; or</P></LI>
+
+<LI><P>has a class type (i.e., <TT>T2</TT> is a class type), where
+<TT>T1</TT> is not reference-related to <TT>T2</TT>, and can be
+implicitly converted to an lvalue of type &#8220;<I>cv3</I>
+<TT>T3</TT>,&#8221; where &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv3</I> <TT>T3</TT>&#8221; (this
+conversion is selected by enumerating the applicable conversion
+functions (12.2.2.7 [<A href="https://wg21.link/over.match.ref">over.match.ref</A>]) and choosing the best one
+through overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>])),</P></LI>
+
+</UL>
+
+<P>then the reference is bound <DEL>directly</DEL> to the initializer
+expression lvalue in the first case<DEL>, and the reference is bound</DEL>
+<INS>and</INS> to the lvalue result of the conversion in the second case.
+<DEL>In these cases the reference is said to <I>bind directly</I> to the
+initializer expression.</DEL> [<I>Note:</I> the usual lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>])
+standard conversions are not needed, and therefore are suppressed,
+when such direct bindings to lvalues are done.  &#8212;<I>end
+note</I>]</P>
+
+<P>[<I>Example:</I> ... &#8212;<I>end example</I>]</P>
+
+<LI><P>Otherwise, the reference shall be an lvalue reference to a
+non-volatile const type (i.e., <I>cv1</I> shall be <TT>const</TT>), or
+the reference shall be an rvalue reference and the initializer
+expression shall be an rvalue.  [<I>Example:</I> ... &#8212;<I>end
+example]</I>
+</P></LI>
+
+<UL>
+<LI>
+<P>If the initializer expression is an rvalue, with
+<TT>T2</TT> a class type, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; the
+reference is bound to the object represented by the rvalue (see
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) or to a sub-object within that
+object.</P>
+
+<P>[<I>Example:</I> ... &#8212;<I>end example</I>]</P>
+
+</LI>
+
+<LI><P>If the initializer expression is an rvalue, with <TT>T2</TT> an
+array type, and &#8220;<I>cv1</I> <TT>T1</TT>&#8221; is
+reference-compatible with &#8220;<I>cv2</I> <TT>T2</TT>,&#8221; the
+reference is bound to the object represented by the rvalue (see
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]).</P></LI>
+
+<LI><P>Otherwise, a temporary of type &#8220;<I>cv1</I>
+<TT>T1</TT>&#8221; is created and initialized from the initializer
+expression using the rules for a non-reference copy initialization
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).  The reference is then bound to the
+temporary.  If <TT>T1</TT> is reference-related to <TT>T2</TT>,
+<I>cv1</I> must be the same cv-qualification as, or greater
+cv-qualification than, <I>cv2</I>; otherwise, the program is
+ill-formed. [<I>Example:</I> ... &#8212;<I>end example</I>]</P></LI>
+
+</UL>
+
+</UL>
+
+<P><INS>In all cases except the last (i.e., creating and initializing
+a temporary from the initializer expression), the reference is said
+to <I>bind directly</I> to the initializer expression.</INS></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#3.1">expr.cond</A>] bullet 3.1 as
+follows:</P></LI>
+
+<UL><LI><P>If <TT>E2</TT> is an lvalue: <TT>E1</TT> can be converted
+to match <TT>E2</TT> if <TT>E1</TT> can be implicitly converted
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) to the type &#8220;lvalue reference to
+<TT>T2</TT>&#8221;, subject to the constraint that in the conversion
+the reference must bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to
+<DEL><TT>E1</TT></DEL> <INS>an lvalue</INS>.</P></LI></UL>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

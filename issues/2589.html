@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2589</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2589"></A><H4>2589.
+  
+Context of access checks during constraint satisfaction checking
+</H4>
+<B>Section: </B>13.5.2.3&#160; [<A href="https://wg21.link/temp.constr.atomic">temp.constr.atomic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-10-02<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;class T&gt; concept ctible = requires { T(); };
+
+  class A {
+    template &lt;class T&gt; friend struct B;
+    A();
+  };
+
+  template &lt;class T&gt; struct B;
+  template &lt;ctible T&gt; struct B&lt;T&gt; { T t; };
+  B&lt;A&gt; b;  // #1
+
+  template &lt;class T&gt; struct C { };
+  template &lt;ctible T&gt; struct C&lt;T&gt; { T t; };
+  C&lt;A&gt; c;  // #2
+</PRE>
+
+<P>Should the context of instantiation be considered for satisfaction
+checking? If satisfaction checking were always performed in an unrelated
+context, neither partial specialization is used, and #1 would be
+ill-formed (because <TT>B</TT> is incomplete), but #2 would be
+well-formed. If the satisfaction checking were performed in the context
+of the constrained declaration, #1 would be well-formed and #2 would
+be ill-formed, no diagnostic required, because the validity
+of <TT>A()</TT> is different in that context.  That rule, however,
+could also consider the context, in which case #2 would also be
+well-formed.</P>
+
+<P>The decision affects the amount of caching that an implementation
+can perform.</P>
+
+<P>Subclause 13.5.2.3 [<A href="https://wg21.link/temp.constr.atomic#3">temp.constr.atomic</A>] paragraph 3 should be
+clarified one way or another:</P>
+
+<BLOCKQUOTE>
+
+To determine if an atomic constraint is satisfied, the parameter
+mapping and template arguments are first substituted into its
+expression. If substitution results in an invalid type or expression,
+the constraint is not satisfied. Otherwise, the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is performed if necessary, and
+E shall be a constant expression of type bool. The constraint is
+satisfied if and only if evaluation of E results in true.  If, at
+different points in the program, the satisfaction result is different
+for identical atomic constraints and template arguments, the program
+is ill-formed, no diagnostic required.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>Change in 13.5.2.3 [<A href="https://wg21.link/temp.constr.atomic#3">temp.constr.atomic</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+To determine if an atomic constraint is <I>satisfied</I>, the
+parameter mapping and template arguments are first substituted into
+its expression. If substitution results in an invalid type or
+expression, the constraint is not satisfied<INS>; access checking is
+performed in the context in which the <I>constraint-expression</I>
+or <I>requires-expression</I> appears</INS>. Otherwise, the
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is performed
+if necessary, and E shall be a constant expression of type bool. ...
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (December, 2024)</B></P>
+
+<P>Reflector review yielded an improved resolution.
+
+</P>
+
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
+
+<P>Append a new paragraph after 11.8.1 [<A href="https://wg21.link/class.access.general#9">class.access.general</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+<P>Access for a default template-argument (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) is
+checked in the context in which it appears rather than at any points
+of use of it.  [<I>Example 5:</I> ... &#8212;<I>end example</I>]</P>
+
+<P class="ins">
+
+Access for an atomic constraint is checked in the context in which its
+expression appears, or for an immediately-declared constraint, in the
+context where its <I>type-constraint</I> appears, rather than at any point
+where its satisfaction is checked.
+[ Example:</P>
+<PRE class="ins">
+  template&lt;class T&gt; concept ctible = requires { T(); };
+
+  class A {
+    template&lt;class T&gt; friend struct B;
+    A();
+  };
+
+  template&lt;class T&gt; struct B;
+  template&lt;ctible T&gt; struct B&lt;T&gt; { T t; };
+  B&lt;A&gt; b;                    //<SPAN CLASS="cmnt"> error: uses incomplete primary template of </SPAN>B
+
+  template&lt;class T&gt; struct C { };
+  template&lt;ctible T&gt; struct C&lt;T&gt; { T t; };
+  C&lt;A&gt; c;                    //<SPAN CLASS="cmnt"> OK, not using the partial specialization</SPAN>
+
+  template&lt;typename T, bool b&gt; concept C = b;
+  class U { static constexpr bool enabled = true; friend struct X; };
+  struct X {
+   template&lt;typename U, C&lt;U::enabled&gt; V&gt; struct A {};
+  };
+  struct Y {
+   template&lt;typename U, C&lt;U::enabled&gt; V&gt; struct A {};
+  };
+  X::A&lt;U, int&gt; x;    // <SPAN CLASS="cmnt">OK</SPAN>
+  Y::A&lt;U, int&gt; y;    // <SPAN CLASS="cmnt">error: cannot access </SPAN>U::enabled
+</PRE>
+<P class="ins">--end example ]</P>
+</BLOCKQUOTE>
+
+<P><B>Additional notes (December, 2024)</B></P>
+
+<P>The resolution was amended.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Append a new paragraph after 11.8.1 [<A href="https://wg21.link/class.access.general#9">class.access.general</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+<P>Access for a default template-argument (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) is
+checked in the context in which it appears rather than at any points
+of use of it.  [<I>Example 5:</I> ... &#8212;<I>end example</I>]</P>
+
+<P class="ins">
+
+Access for an atomic constraint is checked in a context unrelated to
+any class or function.
+[ Example:</P>
+<PRE class="ins">
+  template&lt;bool B&gt; concept C = B;
+
+  struct A {
+    template&lt;typename T&gt; void f() requires C&lt;T::value&gt;;
+  };
+  struct B : A {
+    using A::f;
+    template&lt;typename T&gt; void f() requires C&lt;T::value&gt; &amp;&amp; true;
+  };
+
+  class X { static constexpr bool value = true; friend struct A; };
+  void g() {
+    B().f&lt;X&gt;();    // error: no viable function
+  }
+</PRE>
+<P class="ins">--end example ]</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

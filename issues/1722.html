@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1722</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1722"></A><H4>1722.
+  
+Should lambda to function pointer conversion function be <TT>noexcept</TT>?
+</H4>
+<B>Section: </B>7.5.6.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ville Voutilainen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-31<BR>
+
+
+<P>[Moved to DR at the October, 2015 meeting.]</P>
+
+
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#6">expr.prim.lambda</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+The closure type for a non-generic <I>lambda-expression</I> with
+no <I>lambda-capture</I> has a public non-virtual non-explicit const
+conversion function to pointer to function with C++ language linkage
+(9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) having the same parameter and return types as
+the closure type's function call operator.
+
+</BLOCKQUOTE>
+
+<P>This does not specify whether the conversion function is
+<TT>noexcept(true)</TT> or <TT>noexcept(false)</TT>.  It might be
+helpful to nail that down.</P>
+
+<P><B>Proposed resolution (May, 2015):</B></P>
+
+<P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#6">expr.prim.lambda</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The closure type for a non-generic <I>lambda-expression</I>
+with no <I>lambda-capture</I> has a <DEL>public non-virtual
+non-explicit const</DEL> conversion function to pointer to
+function with C++ language linkage
+(9.11 [<A href="https://wg21.link/dcl.link">dcl.link</A>]) having the same parameter and
+return types as the closure type's function call
+operator. The value returned by this conversion function
+shall be the address of a function that, when invoked, has
+the same effect as invoking the closure type's function call
+operator. For a generic lambda with
+no <I>lambda-capture</I>, the closure type has a <DEL>public
+non-virtual non-explicit const</DEL> conversion function template
+to pointer to function. The conversion function template...
+[<I>Example:</I>
+</P>
+
+<PRE>
+  auto GL = [](auto a) { std::cout &lt;&lt; a; return a; };
+  int (*GL_int)(int) = GL; //<SPAN CLASS="cmnt"> OK: through conversion function template</SPAN>
+  GL_int(3);               //<SPAN CLASS="cmnt"> OK: same as </SPAN>GL(3)
+</PRE>
+
+</BLOCKQUOTE>
+
+<P>&#8212;<I>end example</I>] <INS>The conversion function or
+conversion function template is public, non-virtual, non-explicit,
+const, and has a non-throwing exception specification
+(14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]).</INS>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

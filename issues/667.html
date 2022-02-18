@@ -1,0 +1,410 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 667</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="667"></A><H4>667.
+  
+Trivial special member functions that cannot be implicitly defined
+</H4>
+<B>Section: </B>11.4.5.3&#160; [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 December 2007<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting as part of document N3079.]</P>
+
+
+
+<P>Should the following class have a trivial copy assignment operator?</P>
+
+<PRE>
+    struct A {
+        int&amp; m;
+        A();
+        A(const A&amp;);
+    };
+</PRE>
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11 does not mention whether the
+presence of reference members (or cv-qualifiers, etc.) should affect
+triviality.  Should it?</P>
+
+<P>One reason why this matters is that implementations have to make
+the builtin type trait operator <TT>__has_trivial_default_ctor(T)</TT>
+work so that they can support the type trait template
+<TT>std::has_trivial_default_constructor</TT>.</P>
+
+<P>Assuming the answer is &#8220;yes,&#8221; it looks like we probably
+need similar wording for trivial default and trivial copy ctors.
+</P>
+
+<P><B>Notes from the February, 2008 meeting:</B></P>
+
+<P>Deleted special member functions are also not trivial.  Resolution
+of this issue should be coordinated with the concepts proposal.</P>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>It appears that this issue will be resolved by the concepts
+proposal directly.  The issue is in &#8220;review&#8221; status to
+check if that is indeed the case in the final version of the
+proposal.</P>
+
+<P><B>Additional notes (May, 2009):</B></P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    struct Base {
+      private:
+        ~Base() = default;
+    };
+
+    struct Derived: Base {
+    };
+</PRE>
+
+<P>The implicitly-declared destructor of <TT>Derived</TT> is
+defined as deleted because <TT>Base::~Base()</TT> is inaccessible,
+but it fulfills the requirements for being trivial.  Presumably
+the <TT>Base</TT> destructor should be non-trivial, either by
+directly specifying that it is non-trivial or by specifying that it
+is user-provided.  An alternative would be to make it ill-formed to
+attempt to declare a defaulted non-public special member function.</P>
+
+
+
+<P>Any changes to the definition of triviality should be checked
+against Clause 11 [<A href="https://wg21.link/class#6">class</A>] paragraph 6 for any changes needed
+there to accommodate the new definitions.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>The July, 2009 resolution of <A HREF="906.html">issue 906</A>
+addresses the example above (with an inaccessible defaulted
+destructor): a defaulted special member function can only have
+non-public access if the defaulted definition is outside the class,
+making it non-trivial.  The example as written above would be
+ill-formed.</P>
+
+<P><B>Proposed resolution (October, 2009):</B></P>
+
+<OL>
+<LI><P>Change 9.5 [<A href="https://wg21.link/dcl.fct.def#9">dcl.fct.def</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Only special member functions may be explicitly defaulted<INS>.
+Explicitly-defaulted functions and implicitly-declared functions are
+collectively called <I>defaulted</I> functions</INS>, and the
+implementation shall <DEL>define them as if they had</DEL>
+<INS>provide</INS> implicit definitions <INS>for them</INS>
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>], 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>])<INS>, which might mean defining them as deleted</INS>. A
+special member function that would be implicitly defined as deleted
+may be explicitly defaulted only on its first declaration, in which
+case it is defined as deleted.  A special member function is
+<I>user-provided</I> if it is user-declared and not explicitly
+defaulted on its first declaration. A user-provided
+explicitly-defaulted function is defined at the point where it is
+explicitly defaulted. [<I>Note:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>] paragraphs 5-6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <I>default</I> constructor for a class <TT>X</TT> is a
+constructor of class <TT>X</TT> that can be called without an
+argument.  If there is no user-declared constructor for class
+<TT>X</TT>, a constructor having no parameters is implicitly declared
+<INS>as defaulted (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>.  An
+implicitly-declared default constructor is an <TT>inline public</TT>
+member of its class.  <DEL>A default constructor is
+<I>trivial</I> if it is not user-provided (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])
+and if:</DEL>
+</P>
+
+<UL>
+<LI><P><DEL>its class has no virtual functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]),
+and</DEL></P></LI>
+
+<LI><P><DEL>no non-static data member of its class has a
+<I>brace-or-equal-initializer</I>, and</DEL></P></LI>
+
+<LI><P><DEL>all the direct base classes of its class have trivial default
+constructors, and</DEL></P></LI>
+
+<LI><P><DEL>for all the non-static data members of its class that are of
+class type (or array thereof), each such class has a trivial default
+constructor.</DEL></P></LI>
+
+</UL>
+
+<P>A<DEL>n implicitly-declared</DEL> <INS>defaulted</INS> default
+constructor for class <TT>X</TT> is defined as deleted if:</P>
+
+<UL>
+<LI><P>
+<TT>X</TT> is a union-like class that has a variant member
+with a non-trivial default constructor,</P></LI>
+
+<LI><P>any non-static data member is of reference type,</P></LI>
+
+<LI><P>any non-static data member of const-qualified
+type (or array thereof) does not have a user-provided default
+constructor, or</P></LI>
+
+<LI><P>any non-static data member or direct or virtual base class has
+class type <TT>M</TT> (or array thereof) and <TT>M</TT> has no default
+constructor, or if overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) as
+applied to <TT>M</TT>'s default constructor, results in an ambiguity
+or a function that is deleted or inaccessible from the
+implicitly-declared default constructor.</P></LI>
+
+</UL>
+
+<P><INS>A default constructor is trivial if it is neither
+user-provided nor deleted and if:</INS></P>
+
+<UL>
+<LI><P><INS>its class has no virtual functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]),
+and</INS></P></LI>
+
+<LI><P><INS>no non-static data member of its class has a
+<I>brace-or-equal-initializer</I>, and</INS></P></LI>
+
+<LI><P><INS>all the direct base classes of its class have trivial default
+constructors, and</INS></P></LI>
+
+<LI><P><INS>for all the non-static data members of its class that are of
+class type (or array thereof), each such class has a trivial default
+constructor.</INS></P></LI>
+
+</UL>
+
+<P>Otherwise, the default constructor is <I>non-trivial</I>.</P>
+
+<P>A <DEL>non-user-provided</DEL> default constructor <DEL>for a
+class</DEL> <INS>that is defaulted and not deleted</INS> is
+<I>implicitly defined</I> when it is used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])
+to create an object of its class type (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])<INS>,
+or when it is explicitly defaulted after its first declaration</INS>.
+The implicitly-defined <DEL>or explicitly-defaulted</DEL> default
+constructor performs the set of initializations of the class that
+would be performed by a user-written default constructor for that
+class with no <I>ctor-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>])
+and an empty <I>compound-statement</I>. If that user-written default
+constructor would be ill-formed, the program is ill-formed.  If that
+user-written default constructor would satisfy the requirements of a
+constexpr constructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]), the
+implicitly-defined default constructor is constexpr. Before the
+<DEL>non-user-provided</DEL> <INS>defaulted</INS> default constructor
+for a class is implicitly defined, all the non-user-provided default
+constructors for its base classes and its non-static data members
+shall have been implicitly defined. [<I>Note:</I> an
+implicitly-declared default constructor has an
+<I>exception-specification</I> (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]).  An
+explicitly-defaulted definition has no implicit
+<I>exception-specification</I>. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>] paragraphs 3-4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If a class has no user-declared destructor, a destructor is
+<DEL>declared</DEL> implicitly <INS>declared as defaulted
+(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>. An implicitly-declared destructor is
+an <TT>inline public</TT> member of its class. <DEL>If the class is a
+union-like class that has a variant member with a non-trivial
+destructor, an implicitly-declared destructor is defined as deleted
+(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). A destructor is <I>trivial</I> if it is
+not user-provided and if:</DEL>
+</P>
+
+<UL>
+<LI><P><DEL>the destructor is not <TT>virtual</TT>,</DEL></P></LI>
+
+<LI><P><DEL>all of the direct base classes of its class have trivial
+destructors, and</DEL></P></LI>
+
+<LI><P><DEL>for all of the non-static data members of its class that are of
+class type (or array thereof), each such class has a trivial
+destructor.</DEL></P></LI>
+
+</UL>
+
+<P>A<DEL>n implicitly-declared</DEL> <INS>defaulted</INS> destructor
+for a class <TT>X</TT> is defined as deleted if:</P>
+
+<UL>
+<LI><P>
+<TT>X</TT> is a union-like class that has a variant member
+with a non-trivial destructor,</P></LI>
+
+<LI><P>any of the non-static data members has class type <TT>M</TT>
+(or array thereof) and <TT>M</TT> has <DEL>an</DEL> <INS>a</INS>
+deleted destructor or a destructor that is inaccessible from the
+implicitly-declared destructor, or</P></LI>
+
+<LI><P>any direct or virtual base class has a deleted destructor or a
+destructor that is inaccessible from the implicitly-declared
+destructor.</P></LI>
+
+</UL>
+
+<P><INS>A destructor is trivial if it is neither user-provided nor
+deleted and if:</INS></P>
+
+<UL>
+<LI><P><INS>the destructor is not <TT>virtual</TT>,</INS></P></LI>
+
+<LI><P><INS>all of the direct base classes of its class have trivial
+destructors, and</INS></P></LI>
+
+<LI><P><INS>for all of the non-static data members of its class that are of
+class type (or array thereof), each such class has a trivial
+destructor.</INS></P></LI>
+
+</UL>
+
+<P>Otherwise, the destructor is <I>non-trivial</I>.</P>
+
+<P>A <DEL>non-user-provided</DEL> destructor <INS>that is defaulted
+and not defined as deleted</INS> is <I>implicitly defined</I> when it
+is used to destroy an object of its class type (6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>])<INS>, or when it is explicitly defaulted after its first
+declaration</INS>.  <DEL>A program is ill-formed if the class for which a
+destructor is implicitly defined or explicitly defaulted has:</DEL>
+</P>
+
+<UL>
+<LI><P><DEL>a non-static data member of class type (or array thereof)
+with an inaccessible destructor, or</DEL></P></LI>
+
+<LI><P><DEL>a base class with an inaccessible destructor.</DEL></P></LI>
+
+</UL>
+
+<P>Before the <DEL>non-user-provided</DEL> <INS>defaulted</INS>
+destructor for a class is implicitly defined, all the
+<DEL>non-user-defined</DEL> <INS>non-user-provided</INS> destructors
+for its base classes and its non-static data members shall have been
+implicitly defined.  [<I>Note:</I> an implicitly-declared destructor
+has an <I>exception-specification</I> (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]).  An
+explictly defaulted definition has no implicit
+<I>exception-specification</I>. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraphs 4-9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the class definition does not explicitly declare a copy
+constructor, one is <DEL>declared <I>implicitly</I></DEL>
+<INS>implicitly declared as defaulted (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>. Thus...</P>
+
+<P>...An implicitly-declared copy constructor is an <TT>inline
+public</TT> member of its class.  A<DEL>n implicitly-declared</DEL>
+<INS>defaulted</INS> copy constructor for a class <TT>X</TT> is
+defined as deleted if <TT>X</TT> has: ...</P>
+
+<P>A copy constructor for class <TT>X</TT> is
+<DEL><I>trivial</I></DEL> <INS>trivial</INS> if it is <DEL>not</DEL>
+<INS>neither</INS> user-provided <INS>nor deleted</INS>
+<DEL>(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</DEL> and if...</P>
+
+<P>A <DEL>non-user-provided</DEL> copy constructor <INS>that is
+defaulted and not defined as deleted</INS> is <I>implicitly
+defined</I> if it is used to initialize an object of its class type
+from a copy of an object of its class type or of a class type derived
+from its class type<SUP>116</SUP><INS>, or when it is explicitly
+defaulted after its first declaration</INS>.  [<I>Note:</I> the copy
+constructor is implicitly defined even if the implementation elided
+its use (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). &#8212;<I>end note</I>]</P>
+
+<P>Before the <DEL>non-user-provided</DEL> <INS>defaulted</INS> copy
+constructor for a class is implicitly defined, all non-user-provided
+copy constructors...</P>
+
+<P>The implicitly-defined <DEL>or explicitly-defaulted</DEL> copy
+constructor for a non-union class <TT>X</TT> performs...</P>
+
+<P>The implicitly-defined <DEL>or explicitly-defaulted</DEL> copy
+constructor for a union <TT>X</TT> copies the object representation
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] paragraphs 11-15 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>If the class definition does not explicitly declare a copy
+assignment operator, one is <DEL>declared <I>implicitly</I></DEL>
+<INS>implicitly declared as defaulted (9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>])</INS>...</P>
+
+<P>...A<DEL>n implicitly-declared</DEL> <INS>defaulted</INS> copy
+assignment operator for class <TT>X</TT> is defined as deleted if
+<TT>X</TT> has:...</P>
+
+<P>A copy assignment operator for class <TT>X</TT> is <I>trivial</I>
+if it is <DEL>not</DEL> <INS>neither</INS> user-provided <INS>nor
+deleted</INS> and if...</P>
+
+<P>A <DEL>non-user-provided</DEL> copy assignment operator <INS>that
+is defaulted and not defined as deleted</INS> is <I>implicitly
+defined</I> when an object of its class type is assigned a value of
+its class type or a value of a class type derived from its class
+type<INS>, or when it is explicitly defaulted after its first
+declaration</INS>.</P>
+
+<P>Before the <DEL>non-user-provided</DEL> <INS>defaulted</INS> copy
+assignment operator for a class is implicitly defined...</P>
+
+<P>The implicitly-defined <DEL>or explicitly-defaulted</DEL> copy
+assignment operator for a non-union class <TT>X</TT> performs...</P>
+
+<P>It is unspecified whether subobjects representing virtual base
+classes are assigned more than once by the implicitly-defined <DEL>or
+explicitly-defaulted</DEL> copy assignment
+operator. [<I>Example:</I>...</P>
+
+<P>The implicitly-defined <DEL>or explicitly-defaulted</DEL> copy
+assignment operator for a union <TT>X</TT> copies the object
+representation (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) of <TT>X</TT>.</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

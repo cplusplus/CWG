@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 396</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="396"></A><H4>396.
+  
+Misleading note regarding use of <TT>auto</TT> for disambiguation
+</H4>
+<B>Section: </B>9.2.3&#160; [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Herb Sutter
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 Jan 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P>BTW, I noticed that the following note in 9.2.2 [<A href="https://wg21.link/dcl.stc#2">dcl.stc</A>] paragraph 2
+doesn't seem to have
+made it onto the issues list or into the TR:</P>
+<BLOCKQUOTE>
+  [Note: hence, the auto specifier is almost always redundant and not
+  often used; one use of auto is to distinguish a declaration-statement
+  from an expression-statement (stmt.ambig) explicitly. --- end note]
+</BLOCKQUOTE>
+<P>I thought that this was well known to be incorrect, because using auto
+does not disambiguate this. Writing:
+<PRE>
+  auto int f();
+</PRE>
+is still a declaration of a function f, just now with an error since the
+function's return type may not use an auto storage class specifier. I
+suppose an error is an improvement over a silent ambiguity going the
+wrong way, but it's still not a solution for the user who wants to
+express the other in a compilable way.</P>
+
+<P>Proposed resolution: Replace that note with the following note:</P>
+<BLOCKQUOTE>
+  [Note: hence, the auto specifier is always redundant and not often
+  used. --- end note]
+</BLOCKQUOTE>
+
+<P>
+<U>John Spicer</U>:
+I support the proposed change, but I think the disambiguation case is not the
+one that you describe.  An example of the supposed disambiguation is:</P>
+<PRE>
+  int i;
+  int j;
+  int main()
+  {
+    int(i);  // declares i, not reference to ::i
+    auto int(j);  // declares j, not reference to ::j
+  }
+</PRE>
+<P>
+cfront would take "int(i)" as a cast of ::i, so the auto would force what it
+would otherwise treat as a statement to be considered a declaration
+(cfront 3.0 warned that this would change in the future).</P>
+
+<P>In a conforming compiler the auto is always redundant (as you say) because
+anything that could be considered a valid declaration should be treated as
+one.</P>
+
+<P><B>Proposed resolution (April 2003):</B></P>
+
+<P>Replace 9.2.2 [<A href="https://wg21.link/dcl.stc#2">dcl.stc</A>] paragraph 2
+<BLOCKQUOTE>
+[Note: hence, the <TT>auto</TT> specifier
+is almost always redundant and not often used;
+one use of <TT>auto</TT> is to distinguish
+a <I>declaration-statement</I> from
+an <I>expression-statement</I> (8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>])
+explicitly. --- end note]
+</BLOCKQUOTE>
+with
+<BLOCKQUOTE>
+[Note: hence, the <TT>auto</TT> specifier
+is always redundant and not often used.
+One use of <TT>auto</TT> is to distinguish
+a <I>declaration-statement</I> from an <I>expression-statement</I>
+explicitly
+rather than relying on the disambiguation rules
+(8.9 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>]),
+which may aid readers.
+--- end note]
+</BLOCKQUOTE>
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

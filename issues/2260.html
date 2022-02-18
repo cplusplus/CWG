@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2260</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2260"></A><H4>2260.
+  
+Explicit specializations of deleted member functions
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-04-17<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>Although the Standard allows for explicitly specializing a deleted
+function template, member function of a class template, or member
+function template with a non-deleted definition, this seems to be
+problematic for non-template member functions of class templates. For
+example:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    A(const A&amp;) = delete;
+    A(A&amp;&amp;) = default;
+  };
+  static_assert(is_trivially_copyable(A&lt;int&gt;));
+  template&lt;&gt; struct A&lt;int&gt;::A(const A&amp;) { /* ... */ }
+  static_assert(is_trivially_copyable(A&lt;int&gt;));
+  template&lt;typename T&gt; struct B {
+    virtual void f() = delete;
+  };
+  struct C : B&lt;int&gt; { void f() override = delete; }; //<SPAN CLASS="cmnt"> ok, overriding deleted with deleted </SPAN>
+  template&lt;&gt; void B&lt;int&gt;::f() {} //<SPAN CLASS="cmnt"> would make </SPAN>C<SPAN CLASS="cmnt"> retroactively ill-formed? </SPAN>
+</PRE>
+
+<P><B>Notes from the December, 2016 teleconference:</B></P>
+
+<P>
+<TT>=delete</TT> definitions of member functions should be instantiated
+when instantiating a class template. That would make the example an
+ill-formed redefinition.</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<P>Change 13.9.2 [<A href="https://wg21.link/temp.inst#2">temp.inst</A>] paragraph 2, breaking the running
+text into bullets, as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The implicit instantiation of a class template specialization causes</P>
+
+<UL>
+<LI><P>the implicit instantiation of the declarations, but not of the
+definitions, <DEL>default arguments, or <I>noexcept-specifier</I>s</DEL> of
+the <INS>non-deleted</INS> class member functions, member classes, scoped
+member enumerations, static data members, member templates, and friends;
+and</P></LI>
+
+<LI><P>
+<DEL>it causes</DEL> the implicit instantiation of the definitions
+of <INS>deleted member functions,</INS> unscoped member
+enumerations<INS>,</INS> and member anonymous unions.</P></LI>
+
+</UL>
+
+<P><INS>The implicit instantiation of a class template specialization does not cause the implicit instantiation of default arguments or <I>noexcept-specifier</I>s of the class member functions. [<I>Example:</I></INS></P>
+
+<PRE>
+<INS>  template&lt;class T&gt;
+  struct C {
+    void f() { T x; }
+    void g() = delete;
+  };
+  C&lt;void&gt; c;                       //<SPAN CLASS="cmnt"> OK, definition of </SPAN>C&lt;void&gt;::f<SPAN CLASS="cmnt"> is not instantiated at this point</SPAN>
+  template&lt;&gt; void C&lt;int&gt;::g() { }  //<SPAN CLASS="cmnt"> error: redefinition of </SPAN>C&lt;int&gt;::g</INS>
+</PRE>
+
+<P>
+<INS>&#8212;<I>end example</I>]</INS> However, for the purpose of
+determining whether an instantiated redeclaration is valid according to
+6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>] and 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], a declaration that
+corresponds to a definition in the template is considered to be a
+definition.  [<I>Example:</I>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,305 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 399</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="399"></A><H4>399.
+  
+Destructor lookup redux
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 Jan 2003<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+<P>Mark Mitchell raised a number of issues related to the resolution of
+<A HREF="244.html">issue 244</A> and of destructor lookup in general.</P>
+
+<P>
+<A HREF="244.html">Issue 244</A> says:</P>
+<BLOCKQUOTE>
+	... in a <I>qualified-id</I> of the form:
+<UL>
+::<SUB>opt</SUB> <I>nested-name-specifier</I><SUB>opt</SUB>
+   <I>class-name</I> :: ~ <I>class-name</I>
+</UL>
+	the second class-name is looked up in the same scope as the first.
+</BLOCKQUOTE>
+<P>But if the reference is "<TT>p-&gt;X::~X()</TT>", the first
+<I>class-name</I> is looked up
+in two places (normal lookup and a lookup in the class of p).  Does
+the new wording mean:
+<OL>
+<LI>
+You look up the second class-name in the scope that you found the first
+one.
+</LI>
+<LI>You look up the second class-name using the same kind of lookup that
+   found the first one (normal vs. class).
+</LI>
+<LI>If you did a dual lookup for the first you do a dual lookup for the
+   second.
+</LI>
+</OL>
+</P>
+
+<P>This is a test case that illustrates the issue:</P>
+<PRE>
+  struct A {
+    typedef A C;
+  };
+
+  typedef A B;
+
+  void f(B* bp) {
+    bp-&gt;B::~B();  // okay B found by normal lookup
+    bp-&gt;C::~C();  // okay C found by class lookup
+    bp-&gt;B::~C();  // B found by normal lookup C by class -- okay?
+    bp-&gt;C::~B();  // C found by class lookup B by normal -- okay?
+  }
+</PRE>
+
+<P>A second issue concerns destructor references when the class involved is
+a template class.</P>
+<PRE>
+  namespace N {
+    template &lt;typename T&gt; struct S {
+      ~S();
+    };
+  }
+
+  void f(N::S&lt;int&gt;* s) {
+    s-&gt;N::S&lt;int&gt;::~S();
+  }
+</PRE>
+<P>The issue here is that the grammar uses "~<I>class-name</I>" for destructor
+names, but in this case S is a template name when looked up in N.</P>
+
+<P>Finally, what about cases like:</P>
+<PRE>
+  template &lt;typename T&gt; void f () {
+    typename T::B x;
+    x.template A&lt;T&gt;::template B&lt;T&gt;::~B();
+  }
+</PRE>
+<P>When parsing the template definition, what checks can be done on "~B"?</P>
+
+<P>
+<U>Sandor Mathe</U> adds
+:</P>
+
+<P>The standard correction for <A HREF="244.html">issue 244</A>
+(now in DR status) is still incomplete.</P>
+
+<P>Paragraph 5 of 6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>] is
+not applicable for p-&gt;T::~T since there is no nested-name-specifier.
+Section _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+describes the lookup of p-&gt;~T but p-&gt;T::~T is still not
+described.  There are examples (which are non-normative) that illustrate
+this sort of lookup but they still leave questions unanswered.  The
+examples imply that the name after ~ should be looked up in the same
+scope as the name before the :: but it is not stated.  The problem is
+that the name to the left of the :: can be found in two
+different scopes.  Consider the following:</P>
+<PRE>
+  struct S {
+    struct C { ~C() { } };
+  };
+
+  typedef S::C D;
+
+  int main() {
+    D* p;
+    p-&gt;C::~D();  // valid?
+  }
+</PRE>
+
+<P>Should the destructor call be valid?  If there were a nested name
+specifier, then D should be looked for in the same scope as C.  But
+here, C is looked for in 2 different ways.  First, it is searched for in
+the type of the left hand side of -&gt; and it is also looked for in the
+lexical context.  It is found in one or if both, they must match.  So, C
+is found in the scope of what p points at.  Do you only look for D there?
+If so, this is invalid.  If not, you would then look for D in the context
+of the expression and find it.  They refer to the same underlying
+destructor so this is valid.  The intended resolution of the original
+defect report of the standard was that the name before the :: did not
+imply a scope and you did not look for D inside of C.  However, it was
+not made clear whether this was to be resolved by using the same lookup
+mechanism or by introducing a new form of lookup which is to look in the
+left hand side if that is where C was found, or in the context of the
+expression if that is where C was found.  Of course, this begs the
+question of what should happen when it is found in both?  Consider
+the modification to the above case when C is also found in the context
+of the expression.  If you only look where you found C, is this now
+valid because it is in 1 of the two scopes or is it invalid because C
+was in both and D is only in 1?</P>
+
+<PRE>
+  struct S {
+    struct C { ~C() { } };
+  };
+
+  typedef S::C D;
+  typedef S::C C;
+
+  int main() {
+    D* p;
+    p-&gt;C::~D();  // valid?
+  }
+</PRE>
+
+<P>I agree that the intention of the committee is that the original test
+case in this defect is broken.  The standard committee clearly thinks
+that the last name before the last :: does not induce a new scope which
+is our current interpretation.  However, how this is supposed to work
+is not defined.  This needs clarification of the standard.</P>
+
+<P>
+<U>Martin Sebor</U> adds this example (September 2003), along
+with errors produced by the EDG front end:</P>
+<PRE>
+namespace N {
+    struct A { typedef A NA; };
+    template &lt;class T&gt; struct B { typedef B NB; typedef T BT; };
+    template &lt;template &lt;class&gt; class T&gt; struct C { typedef C NC; typedef T&lt;A&gt; CA; };
+}
+
+void foo (N::A *p)
+{
+    p-&gt;~NA ();
+    p-&gt;NA::~NA ();
+}
+
+template &lt;class T&gt;
+void foo (N::B&lt;T&gt; *p)
+{
+    p-&gt;~NB ();
+    p-&gt;NB::~NB ();
+}
+
+template &lt;class T&gt;
+void foo (typename N::B&lt;T&gt;::BT *p)
+{
+    p-&gt;~BT ();
+    p-&gt;BT::~BT ();
+}
+
+template &lt;template &lt;class&gt; class T&gt;
+void foo (N::C&lt;T&gt; *p)
+{
+    p-&gt;~NC ();
+    p-&gt;NC::~NC ();
+}
+
+template &lt;template &lt;class&gt; class T&gt;
+void foo (typename N::C&lt;T&gt;::CA *p)
+{
+    p-&gt;~CA ();
+    p-&gt;CA::~CA ();
+}
+
+Edison Design Group C/C++ Front End, version 3.3 (Sep  3 2003 11:54:55)
+Copyright 1988-2003 Edison Design Group, Inc.
+
+"t.cpp", line 16: error: invalid destructor name for type "N::B&lt;T&gt;"
+      p-&gt;~NB ();
+          ^
+
+"t.cpp", line 17: error: qualifier of destructor name "N::B&lt;T&gt;::NB" does not
+          match type "N::B&lt;T&gt;"
+      p-&gt;NB::~NB ();
+              ^
+
+"t.cpp", line 30: error: invalid destructor name for type "N::C&lt;T&gt;"
+      p-&gt;~NC ();
+          ^
+
+"t.cpp", line 31: error: qualifier of destructor name "N::C&lt;T&gt;::NC" does not
+          match type "N::C&lt;T&gt;"
+      p-&gt;NC::~NC ();
+              ^
+
+4 errors detected in the compilation of "t.cpp".
+</PRE>
+
+<P>
+<U>John Spicer:</U>
+The issue here is that we're unhappy with the destructor names when doing
+semantic analysis of the template definitions (not during an
+instantiation).</P>
+
+<P>My personal feeling is that this is reasonable.  After all, why
+would you call p-&gt;~NB for a class that you just named
+as N::B&lt;T&gt; and you could just say p-&gt;~B?</P>
+
+<P><B>Additional note (September, 2004)</B></P>
+
+<P>The resolution for <A HREF="244.html">issue 244</A> removed
+the discussion of <TT>p-&gt;N::~S</TT>, where <TT>N</TT> is a
+<I>namespace-name</I>.  However, the resolution did not make this
+construct ill-formed; it simply left the semantics undefined.
+The meaning should either be defined or the construct made
+ill-formed.</P>
+
+<P>See also issues <A HREF="305.html">305</A> and
+<A HREF="466.html">466</A>.</P>
+
+<P><B>Additional note, November, 2014:</B></P>
+
+<P>Here are some additional examples that should be addressed by the
+resolution of this issue:</P>
+
+<PRE>
+   namespace N {
+     template&lt;typename T&gt; struct E {};
+     typedef E&lt;int&gt; F;
+   }
+   namespace M {
+     typedef N::F H;
+   }
+   void g(N::F f) {
+     typedef N::F G;
+     f.G::~E(); //<SPAN CLASS="cmnt"> #1</SPAN>
+     f.G::~F(); //<SPAN CLASS="cmnt"> #2</SPAN>
+     f.G::~G(); //<SPAN CLASS="cmnt"> #3</SPAN>
+     f.N::F::~E(); //<SPAN CLASS="cmnt"> #4</SPAN>
+     f.N::F::~F(); //<SPAN CLASS="cmnt"> #5</SPAN>
+     f.N::F::~G(); //<SPAN CLASS="cmnt"> #6</SPAN>
+     f.M::H::~E(); //<SPAN CLASS="cmnt"> #7</SPAN>
+     f.M::H::~F(); //<SPAN CLASS="cmnt"> #8</SPAN>
+     f.M::H::~G(); //<SPAN CLASS="cmnt"> #9</SPAN>
+     f.M::H::~H(); //<SPAN CLASS="cmnt"> #10</SPAN>
+   }
+</PRE>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

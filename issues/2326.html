@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2326</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2326"></A><H4>2326.
+  
+Type deduction with initializer list containing ambiguous functions
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Caves
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-08-12<BR>
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  template&lt;typename T, int N&gt; void g(T (* const (&amp;)[N])(T)) { }
+
+  int f1(int);
+  int f4(int);
+  char f4(char);
+
+  void f() {
+    g({ &amp;f1, &amp;f4 });  //<SPAN CLASS="cmnt"> OK, </SPAN>T<SPAN CLASS="cmnt"> deduced to </SPAN>int<SPAN CLASS="cmnt">, </SPAN>N<SPAN CLASS="cmnt"> deduced to </SPAN>2<SPAN CLASS="cmnt">?</SPAN>
+  }
+</PRE>
+
+<P>There is implementation divergence on the handling of this
+example. According to 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#1">temp.deduct.call</A>] paragraph 1,</P>
+
+<BLOCKQUOTE>
+
+If removing references and cv-qualifiers from <TT>P</TT>
+gives
+<TT>std::initializer_list&lt;P'&gt;</TT> or <TT>P'[N]</TT> for
+some <TT>P'</TT> and <TT>N</TT> and the argument is a non-empty
+initializer list (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]), then deduction is
+performed instead for each element of the initializer list,
+taking <TT>P'</TT> as a function template parameter type and the
+initializer element as its argument, and in the <TT>P'[N]</TT>
+case, if <TT>N</TT> is a non-type template parameter, <TT>N</TT>
+is deduced from the length of the initializer list.
+
+</BLOCKQUOTE>
+
+<P>Deduction fails for the <TT>&amp;f4</TT> element fails due to
+ambiguity, so by 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.5.1">temp.deduct.type</A>] bullet 5.5.1 the
+function parameter is a non-deduced context.</P>
+
+<P>It is not clear, however, whether that implies that the
+function parameter is a non-deduced context from the perspective
+of the entire deduction, so we cannot deduct <TT>T</TT> and
+<TT>N</TT>, or if it's only a non-deduced context for this slice
+of the initializer list deduction and we can still deduce the
+template parameters from the <TT>&amp;f1</TT> element.</P>
+
+<P>See also <A HREF="1513.html">issue 1513</A>.</P>
+
+<P><B>Rationale, July, 2017</B></P>
+
+<P>This issue is a duplicate of <A HREF="2318.html">issue 2318</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

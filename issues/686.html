@@ -1,0 +1,248 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 686</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="686"></A><H4>686.
+  
+Type declarations/definitions in <I>type-specifier-seq</I>s and <I>type-id</I>s
+</H4>
+<B>Section: </B>9.3.2&#160; [<A href="https://wg21.link/dcl.name">dcl.name</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 March, 2008<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+
+
+<P>The restrictions on declaring and/or defining classes inside
+<I>type-specifier-seq</I>s and <I>type-id</I>s are inconsistent
+throughout the Standard.  This is probably due to the fact that
+nearly all of the sections that deal with them attempt to state
+the restriction afresh.  There are three cases:</P>
+
+<OL>
+<LI>
+<P>7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], 8.5 [<A href="https://wg21.link/stmt.select">stmt.select</A>],
+and 11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>] prohibit &#8220;declarations&#8221;
+of classes and enumerations.  That means that</P>
+
+<PRE>
+    while (struct C* p = 0) ;
+</PRE>
+
+<P>is ill-formed unless a prior declaration of <TT>C</TT> has been
+seen.  These appear to be cases that should have been fixed by
+<A HREF="379.html">issue 379</A>, changing &#8220;class
+declaration&#8221; to &#8220;class definition,&#8221; but were
+overlooked.</P>
+</LI>
+
+<LI><P>7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>], 9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>], and
+9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>] (late-specified return types) do not
+contain any restriction at all. </P></LI>
+
+<LI><P>All the remaining cases prohibit &#8220;type
+definitions,&#8221; apparently referring to classes and
+enumerations.</P></LI>
+
+</OL>
+
+<P>
+<U>Suggested resolution</U>:</P>
+
+<P>Add something like, &#8220;A class or enumeration shall
+not be defined in a <I>type-specifier-seq</I> or in a
+<I>type-id</I>,&#8221; to a single place in the Standard and
+remove all other mentions of that restriction (allowing
+declarations via <I>elaborated-type-specifier</I>).</P>
+
+<P>
+<U>Mike Miller</U>:</P>
+
+<P>An <I>alias-declaration</I> is just a different syntax for
+a typedef declaration, which allows definitions of a class in
+the type; I would expect the same to be true of an
+<I>alias-declaration</I>.  I don't have any particularly
+strong attachment to allowing a class definition in an
+<I>alias-declaration</I>.  My only concern is introducing
+an irregularity into what are currently exact-match
+semantics with typedefs.</P>
+
+<P>There's a parallel restriction in many (but not all?) of
+these places on typedef declarations.</P>
+
+<P>
+<U>Jens Maurer</U>:</P>
+
+<P>Those are redundant, as <TT>typedef</TT> is not a
+<I>type-specifier</I>, and should be removed as well.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<OL>
+<LI><P>Delete the indicated words from 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast#1">expr.dynamic.cast</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in a <TT>dynamic_cast</TT>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 7.6.1.8 [<A href="https://wg21.link/expr.typeid#4">expr.typeid</A>] paragraph 4:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in the <I>type-id</I>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#1">expr.static.cast</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in a <TT>static_cast</TT>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#1">expr.reinterpret.cast</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in a <TT>reinterpret_cast</TT>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 7.6.1.11 [<A href="https://wg21.link/expr.const.cast#1">expr.const.cast</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in a <TT>const_cast</TT>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete paragraph 5 of 7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Types shall not be defined in a <TT>sizeof</TT> expression.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete paragraph 5 of 7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The <I>type-specifier-seq</I> shall not contain class declarations, or
+enumeration declarations.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete paragraph 4 of 7.6.2.6 [<A href="https://wg21.link/expr.alignof">expr.alignof</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>A type shall not be defined in an <TT>alignof</TT> expression.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete paragraph 3 of 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Types shall not be defined in casts.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 8.5 [<A href="https://wg21.link/stmt.select#2">stmt.select</A>] paragraph 2:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>The <I>type-specifier-seq</I> shall not contain
+<TT>typedef</TT> and shall not declare a new class or
+enumeration.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the indicated words to 9.2.9 [<A href="https://wg21.link/dcl.type#3">dcl.type</A>] paragraph 3:
+</P></LI>
+
+<BLOCKQUOTE>
+
+At least one <I>type-specifier</I> that is not a
+<I>cv-qualifier</I> is required in a declaration unless it
+declares a constructor, destructor or conversion function.
+[<I>Footnote:</I> ... ] <INS>A <I>type-specifier-seq</I> shall not
+define a class or enumeration unless it appears in the
+<I>type-id</I> of an <I>alias-declaration</I>
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]).</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 11.4.8.3 [<A href="https://wg21.link/class.conv.fct#1">class.conv.fct</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Classes, enumerations, and <I>typedef-name</I>s shall not be
+declared in the <I>type-specifier-seq</I>.</DEL>...
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated words from 14.4 [<A href="https://wg21.link/except.handle#1">except.handle</A>] paragraph 1:
+</P></LI>
+
+<BLOCKQUOTE>
+
+...<DEL>Types shall not be defined in an <I>exception-declaration</I>.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete paragraph 6 of 14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Types shall not be defined in <I>exception-specification</I>s.</DEL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><I>[Drafting note: no changes are required to
+7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>], 9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>],
+9.12.2 [<A href="https://wg21.link/dcl.align">dcl.align</A>], 9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>],
+9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], 13.2 [<A href="https://wg21.link/temp.param">temp.param</A>],
+or 13.3 [<A href="https://wg21.link/temp.names">temp.names</A>].]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

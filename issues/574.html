@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 574</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="574"></A><H4>574.
+  
+Definition of &#8220;copy assignment operator&#8221;
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>15 April 2006<BR>
+
+
+<P>Is the following a &#8220;copy assignment operator?&#8221;</P>
+
+<PRE>
+    struct A {
+        const A&amp; operator=(const A&amp;) volatile;
+    };
+</PRE>
+
+<P>11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#9">class.copy.ctor</A>] paragraph 9 doesn't say one way or the
+other whether cv-qualifiers on the function are allowed.  (A similar
+question applies to the <TT>const</TT> case, but I avoided that example
+because it seems so wrong one tends to jump to a conclusion before
+seeing what the standard says.)</P>
+
+<P>Since the point of the definition of &#8220;copy assignment
+operator&#8221; is to control whether the compiler generates a default
+version if the user doesn&#8217;t, I suspect the correct answer is
+that neither <TT>const</TT> nor <TT>volatile</TT> cv-qualification
+on <TT>operator=</TT> should be allowed for a &#8220;copy assignment
+operator.&#8221; A user can write an <TT>operator=</TT> like that, but
+it doesn't affect whether the compiler generates the default one.</P>
+
+<P><B>Proposed Resolution (November, 2006):</B></P>
+
+<P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#9">class.copy.ctor</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+A user-declared <I>copy</I> assignment operator <TT>X::operator=</TT>
+is a non-static non-template <INS>non-volatile non-const</INS> member
+function of class <TT>X</TT> with exactly one parameter of
+type <TT>X</TT>, <TT>X&amp;</TT>, <TT>const X&amp;</TT>, <TT>volatile
+X&amp;</TT> or <TT>const volatile X&amp;</TT>.
+
+</BLOCKQUOTE>
+
+<P><I>[Drafting note: If a user-declared volatile <TT>operator=</TT>
+prevented the implicit declaration of the copy assignment operator,
+all assignments for objects of the given class (even to non-volatile
+objects) would pay the penalty for volatile write accesses in the
+user-declared <TT>operator=</TT>, despite not needing it.]</I></P>
+
+<P><B>Additional note (December, 2008):</B></P>
+
+
+
+<P>The proposed resolution addresses only cv-qualified assignment
+operators and is silent on ref-qualified versions.  However, it would
+seem that the spirit of the resolution would indicate that a ref-qualified
+assignment operator would not be considered a copy assignment operator.</P>
+
+<P>There appears to be an emerging idiom that relies on the idea that
+providing an lvalue-only assignment operator would prevent assignment
+to rvalues:</P>
+
+<PRE>
+    struct A {
+      A&amp; operator=(const A&amp;) &amp;; // disable assignemt to rvalue
+    };
+</PRE>
+
+<P>The resolution should also be reconsidered in light of the use of
+a const-qualified assignment operator as part of the implementation
+of a proxy class, where the proxy object itself is constant and should
+not be changed, but the copy assignment operator would apply to the
+object to which the proxy object refers.</P>
+
+<P><B>Rationale (March, 2009):</B></P>
+
+<P>It was decided that cv-qualified and ref-qualified assignment
+operators should be considered copy assignment operators if they
+have the required parameter type.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

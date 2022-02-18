@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1781</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1781"></A><H4>1781.
+  
+Converting from <TT>nullptr_t</TT> to <TT>bool</TT> in overload resolution
+</H4>
+<B>Section: </B>12.2.2.6&#160; [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-26<BR>
+
+
+<P>[Accepted as a DR at the November, 2018 (San Diego) meeting.]</P>
+
+<P>According to 12.2.2.6 [<A href="https://wg21.link/over.match.conv#1">over.match.conv</A>] paragraph 1, when a class
+type <TT>S</TT> is used as an initializer for an object of type <TT>T</TT>,
+</P>
+
+<BLOCKQUOTE>
+
+The conversion functions of <TT>S</TT> and its base classes are
+considered. Those non-explicit conversion functions that are not hidden
+within <TT>S</TT> and yield type <TT>T</TT> or a type that can be converted
+to type <TT>T</TT> via a standard conversion sequence
+(12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]) are candidate functions.
+
+</BLOCKQUOTE>
+
+<P>Because conversion from <TT>std::nullptr_t</TT> to <TT>bool</TT>
+is only permitted in direct-initialization (7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]),
+it is not clear whether there is a standard conversion sequence from
+<TT>std::nullptr_t</TT> to <TT>bool</TT>, considering that an
+implicit conversion sequence is intended to model
+copy-initialization.  Should 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>] be
+understood to refer only to conversions permitted in
+copy-initialization, or should the form of the initialization be
+considered?  For example,</P>
+
+<PRE>
+  struct SomeType {
+    operator std::nullptr_t();
+  };
+  bool b{ SomeType() };    //<SPAN CLASS="cmnt"> Well-formed?</SPAN>
+</PRE>
+
+<P>Note also 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#4">over.ics.rank</A>] paragraph 4, which may bear
+on the intent (or, alternatively, might describe a situation that
+cannot arise):</P>
+
+<BLOCKQUOTE>
+
+A conversion that does not convert a pointer, a pointer to member, or
+<TT>std::nullptr_t</TT> to <TT>bool</TT> is better than one that does.
+
+</BLOCKQUOTE>
+
+<P>See also issues <A HREF="2133.html">2133</A> and
+<A HREF="2243.html">2243</A>.)</P>
+
+<P><B>Proposed resolution (June, 2018):</B></P>
+
+<OL>
+<LI><P>Change 7.3.15 [<A href="https://wg21.link/conv.bool#1">conv.bool</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A prvalue of arithmetic, unscoped enumeration, pointer, or
+pointer-to-member type can be converted to a prvalue of type
+<TT>bool</TT>. A zero value, null pointer value, or null member
+pointer value is converted to <TT>false</TT>; any other value is
+converted to <TT>true</TT>. <DEL>For direct-initialization
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), a prvalue of type
+<TT>std::nullptr_t</TT> can be converted to a prvalue of
+type <TT>bool</TT>; the resulting value is <TT>false</TT>.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following bullet before 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+bullet 17.8:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>The semantics of initializers are as follows. The
+<I>destination type</I> is the type of the object or
+reference being initialized and the <I>source type</I> is
+the type of the initializer expression. If the initializer
+is not a single (possibly parenthesized) expression, the
+source type is not defined.</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P><INS>Otherwise, if the initialization is
+direct-initialization, the source type
+is <TT>std::nullptr_t</TT>, and the destination type
+is <TT>bool</TT>, the initial value of the object being
+initialized is <TT>false</TT>.</INS></P></LI>
+
+<LI><P>Otherwise, the initial value of the object being
+initialized is the (possibly converted) value...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#4.1">over.ics.rank</A>] bullet 4.1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>Standard conversion sequences are ordered by their ranks: an
+Exact Match is a better conversion than a Promotion, which
+is a better conversion than a Conversion. Two conversion
+sequences with the same rank are indistinguishable unless
+one of the following rules applies:</P>
+
+<UL>
+<LI><P>A conversion that does not convert a
+pointer<DEL>,</DEL> <INS>or</INS> a pointer to member<DEL>,
+or <TT>std::nullptr_t</TT></DEL> to <TT>bool</TT> is better
+than one that does.</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="2133.html">issue 2133</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

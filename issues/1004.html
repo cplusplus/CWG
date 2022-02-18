@@ -1,0 +1,185 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1004</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1004"></A><H4>1004.
+  
+Injected-class-names as arguments for template template parameters
+</H4>
+<B>Section: </B>13.8.2&#160; [<A href="https://wg21.link/temp.local">temp.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2009-11-19<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+
+
+<P>The injected-class-name of a class template can be used either
+by itself, in which case it is a type denoting the current instantiation,
+or followed by a template argument list, in which case it is a
+<I>template-name</I>.  It would be helpful to extend this treatment
+so that the injected-class-name could be used as an argument for a template
+template parameter:</P>
+
+<PRE>
+    template &lt;class T&gt; struct A { };
+
+    template &lt;template &lt;class&gt; class TTP&gt; struct B { };
+
+    struct C: A&lt;int&gt; {
+       B&lt;A&gt; b;
+    };
+</PRE>
+
+<P>(This is accepted by g++.)</P>
+
+<P>
+<U>James Widman</U>:</P>
+
+<P>It would not be so helpful when used with overloaded function
+templates, for example:</P>
+
+<PRE>
+    template &lt;template &lt;class&gt; class TTP&gt;  void f(); // #1
+    template &lt;                 class T  &gt;  void f(); // #2
+
+    template &lt;class T&gt; struct A { };
+
+    struct C: A&lt;int&gt; {
+        void h(  ) {
+            f&lt;A&gt;(); //  #1?  #2?  Substitution failure?
+        }
+    };
+</PRE>
+
+<P>(See also <A HREF="602.html">issue 602</A>.)</P>
+
+<P><B>Proposed resolution (November, 2010) [SUPERSEDED]:</B></P>
+
+<P>Change 13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>] paragraphs 1-5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Like normal (non-template) classes, class templates have an
+injected-class-name (Clause 11 [<A href="https://wg21.link/class">class</A>]).  The
+injected-class-name can be used <DEL>with or without a
+<I>template-argument-list</I></DEL> <INS>as a <I>template-name</I>
+or a <I>type-name</I></INS>. <DEL>When it is used without a
+<I>template-argument-list</I>, it is equivalent to the
+injected-class-name followed by the <I>template-parameter</I>s of the
+class template enclosed in <TT>&lt;&gt;</TT>.</DEL> When it is used
+with a <I>template-argument-list</I>, <INS>as a
+<I>template-argument</I> for a template <I>template-parameter</I>, or
+as the final identifier in the <I>elaborated-type-specifier</I> of a
+friend class template declaration</INS> it refers to the <DEL>specified
+class template specialization, which could be the current
+specialization or another specialization.</DEL> <INS>class template
+itself.  Otherwise, it is equivalent to the <I>template-name</I>
+followed by the <I>template-parameter</I>s of the class template
+enclosed in <TT>&lt;&gt;</TT>.</INS>
+</P>
+
+<P>Within the scope of a class template specialization or partial
+specialization, when the injected-class-name is not <DEL>followed by a
+<TT>&lt;</TT></DEL> <INS>used as a <I>type-name</I></INS>, it is
+equivalent to the <DEL>injected-class-name</DEL>
+<INS><I>template-name</I></INS> followed by the
+<I>template-argument</I>s of the class template specialization or
+partial specialization enclosed in
+<TT>&lt;&gt;</TT>. [<I>Example:</I>
+</P>
+
+<PRE>
+<INS>  template&lt;template&lt;class&gt; class T&gt; class A { };</INS>
+  template&lt;class T&gt; class Y;
+  template&lt;&gt; class Y&lt;int&gt; {
+    Y* p;           //<SPAN CLASS="cmnt"> meaning </SPAN>Y&lt;int&gt;
+    Y&lt;char&gt;* q;     //<SPAN CLASS="cmnt"> meaning </SPAN>Y&lt;char&gt;
+<INS>    A&lt;Y&gt;* a;        //<SPAN CLASS="cmnt"> meaning </SPAN>A&lt;::Y&gt;
+    class B {
+      template&lt;class&gt; friend class Y;  //<SPAN CLASS="cmnt"> meaning </SPAN>::Y
+    };</INS>
+  };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>The injected-class-name of a class template or class template
+specialization can be used either <DEL>with or without a
+<I>template-argument-list</I></DEL> <INS>as a <I>template-name</I> or
+a <I>type-name</I></INS> wherever it is in scope. [<I>Example:</I>
+</P>
+
+<PRE>
+  template &lt;class T&gt; struct Base {
+    Base* p;
+  };
+
+  template &lt;class T&gt; struct Derived: public Base&lt;T&gt; {
+    typename Derived::Base* p;    //<SPAN CLASS="cmnt"> meaning </SPAN>Derived::Base&lt;T&gt;
+  };
+
+<INS>  template&lt;class T, template&lt;class&gt; class U = T::template Base&gt; struct Third { };
+  Third&lt;Base&lt;int&gt;&gt; t; //<SPAN CLASS="cmnt"> OK, default argument uses injected-class-name as a template</SPAN></INS>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>A lookup that finds an injected-class-name (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) can result in an ambiguity in certain cases (for
+example, if it is found in more than one base class). If all of the
+injected-class-names that are found refer to specializations of the
+same class template, and if the name is <DEL>followed by a
+<I>template-argument-list</I></DEL> <INS>used as a
+<I>template-name</I></INS>, the reference refers to the class template
+itself and not a specialization thereof, and is not
+ambiguous. [<I>Example:</I>
+</P>
+
+<PRE>
+  template &lt;class T&gt; struct Base { };
+  template &lt;class T&gt; struct Derived: Base&lt;int&gt;, Base&lt;char&gt; {
+    typename Derived::Base b;             //<SPAN CLASS="cmnt"> error: ambiguous</SPAN>
+    typename Derived::Base&lt;double&gt; d;     //<SPAN CLASS="cmnt"> OK</SPAN>
+  };
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+<P>When the normal name of the template (i.e., the name from the
+enclosing scope, not the injected-class-name) is used <DEL>without a
+<I>template-argument-list</I></DEL>, it <INS>always</INS> refers to
+the class template itself and not a specialization of the
+template. [<I>Example:...</I>
+</P>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="602.html">issue 602</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

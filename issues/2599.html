@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2599</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2599"></A><H4>2599.
+  
+What does initializing a parameter include?
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-18<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Subclause 7.6.1.3 [<A href="https://wg21.link/expr.call#8">expr.call</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+The <I>postfix-expression</I> is sequenced before each expression in
+the <I>expression-list</I> and any default argument. The
+initialization of a parameter, including every associated value
+computation and side effect, is indeterminately sequenced with respect
+to that of any other parameter.  [<I>Note 8:</I> All side effects of
+argument evaluations are sequenced before the function is entered (see
+6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>Consider:</P>
+
+<PRE>
+  f(std::unique_ptr&lt;int&gt;(new int),std::unique_ptr&lt;int&gt;(new int));
+</PRE>
+
+<P>It is not clear from the phrasing whether the evaluation of
+each <TT>new int</TT> is part of the "initialization of [its]
+parameter" or whether only the initialization of <TT>f</TT>'s parameters from
+the completed <TT>std::unique_ptr&lt;int&gt;</TT> objects is
+included. The note does not help, since it can be read as
+distinguishing argument evaluations from initialization.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Insert before 9.4.1 [<A href="https://wg21.link/dcl.init.general#18">dcl.init.general</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>initializer-clause</I> followed by an ellipsis is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).</P>
+
+<P><INS>Initialization includes the evaluation of all subexpressions
+of each <I>initializer-clause</I> of the initializer (possibly nested
+within <I>braced-init-list</I>s).</INS></P>
+
+<P>If the initializer is a parenthesized <I>expression-list</I>, the
+expressions are evaluated in the order specified for function calls
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</P>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-08-26):</B></P>
+
+<P>Insert before 9.4.1 [<A href="https://wg21.link/dcl.init.general#18">dcl.init.general</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>initializer-clause</I> followed by an ellipsis is a pack
+expansion (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).</P>
+
+<P><INS>Initialization includes the evaluation of all subexpressions
+of each <I>initializer-clause</I> of the initializer (possibly nested
+within <I>braced-init-list</I>s) and the creation of any temporary
+objects for function arguments or return values
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]).</INS></P>
+
+<P>If the initializer is a parenthesized <I>expression-list</I>, the
+expressions are evaluated in the order specified for function calls
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

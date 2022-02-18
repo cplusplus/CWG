@@ -1,0 +1,150 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2822</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2822"></A><H4>2822.
+  
+Side-effect-free pointer zap
+</H4>
+<B>Section: </B>6.7.6.1&#160; [<A href="https://wg21.link/basic.stc.general">basic.stc.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-06<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>Subclause 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#4">basic.stc.general</A>] paragraph 4 seems to suggest
+that the end of duration of a region of storage causes actual
+modifications to pointer objects, causing questions about data races
+(in the abstract machine).</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Append to 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#1">basic.stc.general</A>] paragraph 1:</P>
+
+<BLOCKQUOTE class="ins">
+
+[ Note: After the duration of a region of storage has ended, the use of
+pointers to that region of storage is limited
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]).  -- end note ]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 6.7.6.1 [<A href="https://wg21.link/basic.stc.general#4">basic.stc.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+When the end of the duration of a region of storage is reached,
+the values of all pointers representing the address of any part of
+that region of storage become invalid pointer values
+(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]). Indirection through an invalid pointer
+value and passing an invalid pointer value to a deallocation function
+have undefined behavior.  Any other use of an invalid pointer value
+has implementation-defined behavior. [ Footnote: ... ]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 2:</I> A pointer past the end of an object
+(7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) is not considered to point to an
+unrelated object of the object's type, even if the unrelated object is
+located at that address. <DEL>A pointer value becomes invalid when the
+storage it denotes reaches the end of its storage duration; see
+6.7.6 [<A href="https://wg21.link/basic.stc">basic.stc</A>].</DEL> &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert a new paragraph after 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3:</P>
+
+<BLOCKQUOTE class="ins">
+A pointer value <I>P</I> is <I>valid in the context of</I> an
+evaluation <I>E</I> if <I>P</I> is a null pointer value, or if it is a
+pointer to or past the end of an object <I>O</I> and <I>E</I> happens
+before the end of the duration of the region of storage
+for <I>O</I>. If a pointer value <I>P</I> is used in an
+evaluation <I>E</I> and <I>P</I> is not valid in the context
+of <I>E</I>, then the behavior is undefined if <I>E</I> is an
+indirection (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) or an invocation of a
+deallocation function (6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]), and
+implementation-defined otherwise. [ Footnote: Some implementations
+might define that copying such a pointer value causes a
+system-generated runtime fault. -- end footnote ]
+
+[ Note: <I>P</I> can be valid in the context of <I>E</I> even if it
+points to a type unrelated to that of <I>O</I> or if <I>O</I> is not
+within its lifetime, although further restrictions apply to such
+pointer values (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>],
+7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>], 7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#14">expr.static.cast</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If the original pointer value represents the address A of a byte
+in memory and A does not satisfy the alignment requirement of T, then
+the resulting pointer value <INS>(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>])</INS> is
+unspecified. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#5">expr.reinterpret.cast</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A value of integral type or enumeration type can be explicitly
+converted to a pointer. A pointer converted to an integer of
+sufficient size (if any such exists on the implementation) and back to
+the same pointer type will have its original value
+<INS>(6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>])</INS>; mappings between
+pointers and integers are otherwise implementation-defined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

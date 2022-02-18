@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 402</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="402"></A><H4>402.
+  
+More on partial ordering of function templates
+</H4>
+<B>Section: </B>13.7.7.3&#160; [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Apr 2003<BR>
+
+
+
+
+<P>This was split off from <A HREF="214.html">issue 214</A> at
+the April 2003 meeting.</P>
+
+<P>
+<U>Nathan Sidwell</U>:
+John Spicer's proposed resolution does not make the following
+well-formed.</P>
+<PRE>
+  template &lt;typename T&gt; int Foo (T const *) {return 1;} //#1
+  template &lt;unsigned I&gt; int Foo (char const (&amp;)[I]) {return 2;} //#2
+
+  int main ()
+  {
+    return Foo ("a") != 2;
+  }
+</PRE>
+<P>Both #1 and #2 can deduce the "a" argument, #1 deduces T as char and
+#2 deduces I as 2. However, neither is more specialized because the
+proposed rules do not have any array to pointer decay.</P>
+
+<P>#1 is only deduceable because of the rules in
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#2">temp.deduct.call</A>] paragraph 2 that
+decay array and function type arguments when the template parameter is
+not a reference. Given that such behaviour happens in deduction, I believe
+there should be equivalent behaviour during partial ordering. #2 should be
+resolved as more specialized as #1. The following alteration to the
+proposed resolution of DR214 will do that.</P>
+
+<P>Insert before,</P>
+<UL>
+<LI>If A is a cv-qualified type, A is replaced by the
+         cv-unqualified version of A.</LI>
+</UL>
+<P>the following</P>
+<UL>
+<LI>If P was not originally a reference type,
+<UL>
+<LI>If A is an array type, A is replaced by the pointer type produced
+            by the array to pointer conversion</LI>
+<LI>If A is a function type, A is replaced by the pointer type
+            produced by the function to pointer conversion</LI>
+</UL>
+</LI>
+</UL>
+
+<P>For the example above, this change results in deducing 'T const *' against
+'char const *' in one direction (which succeeds), and 'char [I]'
+against 'T const *' in the other (which fails).</P>
+
+<P>
+<U>John Spicer</U>:
+I don't consider this a shortcoming of my proposed wording, as I don't
+think this is part of the current rules.  In other words, the
+resolution of 214 might make it clearer how this case is handled
+(i.e., clearer that it is not allowed), but I don't believe it
+represents a change in the language.</P>
+
+<P>I'm not necessarily opposed to such a change, but I think it should be
+reviewed by the core group as a related change and not a defect in the
+proposed resolution to 214.</P>
+
+<P><B>Notes from the October 2003 meeting:</B></P>
+
+<P>There was some sentiment that it would be desirable to have
+this case ordered, but we don't think it's worth spending the
+time to work on it now.  If we look at some larger partial
+ordering changes at some point, we will consider this again.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

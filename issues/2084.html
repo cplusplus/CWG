@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2084</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2084"></A><H4>2084.
+  
+NSDMIs and deleted union default constructors
+</H4>
+<B>Section: </B>11.4.5&#160; [<A href="https://wg21.link/class.ctor">class.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-12<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+<P>According to 11.4.5 [<A href="https://wg21.link/class.ctor#4">class.ctor</A>] paragraph 4 says,</P>
+
+<BLOCKQUOTE>
+
+<P>A defaulted default constructor for class <TT>X</TT> is defined as
+deleted if:</P>
+
+<UL>
+<LI><P>
+<TT>X</TT> is a union-like class that has a
+variant member with a non-trivial default
+constructor,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This should make the following example ill-formed:</P>
+
+<PRE>
+  struct S {
+    S();
+  };
+  union U {
+    S s{};
+  } u;
+</PRE>
+
+<P>because the default constructor of <TT>U</TT> is deleted.  However,
+both clang and g++ accept this without error.  Should the rule be
+relaxed for a union with an NSDMI?</P>
+
+<P><B>Notes from the May, 2015 meeting:</B></P>
+
+<P>An NSDMI is basically syntactic sugar for a
+<I>mem-initializer</I>, so the presence of one should be
+treated as if a user-declared default constructor were present.</P>
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<P>Change 11.4.5 [<A href="https://wg21.link/class.ctor#4">class.ctor</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...A defaulted default constructor for class <TT>X</TT> is defined as
+deleted if:</P>
+
+<UL>
+<LI><P><INS><TT>X</TT> is a union that has a variant
+member with a non-trivial default constructor and no variant
+member of <TT>X</TT> has a default member
+initializer,</INS></P></LI>
+
+<LI><P>
+<TT>X</TT> is
+a <DEL>union-like</DEL> <INS>non-union</INS> class that has
+a variant member <INS><TT>M</TT></INS> with a non-trivial default
+constructor <INS>and no variant member of the anonymous union
+containing <TT>M</TT> has a default member initializer</INS>,</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2196</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2196"></A><H4>2196.
+  
+Zero-initialization with virtual base classes
+</H4>
+<B>Section: </B>9.4&#160; [<A href="https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++17
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-11-06<BR>
+
+
+<P>[Adopted at the February/March, 2017 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct V { int n; };
+  struct A : virtual V {};
+  struct B : A {
+   B() : V{123}, A() {}
+  } b;
+</PRE>
+
+<P>Initialization of <TT>b</TT> first performs aggregate
+initialization of the V virtual base subobject. Then it performs value
+initialization of the A base subobject.  Per 9.4.1 [<A href="https://wg21.link/dcl.init.general#9.1.2">dcl.init.general</A>] bullet 9.1.2, the A base subobject is zero-initialized. Per
+9.4.1 [<A href="https://wg21.link/dcl.init.general#6.2">dcl.init.general</A>] bullet 6.2, this zero-initializes the V
+virtual base subobject.</P>
+
+<P>Result: <TT>b.n</TT> is required to be 0, not 123.</P>
+
+<P><B>Proposed resolution (November, 2016):</B></P>
+
+<P>Change 9.4 [<A href="https://wg21.link/dcl.init#6.2">dcl.init</A>] bullet 6.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>To <I>zero-initialize</I> an object or reference of type <TT>T</TT>
+means:</P>
+
+<UL>
+<LI><P>if <TT>T</TT> is a scalar type (6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]), the
+object is initialized to the value obtained by converting the integer
+literal <TT>0</TT> (zero) to <TT>T</TT>;<SUP>103</SUP>
+</P></LI>
+
+<LI><P>if <TT>T</TT> is a (possibly cv-qualified) non-union class type,
+each non-static data member<INS>, each non-virtual base class
+subobject,</INS> and<INS>, if the object is not a base class
+subobject,</INS> each <INS>virtual</INS> base<DEL>-</DEL><INS> </INS> class
+subobject is zero-initialized and padding is initialized to zero
+bits;</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

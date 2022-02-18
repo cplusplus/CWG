@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2146</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2146"></A><H4>2146.
+  
+Scalar object vs memory location in definition of &#8220;unsequenced&#8221;
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-06-22<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>According to 6.9.1 [<A href="https://wg21.link/intro.execution#15">intro.execution</A>] paragraph 15,</P>
+
+<BLOCKQUOTE>
+
+If a side effect on a scalar object is unsequenced relative
+to either another side effect on the same scalar object or a
+value computation using the value of the same scalar object,
+and they are not potentially concurrent
+(6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]), the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>Should this refer to &#8220;memory location,&#8221; which
+also encompasses contiguous bit-fields, as the definition of
+data races in 6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>] does?  For example,</P>
+
+<PRE>
+  struct S {
+    int x : 4;
+    int y : 4;
+    int z : 4;
+  };
+
+  void f(int, int, int);
+  int g(int, S&amp;);
+
+  int main(int argc, char ** argv) {
+    S s = { argc, argc+1, argc+2 };
+    f(++s.x, g(++s.y, s), ++s.z);
+  }
+</PRE>
+
+<P><B>Proposed resolution (February, 2016):</B></P>
+
+<P>Change 6.9.1 [<A href="https://wg21.link/intro.execution#15">intro.execution</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE>
+
+...If a side effect on a <DEL>scalar
+object</DEL> <INS>memory location
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>])</INS> is unsequenced relative to
+either another side effect on the same <DEL>scalar
+object</DEL> <INS>memory location</INS> or a value
+computation using the value of <INS>any object in</INS> the
+same <DEL>scalar object</DEL> <INS>memory location</INS>,
+and they are not potentially concurrent
+(6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]), the behavior is
+undefined. [<I>Note:</I> The next section...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

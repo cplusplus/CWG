@@ -1,0 +1,191 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 496</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="496"></A><H4>496.
+  
+Is a volatile-qualified type really a POD?
+</H4>
+<B>Section: </B>6.8&#160; [<A href="https://wg21.link/basic.types">basic.types</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Maddock
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 Dec 2004<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+
+
+<P>In 6.8 [<A href="https://wg21.link/basic.types#10">basic.types</A>] paragraph 10, the standard makes
+it quite clear that volatile qualified types are PODs:</P>
+
+<BLOCKQUOTE>
+
+Arithmetic types (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]), enumeration
+types, pointer types, and pointer to member types (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]), and <I>cv-qualified</I> versions of these
+types (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) are collectively called
+<I>scalar types</I>. Scalar types, POD-struct types, POD-union
+types (Clause 11 [<A href="https://wg21.link/class">class</A>]), arrays of such types and
+<I>cv-qualified</I> versions of these types (6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) are collectively called <I>POD types</I>.
+
+</BLOCKQUOTE>
+
+<P>However in 6.8 [<A href="https://wg21.link/basic.types#3">basic.types</A>] paragraph 3, the
+standard makes it clear that PODs can be copied &#8220;as
+if&#8221; they were a collection of bytes by <TT>memcpy</TT>:</P>
+
+<BLOCKQUOTE>
+
+For any POD type <TT>T</TT>, if two pointers to <TT>T</TT> point to
+distinct <TT>T</TT> objects <TT>obj1</TT> and <TT>obj2</TT>, where
+neither <TT>obj1</TT> nor <TT>obj2</TT> is a base-class subobject, if
+the value of <TT>obj1</TT> is copied into <TT>obj2</TT>, using
+the <TT>std::memcpy</TT> library function, <TT>obj2</TT> shall
+subsequently hold the same value as <TT>obj1</TT>.
+
+</BLOCKQUOTE>
+
+<P>The problem with this is that a volatile qualified type may
+need to be copied in a specific way (by copying using only atomic
+operations on multithreaded platforms, for example) in order to
+avoid the &#8220;memory tearing&#8221; that may occur with a
+byte-by-byte copy.</P>
+
+<P>I realise that the standard says very little about volatile
+qualified types, and nothing at all (yet) about multithreaded
+platforms, but nonetheless this is a real issue, for the
+following reason:</P>
+
+<P>The forthcoming TR1 will define a series of traits that
+provide information about the properties of a type, including
+whether a type is a POD and/or has trivial construct/copy/assign
+operations.  Libraries can use this information to optimise their
+code as appropriate, for example an array of type <TT>T</TT>
+might be copied with a <TT>memcpy</TT> rather than an
+element-by-element copy if <TT>T</TT> is a POD.  This was one of
+the main motivations behind the type traits chapter of the TR1.
+However it's not clear how volatile types (or POD's which have a
+volatile type as a member) should be handled in these cases.</P>
+
+<P><B>Notes from the April, 2005 meeting:</B></P>
+
+<P>It is not clear whether the volatile qualifier actually guarantees
+atomicity in this way.  Also, the work on the memory model for
+multithreading being done by the Evolution Working Group seems at this
+point likely to specify additional semantics for volatile data, and
+that work would need to be considered before resolving this issue.</P>
+
+<P>(See also <A HREF="1746.html">issue 1746</A>.)</P>
+
+<P><B>Proposed resolution, October, 2012:</B></P>
+
+<OL>
+<LI><P>Change 6.8 [<A href="https://wg21.link/basic.types#9">basic.types</A>] paragraph 9 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...Scalar types, trivially copyable class types (Clause 11 [<A href="https://wg21.link/class">class</A>]), arrays of such types, and <DEL>cv-qualified</DEL>
+<INS>non-volatile const-qualified</INS> versions of these types
+(6.8.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) are collectively called <I>trivially
+copyable types</I>. Scalar types, trivial class types...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>] paragraphs 6-7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<INS>What constitutes an access to an object that has
+volatile-qualified type is implementation-defined.</INS> If an attempt
+is made to refer to an object defined with a volatile-qualified type
+through the use of a glvalue with a non-volatile-qualified type, the
+program behavior is undefined.</P>
+
+<P>[<I>Note:</I> <TT>volatile</TT> is a hint to the implementation to
+avoid aggressive optimization involving the object because the value
+of the object might be changed by means undetectable by an
+implementation. <INS>Furthermore, for some implementations,
+<TT>volatile</TT> might indicate that special hardware instructions
+are required to access the object.</INS> See 6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]
+for detailed semantics.  In general, the semantics of
+<TT>volatile</TT> are intended to be the same in C++ as they are in
+C. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#12">class.copy.ctor</A>] paragraph 12 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A copy/move constructor for class <TT>X</TT> is trivial if it is not
+user-provided, its declared parameter type is the same as if it had
+been implicitly declared, and if</P>
+
+<UL>
+<LI><P>class <TT>X</TT> has no virtual functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]),
+and</P></LI>
+
+<LI><P><INS>class <TT>X</TT> has no non-static data members of
+volatile-qualified type, and</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#25">class.copy.ctor</A>] paragraph 25 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A copy/move assignment operator for class <TT>X</TT> is trivial if
+it is not user-provided, its declared parameter type is the same as if
+it had been implicitly declared, and if</P>
+
+<UL>
+<LI><P>class <TT>X</TT> has no virtual functions (11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes (11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]),
+and</P></LI>
+
+<LI><P><INS>class <TT>X</TT> has no non-static data members of
+volatile-qualified type, and</INS></P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the June, 2016 meeting:</B></P>
+
+<P>The resolution of <A HREF="2094.html">issue 2094</A> revert
+the changes above revert the changes of <TT>volatile</TT>
+qualification on trivial copyability.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

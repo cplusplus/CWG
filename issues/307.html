@@ -1,0 +1,144 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 307</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="307"></A><H4>307.
+  
+Initialization of a virtual base class subobject
+</H4>
+<B>Section: </B>11.9.5&#160; [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Andrei Iltchenko
+ &#160;&#160;&#160;
+
+ <B>Date: </B>31 Aug 2001<BR>
+
+
+<P>The second paragraph of section 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>] contains the
+following text:</P>
+<BLOCKQUOTE>
+To explicitly or implicitly convert a pointer (an
+lvalue) referring to an object of class X to a pointer (reference) to
+a direct or indirect base class B of X, the construction of X and the
+construction of all of its direct or indirect bases that directly or
+indirectly derive from B shall have started and the destruction of
+these classes shall not have completed, otherwise the conversion
+results in undefined behavior.
+</BLOCKQUOTE>
+
+<P>Now suppose we have the following piece of code:</P>
+<PRE>
+    struct  a  {
+       a() :  m_a_data(0)  {   }
+       a(const a&amp; rhsa) :  m_a_data(rhsa.m_a_data)  {   }
+       int   m_a_data;
+    };
+
+    struct  b :  virtual a  {
+       b() :  m_b_data(0)  {   }
+       b(const b&amp; rhsb) :  a(rhsb),  m_b_data(rhsb.m_b_data)  {   }
+       int   m_b_data;
+    };
+
+    struct  c :  b  {
+       c() :  m_c_data(0)  {   }
+       c(const c&amp; rhsc) :  a(rhsc),// Undefined behaviour when constru-
+                                   // cting an object of type 'c'
+                           b(rhsc),  m_c_data(rhsc.m_c_data)  {   }
+       int   m_c_data;
+    };
+
+    int  main()
+    {   c   ac1,   ac2(ac1);   }
+</PRE>
+<P> The problem with the above snippet is that when the value '<TT>ac2</TT>' is
+being created and its construction gets started, <TT>c</TT>'s copy constructor
+has first to initialize the virtual base class subobject '<TT>a</TT>'. Which
+requires that the lvalue expression '<TT>rhsc</TT>' be converted to the type of
+the parameter of <TT>a</TT>'s copy constructor,
+which is 'const a&amp;'. According
+to the wording quoted above, this can be done without undefined
+behaviour if and only if <TT>b</TT>'s construction has already started, which
+is not possible since '<TT>a</TT>', being a virtual base class, has to be
+initialized first by a constructor of the most derived object
+(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).</P>
+
+<P>The issue could in some cases be alleviated when '<TT>c</TT>' has a
+user-defined copy constuctor. The constructor could default-initialize
+its '<TT>a</TT>' subobject and then initialize <TT>a</TT>'s members
+as needed taking
+advantage of the latitude given in paragraph 2 of
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>].</P>
+
+<P>But if '<TT>c</TT>' ends up having the implicitly-defined copy constuctor,
+there's no way to evade undefined behaviour.</P>
+<PRE>
+    struct  c :  b  {
+       c() :  m_c_data(0)  {   }
+       int   m_c_data;
+    };
+
+    int  main()
+    {   c   ac1,   ac2(ac1);   }
+</PRE>
+<P>Paragraph 8 of 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>] states</P>
+<BLOCKQUOTE>
+The
+implicitly-defined copy constructor for class X performs a memberwise
+copy of its subobjects. The order of copying is the same as the order
+of initialization of bases and members in a user-defined constructor
+(see 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]).
+Each subobject is copied in the manner appropriate to
+its type:
+<UL>
+<LI>
+if the subobject is of class type, the copy constructor for the
+class is used;
+</LI>
+</UL>
+</BLOCKQUOTE>
+<P>Which effectively means that the implicitly-defined copy constructor
+for '<TT>c</TT>' will have to initialize its '<TT>a</TT>'
+base class subobject first and
+that must be done with <TT>a</TT>'s copy constructor, which will always require
+a conversion of an lvalue expression of type '<TT>const c</TT>' to an lvalue of
+type '<TT>const a&amp;</TT>'. The situation would be the same if all the three
+classes shown had implicitly-defined copy constructors.</P>
+
+<P><B>Suggested resolution:</B></P>
+<P>Prepend to paragraph 2 of 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>] the following:
+<BLOCKQUOTE>
+Unless the conversion happens in a mem-initializer whose
+mem-initializer-id designates a virtual base class of X, to explicitly
+or implicitly convert ...
+</BLOCKQUOTE>
+</P>
+
+<P><B>Notes from the 10/01 meeting:</B></P>
+
+<P>There is no problem in this example.  <TT>ac1</TT> is fully initialized
+before it is used in the initialization of <TT>ac2</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,209 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 370</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="370"></A><H4>370.
+  
+Can <TT>#include &lt;...&gt;</TT> form be used other than for standard C++ headers?
+</H4>
+<B>Section: </B>15.3&#160; [<A href="https://wg21.link/cpp.include">cpp.include</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Beman Dawes
+ &#160;&#160;&#160;
+
+ <B>Date: </B>01 August 2002<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>The motivation for this issue is a desire to write portable programs which
+will work with any conforming implementation.</P>
+<P>The C++ Standard (15.3 [<A href="https://wg21.link/cpp.include">cpp.include</A>]) provides two forms of
+<TT>#include</TT> directives, with the &lt;...&gt; form being described
+(15.3 [<A href="https://wg21.link/cpp.include#2">cpp.include</A>] paragraph 2) as "for a header", and
+the "..." form (15.3 [<A href="https://wg21.link/cpp.include#3">cpp.include</A>] paragraph 3) as
+for "the source file" identified between the delimiters. When the
+standard uses the term "header", it often appears to be limiting
+the term to apply to the Standard Library headers only. Users of the
+standard almost always use the term "header" more broadly, to
+cover all <TT>#include</TT>d source files, but
+particularly those containing interface declarations.</P>
+
+<P>Headers, including source files, can be categorized according to
+their origin and usage:</P>
+<OL>
+  <LI>C++ Standard Library headers (which aren't necessarily files).</LI>
+  <LI>Other standard libraries such as the POSIX headers.</LI>
+  <LI>Operating system API's such as <I>windows.h</I>.</LI>
+  <LI>Third party libraries, such as Boost, ACE, or commercial offerings.</LI>
+  <LI>Organization-wide "standard" header files, such as a company's <I>
+  config.hpp</I>.</LI>
+  <LI>A project's "public" header files, often shared by all
+      developers working on the same project.</LI>
+  <LI>A project or user's "private", "local", or
+      "detail" headers, in the same directory or sub-directory
+      as the compilation unit.</LI>
+</OL>
+<P>Existing practice varies widely, but it is fairly easy to find users
+advocating:</P>
+<UL>
+  <LI>For (1), Standard Library headers, use &lt;...&gt;. All others
+      use "...".</LI>
+  <LI>For (7),  use "...". All others use &lt;...&gt;.</LI>
+  <LI>Draw a line somewhere below (1) and above (7), and use
+      &lt;...&gt; above the line and "..." below.
+      The exact location of the line may be based on a perception of
+      how often the header involved changes; some "make" utilities
+      use this to optimize builds.</LI>
+</UL>
+<P>Do any of the practices A, B, or C result in programs which can be rejected
+by a conforming implementation?</P>
+
+<P>The first defect is that readers of the standard have not been
+able to reach consensus on the answers to the above question.</P>
+
+<P>A second possible defect is that if A, B, or C can be rejected by a
+conforming implementation, then the standard should be changed because would
+mean there is a wide variance between the standard and existing practice.</P>
+
+<P>
+<U>Matt Austern</U>:
+I really only see two positions:</P>
+<OL>
+<LI>Implementations have some unspecified mechanism (copying
+files to a magic directory, adding a magic flag,...) such that the
+line <TT>#include &lt;foo&gt;</TT> results in textual inclusion of
+the file foo.</LI>
+<LI>Implementations are not required to have any mechanism for
+getting <TT>#include &lt;foo&gt;</TT> to perform textual inclusion of an
+arbitrary file <TT>foo</TT>.  That form is reserved for standard
+library headers only.</LI>
+</OL>
+<P>I agree that the standard should clarify which of those two is the
+case (I imagine it'll hinge on finding one crucual sentence that
+either says "implementation defined" or "unspecified"), but from
+the standpoint of portability I don't see much difference between
+the two.  I claim that, with either of those two interpretations, using
+<TT>#include &lt;foo&gt;</TT> is already nonportable.</P>
+
+<P>(Of course, I claim that almost anything having to do with headers,
+including the <TT>#include "foo"</TT> form, is also nonportable.  In practice
+there's wide variation in how compilers handle paths, especially
+relative paths.)</P>
+
+<P>
+<U>Beman Dawes</U>:
+The whole issue can be resolved by replacing "header" with "header or
+source file" in 15.3 [<A href="https://wg21.link/cpp.include#2">cpp.include</A>] paragraph 2.
+That will bring the standard into
+alignment with existing practice by both users and implementations.
+The "header and/or source file" wording is used at least three other
+places in the standard where otherwise there might be some confusion.</P>
+
+<P>
+<U>John Skaller</U>:
+In light of Andrew Koenig's comments, this doesn't appear to be the case,
+since the mapping of include names to file names is implementation defined,
+and therefore source file inclusion cannot be made portable
+within the ISO C/C++ standards (since that provision obviously cannot be
+removed).</P>
+
+<P>A possible idea is to create a binding standard, outside the
+C/C++ ISO Standards, which specifies not only the path lookup
+mechanism but also the translation from include names to file
+names. Clearly that is OS dependent, encoding dependent, etc,
+but there is no reason not to have a binding standard for Unix,
+Windows, etc, and specify these bindings in such a way that
+copying directories from one OS to the other can result in
+programs working on both OS's.</P>
+
+<P>
+<U>Andy Koenig</U>:
+An easier solution might be to specify a (presumably unbounded, or
+bounded only by implementation capacity) collection of header-file
+names that every implementation must make it possible for programs
+to access somehow, without specifying exactly how.</P>
+
+<P><B>Notes from October 2002 meeting:</B></P>
+
+<P>This was discussed at some length.  While there was widespread
+agreement that such inclusion is inherently implementation-dependent,
+we agreed to try to add wording that would make it clear that
+implementations are permitted (but not required) to allow inclusion
+of files using the &lt;...&gt; form of <TT>#include</TT>.</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>Change 15.3 [<A href="https://wg21.link/cpp.include#7">cpp.include</A>] paragraph 7 from:</P>
+
+<BLOCKQUOTE>
+
+[<I>Example:</I> The most common uses of <TT>#include</TT> preprocessing
+directives are as in the following:
+
+<PRE>
+    #include &lt;stdio.h&gt;
+    #include "myprog.h"
+</PRE>
+
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P>to:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> Although an implementation may provide a mechanism for
+making arbitrary source files available to the <TT>&lt; &gt;</TT>
+search, in general programmers should use the <TT>&lt; &gt;</TT> form
+for headers provided with the implementation, and the <TT>" "</TT>
+form for sources outside the control of the implementation. For
+instance:
+
+<PRE>
+    #include &lt;stdio.h&gt;
+    #include &lt;unistd.h&gt;
+    #include "usefullib.h"
+    #include "myprog.h"
+</PRE>
+
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P><B>Notes from October, 2005 meeting:</B></P>
+
+<P>Some doubt was expressed as to whether the benefit of this
+non-normative clarification outweighs the overall goal of synchronizing
+clause 16 with the corresponding text in the C99 Standard.  As a
+result, this issue is being left in &#8220;review&#8221; status to
+allow further discussion.</P>
+
+<P><B>Additional notes (October, 2006):</B></P>
+
+<P>WG14 takes no position on this change.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

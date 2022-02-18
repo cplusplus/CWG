@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 232</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="232"></A><H4>232.
+  
+Is indirection through a null pointer undefined behavior?
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>5 Jun 2000<BR>
+
+
+
+
+<P>At least a couple of places in the IS state that indirection
+through a null pointer produces undefined behavior: 6.9.1 [<A href="https://wg21.link/intro.execution#4">intro.execution</A>] paragraph 4 gives "dereferencing the null pointer" as an
+example of undefined behavior, and 9.3.4.3 [<A href="https://wg21.link/dcl.ref#4">dcl.ref</A>] paragraph 4
+(in a note) uses this supposedly undefined behavior as
+justification for the nonexistence of "null references."</P>
+
+<P>However, 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#1">expr.unary.op</A>] paragraph 1, which describes
+the unary "*" operator, does <I>not</I> say that the behavior is
+undefined if the operand is a null pointer, as one might expect.
+Furthermore, at least one passage gives dereferencing a null pointer
+well-defined behavior: 7.6.1.8 [<A href="https://wg21.link/expr.typeid#2">expr.typeid</A>] paragraph 2
+says</P>
+
+<BLOCKQUOTE>
+If the lvalue expression is obtained by applying the unary * operator
+to a pointer and the pointer is a null pointer value (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), the <TT>typeid</TT> expression throws the
+<TT>bad_typeid</TT> exception (17.7.5 [<A href="https://wg21.link/bad.typeid">bad.typeid</A>]).
+</BLOCKQUOTE>
+
+<P>This is inconsistent and should be cleaned up.</P>
+
+<P>
+<U>Bill Gibbons</U>:</P>
+
+<P>At one point we agreed that dereferencing a null pointer was
+<I>not</I> undefined; only using the resulting value had undefined
+behavior.</P>
+
+<P>For example:</P>
+
+<PRE>
+    char *p = 0;
+    char *q = &amp;*p;
+</PRE>
+
+<P>Similarly, dereferencing a pointer to the end of an array should be
+allowed as long as the value is not used:</P>
+
+<PRE>
+    char a[10];
+    char *b = &amp;a[10];   // equivalent to "char *b = &amp;*(a+10);"
+</PRE>
+
+<P>Both cases come up often enough in real code that they should be
+allowed.</P>
+
+<P>
+<U>Mike Miller</U>:</P>
+
+<P>I can see the value in this, but it doesn't seem to be well
+reflected in the wording of the Standard.  For instance, presumably
+<TT>*p</TT> above would have to be an lvalue in order to be the
+operand of "<TT>&amp;</TT>", but the definition of "lvalue" in
+7.2.1 [<A href="https://wg21.link/basic.lval#2">basic.lval</A>] paragraph 2 says that "an lvalue refers to
+an object."  What's the object in <TT>*p</TT>?  If we were to allow
+this, we would need to augment the definition to include the result of
+dereferencing null and one-past-the-end-of-array.</P>
+
+<P>
+<U>Tom Plum</U>:</P>
+
+<P>Just to add one more recollection of the intent: I was <I>very</I>
+happy when (I thought) we decided that it was only the attempt to
+actually fetch a value that creates undefined behavior.  The words
+which (I thought) were intended to clarify that are the first three
+sentences of the lvalue-to-rvalue conversion, 7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]:</P>
+
+<BLOCKQUOTE>
+
+An lvalue (7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) of a non-function, non-array
+type <TT>T</TT> can be converted to an rvalue.  If <TT>T</TT> is an
+incomplete type, a program that necessitates this conversion is
+ill-formed.  If the object to which the lvalue refers is not an object
+of type <TT>T</TT> and is not an object of a type derived from
+<TT>T</TT>, or if the object is uninitialized, a program that
+necessitates this conversion has undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>In other words, it is only the act of "fetching", of
+lvalue-to-rvalue conversion, that triggers the ill-formed or undefined
+behavior.  Simply forming the lvalue expression, and then for example
+taking its address, does not trigger either of those errors.  I
+described this approach to WG14 and it may have been incorporated into
+C 1999.</P>
+
+<P>
+<U>Mike Miller</U>:</P>
+
+<P>If we admit the possibility of null lvalues, as Tom is suggesting
+here, that significantly undercuts the rationale for prohibiting "null
+references" -- what is a reference, after all, but a named lvalue?  If
+it's okay to create a null lvalue, as long as I don't invoke the
+lvalue-to-rvalue conversion on it, why shouldn't I be able to capture
+that null lvalue as a reference, with the same restrictions on its
+use?</P>
+
+<P>I am not arguing in favor of null references.  I don't want them in
+the language.  What I am saying is that we need to think carefully
+about adopting the permissive approach of saying that it's all right
+to create null lvalues, as long as you don't use them in certain ways.
+If we do that, it will be very natural for people to question why they
+can't pass such an lvalue to a function, as long as the function
+doesn't do anything that is not permitted on a null lvalue.
+</P>
+
+<P>If we want to allow <TT>&amp;*(p=0)</TT>, maybe we should change
+the definition of "<TT>&amp;</TT>" to handle dereferenced null
+specially, just as <TT>typeid</TT> has special handling, rather than
+changing the definition of lvalue to include dereferenced nulls, and
+similarly for the array_end+1 case.  It's not as general, but I think
+it might cause us fewer problems in the long run.
+</P>
+
+<P><B>Notes from the October 2003 meeting:</B></P>
+
+<P>See also <A HREF="315.html">issue 315</A>, which deals with
+the call of a static member function through a null pointer.</P>
+
+<P>We agreed that the approach in the standard seems okay:
+<TT>p = 0; *p;</TT> is not inherently an error.  An
+lvalue-to-rvalue conversion would give it undefined behavior.</P>
+
+<P><B>Proposed resolution (October, 2004):</B></P>
+
+<P>(Note: the resolution of <A HREF="453.html">issue 453</A>
+also resolves part of this issue.)</P>
+
+<OL>
+
+<LI>
+<P>Add the indicated words to 7.2.1 [<A href="https://wg21.link/basic.lval#2">basic.lval</A>] paragraph 2:
+</P>
+
+<BLOCKQUOTE>
+
+An lvalue refers to an object or function <INS>or is an empty lvalue
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>])</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add the indicated words to 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#1">expr.unary.op</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+
+The unary <TT>*</TT> operator performs <I>indirection</I>: the
+expression to which it is applied shall be a pointer to an object
+type, or a pointer to a function type and the result is an lvalue
+referring to the object or function to which the expression
+points<INS>, if any. If the pointer is a null pointer value
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) or points one past the last element
+of an array object (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]), the result is an
+<I>empty lvalue</I> and does not refer to any object or function.
+An empty lvalue is not modifiable</INS>.  If the type of the
+expression is &#8220;pointer to <TT>T</TT>,&#8221; the type of
+the result is &#8220;<TT>T</TT>.&#8221; [<I>Note:</I> a pointer to an
+incomplete type (other than cv void) can be dereferenced. The
+lvalue thus obtained can be used in limited ways (to initialize a
+reference, for example); this lvalue must not be converted to an
+rvalue, see 7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>].&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add the indicated words to 7.3.2 [<A href="https://wg21.link/conv.lval#1">conv.lval</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+
+If the object to which the lvalue refers is not an object of type
+<TT>T</TT> and is not an object of a type derived from
+<TT>T</TT>, or if the object is uninitialized, <INS>or if the
+lvalue is an empty lvalue (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),</INS> a
+program that necessitates this conversion has undefined behavior.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>] as indicated:</P>
+
+<BLOCKQUOTE>
+
+Certain other operations are described in this International
+Standard as undefined (for example, the effect of <DEL>dereferencing
+the null pointer</DEL> <INS>division by zero</INS>).
+
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>Note (March, 2005):</B></P>
+
+<P>The 10/2004 resolution interacts with the resolution of <A HREF="73.html">issue 73</A>.  We added wording to 6.8.4 [<A href="https://wg21.link/basic.compound#3">basic.compound</A>] paragraph 3 to the effect that a pointer containing
+the address one past the end of an array is considered to &#8220;point
+to&#8221; another object of the same type that might be located there.
+The 10/2004 resolution now says that it would be undefined behavior to
+use such a pointer to fetch the value of that object.  There is at
+least the appearance of conflict here; it may be all right, but it at
+needs to be discussed further.</P>
+
+<P>
+<B>Notes from the April, 2005 meeting:</B>
+</P>
+
+<P>The CWG agreed that there is no contradiction between this
+direction and the resolution of <A HREF="73.html">issue 73</A>.
+However, &#8220;not modifiable&#8221; is a compile-time concept, while
+in fact this deals with runtime values and thus should produce
+undefined behavior instead.  Also, there are other contexts in which
+lvalues can occur, such as the left operand of <TT>.</TT>
+or <TT>.*</TT>, which should also be restricted.  Additional drafting
+is required.</P>
+
+<P>(See also <A HREF="1102.html">issue 1102</A>.)</P>
+
+
+
+<P><B>CWG 2023-11-06</B></P>
+
+<P>There is no consensus to pursue the introduction of empty lvalues,
+without prejudice to a potential future paper addressed to EWG.  The
+implicit undefined behavior in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#1">expr.unary.op</A>] paragraph 1
+is handled in <A HREF="2823.html">issue 2823</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

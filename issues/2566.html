@@ -1,0 +1,181 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2566</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2566"></A><H4>2566.
+  
+Matching deallocation for uncaught exception
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-04-13<BR>
+
+
+<P>Initialization of an object may terminate via an exception, in
+which case any dynamically-allocated memory is freed, per
+7.6.2.8 [<A href="https://wg21.link/expr.new#26">expr.new</A>] paragraph 26:</P>
+
+<BLOCKQUOTE>
+
+If any part of the object initialization described above [ Footnote:
+... ] terminates by throwing an exception and a suitable deallocation
+function can be found, the deallocation function is called to free the
+memory in which the object was being constructed, after which the
+exception continues to propagate in the context of
+the <I>new-expression</I>.  If no unambiguous matching deallocation
+function can be found, propagating the exception does not cause the
+object's memory to be freed.
+
+</BLOCKQUOTE>
+
+<P>However, implementations do not consistently support this provision
+in case the exception remains uncaught:</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+  struct C {
+    void* operator new(std::size_t n) {
+      std::cout &lt;&lt; "malloc\n";
+      return malloc(n);
+    }
+    void operator delete(void* ptr) {
+      std::cout &lt;&lt; "free\n";
+      free(ptr);
+    }
+    C() {
+      throw 0;
+    }
+  };
+  int main() {
+    auto ptr = new C;
+  }
+</PRE>
+
+<P>Both clang and GCC do not free the memory in this example; they do
+so if the exception is caught in <TT>main</TT>.</P>
+
+<P>Maybe a similar provision as used for stack unwinding in
+14.4 [<A href="https://wg21.link/except.handle#9">except.handle</A>] paragraph 9 is desirable:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function <TT>std::terminate</TT> is
+invoked; whether or not the stack is unwound before this invocation of
+<TT>std::terminate</TT> is implementation-defined
+(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Integrate freeing dynamically-allocated memory with stack unwinding
+(14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]), since this is what implementations
+actually do.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#26">expr.new</A>] paragraph 26, 27, and 28 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+<P><DEL>If any part of the object initialization described above [
+Footnote: This can include evaluating a <I>new-initializer</I> and/or
+calling a constructor. ] terminates by throwing an exception and a
+suitable deallocation function can be found, the deallocation function
+is called to free the memory in which the object was being
+constructed, after which the exception continues to propagate in the
+context of the <I>new-expression</I>.  If no unambiguous matching
+deallocation function can be found, propagating the exception does not
+cause the object's memory to be freed.  [<I>Note 13:</I> This is
+appropriate when the called allocation function does not allocate
+memory; otherwise, it is likely to result in a memory
+leak. &#8212;<I>end note</I>]</DEL></P>
+
+<P>
+<INS>For purposes of stack unwinding (14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>]), the <I>matching deallocation function</I> is determined as follows:</INS>
+If the <I>new-expression</I> does not begin with a unary ::
+operator and the allocated type is a class type T or an array thereof,
+a search is performed for the deallocation function's name in the
+scope of T. Otherwise, or if nothing is found, the deallocation
+function's name is looked up by searching for it in the global scope.</P>
+
+<P>A declaration of a placement deallocation function matches the
+declaration of a placement allocation function if it has the same
+number of parameters and, after parameter transformations
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), all parameter types except the first
+are identical. If the lookup finds a single matching deallocation
+function, that function <DEL>will be called</DEL> <INS>is the matching
+deallocation function</INS>; otherwise, <DEL>no deallocation function
+will be called</DEL> <INS>there is no matching deallocation
+function</INS>. If the lookup finds a usual deallocation function and
+that function, considered as a placement deallocation function, would
+have been selected as a match for the allocation function, the program
+is ill-formed. For a non-placement allocation function, the normal
+deallocation function lookup is used to find the matching deallocation
+function (7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>]).</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#1">except.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+As control passes from the point where an exception is thrown to a
+handler, objects are destroyed <INS>and deallocation functions are
+invoked</INS> by a process, specified in this subclause,
+called <I>stack unwinding</I>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.3 [<A href="https://wg21.link/except.ctor#5">except.ctor</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 4:</I> If the object was allocated by a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]),</DEL>
+<INS>If the evaluation of a <I>new-expression</I> other than the
+invocation of the allocation function is terminated by an
+exception,</INS> the matching deallocation function
+<DEL>(6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>])</DEL>, if any, is
+called <INS>(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>])</INS>
+<DEL>to free the storage occupied by the
+object</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

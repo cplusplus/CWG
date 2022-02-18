@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2725</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2725"></A><H4>2725.
+  
+Overload resolution for non-call of class member access
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-04-26<BR>
+
+
+<P>[Accepted as a DR at the November, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static void f();
+    static void f(int);
+  } x;
+  void (*p)() = x.f;   //<SPAN CLASS="cmnt"> error</SPAN>
+</PRE>
+
+<P>This is ill-formed as confirmed by <A HREF="61.html">issue 61</A>.  Various other changes (see <A HREF="2241.html">issue 2241</A>) have put the following example into the same category:
+</P>
+
+<PRE>
+  struct B {
+    static void f();
+  } y;
+  void (*q)() = y.f;   //<SPAN CLASS="cmnt"> error</SPAN>
+</PRE>
+
+<P>If this is the intended outcome (although major implementations
+disagree), then the rules in 7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>] should be
+clarified accordingly.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-06-13):</B></P>
+
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#6.3">expr.ref</A>] bullet 6.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+
+<LI>If E2 is an overload set, <INS>the expression shall be the
+(possibly-parenthesized) left-hand operand of a member function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), and</INS> function overload resolution
+(12.2 [<A href="https://wg21.link/over.match">over.match</A>]) is used to select the function to which E2
+refers. The type of E1.E2 is the type of E2 and E1.E2 refers to the
+function referred to by E2.
+<UL>
+<LI>If E2 refers to a static member function, E1.E2 is an lvalue.</LI>
+
+<LI>Otherwise (when E2 refers to a non-static member function), E1.E2
+is a prvalue. <DEL>The expression can be used only as the left-hand
+operand of a member function call (11.4.2 [<A href="https://wg21.link/class.mfct">class.mfct</A>]).</DEL>
+[<I>Note 5:</I> Any redundant set of parentheses surrounding the
+expression is ignored (7.5.4 [<A href="https://wg21.link/expr.prim.paren">expr.prim.paren</A>]). &#8212;<I>end
+note</I>]
+</LI>
+</UL>
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This also addresses <A HREF="1038.html">issue 1038</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

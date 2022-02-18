@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1049</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1049"></A><H4>1049.
+  
+Copy elision through reference parameters of inline functions
+</H4>
+<B>Section: </B>11.9.6&#160; [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-10<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    int c;
+
+    struct A {
+       A() { ++c; }
+       A(const A&amp;) { ++c; }
+    };
+
+    struct B {
+       A a;
+       B(const A&amp; a): a(a) { }
+    };
+
+    int main() {
+       (B(A()));
+       return c - 1;
+    }
+</PRE>
+
+<P>Here we would like to be able to avoid the copy and just
+construct the <TT>A()</TT> directly into the <TT>A</TT> subobject
+of <TT>B</TT>.  But we can't, because it isn't allowed by
+11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#34.3">class.copy.ctor</A>] bullet 34.3:</P>
+
+<UL><LI><P>when a temporary class object that has not been bound
+to a reference (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) would be copied/moved
+to a class object with the same cv-unqualified type, the
+copy/move operation can be omitted by constructing the temporary
+object directly into the target of the omitted
+copy/move</P></LI></UL>
+
+<P>The part about not being bound to a reference was added for an
+unrelated reason by <A HREF="185.html">issue 185</A>.  If
+that resolution were recast to require that the temporary object
+is not accessed after the copy, rather than banning the reference
+binding, this optimization could be applied.</P>
+
+<P>The similar example using pass by value is also not one of the
+allowed cases, which could be considered part of <A HREF="6.html">issue 6</A>.
+</P>
+
+<P><B>CWG 2023-05-12</B></P>
+
+<P>This is a plausible optimization opportunity whose detailed
+specification requires a paper.</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

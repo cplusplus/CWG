@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 101</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="101"></A><H4>101.
+  
+Redeclaration of extern "C" names via using-declarations
+</H4>
+<B>Section: </B>9.9&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>10 Mar 1999<BR>
+
+
+
+
+
+<P>Consider the following:</P>
+<PRE>
+    extern "C" void f();
+    namespace N {
+        extern "C" void f();
+    }
+    using N::f;
+</PRE>
+According to
+9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+
+paragraph 11, the <I>using-declaration</I> is an error:
+<BLOCKQUOTE>
+If a function declaration in namespace scope or block
+scope has the same name and the same parameter types
+as a function introduced by a <I>using-declaration</I>, the
+program is ill-formed.
+</BLOCKQUOTE>
+Based on the context (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+
+paragraph 10 simply reiterates the requirements
+of
+6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>]
+), one might wonder if
+the failure to exempt <TT>extern&#160;"C"</TT>
+functions was intentional or an oversight.  After all, there is
+only one function <TT>f()</TT> involved, because it's <TT>extern&#160;"C"</TT>, so
+ambiguity is not a reason to prohibit the <I>using-declaration</I>.
+<P>
+This also breaks the relatively strong parallel between <TT>extern&#160;"C"</TT>
+functions and typedefs established in our discussion of
+<A HREF="14.html">Core issue 14</A>
+in Santa Cruz.  There the question was for <I>using-directives</I>:</P>
+<PRE>
+    typedef unsigned int size_t;
+    extern "C" int f();
+    namespace N {
+        typedef unsigned int size_t;
+        extern "C" int f();
+    }
+    using namespace N;
+    int i = f();        // ambiguous "f"?
+    size_t x;           // ambiguous "size_t"?
+</PRE>
+We decided for both that there was no ambiguity because each
+pair of declarations declares the same entity.  (According to
+6.1 [<A href="https://wg21.link/basic.pre#3">basic.pre</A>] paragraph 3,
+a typedef name is not an entity, but a type is; thus the
+declarations of <TT>size_t</TT> declare the same entity "<TT>unsigned int</TT>".)
+<P>
+In the context of <I>using-declaration</I>s, there is no explicit
+extension of the restrictions in 6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>]
+
+paragraph 4 except as noted above for function declarations; thus the parallel
+scenario for a typedef is not ill-formed:</P>
+<PRE>
+    typedef unsigned int size_t;
+    namespace N {
+        typedef unsigned int size_t;
+    };
+    using N::size_t;        // okay, both declarations
+                            // refer to the same entity
+</PRE>
+I think the first sentence of
+9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+
+paragraph 11 ought to be rewritten as:
+<BLOCKQUOTE>
+If a function declaration in namespace scope or block
+scope has the same name and the same parameter types
+as a function introduced by a <I>using-declaration</I>,
+<INS>and the declarations do not declare the same function</INS>, the
+program is ill-formed.
+</BLOCKQUOTE>
+
+<P>
+<B>Proposed Resolution (10/99):</B>
+As suggested.</P>
+<BR><BR>
+</BODY>
+</HTML>

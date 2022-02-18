@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1282</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1282"></A><H4>1282.
+  
+Underspecified destructor <I>exception-specification</I>
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Kr&#252;gler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-03-28<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>It is not clear whether the unexpected handler will be invoked in
+the following example:</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+  #include &lt;exception&gt;
+
+  struct A { ~A() throw() { } };
+  struct B { ~B() noexcept { } };
+  struct C : A, B { ~C() { throw 0; } };
+
+  void unexpected_observer() {
+   std::cerr &lt;&lt; "unexpected called" &lt;&lt; std::endl;
+   std::terminate();
+  }
+
+  int main() {
+   std::set_unexpected(unexpected_observer);
+   C c;
+  }
+
+</PRE>
+
+<P>The problem is 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 only says that
+the <I>exception-specification</I> of <TT>C::~C</TT> &#8220;shall allow
+no exceptions,&#8221; which could mean either <TT>throw()</TT> or
+<TT>noexcept(true)</TT>.</P>
+
+<P><B>Proposed resolution (August, 2011):</B></P>
+
+<P>Change 14.5 [<A href="https://wg21.link/except.spec#14">except.spec</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An implicitly declared special member function (11.4.4 [<A href="https://wg21.link/special">special</A>]) <DEL>shall have</DEL> <INS>has</INS> an
+<I>exception-specification</I>.  If <TT>f</TT> is an implicitly
+declared default constructor, copy constructor, move constructor,
+destructor, copy assignment operator, or move assignment operator, its
+implicit <I>exception-specification</I> specifies the <I>type-id</I> <TT>T</TT>
+if and only if <TT>T</TT> is allowed by the
+<I>exception-specification</I> of a function directly invoked by
+<TT>f</TT>'s implicit definition; <TT>f</TT> <DEL>shall allow</DEL>
+<INS>allows</INS> all exceptions if any function it directly invokes
+allows all exceptions, and <TT>f</TT> <DEL>shall allow no
+exceptions</DEL> <INS>has the <I>exception-specification</I>
+<TT>noexcept(true)</TT></INS> if every function it directly invokes
+allows no exceptions. [<I>Example:</I>
+</P>
+
+<PRE>
+  struct A {
+    A();
+    A(const A&amp;) throw();
+    A(A&amp;&amp;) throw();
+    ~A() throw(X);
+  };
+  struct B {
+    B() throw();
+    B(const B&amp;) throw();
+    B(B&amp;&amp;) throw(Y);
+    ~B() throw(Y);
+  };
+  struct D : public A, public B {
+      //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D();
+      //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D(const D&amp;) <DEL>throw()</DEL> <INS>noexcept(true)</INS>;
+      //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::D(D&amp;&amp;) throw(Y);
+      //<SPAN CLASS="cmnt"> Implicit declaration of </SPAN>D::~D() throw(X, Y);
+  };
+</PRE>
+
+<P>Furthermore, if...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

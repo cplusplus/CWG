@@ -1,0 +1,252 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 95</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="95"></A><H4>95.
+  
+Elaborated type specifiers referencing names declared in friend decls
+</H4>
+<B>Section: </B>_N4868_.9.8.2.3&#160; [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Feb 1999<BR>
+
+
+
+
+<P>A change was introduced into the language that made names first declared
+in friend declarations "invisible" to normal lookups until such time that
+the identifier was declared using a non-friend declaration. This is described
+in _N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3
+and
+11.8.4 [<A href="https://wg21.link/class.friend#9">class.friend</A>] paragraph 9
+(and perhaps other places).</P>
+
+<P>The standard gives examples of how this all works with friend declarations,
+but there are some cases with nonfriend elaborated type specifiers for
+which there are no examples, and which might yield surprising results.</P>
+
+<P>The problem is that an elaborated type specifier is sometimes a declaration
+and sometimes a reference. The meaning of the following code changes depending
+on whether or not friend class names are injected (visibly) into the enclosing
+namespace scope.</P>
+<PRE>
+    struct A;
+    struct B;
+    namespace N {
+        class X {
+            friend struct A;
+            friend struct B;
+        };
+        struct A *p;     // N::A with friend injection, ::A without
+        struct B;        // always N::B
+    }
+</PRE>
+Is this the desired behavior, or should
+all elaborated type specifiers (and not just those of the form
+"<I>class-key&#160;identifier</I>;") have the effect of finding
+previously declared "invisible"
+names and making them visible?
+
+<P>
+<U>Mike Miller</U>: That's not how I would categorize the effect of
+"<TT>struct B;</TT>". That declaration introduces the name
+"<TT>B</TT>" into namespace <TT>N</TT>
+in exactly the same fashion as if the friend declaration did not exist.
+The preceding friend declaration simply stated that, if a class
+<TT>N::B</TT> were
+ever defined, it would have friendly access to the members of
+<TT>N::X</TT>. In
+other words, the lookups in both "<TT>struct A*</TT>..." and
+"<TT>struct B;</TT>" ignore
+the friend declarations.</P>
+
+<P>(The standard is schizophrenic on the issue of whether such friend declarations
+introduce names into the enclosing namespace. 6.4 [<A href="https://wg21.link/basic.scope#4">basic.scope</A>] paragraph 4
+says,
+<UL>friend declarations (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]
+) may introduce a (possibly not visible) name
+into an enclosing name-space</UL>
+while 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#6">basic.scope.pdecl</A>] paragraph 6
+says exactly the opposite:
+<UL>friend declarations refer to functions or classes that are members
+of the nearest enclosing namespace, but they do not introduce new names
+into that namespace (_N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+).</UL>
+Both of these are just notes; the normative text doesn't commit itself
+either way, just stating that the name is not found until actually declared
+in the enclosing namespace scope. I prefer the latter description; I think
+it makes the behavior you're describing a lot clearer and easier to understand.)</P>
+
+<P>
+<U>John Spicer</U>: The previous declaration of B is not completely
+ignored though, because certainly changing "friend struct B;" to "friend
+union B;" would result in an error when B was later redeclared as a struct,
+wouldn't it?</P>
+
+<P>
+<U>Bill Gibbons</U>: Right. I think the intent was to model this after
+the existing rule for local declarations of functions (which dates back
+to C), where the declaration is introduced into the enclosing scope but
+the name is not. Getting this right requires being somewhat more rigorous
+about things like the ODR because there may be declaration clashes even
+when there are no name clashes. I suspect that the standard gets this right
+in most places but I would expect there to be a few that are still wrong,
+in addition to the one Mike pointed out.</P>
+
+<P>
+<U>Mike Miller</U>: Regarding <I>would result in an error when <TT>B</TT>
+was later redeclared</I>
+</P>
+
+<P>I don't see any reason why it should. The restriction that the class-key
+must agree is found in 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]
+
+and is predicated on having found a matching
+declaration in a lookup according to 6.5.6 [<A href="https://wg21.link/basic.lookup.elab">basic.lookup.elab</A>]
+.
+Since a lookup of a name declared
+only (up to that point) in a friend declaration does not find that name
+(regardless of whether you subscribe to the "does-not-introduce" or "introduces-invisibly"
+school of thought), there can't possibly be a mismatch. </P>
+
+<P>I don't
+think that the Standard's necessarily broken here. There is no requirement
+that a class declared in a friend declaration ever be defined. Explicitly
+putting an incompatible declaration into the namespace where that friend
+class would have been defined is, to me, just making it impossible to define
+&#8212; which is no problem, since it didn't have to be defined anyway. The
+only error would occur if the same-named but unbefriended class attempted
+to use the nonexisting grant of friendship, which would result in an access
+violation.</P>
+
+<P>(BTW, I couldn't
+find anything in the Standard that forbids <I>defining</I> a class with a mismatched
+<I>class-key</I>, only using one in an
+<I>elaborated-type-specifier</I>. Is this a hole
+that needs to be filled?)</P>
+
+<P>
+<U>John Spicer</U>: This is what 9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#3">dcl.type.elab</A>] paragraph 3
+says:
+<UL>The <I>class-key</I> or <TT>enum</TT> keyword present in the
+<I>elaborated-type-specifier</I>
+shall agree in kind with the declaration to which the name in the
+<I>elaborated-type-specifier</I>
+refers. This rule also applies to the form of <I>elaborated-type-specifier</I>
+that declares a <I>class-name</I> or <TT>friend</TT> class since it can be
+construed as
+referring to the definition of the class. Thus, in any
+<I>elaborated-type-specifier</I>,
+the <TT>enum</TT> keyword shall be used to refer to an enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+),
+the <TT>union</TT> <I>class-key</I> shall be used to refer to a union
+(Clause 11 [<A href="https://wg21.link/class">class</A>]
+),
+and either the <TT>class</TT> or <TT>struct</TT> <I>class-key</I>
+shall be used to refer to a class
+(Clause 11 [<A href="https://wg21.link/class">class</A>]
+) declared using the
+<TT>class</TT> or <TT>struct</TT> <I>class-key</I>.</UL>
+The latter part of this paragraph (beginning "This rule also applies...")
+is somewhat murky to me, but I think it could be interpreted to say that</P>
+<PRE>
+            class B;
+            union B {};
+</PRE>
+and
+<PRE>
+            union B {};
+            class B;
+</PRE>
+are both invalid. I think this paragraph is <I>intended</I> to say that. I'm
+not so sure it actually does say that, though.
+
+<P>
+<U>Mike Miller</U>: Regarding <I>I think the intent was to model this
+after the existing rule for local declarations of functions (which dates
+back to C)</I>
+</P>
+
+<P>Actually, that's not the C (1989) rule. To quote the Rationale from
+X3.159-1989:</P>
+<UL>While it was generally agreed that it is poor practice to take advantage
+of an external declaration once it had gone out of scope, some argued that
+a translator had to remember the declaration for checking anyway, so why
+not acknowledge this? The compromise adopted was to decree essentially
+that block scope rules apply, but that a conforming implementation need
+not diagnose a failure to redeclare an external identifier that had gone
+out of scope (undefined behavior).</UL>
+
+<P>Regarding <I>Getting this right requires being somewhat more rigorous</I>
+</P>
+
+<P>Yes, I think if this is to be made illegal, it would have to be done
+with the ODR; the name-lookup-based current rules clearly (IMHO) don't
+apply. (Although to be fair, the [non-normative] note in 6.4 [<A href="https://wg21.link/basic.scope#4">basic.scope</A>] paragraph 4
+sounds as
+if it expects friend invisible injection to trigger the multiple-declaration
+provisions of that paragraph; it's just that there's no normative text
+implementing that expectation.)</P>
+
+<P>
+<U>Bill Gibbons</U>: Nor does the ODR currently disallow:</P>
+<PRE>
+    translation unit #1    struct A;
+
+    translation unit #2    union A;
+</PRE>
+since it only refers to class definitions, not declarations.
+
+<P>But the obvious form of the missing rule (all declarations of a class
+within a program must have compatible struct/class/union keys) would also
+answer the original question.</P>
+
+<P>The declarations need not be visible. For example:</P>
+<PRE>
+    translation unit #1    int f() { return 0; }
+
+    translation unit #2:   void g() {
+                               extern long f();
+                           }
+</PRE>
+is ill-formed even though the second "<TT>f</TT>" is not a visible declaration.
+
+<P>
+<B>Rationale (10/99):</B> The main issue (differing behavior of
+standalone and embedded <I>elaborated-type-specifier</I>s) is as
+the Committee intended.  The remaining questions mentioned in the
+discussion may be addressed in dealing with related issues.</P>
+
+<P>(See also issues
+<A HREF="136.html">136</A>,
+<A HREF="138.html">138</A>,
+<A HREF="139.html">139</A>,
+<A HREF="143.html">143</A>,
+<A HREF="165.html">165</A>, and
+<A HREF="166.html">166</A>.)</P>
+<BR><BR>
+</BODY>
+</HTML>

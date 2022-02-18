@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1671</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1671"></A><H4>1671.
+  
+Unclear rules for deduction with cv-qualification
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Clamage
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-04-26<BR>
+
+
+
+
+<OL>
+<LI><P>Simple pointer:</P></LI>
+
+<P>Template argument: <TT>const T*</TT><BR>
+
+Actual argument: <TT>char*</TT><BR>
+
+We deduce <TT>T</TT> to be <TT>char</TT>, and by compatibility of
+cv-qualifiers, this deduction works.</P>
+
+<P>Now suppose that (somehow) we deduced <TT>T</TT> to be <TT>const
+char</TT>. We fold the resulting <TT>const const char*</TT> into <TT>const
+char*</TT>, and again the deduction works. Does the standard disallow this
+deduction? The reason for this question is in the next example.</P>
+
+<LI><P>Pointer to member:</P></LI>
+
+<P>Template argument: <TT>const T A&lt;T&gt;::*</TT>, where <TT>A</TT> is a class template<BR>
+
+Actual argument: <TT>char A&lt;const char&gt;::*</TT><BR>
+
+Compilers reject this case, because if we deduce the first <TT>T</TT> to
+be <TT>char</TT>, we cannot match <TT>A&lt;T&gt;::*</TT>. But suppose we
+look first at the second <TT>T</TT>, deducing it to be <TT>const
+char</TT>. Then we get <TT>const char A&lt;const char&gt;::*</TT>, which is
+OK. Alternatively, as in the hypothetical case in example 1, suppose we
+deduce the first <TT>T</TT> to be <TT>const char</TT>, again we get a
+match.</P>
+
+<P>Arbitrarily adding extra cv-qualifiers in looking for a match, or trying
+different matching orders to find one that works, seems wrong. But are
+these approaches disallowed?</P>
+
+</OL>
+
+<P>For completeness, here is a code example:</P>
+
+<PRE>
+  template &lt;typename Q&gt;
+  struct A {
+    int i;
+  };
+
+  template &lt;typename T&gt;
+  void foo(const T A&lt;T&gt;::*) { }
+
+  int main() {
+    A&lt;const int&gt; a;
+    int A&lt;const int&gt;::*p = &amp;A&lt;const int&gt;::i;
+    foo(p);  //<SPAN CLASS="cmnt"> rejected by all compilers, but why?</SPAN>
+  }
+</PRE>
+
+<P><B>Rationale (September, 2013):</B></P>
+
+<P>There are no rules that would result in deducing <TT>const char</TT>
+in the specified example.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

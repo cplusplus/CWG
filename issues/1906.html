@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1906</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1906"></A><H4>1906.
+  
+Name lookup in member <TT>friend</TT> declaration
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-03-30<BR>
+
+
+
+
+<P>According to 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10,</P>
+
+<BLOCKQUOTE>
+
+In a <TT>friend</TT> declaration naming a member function, a name used in the
+function declarator and not part of a <I>template-argument</I> in
+the <I>declarator-id</I> is first looked up in the scope of the member
+function's class (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]). If it is not found, or if the
+name is part of a <I>template-argument</I> in the <I>declarator-id</I>, the
+look up is as described for unqualified names in the definition of the
+class granting friendship.
+
+</BLOCKQUOTE>
+
+<P>The corresponding specification for non-<TT>friend</TT> declarations
+in paragraph 8 applies the class-scope lookup only to names that
+follow the <I>declarator-id</I>.  The same should be true in
+<TT>friend</TT> declarations.</P>
+
+<P><B>Proposed resolution (February, 2018):</B></P>
+
+<OL>
+<LI><P>Change 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#8">basic.lookup.unqual</A>] paragraph 8 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>For the members of a class <TT>X</TT>, a name used in a member function
+body, in a default argument, in a <I>noexcept-specifier</I>, in
+the <I>brace-or-equal-initializer</I> of a non-static data member
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or in the <DEL>definition</DEL>
+<INS>declaration</INS> of a class member outside of the definition
+of <TT>X</TT><DEL>,</DEL> following the
+member's <I>declarator-id</I><SUP>32</SUP>, shall be declared in one of the
+following ways:</P>
+
+<UL>
+<LI><P>before its use in the block in which it is used or in an
+enclosing block (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]) <INS>within the body of the
+member function</INS>, or</P></LI>
+
+<LI><P>
+<DEL>shall be</DEL> <INS>as</INS> a member of class <TT>X</TT>
+or <DEL>be</DEL> <INS>as</INS> a member of a base class of <TT>X</TT>
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]), or</P></LI>
+
+<LI><P>if <TT>X</TT> is a nested class of class <TT>Y</TT>
+(11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>]), shall be a member of <TT>Y</TT>, or shall be
+a member of a base class of <TT>Y</TT> (this lookup applies in turn
+to <TT>Y</TT>'s enclosing classes, starting with the innermost enclosing
+class),<SUP>33</SUP> or</P></LI>
+
+<LI><P>if <TT>X</TT> is a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>]) or is a
+nested class of a local class, before the definition of class <TT>X</TT> in
+a block enclosing the definition of class <TT>X</TT>, or</P></LI>
+
+<LI><P>if <TT>X</TT> is a member of namespace <TT>N</TT>, or is a nested
+class of a class that is a member of <TT>N</TT>, or is a local class or a
+nested class within a local class of a function that is a member
+of <TT>N</TT>, before the use of the name, in namespace <TT>N</TT> or in
+one of <TT>N</TT>'s enclosing namespaces<DEL>.</DEL><INS>, or</INS>
+</P></LI>
+
+<LI><P><INS>for a friend declaration in a class <TT>Y</TT>, in a scope that
+would be searched for a name appearing within <TT>Y</TT>.</INS></P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#10">basic.lookup.unqual</A>] paragraph 10 and combine its
+example with that of paragraph 8:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>In a <TT>friend</TT> declaration naming a member function, a name
+used in the function declarator and not part of a <I>template-argument</I>
+in the <I>declarator-id</I> is first looked up in the scope of the member
+function's class (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]). If it is not found, or if the
+name is part of a <I>template-argument</I> in the <I>declarator-id</I>, the
+look up is as described for unqualified names in the definition of the
+class granting friendship. [<I>Example:</I></DEL></P>
+
+<PRE>
+<DEL>  struct A {
+    typedef int AT;
+    void f1(AT);
+    void f2(float);
+    template &lt;class T&gt; void f3();
+  };
+  struct B {
+    typedef char AT;
+    typedef float BT;
+    friend void A::f1(AT);     //<SPAN CLASS="cmnt"> parameter type is A::AT</SPAN>
+    friend void A::f2(BT);     //<SPAN CLASS="cmnt"> parameter type is B::BT</SPAN>
+    friend void A::f3&lt;AT&gt;(); //<SPAN CLASS="cmnt"> template argument is B::AT</SPAN>
+  };</DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Notes from the February, 2018 teleconference:</B></P>
+
+<P>There was some concern as to whether the added lookup for friend
+function declarations placed the additional lookups in the correct sequence
+relative to the existing lookups and whether the new specification reflects
+any existing practice. </P>
+
+<P><B>Rationale (March, 2018):</B></P>
+
+<P>After further discussion, CWG determined that the semantics described in
+the existing wording were the most appropriate out of the alternatives
+considered.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

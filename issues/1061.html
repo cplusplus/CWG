@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1061</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1061"></A><H4>1061.
+  
+Negative array bounds in a <I>new-expression</I>
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Sean Hunt
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2010-03-23<BR>
+
+
+<P>[Voted into the WP at the November, 2010 meeting.]</P>
+
+<P>Recent changes have added the requirement (7.6.2.8 [<A href="https://wg21.link/expr.new#7">expr.new</A>] paragraph 7)
+,</P>
+
+<BLOCKQUOTE>
+
+If the value of that <I>expression</I> is such that the size of
+the allocated object would exceed the implementation-defined
+limit, no storage is obtained and the <I>new-expression</I>
+terminates by throwing an exception of a type that would match a
+handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type
+<TT>std::bad_array_new_length</TT> (17.6.4.2 [<A href="https://wg21.link/new.badlength">new.badlength</A>]).
+
+</BLOCKQUOTE>
+
+<P>Given this checking, is there any current reason for the statement
+in the preceding paragraph,</P>
+
+<BLOCKQUOTE>
+
+If the value of the expression is negative, the behavior is undefined.
+
+</BLOCKQUOTE>
+
+<P>Presumably for most negative expressions on most platforms, a
+negative value would result in a too-large request anyway, and
+even if not the check could easily be expanded to look explicitly
+for a negative value in addition to a too-large request.</P>
+
+<P><B>Proposed resolution (September, 2010):</B></P>
+
+<OL>
+<LI><P>Change 7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>] paragraphs 6 and 7 as
+follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...<DEL>If the value of the expression is negative, the behavior is
+undefined.</DEL>  [<I>Example:</I> given the definition <TT>int n = 42</TT>,
+<TT>new float[n][5]</TT> is well-formed (because <TT>n</TT> is the
+<I>expression</I> of a <I>noptr-new-declarator</I>), but <TT>new
+float[5][n]</TT> is ill-formed (because <TT>n</TT> is not a constant
+expression).  <DEL>If <TT>n</TT> is negative, the effect of <TT>new
+float[n][5]</TT> is undefined.</DEL> &#8212;<I>end example</I>]</P>
+
+<P>When the value of the <I>expression</I> in a
+<I>noptr-new-declarator</I> is zero, the allocation function is called
+to allocate an array with no elements. If the value of that
+<I>expression</I> is <INS>less than zero or</INS> such that the size
+of the allocated object would exceed the implementation-defined limit,
+no storage is obtained and the <I>new-expression</I> terminates by
+throwing an exception of a type that would match a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type <TT>std::bad_array_new_length</TT>
+(17.6.4.2 [<A href="https://wg21.link/new.badlength">new.badlength</A>]).</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 17.6.4.2 [<A href="https://wg21.link/new.badlength#1">new.badlength</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+The class <TT>bad_array_new_length</TT> defines the type of objects
+thrown as exceptions by the implementation to report an attempt to
+allocate an array of size <INS>less than zero or</INS> greater than an
+implementation-defined limit (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]).
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

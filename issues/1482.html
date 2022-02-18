@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1482</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1482"></A><H4>1482.
+  
+Point of declaration of enumeration
+</H4>
+<B>Section: </B>6.4.2&#160; [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-20<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+<P>According to 6.4.2 [<A href="https://wg21.link/basic.scope.pdecl#2">basic.scope.pdecl</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+The point of declaration for an enumeration is immediately after the
+identifier (if any) in either its <I>enum-specifier</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) or its first <I>opaque-enum-declaration</I> (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), whichever comes first.
+
+</BLOCKQUOTE>
+
+<P>This would make the following example well-formed:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct S { typedef char I; };
+  enum E: S&lt;E&gt;::I { e };
+</PRE>
+
+<P>Presumably that would make <TT>E</TT> an incomplete enumeration type
+for the instantiation of <TT>S&lt;E&gt;</TT> (a concept not otherwise
+found in the Standard).  However, some implementations reject this
+example, presumably making the point of declaration after the
+<I>enum-base</I>.  We either need to make it ill-formed or describe
+incomplete enumeration types.</P>
+
+<P>See also <A HREF="977.html">issue 977</A>.</P>
+
+<P><B>Proposed resolution (December, 2012):</B></P>
+
+<OL>
+<LI><P>Change 6.8 [<A href="https://wg21.link/basic.types#5">basic.types</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A class that has been declared but not defined, <INS>an enumeration
+type in certain contexts (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]),</INS> or an array
+of unknown size or of incomplete element type, is an
+incompletely-defined object type.<SUP>43</SUP> Incompletely-defined
+object types...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph preceding
+9.7.1 [<A href="https://wg21.link/dcl.enum#6">dcl.enum</A>] paragraph 6:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><INS>An enumeration whose underlying type is fixed is an incomplete
+type from its point of declaration (6.4.2 [<A href="https://wg21.link/basic.scope.pdecl">basic.scope.pdecl</A>]) to
+immediately after its <I>enum-base</I> (if any), at which point it
+becomes a complete type. An enumeration whose underlying type is not
+fixed is an incomplete type from its point of declaration to
+immediately after the closing <TT>}</TT> of its
+<I>enum-specifier</I>, at which point it becomes a complete
+type.</INS></P>
+
+<P>For an enumeration whose underlying type is not fixed...</P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="977.html">issue 977</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,77 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2089</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2089"></A><H4>2089.
+  
+Restricting selection of builtin overloaded operators
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-26<BR>
+
+
+
+
+<P>The candidates selected by 12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>] include
+built-in candidates that will result in an error if chosen; this
+was affirmed by <A HREF="1687.html">issue 1687</A>.  As a result,
+<TT>t+u</TT> is ill-formed because it is resolved to the built-in
+<TT>operator+(int*,std::ptrdiff_t)</TT>, although most implementations
+do not (yet) agree:</P>
+
+<PRE>
+  struct Adaptor { Adaptor(int); };
+
+  struct List { };
+  void operator +(List &amp;, Adaptor);
+
+  struct DataType {
+    operator int *() const = delete;
+    operator List &amp;() const;
+  };
+
+  struct Yea;
+  struct Nay { int theNaysHaveIt; };
+
+  template &lt;typename T, typename U&gt;
+  Yea addCheck(int, T &amp;&amp;t, U &amp;&amp;u, char (*)[sizeof(t + u, 0)] = 0);
+
+  template &lt;typename T, typename U&gt;
+  Nay addCheck(void *, T &amp;&amp;t, U &amp;&amp;u);
+
+  void test(DataType &amp;data) { (void)sizeof(addCheck(0, data,
+  0.).theNaysHaveIt); }
+</PRE>
+
+<P>It might be better to adjust the candidate list in
+12.2.2.4 [<A href="https://wg21.link/over.match.ctor#3.3.3">over.match.ctor</A>] bullet 3.3.3 to allow conversion
+only on class types and exclude the second standard conversion
+sequence.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

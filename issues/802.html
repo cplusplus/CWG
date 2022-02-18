@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 802</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="802"></A><H4>802.
+  
+Problems with restrictions on taking the address of a member of a concept map
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>concepts
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>UK
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 March, 2009<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#UK69">N2800 comment
+  UK&#160;69<BR></A>
+
+<P>
+If we cannot
+bind references/take address of functions in concept_maps,
+does that mean we cannot use generic bind in constrained
+templates? Launch threads with expressions found via
+concept map lookup? Hit problems creating std::function
+objects? Does the problem only occur if we use qualified
+lookup to explicitly name a concept map? Does it only kick
+in if we rely on the implicit function implementation
+provided by a concept_map, so some types will work and
+others won't for the same algorithm?!
+</P>
+
+<P><B>Additional note, June, 2009:</B></P>
+
+
+
+<P>Here is an example illustrating the question:</P>
+
+<PRE>
+    auto concept Fooable&lt;T&gt; {
+       void foo(T);
+    }
+
+    struct test_type {
+       void foo() {
+          cout &lt;&lt; "foo test_type\n";
+       }
+    };
+
+    concept_map Fooable&lt;test_type&gt; {
+       void foo(test_type&amp; t) {
+          t.foo();
+       }
+    }
+
+    void foo(int x) {
+       cout "foo int\n";
+    }
+
+    template&lt;typename T&gt;
+       requires Fooable&lt;T&gt;
+    function&lt;void(T)&gt; callback(T t) {
+       void(*fn)(T) = foo;
+       return fn;
+    }
+
+    int main() {
+       auto fn1 = factory(test_type{});
+       auto fn2 = factory(0);
+       fn1(test_type{});
+       fn2(0);
+       return 0;
+    }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

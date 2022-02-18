@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1740</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1740"></A><H4>1740.
+  
+Disambiguation of <TT>noexcept</TT>
+</H4>
+<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-13<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA27">N3690 comment
+  CA&#160;27<BR></A>
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>There is an ambiguity between a <TT>noexcept</TT> specifier's
+optional parenthesized <I>constant-expression</I> and an initializer:</P>
+
+<PRE>
+  void f() noexcept;
+  void (*p)() noexcept (&amp;f);
+</PRE>
+
+<P>Here, we can just about make 9.3.3 [<A href="https://wg21.link/dcl.ambig.res#1">dcl.ambig.res</A>] paragraph 1's rule
+fit, and say that the <TT>(&amp;f)</TT> is part of the
+<I>exception-specification</I> rather than being an initializer.  However,
+this case is much more problematic:</P>
+
+<PRE>
+  void (*fp2)() noexcept, (*fp)() noexcept (fp2 = 0);
+</PRE>
+
+<P>The <TT>(fp = 0)</TT> here is unambiguously an initializer, because an
+<I>assignment-expression</I> cannot syntactically be
+a <I>constant-expression</I>, although current implementations treat it
+as an ill-formed part of the <I>exception-specification</I>.</P>
+
+<P>Probably the best approach would be to change 14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]
+to say that a <TT>(</TT> following <TT>noexcept</TT> is always treated
+as being part of the <I>noexcept-specification</I>.</P>
+
+<P><B>Proposed resolution (September, 2013):</B></P>
+
+<P>Change 14.5 [<A href="https://wg21.link/except.spec#1">except.spec</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+...In a <I>noexcept-specification</I>, the <I>constant-expression</I>, if
+supplied, shall be a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that
+is contextually converted to bool (7.3 [<A href="https://wg21.link/conv">conv</A>]). A
+<I>noexcept-specification</I> <TT>noexcept</TT> is equivalent
+to <TT>noexcept(<DEL> </DEL>true)</TT>. <INS>A <TT>(</TT> token that follows
+<TT>noexcept</TT> is part of the <I>noexcept-specification</I> (and does
+not commence an <I>initializer</I> (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

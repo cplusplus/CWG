@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1908</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1908"></A><H4>1908.
+  
+Dual destructor lookup and <I>template-id</I>s
+</H4>
+<B>Section: </B>_N4868_.6.5.6&#160; [<A href="https://wg21.link/basic.lookup.classref">basic.lookup.classref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-03-31<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>According to _N4868_.6.5.6 [<A href="https://wg21.link/basic.lookup.classref#3">basic.lookup.classref</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+If the <I>unqualified-id</I> is <TT>~</TT><I>type-name</I>,
+the <I>type-name</I> is looked up in the context of the
+entire <I>postfix-expression</I>.  If the type <TT>T</TT> of the object
+expression is of a class type <TT>C</TT>, the <I>type-name</I> is also
+looked up in the scope of class <TT>C</TT>. At least one of the lookups
+shall find a name that refers to (possibly cv-qualified) <TT>T</TT>.
+
+</BLOCKQUOTE>
+
+<P>This would apply to an example like</P>
+
+<PRE>
+  namespace K {
+    template &lt;typename T, typename U = char&gt; struct A { };
+    A&lt;short&gt; *a;
+  }
+
+  template &lt;typename T&gt; using A = K::A&lt;short, T&gt;;
+
+  int main() {
+    K::a-&gt;~A&lt;char&gt;();
+  }
+</PRE>
+
+<P>Current implementations, however, only apply the dual lookup when
+the <I>type-name</I> is not a <I>template-id</I>.  The specification
+should be changed to reflect current practice.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

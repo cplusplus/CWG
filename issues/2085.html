@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2085</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2085"></A><H4>2085.
+  
+Invalid example of adding special member function via default argument
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-02-13<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>The example in 6.3 [<A href="https://wg21.link/basic.def.odr#6.6">basic.def.odr</A>] bullet 6.6 reads,</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt">translation unit 1:</SPAN>
+  struct X {
+    X(int);
+    X(int, int);
+  };
+  X::X(int = 0) { }
+  class D: public X { };
+  D d2;     //<SPAN CLASS="cmnt"> </SPAN>X(int)<SPAN CLASS="cmnt"> called by </SPAN>D()
+
+  //<SPAN CLASS="cmnt">translation unit 2:</SPAN>
+  struct X {
+    X(int);
+    X(int, int);
+  };
+  X::X(int = 0, int = 0) { }
+  class D: public X { };   //<SPAN CLASS="cmnt"> </SPAN>X(int, int)<SPAN CLASS="cmnt"> called by </SPAN>D()<SPAN CLASS="cmnt">;</SPAN>
+                           //<SPAN CLASS="cmnt"> </SPAN>D()<SPAN CLASS="cmnt">'s implicit definition</SPAN>
+                           //<SPAN CLASS="cmnt"> violates the ODR</SPAN>
+</PRE>
+
+<P>Creating a special member function via default arguments added
+in an out-of-class definition, as is done here, is no longer
+permitted, so at a minimum the example should be removed.  It is
+not clear whether there remain any cases to which the normative
+wording of bullet 6.6 would apply:</P>
+
+<UL><LI><P>if <TT>D</TT> is a class with an implicitly-declared constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), it is as if the constructor was
+implicitly defined in every translation unit where it is
+odr-used, and the implicit definition in every translation
+unit shall call the same constructor for a base class or a
+class member of <TT>D</TT>.</P></LI></UL>
+
+<P>If not, the entire bullet should be removed.</P>
+
+<P><B>Proposed resolution (September, 2015):</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#6.6">basic.def.odr</A>] bullet 6.6 as follows:</P>
+
+<UL>
+<LI>
+
+<P>if <TT>D</TT> is a class with an implicitly-declared constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), it is as if the constructor was implicitly
+defined in every translation unit where it is odr-used, and the implicit
+definition in every translation unit shall call the same constructor for a
+<DEL>base class or a class member</DEL> <INS>subobject</INS>
+of <TT>D</TT>. [<I>Example:</I>
+</P>
+</LI>
+
+<PRE>
+  //<SPAN CLASS="cmnt">translation unit 1:</SPAN>
+  struct X {
+    X(int<INS>, int</INS>);
+    X(int, int<INS>, int</INS>);
+  };
+  X::X(<INS>int,</INS> int = 0) { }
+  class D<DEL>: public X</DEL> {
+    <INS>X x = 0;</INS>
+  };
+  D d2;            //<SPAN CLASS="cmnt"> </SPAN>X(<INS>int,</INS> int)<SPAN CLASS="cmnt"> called by </SPAN>D()
+
+  //<SPAN CLASS="cmnt">translation unit 2:</SPAN>
+  struct X {
+    X(int<INS>, int</INS>);
+    X(int, int<INS>, int</INS>);
+  };
+  X::X(<INS>int,</INS> int = 0, int = 0) { }
+  class D<DEL>: public X</DEL> {
+    <INS>X x = 0;</INS>
+  };
+                   //<SPAN CLASS="cmnt"> </SPAN>X(<INS>int,</INS> int, int)<SPAN CLASS="cmnt"> called by </SPAN>D()<SPAN CLASS="cmnt">;</SPAN>
+                   //<SPAN CLASS="cmnt"> </SPAN>D()<SPAN CLASS="cmnt">'s implicit definition</SPAN>
+                   //<SPAN CLASS="cmnt"> violates the ODR</SPAN>
+</PRE>
+
+<P>&#8212;<I>end example</I>]</P>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,99 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 124</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="124"></A><H4>124.
+  
+Lifetime of temporaries in default initialization of class arrays
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jack Rouse
+ &#160;&#160;&#160;
+
+ <B>Date: </B>3 June 1999<BR>
+
+
+
+<P>[Moved to DR at 4/01 meeting.]</P>
+
+
+
+<P>
+<U>Jack Rouse:</U>
+6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+
+states that temporary objects will normally be destroyed at the
+end of the full expression in which they are created.  This can create
+some unique code generation requirements when initializing a class
+array with a default constructor that uses a default argument.  Consider
+the code:</P>
+
+<PRE>
+    struct T {
+       int i;
+       T( int );
+       ~T();
+    };
+
+    struct S {
+       S( int = T(0).i );
+       ~S();
+    };
+
+    S* f( int n )
+    {
+       return new S[n];
+    }
+</PRE>
+
+The full expression allocating the array in <TT>f(int)</TT> includes the
+default constructor for <TT>S</TT>.  Therefore according to
+6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>] paragraph 14, it
+includes the default argument expression for <TT>S(int)</TT>.
+So evaluation of
+the full expression should include evaluating the default argument "n"
+times and creating "n" temporaries of type <TT>T</TT>.  But the destruction of
+the temporaries must be delayed until the end of the full expression
+so this requires allocating space at runtime for "n" distinct
+temporaries.  It is unclear how these temporaries are supposed to be
+allocated and deallocated.  They cannot readily be autos because a
+variable allocation is required.
+
+<P>I believe that many existing implementations will destroy the
+temporaries needed by the default constructor after each array element
+is initialized.  But I can't find anything in the standard that allows
+the temporaries to be destroyed early in this case.</P>
+
+<P>I think the standard should allow the early destruction of temporaries
+used in the default initialization of class array elements.  I believe
+early destruction is the status quo, and I don't think the users of
+existing C++ compilers have been adversely impacted by it.</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<P>The proposed resolution is contained in the proposal for
+<A HREF="201.html">issue 201</A>.</P>
+<BR><BR>
+</BODY>
+</HTML>

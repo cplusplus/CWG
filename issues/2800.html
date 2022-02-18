@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2800</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2800"></A><H4>2800.
+  
+Instantiating constexpr variables for potential constant evaluation
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Shafik Yaghmour
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-09-22<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  struct A {
+    T data;
+
+    static const A a;
+  };
+  template &lt;typename T&gt;
+  inline constexpr A&lt;T&gt; A&lt;T&gt;::a {42};
+
+  static_assert(A&lt;int&gt;::a.data == 42);
+</PRE>
+
+<P>This ought to be well-formed, but there is no rule that would cause
+instantiation of <TT>A&lt;int&gt;::a</TT>.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct A {
+    static T x;
+  };
+  template&lt;typename T&gt; T A&lt;T&gt;::x = (std::cout &lt;&lt; "constructed", T());
+  template&lt;typename T&gt; void b(decltype(&amp;A&lt;int&gt;::x));
+</PRE>
+
+<P>For the second example, it is undesirable to
+instantiate <TT>A&lt;int&gt;</TT>.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#3">expr.const</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A variable is <I>potentially-constant</I> if it is constexpr or it has
+reference or non-volatile const-qualified integral or enumeration
+type <INS>or, for a templated variable, if the definition that would
+be instantiated if the variable were needed for constant evaluation
+uses the <TT>constexpr</TT> <I>decl-specifier</I>
+(13.7.6.2 [<A href="https://wg21.link/temp.spec.partial.match">temp.spec.partial.match</A>])</INS>.
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-10-20</B></P>
+
+<P>The phrasing suggests that <TT>const int</TT> variables
+instantiated from a variable template are no longer
+potentially-constant.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#3">expr.const</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A variable is <I>potentially-constant</I> if it is
+<DEL>constexpr</DEL> <INS>declared with the
+<TT>constexpr</TT> <I>decl-specifier</I></INS> or it has reference
+or non-volatile const-qualified integral or enumeration type.
+<INS>Such a variable may be instantiated from a templated variable, in
+which case the definition that would be instantiated if the variable
+were needed for constant evaluation is considered
+(13.7.6.2 [<A href="https://wg21.link/temp.spec.partial.match">temp.spec.partial.match</A>])</INS>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

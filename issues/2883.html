@@ -1,0 +1,112 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2883</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2883"></A><H4>2883.
+  
+Definition of "odr-usable" ignores lambda scopes
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-20<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/523">#523</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void f() {
+    int x;
+    [&amp;] {
+      return x;       //<SPAN CLASS="cmnt"> #1</SPAN>
+    };
+  }
+</PRE>
+
+<P>The odr-use of <TT>x</TT> is ill-formed, because <TT>x</TT> is not
+odr-usable in that scope, because there is a lambda scope
+(6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]) between #1 and the definition of
+<TT>x</TT>.</P>
+
+<P>A more involved example exhibits implementation divergence:</P>
+
+<PRE>
+  struct A {
+    A() = default;
+    A(const A &amp;) = delete;
+    constexpr operator int() { return 42; }
+  };
+  void f() {
+    constexpr A a;
+    [=]&lt;typename T, int = a&gt; {};   //<SPAN CLASS="cmnt"> OK, not odr-usable from a default template argument, and not odr-used</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-31):</B></P>
+
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#10">basic.def.odr</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+A local entity (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) is <I>odr-usable</I> in a
+scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) if:
+<UL>
+<LI> either the local entity
+is not *this, or an enclosing class or non-lambda function parameter
+scope exists and, if the innermost such scope is a function parameter
+scope, it corresponds to a non-static member function, and</LI>
+<LI>for each intervening scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) between
+the point at which the entity is introduced and the scope (where *this
+is considered to be introduced within the innermost enclosing class or
+non-lambda function definition scope), either:
+<UL>
+<LI>the intervening scope is a block scope, or</LI>
+
+<LI>the intervening scope is the function parameter scope of
+a <I>lambda-expression</I><INS>, or</INS>
+</LI>
+
+<LI>
+<INS>the intervening scope is the lambda scope of
+a <I>lambda-expression</I></INS> that has a <I>simple-capture</I>
+naming the entity or has a <I>capture-default</I>, and the block scope
+of the <I>lambda-expression</I> is also an intervening scope.
+</LI>
+</UL>
+</LI>
+</UL>
+If a local entity is odr-used in a scope in which it is not
+odr-usable, the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

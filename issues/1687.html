@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1687</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1687"></A><H4>1687.
+  
+Conversions of operands of built-in operators
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-05-17<BR>
+
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+<P>Consider an example like:</P>
+
+<PRE>
+  struct Y {
+    operator int*();
+  };
+
+  extern int *p;
+  int *a = p + 100.0;   //<SPAN CLASS="cmnt"> #1</SPAN>
+  int *b = Y() + 100.0; //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>#1 is ill-formed because it violates the requirement of
+7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] that the non-pointer operand have integral
+or enumeration type.  It appears that #2 is well-formed, however,
+because 12.2.2.3 [<A href="https://wg21.link/over.match.oper#7">over.match.oper</A>] paragraph 7 says,</P>
+
+<BLOCKQUOTE>
+
+If a built-in candidate is selected by overload resolution, the operands
+are converted to the types of the corresponding parameters of the selected
+operation function. Then the operator is treated as the corresponding
+built-in operator and interpreted according to
+Clause 7 [<A href="https://wg21.link/expr">expr</A>].
+
+</BLOCKQUOTE>
+
+<P>In this case, the selected operation function is</P>
+
+<PRE>
+  int *operator+(int *, std::ptrdiff_t)
+</PRE>
+
+<P>
+<TT>100.0</TT> is thus converted to <TT>std::ptrdiff_t</TT> before
+reaching 7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>].</P>
+
+<P>This problem could be addressed by restricting the conversion to
+the class or enumeration operand rather than both operands.</P>
+
+<P><B>Proposed resolution (January, 2014):</B></P>
+
+<P>Change 12.2.2.3 [<A href="https://wg21.link/over.match.oper#7">over.match.oper</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>If a built-in candidate is selected by overload resolution,
+the operands <INS>of class type</INS> are converted to the
+types of the corresponding parameters of the selected
+operation function<INS>, except that the second standard
+conversion sequence of a user-defined conversion sequence
+(12.2.4.2.3 [<A href="https://wg21.link/over.ics.user">over.ics.user</A>]) is not
+applied</INS>. Then the operator is treated as the
+corresponding built-in operator and interpreted according to
+Clause 7 [<A href="https://wg21.link/expr">expr</A>]. <INS>[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  struct X {
+    operator double();
+  };
+
+  struct Y {
+    operator int*();
+  };
+
+  int *a = Y() + 100.0; //<SPAN CLASS="cmnt"> error: pointer arithmetic requires integral operand</SPAN>
+  int *b = Y() + X();   //<SPAN CLASS="cmnt"> error: pointer arithmetic requires integral operand</SPAN></INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

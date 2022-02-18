@@ -1,0 +1,296 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2588</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2588"></A><H4>2588.
+  
+friend declarations and module linkage
+</H4>
+<B>Section: </B>11.8.4&#160; [<A href="https://wg21.link/class.friend">class.friend</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nathan Sidwell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-05-26
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  export module Foo;
+  class X {
+    friend void f(X); //<SPAN CLASS="cmnt"> #1 linkage?</SPAN>
+  };
+</PRE>
+
+<P>Subclause 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4 gives #1 external linkage:
+</P>
+
+<BLOCKQUOTE>
+
+A function first declared in a friend declaration has the linkage of
+the namespace of which it is a member (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+
+</BLOCKQUOTE>
+
+<P>(There is no similar provision for friend classes first declared in
+a class.)</P>
+
+<P>However, 6.6 [<A href="https://wg21.link/basic.link#4.8">basic.link</A>] bullet 4.8 gives it 
+module linkage:</P>
+
+<BLOCKQUOTE>
+
+... otherwise, if the declaration of the name is attached to a named
+module (10.1 [<A href="https://wg21.link/module.unit">module.unit</A>]) and is not exported
+(10.2 [<A href="https://wg21.link/module.interface">module.interface</A>]), the name has module linkage;
+
+</BLOCKQUOTE>
+
+<P>Subclause 10.2 [<A href="https://wg21.link/module.interface#2">module.interface</A>] paragraph 2 does not apply:</P>
+
+<BLOCKQUOTE>
+
+A declaration is <I>exported</I> if it is declared within
+an <I>export-declaration</I> and inhabits a namespace scope or it is
+
+<UL>
+<LI>a <I>namespace-definition</I> that contains an exported
+declaration, or
+</LI>
+
+<LI>a declaration within a header unit
+(10.3 [<A href="https://wg21.link/module.import">module.import</A>]) that introduces at least one name.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Also consider this related example:</P>
+
+<PRE>
+  export module Foo;
+  export class Y;
+  //<SPAN CLASS="cmnt"> maybe many lines later, or even a different partition of Foo</SPAN>
+  class Y {
+    friend void f(Y); //<SPAN CLASS="cmnt"> #2 linkage?</SPAN>
+  };
+</PRE>
+
+<UL>
+<LI>Should the friend's linkage be affected by the linkage of the
+befriending class?  In this example, #2 would therefore have external
+linkage, as <TT>Y</TT> is exported.</LI>
+
+<LI>Or should the friend's linkage be affected by the presence or
+absence of <TT>export</TT> on the class definition itself? In this
+example, #2 would thus have module linkage.</LI>
+
+<LI>Or should the friend's linkage be determined ignoring any
+enclosing <TT>export</TT> and ignoring whether the enclosing class is
+exported, per 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4 (alone)?</LI>
+
+<LI>Or should the friend's linkage be as-if the declaration inhabited
+its nearest enclosing namespace scope, without
+the <TT>friend</TT>?</LI>
+
+</UL>
+
+<P>See <A HREF="2607.html">issue 2607</A> for a similar question
+about enumerators.</P>
+
+<P><B>Additional note (May, 2022):</B></P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1253">paper issue 1253</A>,
+by decision of the CWG chair.
+</P>
+
+<P><B>EWG telecon 2022-06-09</B></P>
+
+<P>Consensus: "A friend's linkage should be affected by the
+presence/absence of export on the containing class definition itself,
+but ONLY if the friend is a definition", pending confirmation by
+electronic polling.</P>
+
+<P><B>Proposed resolution (June, 2022) (approved by CWG 2023-01-27) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The name of an entity that belongs to a namespace scope that has not
+been given internal linkage above and that is the name of
+
+<UL>
+<LI>a variable; or</LI>
+<LI>a function; or</LI>
+<LI>a named class (11.1 [<A href="https://wg21.link/class.pre">class.pre</A>]), or an unnamed class
+defined in a typedef declaration in which the class has the typedef
+name for linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>a named enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an unnamed
+enumeration defined in a typedef declaration in which the enumeration
+has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>an unnamed
+enumeration that has an enumerator as a name for linkage purposes
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]); or</LI>
+<LI>a template</LI>
+</UL>
+has its linkage
+determined as follows:
+<UL>
+<LI>
+<INS>if the entity is a function or function template first
+declared in a friend declaration and that declaration is a definition,
+the name has the same linkage, if any, as the name of the enclosing
+class (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]);</INS>
+</LI>
+<LI>
+<INS>otherwise, if the entity is a function or function template
+declared in a friend declaration and a corresponding non-friend
+declaration is reachable, the name has the linkage determined from
+that prior declaration,</INS>
+</LI>
+<LI>
+<INS>otherwise,</INS> if the enclosing namespace has internal
+linkage, the name has internal linkage;</LI>
+<LI>otherwise, if the
+declaration of the name is attached to a named module
+(10.1 [<A href="https://wg21.link/module.unit">module.unit</A>]) and is not exported
+(10.2 [<A href="https://wg21.link/module.interface">module.interface</A>]), the name has module linkage;</LI>
+<LI>
+otherwise, the name has external linkage.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<DEL> A function first declared in a friend declaration has the
+linkage of the namespace of which it is a member
+(6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).  Otherwise, the function retains its
+previous linkage (9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]).</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+
+
+<P><B>EWG electronic poll 2022-06</B></P>
+
+<P>Consensus for "A friend's linkage should be affected by the
+presence/absence of export on the containing class definition itself,
+but ONLY if the friend is a definition (option #2, modified by Jason's
+suggestion). This resolves CWG2588."
+See
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1018r17.html#CWG2588">vote</A>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The name of an entity that belongs to a namespace scope that has not
+been given internal linkage above and that is the name of
+
+<UL>
+<LI>a variable; or</LI>
+<LI>a function; or</LI>
+<LI>a named class (11.1 [<A href="https://wg21.link/class.pre">class.pre</A>]), or an unnamed class
+defined in a typedef declaration in which the class has the typedef
+name for linkage purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>a named enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an unnamed
+enumeration defined in a typedef declaration in which the enumeration
+has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>an unnamed
+enumeration that has an enumerator as a name for linkage purposes
+(9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]); or</LI>
+<LI>a template</LI>
+</UL>
+has its linkage
+determined as follows:
+<UL>
+<LI>
+<INS>if the entity is a function or function template first
+declared in a friend declaration and that declaration is a definition
+and the enclosing class is defined within an <I>export-declaration</I>,
+the name has the same linkage, if any, as the name of the enclosing
+class (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]);</INS>
+</LI>
+<LI>
+<INS>otherwise, if the entity is a function or function template
+declared in a friend declaration and a corresponding non-friend
+declaration is reachable, the name has the linkage determined from
+that prior declaration,</INS>
+</LI>
+<LI>
+<INS>otherwise,</INS> if the enclosing namespace has internal
+linkage, the name has internal linkage;</LI>
+<LI>otherwise, if the
+declaration of the name is attached to a named module
+(10.1 [<A href="https://wg21.link/module.unit">module.unit</A>]) and is not exported
+(10.2 [<A href="https://wg21.link/module.interface">module.interface</A>]), the name has module linkage;</LI>
+<LI>
+otherwise, the name has external linkage.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.8.4 [<A href="https://wg21.link/class.friend#4">class.friend</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<DEL> A function first declared in a friend declaration has the
+linkage of the namespace of which it is a member
+(6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).  Otherwise, the function retains its
+previous linkage (9.2.2 [<A href="https://wg21.link/dcl.stc">dcl.stc</A>]).</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

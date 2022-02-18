@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1885</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1885"></A><H4>1885.
+  
+Return value of a function is underspecified
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-02-28<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>The intent is that a function call is a temporary expression whose
+result is a temporary, but that appears not to be said anywhere.  It should
+also be clarified that a <TT>return</TT> statement in a function with a
+class return type copy-initializes the temporary that is the result.  The
+sequencing of the initialization of the returned temporary, destruction of
+temporaries in the <TT>return</TT> expression, and destruction of automatic
+variables should be make explicit.</P>
+
+<P><B>Proposed resolution (October, 2014):</B></P>
+
+<P>Change 8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>] paragraphs 2-3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>A return statement with neither an <I>expression</I>
+nor a <I>braced-init-list</I> can be used only in functions
+that do not return a value, that is,</DEL> <INS>The
+<I>expression</I> or <I>braced-init-list</I> of a return
+statement is called its operand.  A return statement with no
+operand shall be used only in</INS> a function <DEL>with the</DEL>
+<INS>whose</INS> return
+type <INS>is</INS> <I>cv</I> <TT>void</TT>, a constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), or a destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). <INS>A return statement with an
+operand of type <TT>void</TT> shall be used only in a
+function whose return type is <I>cv</I> <TT>void</TT>.</INS>
+A return statement with <DEL>an expression of non-void type
+can be used only</DEL> <INS>any other operand shall be used
+only</INS> in <DEL>functions returning a value; the value of
+the expression is returned to the caller of the
+function. The value of the expression is implicitly
+converted to the return type of the function in which it
+appears</DEL> <INS>a function whose return type is
+not <I>cv</I> <TT>void</TT>; the return statement
+initializes the object or reference to be returned by
+copy-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) from the
+operand</INS>. <INS>[<I>Note:</I></INS> A return statement
+can involve the construction and copy or move of a temporary
+object (6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). <DEL>[<I>Note:</I></DEL>
+A copy or move operation associated with a return statement
+may be elided or considered as an rvalue for the purpose of
+overload resolution in selecting a constructor
+(11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]). &#8212;<I>end note</I>] <DEL>A
+return statement with a <I>braced-init-list</I> initializes
+the object or reference to be returned from the function by
+copy-list-initialization (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) from
+the specified initializer list.</DEL> [<I>Example:</I>
+</P>
+
+<PRE>
+  std::pair&lt;std::string,int&gt; f(const char* p, int x) {
+    return {p,x};
+  }
+</PRE>
+
+<P>&#8212;<I>end example</I>] Flowing off the end of a function
+is equivalent to a return with no value; this results in
+undefined behavior in a value-returning function.</P>
+
+<P>
+<DEL>A return statement with an expression of
+type <TT>void</TT> can be used only in functions with a
+return type of <I>cv</I> <TT>void</TT>; the expression is
+evaluated just before the function returns to its
+caller.</DEL> <INS>The copy-initialization of the returned
+entity is sequenced before the destruction of temporaries at
+the end of the full-expression established by the operand of
+the return statement, which, in turn, is sequenced before the
+destruction of local variables (8.7 [<A href="https://wg21.link/stmt.jump">stmt.jump</A>]) of
+the block enclosing the return statement.</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<P><I>(See also the related changes in the resolution of
+<A HREF="1299.html">issue 1299</A>.)</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 265</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="265"></A><H4>265.
+  
+Destructors, exceptions, and deallocation
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>dup
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 Nov 2000<BR>
+
+
+
+
+<P>Does the Standard require that the deallocation function will
+be called if the destructor throws an exception?  For example,</P>
+
+<PRE>
+    struct S {
+        ~S() { throw 0; }
+    };
+    void f() {
+        try {
+            delete new S;
+        }
+        catch(...) { }
+    }
+</PRE>
+
+<P>The question is whether the memory for the S object will be freed
+or not.  It doesn't appear that the Standard answers the question,
+although most people would probably assume that it will be freed.</P>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>There is a widespread feeling that it is a poor programming
+practice to allow destructors to terminate with an exception
+(see <A HREF="219.html">issue 219</A>).  This question is
+thus viewed as a tradeoff between efficiency and supporting "bad
+code."  It was observed that there is no way in the current
+language to protect against a throwing destructor, since the
+throw might come from a virtual override.</P>
+
+<P>It was suggested that the resolution to the issue might be
+to make it implementation-defined whether the storage is freed
+if the destructor throws.  Others suggested that the Standard
+should require that the storage be freed, with the understanding
+that implementations might have a flag to allow optimizing away
+the overhead.  Still others thought that both this issue and
+<A HREF="219.html">issue 219</A> should be resolved by
+forbidding a destructor to exit via an exception.  No consensus
+was reached.</P>
+
+<P><B>Rationale (October, 2008):</B></P>
+
+<P>It was noticed that <A HREF="353.html">issue 353</A>, an
+exact duplicate of this one, was independently opened and
+resolved.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 658</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="658"></A><H4>658.
+  
+Defining <TT>reinterpret_cast</TT> for pointer types
+</H4>
+<B>Section: </B>7.6.1.10&#160; [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dave Abrahams
+ &#160;&#160;&#160;
+
+ <B>Date: </B>4 November 2007<BR>
+
+
+<P>[Voted into the WP at the March, 2009 meeting.]</P>
+
+<P>For years I've noticed that people will write code like this to get
+the address of an object's bytes:</P>
+
+<PRE>
+  void foo(long* p) {
+      char* q = reinterpret_cast&lt;char*&gt;(p);  // #1
+      // do something with the bytes of *p by using q
+  }
+</PRE>
+
+<P>When in fact the only portable way to do it according to the standard
+is:</P>
+
+<PRE>
+  void foo(long* p) {
+      char* q = static_cast&lt;char*&gt;(static_cast&lt;void*&gt;(p));  // #2
+      // do something with the bytes of *p by using q
+  }
+</PRE>
+
+<P>I thought <TT>reinterpret_cast</TT> existed so that vendors could
+provide some weird platform-specific things.  However, recently Peter
+Dimov pointed out to me that if we substitute a class type
+for <TT>long</TT> above, <TT>reinterpret_cast</TT> is required to work as
+expected by 11.4 [<A href="https://wg21.link/class.mem#18">class.mem</A>] paragraph 18:</P>
+
+<BLOCKQUOTE>
+
+A pointer to a standard-layout struct object, suitably converted using
+a <TT>reinterpret_cast</TT>, points to its initial member (or if that
+member is a bit-field, then to the unit in which it resides) and vice
+versa.
+
+</BLOCKQUOTE>
+
+<P>So there isn't a whole lot of flexibility to do something different
+and useful on non-class types.  Are there any implementations for
+which #1 actually fails?  If not, I think it would be a good idea to
+nail <TT>reinterpret_cast</TT> down so that the standard says it does
+what people (correctly) think it does in practice.</P>
+
+<P><B>Proposed resolution (March, 2008):</B></P>
+
+<P>Change 7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7 as indicated:</P>
+
+<BLOCKQUOTE>
+
+A pointer to an object can be explicitly converted to a pointer to an
+object of different type. <INS>When an rvalue <TT>v</TT> of type
+&#8220;pointer to <TT>T1</TT>&#8221; is converted to the type
+&#8220;pointer to <I>cv</I> <TT>T2</TT>,&#8221; the result is
+<TT>static_cast&lt;</TT><I>cv</I> <TT>T2*&gt;(static_cast&lt;</TT><I>cv</I> <TT>void*&gt;(v))</TT>
+if both <TT>T1</TT> and <TT>T2</TT> are standard-layout types
+(6.8 [<A href="https://wg21.link/basic.types">basic.types</A>]) and the alignment requirements of
+<TT>T2</TT> are no stricter than those of <TT>T1</TT>.</INS>
+<DEL>Except that c</DEL><INS>C</INS>onverting an rvalue of type
+&#8220;pointer to <TT>T1</TT>&#8221; to the type &#8220;pointer
+to <TT>T2</TT>&#8221; (where <TT>T1</TT> and <TT>T2</TT> are object
+types and where the alignment requirements of <TT>T2</TT> are no
+stricter than those of <TT>T1</TT>) and back to its original type
+yields the original pointer value<DEL>, t</DEL><INS>. T</INS>he result of
+<INS>any other</INS> such <DEL>a</DEL> pointer conversion is unspecified.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

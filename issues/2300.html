@@ -1,0 +1,207 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2300</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2300"></A><H4>2300.
+  
+Lambdas in multiple definitions
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Robert Haberlach
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-04-11<BR>
+
+
+<P>[Accepted as a DR at the July, 2019 meeting.]</P>
+
+<P>A lambda expression in two translation units has distinct closure
+types, because each such expression's type is unique within the program.
+This results in an issue with the ODR, which requires that the definitions
+of an entity are identical. For example, if</P>
+
+<PRE>
+  template &lt;int&gt; void f() {std::function&lt;void()&gt; f = []{};}
+</PRE>
+
+<P>appears in two translation units, different specializations of
+<TT>function</TT>'s constructor template are called, which violates
+6.3 [<A href="https://wg21.link/basic.def.odr#6.4">basic.def.odr</A>] bullet 6.4.</P>
+
+<P>
+<A HREF="765.html">Issue 765</A> dealt with a similar problem
+for inline functions, but the issue still remains for templates.</P>
+
+
+
+<P><B>Proposed resolution, April, 2019:</B></P>
+
+<P>Change 6.3 [<A href="https://wg21.link/basic.def.odr#12">basic.def.odr</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>...Given such an entity named <TT>D</TT> defined in more
+than one translation unit, then</P>
+
+<UL>
+<LI><P>each definition of <TT>D</TT> shall consist of
+the same sequence of tokens<INS>, for which the definition
+of a closure type is considered to consist of the sequence
+of tokens of the corresponding <I>lambda-expression</I></INS>;
+and</P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, corresponding
+names, looked up according to 6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>],
+<DEL>shall refer to an entity defined within the definition
+of <TT>D</TT>, or</DEL> shall refer to the same entity,
+after overload resolution (12.2 [<A href="https://wg21.link/over.match">over.match</A>]) and
+after matching of partial template specialization
+(13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]), except that a name can refer
+to</P></LI>
+
+<UL>
+<LI><P>a non-volatile const object with internal or no
+linkage if the object</P></LI>
+
+<UL>
+<LI><P>has the same literal type in all definitions
+of <TT>D</TT>,</P></LI>
+
+<LI><P>is initialized with a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</P></LI>
+
+<LI><P>is not odr-used in any definition of <TT>D</TT>, and</P></LI>
+
+<LI><P>has the same value in all definitions of <TT>D</TT>,</P></LI>
+
+</UL>
+
+<P>or</P>
+
+<LI><P>a reference with internal or no linkage initialized
+with a constant expression such that the reference refers to
+the same entity in all definitions of <TT>D</TT>;</P></LI>
+
+</UL>
+
+<P>and</P>
+
+<LI><P><INS>in each definition of <TT>D</TT>, except within
+the default arguments and default template arguments of
+<TT>D</TT>, corresponding <I>lambda-expression</I>s shall
+have the same closure type (see below), and</INS></P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, corresponding
+entities shall have the same language linkage; and</P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, the overloaded
+operators referred to, the implicit calls to conversion
+functions, constructors, operator new functions and operator
+delete functions, shall refer to the same function<DEL>, or to a
+function defined within the definition of <TT>D</TT></DEL>;
+and</P></LI>
+
+<LI><P>in each definition of <TT>D</TT>, a default argument used by an
+(implicit or explicit) function call <INS>or a default
+template argument used by an (implicit or explicit)
+<I>template-id</I> or <I>simple-template-id</I></INS> is
+treated as if its token sequence were present in the
+definition of <TT>D</TT>; that is, the default
+argument <INS>or default template argument</INS> is subject
+to the requirements described in this paragraph (<DEL>and,
+if the default argument has subexpressions with default
+arguments, this requirement applies</DEL>
+recursively) <DEL>[<I>Footnote:</I> 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+describes how default argument names are looked up.
+&#8212;<I>end footnote</I>]</DEL>; and</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+<P>If <TT>D</TT> is a template and is defined in more than
+one translation unit, then the preceding requirements shall
+apply both to names from the template's enclosing scope used
+in the template definition (_N4868_.13.8.4 [<A href="https://wg21.link/temp.nondep">temp.nondep</A>]),
+and also to dependent names at the point of instantiation
+(13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>]). <DEL>If the definitions
+of <TT>D</TT> satisfy all these requirements, then the
+behavior is as if there were a single definition
+of <TT>D</TT>.</DEL> <INS>These requirements also apply to
+corresponding entities defined within each definition of
+<TT>D</TT> (including the closure types
+of <I>lambda-expression</I>s, but excluding entities defined
+within default arguments or defualt template arguments of
+either <TT>D</TT> or an entity not defined within
+<TT>D</TT>). For each such entity and for <TT>D</TT> itself,
+the behavior is as if there is a single entity with a single
+definition, including in the application of these
+requirements to other entities.</INS> [<I>Note:</I> The
+entity is still declared in multiple translation units, and
+6.6 [<A href="https://wg21.link/basic.link">basic.link</A>] still applies to these
+declarations. In particular, <I>lambda-expression</I>s
+(7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]) appearing in the type
+of <TT>D</TT> may result in the different declarations
+having distinct types<INS>, and <I>lambda-expression</I>s
+appearng in a default argument of <TT>D</TT> may still
+denote different types in different translation
+units</INS>. &#8212;<I>end note</I>] If the definitions
+of <TT>D</TT> do not satisfy these requirements, then the
+<DEL>behavior is undefined.</DEL>
+<INS>program is ill-formed, no diagnostic required.
+[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  inline void f(bool cond, void (*p)()) {
+    if (cond) f(false, []{});
+  }
+  inline void g(bool cond, void (*p)() = []{}) {
+    if (cond) g(false);
+  }
+  struct X {
+    void h(bool cond, void (*p)() = []{}) {
+      if (cond) h(false);
+    }
+  };</INS>
+</PRE>
+
+<P><INS>If the definition of <TT>f</TT> appears in multiple
+translation units, the behavior of the program is as if there
+is only one definition of <TT>f</TT>. If the definition of
+<TT>g</TT> appears in multiple translation units, the program
+is ill-formed (no diagnostic required) because each such
+definition uses a default argument that refers to a distinct
+<I>lambda-expression</I> closure type. The definition of <TT>X</TT>
+can sppear in multiple translation units of a valid program; the
+<I>lambda-expression</I>s defined within the default argumeht of
+<TT>X::h</TT> within the definition of <TT>X</TT> denote the
+same closure type in each translation unit. &#8212;<I>end
+example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2865</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2865"></A><H4>2865.
+  
+Regression on result of conditional operator
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-14<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;concepts&gt;
+
+  template &lt;class T&gt; T get();
+
+  template &lt;class T&gt;
+  using X = decltype(true ? get&lt;T const&amp;&gt;() : get&lt;T&gt;());
+
+  struct C { };
+
+  static_assert(std::same_as&lt;X&lt;int&gt;, int&gt;);
+  static_assert(std::same_as&lt;X&lt;C&gt;, C const&gt;);  // #1
+</PRE>
+
+<P>Before <A HREF="1895.html">Issue 1895</A>, #1 was well-formed.
+With the reformulation based on conversion sequences, #1 is now
+ill-formed because both conversion sequences can be formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-03):</B></P>
+
+<P>Change in 7.6.16 [<A href="https://wg21.link/expr.cond#4.3">expr.cond</A>] bullet 4.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If E2 is a prvalue or if neither of the conversion sequences above
+can be formed and at least one of the operands has (possibly
+cv-qualified) class type:
+<UL>
+<LI>if T1 and T2 are the same class type (ignoring
+cv-qualification)<INS>:</INS>
+<UL>
+<LI>
+<DEL>and</DEL> <INS>if</INS> T2 is at least as cv-qualified as
+T1, the target type is T2,</LI>
+<LI class="ins">otherwise, no conversion sequence is formed for this operand;</LI>
+</UL>
+</LI>
+<LI>otherwise, if T2 is a base class of T1, the target type is cv1 T2,
+where cv1 denotes the cv-qualifiers of T1<DEL>,</DEL> <INS>;</INS>
+</LI>
+<LI>otherwise, the target type is the type that E2 would have after
+applying the lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions.</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

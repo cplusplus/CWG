@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2440</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2440"></A><H4>2440.
+  
+Allocation in core constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-28<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>7.7 [<A href="https://wg21.link/expr.const#5">expr.const</A>] paragraph 5 attempts to describe
+allowable allocation/deallocation calls in terms of what could
+be called &#8220;core constant subexpressions,&#8221; but the
+actual definition of a core constant expression in paragraph 4
+is in terms of evaluation.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Replace the entirety of 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6
+with the following:</P>
+
+<BLOCKQUOTE>
+
+For the purposes of determining whether an expression <DEL>E</DEL> is
+a core constant expression,
+the evaluation of <DEL>a call
+to</DEL> <INS>the body of</INS> a member function of
+<TT>std::allocator&lt;T&gt;</TT> as defined in
+20.2.10.2 [<A href="https://wg21.link/allocator.members">allocator.members</A>], where <TT>T</TT> is a literal
+type, <DEL>does not disqualify E from being a core constant
+expression, even if the actual evaluation of such a call would
+otherwise fail the requirements for a core constant
+expression</DEL> <INS>is ignored</INS>. Similarly, the evaluation
+of <DEL>a call to</DEL> <INS>the body
+of <TT>std::destroy_at</TT>, <TT>std::ranges::destroy_at</TT>, </INS>
+<TT>std::construct_at</TT><INS>,</INS> or
+<TT>std::ranges::construct_at</TT>
+<DEL>(26.11.8 [<A href="https://wg21.link/specialized.construct">specialized.construct</A>]) does not disqualify E from being a
+core constant expression unless the first argument, of type T*, does
+not point to storage allocated with std::allocator&lt;T&gt; or to an
+object whose lifetime began within the evaluation of E, or the
+evaluation of</DEL> <INS>is considered to include only</INS> the
+underlying constructor <DEL>call disqualifies E from being a core
+constant expression</DEL> <INS>(for the
+functions <TT>construct_at</TT>) or destructor (for the
+functions <TT>destroy_at</TT>) call if the first argument (of
+type <TT>T*</TT>) points to storage allocated
+with <TT>std::allocator&lt;T&gt;</TT></INS>.
+
+</BLOCKQUOTE>
+
+<P><B>CWG telecon 2022-10-21:</B></P>
+
+<P>The references to <TT>destroy_at</TT> were removed in an unrelated update
+to the Working Draft. Also, restore the reference to local objects whose
+lifetime began within E.</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-10):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the purposes of determining whether an expression E is
+a core constant expression,
+the evaluation of <DEL>a call
+to</DEL> <INS>the body of</INS> a member function of
+<TT>std::allocator&lt;T&gt;</TT> as defined in
+20.2.10.2 [<A href="https://wg21.link/allocator.members">allocator.members</A>], where <TT>T</TT> is a literal
+type, <DEL>does not disqualify E from being a core constant
+expression, even if the actual evaluation of such a call would
+otherwise fail the requirements for a core constant
+expression</DEL> <INS>is ignored</INS>. Similarly, the evaluation
+of <DEL>a call to</DEL> <INS>the body of </INS>
+<TT>std::construct_at</TT> or <TT>std::ranges::construct_at</TT>
+<DEL>(26.11.8 [<A href="https://wg21.link/specialized.construct">specialized.construct</A>]) does not disqualify E from being a
+core constant expression unless the first argument, of type T*, does
+not point to storage allocated with std::allocator&lt;T&gt; or to an
+object whose lifetime began within the evaluation of E, or the
+evaluation of</DEL> <INS>is considered to include only</INS> the
+underlying constructor <DEL>call disqualifies E from being a core
+constant expression</DEL> <INS>call if the first argument (of
+type <TT>T*</TT>) points to storage allocated
+with <TT>std::allocator&lt;T&gt;</TT> or to an object whose lifetime
+began within the evaluation of <I>E</I></INS>.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

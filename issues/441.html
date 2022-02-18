@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 441</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="441"></A><H4>441.
+  
+Ordering of static reference initialization
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 Dec 2003<BR>
+
+
+<P>[Voted into WP at April 2005 meeting.]</P>
+
+
+
+<P>
+I have a couple of questions about 6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>],
+"Initialization of
+non-local objects."  I believe I recall some discussion of
+related topics, but I can't find anything relevant in the issues
+list.
+</P>
+
+<P>The first question arose when I discovered that different
+implementations treat reference initialization differently.
+Consider, for example, the following (namespace-scope) code:
+<PRE>
+  int i;
+  int&amp; ir = i;
+  int* ip = &amp;i;
+</PRE>
+Both initializers, "i" and "&amp;i", are constant expressions, per
+7.7 [<A href="https://wg21.link/expr.const#4">expr.const</A>] paragraph 4-5 (a reference constant expression and
+an address constant
+expression, respectively).  Thus, both initializations are
+categorized as static initialization, according to
+6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1:
+<BLOCKQUOTE>
+    Zero-initialization and initialization with a constant
+    expression are collectively called static initialization; all
+    other initialization is dynamic initialization.
+</BLOCKQUOTE>
+</P>
+<P>However, that does not mean that both ir and ip must be
+initialized at the same time:
+<BLOCKQUOTE>
+    Objects of POD types (3.9) with static storage duration
+    initialized with constant expressions (5.19) shall be
+    initialized before any dynamic initialization takes place.
+</BLOCKQUOTE>
+</P>
+<P>Because "int&amp;" is not a POD type, there is no requirement that it
+be initialized before dynamic initialization is performed, and
+implementations differ in this regard.  Using a function called
+during dynamic initialization to print the values of "ip" and
+"&amp;ir", I found that g++, Sun, HP, and Intel compilers initialize
+ir before dynamic initialization and the Microsoft compiler does
+not.  All initialize ip before dynamic initialization.  I believe
+this is conforming (albeit inconvenient :-) behavior.
+</P>
+
+<P>So, my first question is whether it is intentional that a
+reference of static duration, initialized with a reference
+constant expression, need not be initialized before dynamic
+initialization takes place, and if so, why?</P>
+
+<P>The second question is somewhat broader.  As
+6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] is currently
+worded, it appears that there are <U>no</U> requirements on when ir is
+initialized.  In fact, there is a whole category of objects --
+non-POD objects initialized with a constant expression -- for
+which no ordering is specified.  Because they are categorized as
+part of "static initialization," they are not subject to the
+requirement that they "shall be initialized in the order in which
+their definition appears in the translation unit."  Because they
+are not POD types, they are not required to be initialized before
+dynamic initialization occurs.  Am I reading this right?</P>
+
+<P>My preference would be to change
+6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 so that 1) references
+are treated like POD objects with respect to initialization, and
+2) "static initialization" applies only to POD objects and
+references.  Here's some sample wording to illustrate:</P>
+
+<P><B>Suggested resolution:</B></P>
+<BLOCKQUOTE>
+    Objects with static storage duration (3.7.1) shall be
+    zero-initialized (8.5) before any other initialization takes
+    place.  Initializing a reference, or an object of POD
+    type, of static storage duration with a constant expression
+    (5.19) is called constant initialization.  Together,
+    zero-initialization and constant initialization are called
+    static initialization; all other initialization is dynamic
+    initialization.  Static initialization shall be performed
+    before any dynamic initialization takes place.  [Remainder
+    unchanged.]
+</BLOCKQUOTE>
+
+<P><B>Proposed Resolution:</B></P>
+
+<P>Change 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 as follows:
+</P>
+<BLOCKQUOTE>
+Objects with static storage duration (3.7.1) shall be
+zero-initialized (8.5) before any other initialization takes
+place. <INS>Initializing a reference, or an object of POD type, of
+static storage duration with a constant expression (5.19) is
+called <I>constant initialization</I>.  Together,
+zero-initialization and constant initialization are
+</INS><DEL>Zero-initialization and initialization with a
+constant expression are collectively</DEL> called <I>static
+initialization</I>; all other initialization is <I>dynamic
+initialization</I>. <INS>Static initialization shall be performed
+</INS><DEL>Objects of POD types (3.9) with static storage
+duration initialized with constant expressions (5.19) shall be
+initialized</DEL> before any dynamic initialization takes
+place.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

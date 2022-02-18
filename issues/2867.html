@@ -1,0 +1,282 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2867</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2867"></A><H4>2867.
+  
+Order of initialization for structured bindings
+</H4>
+<B>Section: </B>9.6&#160; [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-02-03<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  auto [a, b] = f(X{});
+</PRE>
+
+<P>If <TT>X</TT> is a tuple-like type, this is transformed to
+approximately the following:</P>
+
+<PRE>
+  auto e = f(X{});
+  T1 &amp;a = get&lt;0&gt;(std::move(e));
+  T2 &amp;b = get&lt;1&gt;(std::move(e));
+</PRE>
+
+<P>However, the sequencing of the initializations of e, a, and b is
+not specified.  Further, the temporary <TT>X{}</TT> should be
+destroyed after the initializations of a and b.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#5">intro.execution</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>full-expression</I> is
+<UL>
+<LI>an unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]),</LI>
+
+<LI>a <I>constant-expression</I> (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an <I>init-declarator</I> (9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]) or
+a <I>mem-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), including the
+constituent expressions of the initializer,</LI>
+
+<LI class="ins">the <I>initializer</I>s for all uniquely-named
+variables introduced by a structured binding declaration
+(9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]), including the constituent expressions of
+all initializers,</LI>
+
+<LI>an invocation of a destructor generated at
+the end of the lifetime of an object other than a temporary object
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) whose lifetime has not been extended, or</LI>
+
+<LI>an expression that is not a subexpression of another expression
+and that is not otherwise part of a full-expression.</LI>
+</UL>
+...
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.6 [<A href="https://wg21.link/dcl.struct.bind#4">dcl.struct.bind</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Each v<sub>i</sub> is the name of an lvalue of type T<sub>i</sub>
+that refers to the object bound to r<sub>i</sub>; the referenced type
+is T<sub>i</sub>.
+
+<INS>The initialization of e is sequenced before the initialization of
+any r<sub>i</sub>.  The initialization of r<sub>i</sub> is sequenced
+before the initialization of r<sub>j</sub> if i &lt; j.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-05-03</B></P>
+
+<P>CWG tentatively agreed that all temporaries in a structured binding
+(including those from default arguments of <TT>get</TT> invocations)
+should persist until the semicolon on the declaration as written.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#5">intro.execution</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>full-expression</I> is
+<UL>
+<LI>an unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]),</LI>
+
+<LI>a <I>constant-expression</I> (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an <I>init-declarator</I> (9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>])
+<INS>, an <I>initializer</I> of a structured
+binding declaration (9.1 [<A href="https://wg21.link/dcl.pre">dcl.pre</A>]),</INS> or
+a <I>mem-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), including the
+constituent expressions of the initializer,</LI>
+
+<LI>an invocation of a destructor generated at
+the end of the lifetime of an object other than a temporary object
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) whose lifetime has not been extended, or</LI>
+
+<LI>an expression that is not a subexpression of another expression
+and that is not otherwise part of a full-expression.</LI>
+</UL>
+...
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.6 [<A href="https://wg21.link/dcl.struct.bind#4">dcl.struct.bind</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Each v<sub>i</sub> is the name of an lvalue of type T<sub>i</sub>
+that refers to the object bound to r<sub>i</sub>; the referenced type
+is T<sub>i</sub>.
+
+<INS>The initialization of e is sequenced before the initialization of
+any r<sub>i</sub>.  The initialization of each r<sub>i</sub> is sequenced
+before the initialization of any r<sub>j</sub> where i &lt; j.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Append a new paragraph at the end of 9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>... [ Example: ...
+The type of the id-expression x is "int", the type of the id-expression y is "const volatile double". -- end example ]</P>
+
+<P class="ins">
+The initialization of <I>e</I> and of any r<sub>i</sub> are sequenced
+before the destruction of any temporary object introduced by
+the <I>initializer</I> for <I>e</I> or by the <I>initializer</I>s for
+the r<sub>i</sub>.  The temporary objects are destroyed in the
+reverse order of their construction.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-06-14</B></P>
+
+<P>The specification for the lifetime of temporaries should be moved
+to 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>].)</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-06-28):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#5">class.temporary</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+There are <DEL>four</DEL> <INS>five</INS> contexts in which
+temporaries are destroyed at a different point than the end of the
+full-expression. ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Insert a new paragraph after 6.7.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+<P>The fourth context is when a temporary object is created in
+the <I>for-range-initializer</I> of a range-based for statement. If
+such a temporary object would otherwise be destroyed at the end of
+the <I>for-range-initializer</I> full-expression, the object persists
+for the lifetime of the reference initialized by
+the <I>for-range-initializer</I>.</P>
+
+<P class="ins">
+The fifth context is when a temporary object is created in a
+structured binding declaration (9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]).  Any
+temporary objects introduced by the <I>initializer</I>s for the
+variables with unique names are destroyed at the end of
+the structured binding declaration.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#5">intro.execution</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>full-expression</I> is
+<UL>
+<LI>an unevaluated operand (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]),</LI>
+
+<LI>a <I>constant-expression</I> (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an immediate invocation (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</LI>
+
+<LI>an <I>init-declarator</I> (9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>])
+<INS>(including such introduced by a structured binding (9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]))</INS> or
+a <I>mem-initializer</I> (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]), including the
+constituent expressions of the initializer,</LI>
+
+<LI>an invocation of a destructor generated at
+the end of the lifetime of an object other than a temporary object
+(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]) whose lifetime has not been extended, or</LI>
+
+<LI>an expression that is not a subexpression of another expression
+and that is not otherwise part of a full-expression.</LI>
+</UL>
+...
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.6 [<A href="https://wg21.link/dcl.struct.bind#4">dcl.struct.bind</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Each v<sub>i</sub> is the name of an lvalue of type T<sub>i</sub>
+that refers to the object bound to r<sub>i</sub>; the referenced type
+is T<sub>i</sub>.
+
+<INS>The initialization of e is sequenced before the initialization of
+any r<sub>i</sub>.  The initialization of each r<sub>i</sub> is sequenced
+before the initialization of any r<sub>j</sub> where i &lt; j.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

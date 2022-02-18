@@ -1,0 +1,227 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1823</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1823"></A><H4>1823.
+  
+String literal uniqueness in inline functions
+</H4>
+<B>Section: </B>9.2.3&#160; [<A href="https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-12-17<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>According to 9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4,</P>
+
+<BLOCKQUOTE>
+
+A string literal in the body of an extern inline function is
+the same object in different translation units.
+
+</BLOCKQUOTE>
+
+<P>The Standard does not otherwise specify when string literals are
+required to be the same object, and this requirement is not widely
+implemented.  Should it be removed?</P>
+
+<P><B>Proposed resolution (February, 2014):</B></P>
+
+<OL>
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#1">lex.string</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> is a sequence
+of characters...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#2">lex.string</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> that has
+an <TT>R</TT> in the prefix...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#6">lex.string</A>] paragraph 6 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+After translation phase 6, a <DEL>string
+literal</DEL> <INS><I>string-literal</I></INS> that does not begin...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#7">lex.string</A>] paragraph 7 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> that begins
+with <TT>u8</TT>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#10">lex.string</A>] paragraph 10 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> that begins
+with <TT>u</TT>, such as <TT>u"asdf"</TT>, is a <TT>char16_t</TT> string
+literal. A <TT>char16_t</TT> string literal has type &#8220;array
+of <I>n</I> <TT>const char16_t</TT>&#8221;, where <I>n</I> is the size of
+the string as defined below; it <DEL>has static storage duration
+and</DEL> is initialized with the given characters. A single <I>c-char</I>
+may produce more than one <TT>char16_t</TT> character in the form of
+surrogate pairs.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#11">lex.string</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> that begins
+with <TT>U</TT>, such as <TT>U"asdf"</TT>, is a <TT>char32_t</TT> string
+literal. A <TT>char32_t</TT> string literal has type &#8220;array
+of <I>n</I> <TT>const char32_t</TT>&#8221;, where <I>n</I> is the size of
+the string as defined below; it<DEL> has static storage duration
+and </DEL>is initialized with the given characters.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#12">lex.string</A>] paragraph 12 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <DEL>string literal</DEL> <INS><I>string-literal</I></INS> that begins
+with <TT>L</TT>, such as <TT>L"asdf"</TT>, is a wide string literal. A wide
+string literal has type &#8220;array of <I>n</I> <TT>const
+wchar_t</TT>&#8221;, where <I>n</I> is the size of the string as defined
+below; it <DEL>has static storage duration and</DEL> is initialized with
+the given characters.
+
+</BLOCKQUOTE>
+
+<LI><P>Delete 5.13.5 [<A href="https://wg21.link/lex.string#13">lex.string</A>] paragraph 13:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Whether all string literals are distinct (that is, are stored in
+nonoverlapping objects) is implementation-defined. The effect of attempting
+to modify a string literal is undefined.</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 5.13.5 [<A href="https://wg21.link/lex.string#14">lex.string</A>] paragraph 14 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+In translation phase 6 (5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]), adjacent <DEL>string
+literals</DEL> <INS><I>string-literal</I>s</INS> are concatenated. If
+both <DEL>string literals</DEL> <INS><I>string-literal</I>s</INS> have the
+same <I>encoding-prefix</I>, the resulting concatenated string literal has
+that <I>encoding-prefix</I>. If one <DEL>string
+literal</DEL> <INS><I>string-literal</I></INS> has
+no <I>encoding-prefix</I>, it is treated as a <DEL>string
+literal</DEL> <INS><I>string-literal</I></INS> of the
+same <I>encoding-prefix</I> as the other operand. If a UTF-8 string literal
+token is adjacent to a wide string literal token, the program is
+ill-formed. Any other concatenations are conditionally-supported with
+implementation-defined behavior. [<I>Note:</I> This concatenation is an
+interpretation, not a conversion. Because the interpretation happens in
+translation phase 6 (after each character from a literal has been
+translated into a value from the appropriate character set), a <DEL>string
+literal</DEL> <INS><I>string-literal</I></INS>'s initial rawness has no
+effect on the interpretation or well-formedness of the
+concatenation. &#8212;<I>end note</I>] Table 8...
+
+</BLOCKQUOTE>
+
+<LI><P>Add the following as a new paragraph at the end of
+5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<INS>Evaluating a <I>string-literal</I> results in a string literal
+object with static storage duration, initialized from the given characters
+as specified above.  Whether all string literals are distinct (that is,
+are stored in nonoverlapping objects) and whether successive evaluations
+of a <I>string-literal</I> yield the same or a different object is
+unspecified. [<I>Note:</I> The effect of attempting to modify a string
+literal is undefined. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...A <TT>static</TT> local variable in an <TT>extern inline</TT> function
+always refers to the same object.  <DEL>A string literal in the body of
+an <TT>extern inline</TT> function is the same object in different
+translation units.  [<I>Note:</I> A string literal appearing in a default
+argument is not in the body of an inline function merely because the
+expression is used in a function call from that inline
+function. &#8212;<I>end note</I>]</DEL> A type defined within the body of
+an <TT>extern inline</TT> function is the same type in every translation
+unit.
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P><B>Additional note, February, 2014:</B></P>
+
+<P>Two editorial changes have been made since CWG approved the proposed
+resolution:</P>
+
+<OL>
+<LI>The proposed change to 5.13.5 [<A href="https://wg21.link/lex.string#15">lex.string</A>] paragraph 15 has
+not been made.  The term <I>string-literal</I> refers to the syntactic
+construct appearing in the source, but the addition of the terminating null
+character is made to the concatenated string literal, which is
+(appropriately) referred to in the preceding paragraph (as in the original
+text of paragraph 15) using the English term, not the non-terminal.</LI>
+
+<LI><P>The deletion of the requirement in 9.2.3 [<A href="https://wg21.link/dcl.fct.spec#4">dcl.fct.spec</A>] paragraph 4
+that string literals in inline functions be the same made
+the note following that requirement irrelevant, so the deletion has been
+extended to include the note as well.</P></LI>
+
+</OL>
+
+<P>The issue has been returned to "review" status to allow possible
+reconsideration of these editorial changes.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,281 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2598</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2598"></A><H4>2598.
+  
+Unions should not require a non-static data member of literal type
+</H4>
+<B>Section: </B>6.8.1&#160; [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-06-18<BR>
+
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>According to 6.8.1 [<A href="https://wg21.link/basic.types.general#10">basic.types.general</A>] paragraph 10, a type is a
+literal type only if it satisfies the following:</P>
+
+<BLOCKQUOTE>
+
+A type is a <I>literal type</I> if it is:
+
+<UL>
+<LI>...</LI>
+
+<LI>a possibly cv-qualified class type (Clause 11 [<A href="https://wg21.link/class">class</A>])
+that has all of the following properties:
+<UL>
+
+<LI>it has a constexpr
+destructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]),</LI>
+
+<LI>it is either a
+closure type (7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]), an aggregate type
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), or has at least one constexpr
+constructor or constructor template (possibly inherited
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) from a base class) that is not a copy or
+move constructor,</LI>
+
+<LI>if it is a union, at least one of its
+non-static data members is of non-volatile literal type, and
+</LI>
+
+<LI>
+if it is not a union, all of its non-static data members and base
+classes are of non-volatile literal types.</LI>
+</UL>
+</LI>
+</UL>
+
+[<I>Note 4:</I> A literal type is one for which it might be possible
+to create an object within a constant expression. ... &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+<P>However, the normative rule disagrees with the note. Consider:</P>
+
+<PRE>
+  struct A { A(); };
+  union U {
+    A a;
+    constexpr U() {}
+    constexpr ~U() {}
+  };
+</PRE>
+
+<P>It is certainly possible to create an object of type <TT>U</TT> in
+a constant expression, even though <TT>U</TT> is not a literal
+type.</P>
+
+<P>In the suggested resolution, the aggregate type rule is intended to
+capture the fact that it is not possible for aggregate initialization
+of a non-empty union to leave no active member (and similarly for each
+anonymous union member in a non-union union-like class).</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#10">basic.types.general</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+A type is a <I>literal type</I> if it is:
+
+<UL>
+<LI>...</LI>
+
+<LI>a possibly cv-qualified class type (Clause 11 [<A href="https://wg21.link/class">class</A>])
+that has all of the following properties:
+<UL>
+
+<LI>it has a constexpr
+destructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]),</LI>
+
+<LI>it <DEL>is</DEL> either
+
+<UL>
+<LI>
+<INS>is</INS> a closure type (7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]),</LI>
+
+<LI>
+<INS>is</INS> an aggregate type
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) <INS>for which that type (if it is a
+union) or each of its anonymous union members (otherwise) either has
+at least one variant member of non-volatile literal type or has no
+variant members,</INS> or</LI>
+
+<LI>has at least one constexpr
+constructor or constructor template (possibly inherited
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) from a base class) that is not a copy or
+move constructor, <INS>and</INS>
+</LI>
+
+</UL>
+</LI>
+
+<LI>
+<DEL>if it is a union, at least one of its
+non-static data members is of non-volatile literal type, and</DEL>
+</LI>
+
+<LI>
+<DEL>if it is not a union,</DEL> all of its
+non-static <INS>non-variant</INS> data members and base classes are of
+non-volatile literal types.</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (CWG telecon 2022-08-12) [SUPERSEDED]:</B></P>
+
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#10">basic.types.general</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+A type is a <I>literal type</I> if it is:
+
+<UL>
+<LI>...</LI>
+
+<LI>a possibly cv-qualified class type (Clause 11 [<A href="https://wg21.link/class">class</A>])
+that has all of the following properties:
+<UL>
+
+<LI>it has a constexpr
+destructor (9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]),</LI>
+
+<LI>
+<INS>all of its non-static non-variant data members and base classes
+are of non-volatile literal types, and</INS>
+</LI>
+
+<LI>it <DEL>is</DEL> either
+
+<UL>
+<LI>
+<INS>is</INS> a closure type (7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]),</LI>
+
+<LI>
+<INS>is</INS> an aggregate type
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) <INS>for which that type (if it is a
+union) or each of its anonymous union members (otherwise) either has
+at least one variant member of non-volatile literal type or has no
+variant members,</INS> or</LI>
+
+<LI>has at least one constexpr
+constructor or constructor template (possibly inherited
+(9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) from a base class) that is not a copy or
+move constructor<DEL>,</DEL> <INS>.</INS>
+</LI>
+
+</UL>
+</LI>
+
+<LI>
+<DEL>if it is a union, at least one of its
+non-static data members is of non-volatile literal type, and</DEL>
+</LI>
+
+<LI>
+<DEL>if it is not a union, all of its non-static data members and base
+classes are of non-volatile literal types.</DEL>
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-09):</B></P>
+
+<P>Change 6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A type is a <I>literal type</I> if it is:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P> a possibly cv-qualified class type
+ (Clause 11 [<A href="https://wg21.link/class">class</A>]) that has all of the
+ following properties:</P></LI>
+
+<UL>
+<LI><P>it has a constexpr destructor
+(9.2.6 [<A href="https://wg21.link/dcl.constexpr">dcl.constexpr</A>]),</P></LI>
+
+<LI><P><INS>all of its non-static non-variant data members
+and base classes are of non-volatile literal types,
+and</INS></P></LI>
+
+<LI><P>it <DEL>is either</DEL>
+</P></LI>
+
+<UL>
+<LI><P>
+<INS>is</INS> a closure type
+(7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]),</P></LI>
+
+<LI><P><DEL>an aggregate type
+(9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]),</DEL></P></LI>
+
+<LI><P><INS>is an aggregate union type that has either no
+variant members or at least one variant member of
+non-volatile literal type,</INS></P></LI>
+
+<LI><P><INS>is a non-union aggregate type for which each
+of its anonymous union members satisfies the above requirements
+for an aggregate union type, or</INS></P></LI>
+
+<LI><P>has at least one constexpr constructor or constructor
+template (possibly inherited (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]) from
+a base class) that is not a copy or move
+constructor<DEL>,</DEL><INS>.</INS>
+</P></LI>
+
+</UL>
+
+<LI><P><DEL>if it is a union, at least one of its non-static
+data members is of non-volatile literal type,
+and</DEL></P></LI>
+
+<LI><P><DEL>if it is not a union, all of its non-static data
+members and base classes are of non-volatile literal
+types.</DEL></P></LI>
+
+</UL>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

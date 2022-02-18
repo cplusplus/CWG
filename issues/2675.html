@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2675</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2675"></A><H4>2675.
+  
+<TT>start_lifetime_as</TT>, placement-new, and active union members
+</H4>
+<B>Section: </B>11.5.1&#160; [<A href="https://wg21.link/class.union.general">class.union.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Nina Ranns
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-06<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A { int i;};
+  struct B { int j;};
+  union U { A a; B b; };
+  U u1{A{}};
+  start_lifetime_as&lt;B&gt;(&amp;u1.a); //<SPAN CLASS="cmnt"> #1</SPAN>
+  start_lifetime_as&lt;B&gt;(&amp;u1);   //<SPAN CLASS="cmnt"> #2</SPAN>
+  U u2{B{}};
+  start_lifetime_as&lt;U&gt;(&amp;u2);   //<SPAN CLASS="cmnt"> #3</SPAN>
+  start_lifetime_as&lt;B&gt;(&amp;u1.b); //<SPAN CLASS="cmnt"> #4</SPAN>
+</PRE>
+
+<P>It is unclear which of these constructs changes the active member
+of the union, and whether a union might have more than one active
+member.  Subclause 11.5.1 [<A href="https://wg21.link/class.union.general#2">class.union.general</A>] paragraph 2 appears
+contradictory if several members can be in-lifetime:</P>
+
+<BLOCKQUOTE>
+
+In a union, a non-static data member is active if its name refers to
+an object whose lifetime has begun and has not ended
+(6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). At most one of the non-static data
+members of an object of union type can be active at any time, that is,
+the value of at most one of the non-static data members can be stored
+in a union at any time.
+
+</BLOCKQUOTE>
+
+<P>Similar questions arise for placement-new and
+for <TT>construct_at</TT>; for the latter also during constant
+evaluation.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

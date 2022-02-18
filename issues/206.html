@@ -1,0 +1,95 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 206</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="206"></A><H4>206.
+  
+Semantic constraints on non-dependent names
+</H4>
+<B>Section: </B>_N4868_.13.8.4&#160; [<A href="https://wg21.link/temp.nondep">temp.nondep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>23 Feb 2000<BR>
+
+
+<P>At what point are semantic constraints applied to uses of
+non-dependent names in template definitions?  According to
+_N4868_.13.8.4 [<A href="https://wg21.link/temp.nondep">temp.nondep</A>]
+, such names are looked up
+and bound at the point at which they are used, i.e., the point of
+definition and not the point of instantiation.  However, the text does
+not mention the checking of semantic constraints.</P>
+
+<P>Contrast this omission with the treatment of names in default
+argument expressions given in
+9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#5">dcl.fct.default</A>] paragraph 5,
+ where
+the treatment of semantic constraints is explicit:</P>
+
+<BLOCKQUOTE>
+The names in the expression are bound, and the semantic constraints
+are checked, at the point where the default argument expression
+appears.
+</BLOCKQUOTE>
+
+The following code is an example of where this distinction matters:
+
+<PRE>
+    struct S;
+
+    template &lt;class T&gt; struct Q {
+        S s;    // incomplete type if semantic constraints
+                // are applied in the definition context
+    };
+
+    struct S { };
+
+    // Point of instantiation of Q&lt;int&gt;; S is complete here
+
+    Q&lt;int&gt; si;
+</PRE>
+
+There is real-world code that depends on late checking of semantic
+constraints.  The Standard should be explicit about whether this code
+is broken or not.
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>In 13.8 [<A href="https://wg21.link/temp.res#7">temp.res</A>] paragraph 7, add the following
+immediately preceding the note:</P>
+
+<BLOCKQUOTE>
+
+If a type used in a non-dependent name is incomplete at the point at
+which a template is defined but is complete at the point at which an
+instantiation is done, and if the completeness of that type affects
+whether or not the program is well-formed or affects the semantics of
+the program, the program is ill-formed; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

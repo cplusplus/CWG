@@ -1,0 +1,84 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2170</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2170"></A><H4>2170.
+  
+Unclear definition of odr-use for arrays
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-09-02<BR>
+
+
+<P>[Accepted as a DR at the February, 2019 meeting.]</P>
+
+
+
+<P>The current definition of odr-use of a variable is problematic
+when applied to an array:</P>
+
+<BLOCKQUOTE>
+
+A variable <TT>x</TT> whose name appears as a
+potentially-evaluated expression <TT>ex</TT> is odr-used
+by <TT>ex</TT> unless applying the lvalue-to-rvalue
+conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to <TT>x</TT> yields a
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that does
+not invoke any non-trivial functions and, if <TT>x</TT> is
+an object, <TT>ex</TT> is an element of the set of potential
+results of an expression <TT>e</TT>, where either the
+lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) is
+applied to <TT>e</TT>, or <TT>e</TT> is a discarded-value
+expression (Clause 7 [<A href="https://wg21.link/expr">expr</A>]).
+
+</BLOCKQUOTE>
+
+<P>Consider an example like</P>
+
+<PRE>
+  struct S {
+    constexpr static const int arr[3] = { 0, 1, 2 };
+  };
+  int i = S::arr[1];  //<SPAN CLASS="cmnt"> Should not require </SPAN>S::arr<SPAN CLASS="cmnt"> to be defined</SPAN>
+</PRE>
+
+<P>Although the &#8220;set of potential results&#8221; test
+correctly handles the subscripting operation (since the
+resolution of <A HREF="1926.html">issue 1926</A>), it
+requires applying the lvalue-to-rvalue conversion to
+<TT>S::arr</TT> itself and not just to the result of the
+subscripting operation.  Class objects exhibit a similar
+problem.</P>
+
+<P><B>Proposed resolution (January, 2019):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="2083.html">issue 2083</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

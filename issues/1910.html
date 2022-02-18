@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1910</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1910"></A><H4>1910.
+  
+&#8220;Shall&#8221; requirement applied to runtime behavior
+</H4>
+<B>Section: </B>6.7.6.5.2&#160; [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-04-12<BR>
+
+
+<P>[Accepted as a DR at the March, 2018 (Jacksonville) meeting.]</P>
+
+
+
+<P>According to 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#3">basic.stc.dynamic.allocation</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+If an allocation function declared with a
+non-throwing <I>exception-specification</I> (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>])
+fails to allocate storage, it shall return a null pointer. Any other
+allocation function that fails to allocate storage shall indicate failure
+only by throwing an exception (14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that
+would match a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of
+type <TT>std::bad_alloc</TT> (17.6.4.1 [<A href="https://wg21.link/bad.alloc">bad.alloc</A>]).
+
+</BLOCKQUOTE>
+
+<P>The use of the word &#8220;shall&#8221; to constrain runtime behavior
+is inappropriate, as it normally identifies cases requiring a compile-time
+diagnostic.</P>
+
+<P><B>Proposed resolution (November, 2017)</B></P>
+
+<OL>
+<LI><P>Change 6.7.6.5 [<A href="https://wg21.link/basic.stc.dynamic#3">basic.stc.dynamic</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>Any allocation and/or deallocation functions defined in a C ++
+program, including the default versions in the library, shall conform to
+the semantics</DEL> <INS>If the behavior of an allocation or deallocation
+function does not satisfy the semantic constraints</INS> specified in
+6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>] and 6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]<INS>, the
+behavior is undefined</INS>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#1">basic.stc.dynamic.allocation</A>] paragraph 1 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+...The value of the first parameter <DEL>shall be</DEL> <INS>is</INS>
+interpreted as the requested size of the allocation...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#2">basic.stc.dynamic.allocation</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>The</DEL> <INS>An</INS> allocation function attempts to allocate the
+requested amount of storage. If it is successful, it <DEL>shall return</DEL>
+<INS>returns</INS> the address of the start of a block of storage whose
+length in bytes <DEL>shall be</DEL>
+<INS>is</INS> at least as large as the requested size. <DEL>There are no
+constraints on the contents of the allocated storage on return from the
+allocation function.</DEL> The order, contiguity, and initial value of
+storage allocated by successive calls to an allocation function are
+unspecified. <DEL>The</DEL> <INS>For an allocation function other than a
+reserved placement allocation function (17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>],
+the</INS> pointer returned <DEL>shall be</DEL> <INS>is</INS> suitably
+aligned so that it can be converted to a pointer to any suitable complete
+object type (17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>]) and then used to access the
+object or array in the storage allocated (until the storage is explicitly
+deallocated by a call to a corresponding deallocation function). Even if
+the size of the space requested is zero, the request can fail. If the
+request succeeds, the value returned <DEL>shall be</DEL> <INS>by a
+replaceable allocation function is</INS> a non-null pointer value
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) <TT>p0</TT> different from any previously
+returned value <TT>p1</TT>, unless that value <TT>p1</TT> was subsequently
+passed to <DEL>an operator delete</DEL> <INS>a replaceable deallocation
+function</INS>. Furthermore, for the library allocation
+functions in 17.6.3.2 [<A href="https://wg21.link/new.delete.single">new.delete.single</A>] and
+17.6.3.3 [<A href="https://wg21.link/new.delete.array">new.delete.array</A>], <TT>p0</TT> <DEL>shall represent</DEL>
+<INS>represents</INS> the address of a block of storage disjoint from the
+storage for any other object accessible to the caller. The effect of
+indirecting through a pointer returned <DEL>as</DEL> <INS>from</INS>
+a request for zero size is undefined.<SUP>38</SUP>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation#3">basic.stc.dynamic.allocation</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An allocation function that fails to allocate storage can invoke the
+currently installed new-handler function (17.6.4.3 [<A href="https://wg21.link/new.handler">new.handler</A>]),
+if any. [<I>Note:</I> A program-supplied allocation function can obtain the
+address of the currently installed <TT>new_handler</TT> using the
+<TT>std::get_new_handler</TT> function
+(17.6.4.4 [<A href="https://wg21.link/set.new.handler">set.new.handler</A>]). &#8212;<I>end note</I>] <DEL>If an</DEL>
+<INS>An</INS> allocation function that has a non-throwing exception
+specification (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]) <DEL>fails to allocate storage,
+it shall return</DEL> <INS>indicates failure by returning</INS> a null
+pointer <INS>value</INS>. Any other allocation function <DEL>that fails to
+allocate storage shall indicate</DEL> <INS>never returns a null pointer
+value and indicates</INS> failure only by throwing an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that would match a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) of type <TT>std::bad_alloc</TT>
+(17.6.4.1 [<A href="https://wg21.link/bad.alloc">bad.alloc</A>]).
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

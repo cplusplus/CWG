@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1477</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1477"></A><H4>1477.
+  
+Definition of a <TT>friend</TT> outside its namespace
+</H4>
+<B>Section: </B>_N4868_.9.8.2.3&#160; [<A href="https://wg21.link/namespace.memdef">namespace.memdef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-03-09<BR>
+
+
+<P>[Moved to DR at the April, 2013 meeting.]</P>
+
+<P>According to _N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+Every name first declared in a namespace is a member of that
+namespace. If a <TT>friend</TT> declaration in a non-local class first
+declares a class or function<SUP>95</SUP> the friend class or function
+is a member of the innermost enclosing namespace. The name of the
+friend is not found by unqualified lookup (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>])
+or by qualified lookup (6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]) until a matching
+declaration is provided in that namespace scope (either before or
+after the class definition granting friendship).
+
+</BLOCKQUOTE>
+
+<P>Taken literally, that would mean the following example is
+ill-formed:</P>
+
+<PRE>
+  namespace N {
+    struct A {
+      friend int f();
+    };
+  }
+  int N::f() { return 0; }
+  int i = N::f();    //<SPAN CLASS="cmnt"> ill-formed: </SPAN>N::f<SPAN CLASS="cmnt"> not found</SPAN>
+</PRE>
+
+<P>because the definition of <TT>N::f</TT> appears in global scope
+rather than in namespace scope.</P>
+
+<P><B>Proposed resolution (October, 2012):</B></P>
+
+<P>Change _N4868_.9.8.2.3 [<A href="https://wg21.link/namespace.memdef#3">namespace.memdef</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Every name first declared in a namespace is a member of that
+namespace. If a <TT>friend</TT> declaration in a non-local class first
+declares a class or function<SUP>95</SUP> the friend class or function
+is a member of the innermost enclosing namespace. <DEL>The name of the
+friend is not found by</DEL> <INS>The <TT>friend</TT> declaration does
+not by itself make the name visible to</INS> unqualified lookup
+(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) or <DEL>by</DEL> qualified lookup
+(6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>])<INS>. [<I>Note:</I> The name of the
+friend will be visible in its namespace if</INS> <DEL>until</DEL> a
+matching declaration is provided <DEL>in that</DEL> <INS>at</INS>
+namespace scope (either before or after the class definition granting
+friendship). <INS>&#8212;<I>end note</I>]</INS> If a friend function
+is called...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

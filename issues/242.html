@@ -1,0 +1,244 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 242</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="242"></A><H4>242.
+  
+Interpretation of old-style casts
+</H4>
+<B>Section: </B>7.6.3&#160; [<A href="https://wg21.link/expr.cast">expr.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 Aug 2000<BR>
+
+
+<P>[Adopted at the February, 2016 meeting.]</P>
+
+
+
+<P>The meaning of an old-style cast is described in terms of
+<TT>const_cast</TT>, <TT>static_cast</TT>, and
+<TT>reinterpret_cast</TT> in 7.6.3 [<A href="https://wg21.link/expr.cast#5">expr.cast</A>] paragraph 5.
+Ignoring <TT>const_cast</TT> for the moment, it basically says that if
+the conversion performed by a given old-style cast is one of those
+performed by <TT>static_cast</TT>, the conversion is interpreted as if
+it were a <TT>static_cast</TT>; otherwise, it's interpreted as if it
+were a <TT>reinterpret_cast</TT>, if possible.  The following example
+is given in illustration:</P>
+
+<PRE>
+    struct A {};
+    struct I1 : A {};
+    struct I2 : A {};
+    struct D : I1, I2 {};
+    A *foo( D *p ) {
+	return (A*)( p ); // ill-formed static_cast interpretation
+    }
+</PRE>
+
+<P>The obvious intent here is that a derived-to-base pointer
+conversion is one of the conversions that can be performed using
+<TT>static_cast</TT>, so <TT>(A*)(p)</TT> is equivalent to
+<TT>static_cast&lt;A*&gt;(p)</TT>, which is ill-formed because of the
+ambiguity.</P>
+
+<P>Unfortunately, the description of <TT>static_cast</TT> in
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>] does NOT support this interpretation.
+The problem is in the way 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>] lists the
+kinds of casts that can be performed using <TT>static_cast</TT>.
+Rather than saying something like "All standard conversions can be
+performed using <TT>static_cast</TT>," it says</P>
+
+<BLOCKQUOTE>
+An expression e can be explicitly converted to a type <TT>T</TT> using
+a <TT>static_cast</TT> of the form <TT>static_cast&lt;T&gt;(e)</TT> if
+the declaration "<TT>T t(e);</TT>" is well-formed, for some invented
+temporary variable <TT>t</TT>.
+</BLOCKQUOTE>
+
+<P>Given the declarations above, the hypothetical declaration</P>
+
+<PRE>
+    A* t(p);
+</PRE>
+
+<P>is NOT well-formed, because of the ambiguity.  Therefore the old-style
+cast <TT>(A*)(p)</TT> is NOT one of the conversions that can be performed
+using <TT>static_cast</TT>, and <TT>(A*)(p)</TT> is equivalent to
+<TT>reinterpret_cast&lt;A*&gt;(p)</TT>, which is well-formed under
+7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast#7">expr.reinterpret.cast</A>] paragraph 7.</P>
+
+<P>Other situations besides ambiguity which might raise similar
+questions include access violations, casting from virtual base
+to derived, and casting pointers-to-members when virtual
+inheritance is involved.</P>
+
+
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<OL>
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#2">expr.static.cast</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An lvalue of type &#8220;<I>cv1</I> <TT>B</TT>&#8221;,
+where <TT>B</TT> is a class type, can be cast to type
+&#8220;reference to <I>cv2</I> <TT>D</TT>&#8221;,
+where <TT>D</TT> is a class derived (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) from <TT>B</TT>, if <DEL>a valid
+standard conversion from &#8220;pointer to <TT>D</TT>&#8221;
+to &#8220;pointer to <TT>B</TT>&#8221; exists
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]),</DEL> <I>cv2</I> is the same
+cv-qualification as, or greater cv-qualification
+than, <I>cv1</I><DEL>, and</DEL><INS>. If</INS> <TT>B</TT>
+is <DEL>neither</DEL> a virtual base class
+of <TT>D</TT> <DEL>nor</DEL> <INS>or</INS> a base class of a
+virtual base class of <TT>D</TT><INS>, or if no valid
+standard conversion from &#8220;pointer to <TT>D</TT>&#8221;
+to &#8220;pointer to <TT>B</TT>&#8221; exists
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), the program is ill-formed</INS>.
+<DEL>The result has type
+&#8220;<I>cv2</I> <TT>D</TT>&#8221;.</DEL> An xvalue of type
+&#8220;<I>cv1</I> <TT>B</TT>&#8221; <DEL>may</DEL> <INS>can</INS>
+be cast to type &#8220;rvalue reference
+to <I>cv2</I> <TT>D</TT>&#8221; with the same constraints as
+for an lvalue of type &#8220;<I>cv1</I>
+<TT>B</TT>&#8221;.  If the object of type
+&#8220;<I>cv1</I> <TT>B</TT>&#8221; is actually a subobject
+of an object of type <TT>D</TT>, the result refers to the enclosing
+object of type <TT>D</TT>. Otherwise, the behavior is
+undefined. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#4">expr.static.cast</A>] paragraph 4 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>An expression <TT>e</TT> can be explicitly converted to a
+type <TT>T</TT> <DEL>using a <TT>static_cast</TT> of the form
+<TT>static_cast&lt;T&gt;(e)</TT></DEL> if <DEL>the
+declaration <TT>T t(e);</TT> is well-formed, for some
+invented temporary variable <TT>t</TT>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])</DEL> <INS>there is an implicit
+conversion sequence (12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]) from
+<TT>e</TT> to <TT>T</TT>, or if overload resolution for a
+direct-initialization (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) of an
+object or reference of type <TT>T</TT> from <TT>e</TT> would
+find at least one viable function
+(12.2.3 [<A href="https://wg21.link/over.match.viable">over.match.viable</A>])</INS>. The effect of such an
+explicit conversion is the same as performing the
+declaration and initialization</P>
+
+<PRE>
+<INS>  T t(e);</INS>
+</PRE>
+
+<P>
+<INS>for some invented temporary variable <TT>t</TT>
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])</INS> and then using the
+temporary variable as the result of the conversion.
+<INS>[<I>Note:</I> The conversion is ill-formed when
+attempting to convert an expression of class type to an
+inaccessible or ambiguous base class. &#8212;<I>end
+note</I>]</INS> The expression <TT>e</TT> is used as a
+glvalue if and only if the initialization uses it as a
+glvalue.</P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#11">expr.static.cast</A>] paragraph 11 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer
+to <I>cv1</I> <TT>B</TT>&#8221;, where <TT>B</TT> is a class
+type, can be converted to a prvalue of type &#8220;pointer
+to <I>cv2</I> <TT>D</TT>&#8221;, where <TT>D</TT> is a class
+derived (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) from B, if <DEL>a
+valid standard conversion from &#8220;pointer
+to <TT>D</TT>&#8221; to &#8220;pointer to <TT>B</TT>&#8221;
+exists (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]),</DEL> <I>cv2</I> is the
+same cv-qualification as, or greater cv-qualification
+than, <I>cv1</I><DEL>, and</DEL><INS>. If</INS> <TT>B</TT>
+is <DEL>neither</DEL> a virtual base class
+of <TT>D</TT> <DEL>nor</DEL> <INS>or</INS> a base class of a
+virtual base class of <TT>D</TT><INS>, or if no valid
+standard conversion from &#8220;pointer to <TT>D</TT>&#8221;
+to &#8220;pointer to <TT>B</TT>&#8221; exists
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), the program is
+ill-formed</INS>. The null pointer value
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) is converted to the null pointer
+value of the destination type. If the prvalue of type
+&#8220;pointer to <I>cv1</I> <TT>B</TT>&#8221; points to
+a <TT>B</TT> that is actually a subobject of an object of
+type <TT>D</TT>, the resulting pointer points to the
+enclosing object of type <TT>D</TT>. Otherwise, the behavior
+is undefined.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#12">expr.static.cast</A>] paragraph 12 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A prvalue of type &#8220;pointer to member of <TT>D</TT> of
+type <I>cv1</I> <TT>T</TT>&#8221; can be converted to a
+prvalue of type &#8220;pointer to member
+of <TT>B</TT><DEL>&#8221;</DEL> of
+type <I>cv2</I> <TT>T</TT><INS>&#8221;</INS>,
+where <TT>B</TT> is a base class (
+11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]) of <TT>D</TT>, if <DEL>a valid
+standard conversion from &#8220;pointer to member
+of <TT>B</TT> of type
+<TT>T</TT>&#8221; to &#8220;pointer to member of <TT>D</TT>
+of type <TT>T</TT>&#8221; exists
+(7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]), and</DEL> <I>cv2</I> is the same
+cv-qualification as, or greater cv-qualification than,
+<I>cv1</I>.<SUP>70</SUP> <INS>If no valid standard conversion
+from &#8220;pointer to member of <TT>B</TT> of type
+<TT>T</TT>&#8221; to &#8220;pointer to member of <TT>D</TT>
+of type <TT>T</TT>&#8221; exists (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]),
+the program is ill-formed.</INS> The null member pointer value
+(7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) is converted to the null member
+pointer value of the destination type. If class <TT>B</TT>
+contains the original member, or is a base or derived class
+of the class containing the original member, the resulting
+pointer to member points to the original member. Otherwise,
+the behavior is undefined. [<I>Note:</I> although
+class <TT>B</TT> need not contain the original member, the
+dynamic type of the object with which indirection through
+the pointer to member is performed must contain the original
+member; see 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]. &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

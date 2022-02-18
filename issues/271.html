@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 271</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="271"></A><H4>271.
+  
+Explicit instantiation and template argument deduction
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Feb 2001<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+
+
+<P>Nicolai Josuttis sent me an example like the following:</P>
+
+<PRE>
+    template &lt;typename RET, typename T1, typename T2&gt;
+    const RET&amp; min (const T1&amp; a, const T2&amp; b)
+    {
+	return (a &lt; b ? a : b);
+    }
+    template const int&amp; min&lt;int&gt;(const int&amp;,const int&amp;);  // #1
+    template const int&amp; min(const int&amp;,const int&amp;);       // #2
+</PRE>
+
+<P>Among the questions was whether explicit instantiation #2 is valid,
+where deduction is required to determine the type of <TT>RET</TT>.</P>
+
+<P>The first thing I realized when researching this is that the standard
+does not really spell out the rules for deduction in declarative
+contexts (friend declarations, explicit specializations, and
+explicit instantiations).  For explicit instantiations,
+13.9.3 [<A href="https://wg21.link/temp.explicit#2">temp.explicit</A>] paragraph 2 does
+mention deduction, but it doesn't say which set of deduction rules from
+13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] should be applied.</P>
+
+<P>Second, Nicolai pointed out that
+13.9.3 [<A href="https://wg21.link/temp.explicit#6">temp.explicit</A>] paragraph 6 says</P>
+
+<BLOCKQUOTE>
+A trailing <I>template-argument</I>
+can be left unspecified in an explicit instantiation provided it can
+be deduced from the type of a function parameter
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]).
+</BLOCKQUOTE>
+
+<P>This prohibits cases
+like #2, but I believe this was not considered in the wording as there
+is no reason not to include the return type in the deduction process.</P>
+
+<P>I think there may have been some confusion because the return type is
+excluded when doing deduction on a function call.  But there are
+contexts where the return type is included in deduction, for example,
+when taking the address of a function template specialization.</P>
+
+<P>
+<U>Suggested resolution</U>:</P>
+
+<OL>
+
+<LI>Update 13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] to include a section
+"Deducing template arguments from a declaration" that describes how
+deduction is done when finding a template that matches a declaration.
+This should, I believe, include the return type.</LI>
+
+<LI>Update 13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>] to make reference to the new
+rules in 13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>] and remove the description of
+the deduction details from 13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>] paragraph
+6.</LI>
+
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

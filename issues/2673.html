@@ -1,0 +1,120 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2673</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2673"></A><H4>2673.
+  
+User-declared spaceship vs. built-in operators
+</H4>
+<B>Section: </B>12.2.2.3&#160; [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-30<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;compare&gt;
+
+  enum class E : int {
+    Lo = 0,
+    Hi = 1
+  };
+
+  constexpr auto operator&lt;=&gt;(E lhs, E rhs) -&gt; std::strong_ordering {
+    return (int)rhs &lt;=&gt; (int)lhs;
+  }
+
+  //<SPAN CLASS="cmnt"> everybody agrees this is true</SPAN>
+  static_assert((E::Lo &lt;=&gt; E::Hi) == std::strong_ordering::greater);
+
+  //<SPAN CLASS="cmnt"> gcc rejects this, msvc and clang accept</SPAN>
+  static_assert(E::Lo &gt; E::Hi);  // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>The intent here is for the user-provided <TT>operator&lt;=&gt;</TT>
+to suppress the built-in <TT>operator&lt;=&gt;</TT> for <TT>E</TT>.
+And gcc, clang, and msvc all agree that this does happen when the
+comparison expression explicitly uses <TT>a &lt;=&gt; b</TT>.</P>
+
+<P>But when the comparison expression is a @ b for one of the
+relational operators, gcc disagrees, conforming to
+12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.3">over.match.oper</A>] bullet 3.3:</P>
+
+<BLOCKQUOTE>
+
+For all other operators, the built-in candidates include all of the
+candidate operator functions defined in 12.5 [<A href="https://wg21.link/over.built">over.built</A>]
+that, compared to the given operator, ...
+do not have the same parameter-type-list as any non-member candidate
+that is not a function template specialization.
+
+</BLOCKQUOTE>
+
+<P>The issue is that, for #1, the
+user-provided <TT>operator&lt;=&gt;</TT> is not a non-member
+candidate, but a rewritten candidate.  A similar situation arises for
+a user-declared <TT>operator==</TT>, which will be called for <TT>e1
+== e2</TT>, but not for <TT>e1 != e2</TT>.  Again, clang and MSVC
+disagree.</P>
+
+<P><B>Proposed resolution (January, 2023) [SUPERSEDED]:</B></P>
+
+<P>Change 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.3.4">over.match.oper</A>] bullet 3.3.4 as follows:</P>
+
+<UL>
+
+<LI>...</LI>
+
+<LI>do not have the same parameter-type-list as any non-member <INS>or
+rewritten</INS> candidate that is not a function template
+specialization.
+</LI>
+
+</UL>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-10):</B></P>
+
+<P>Change 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3.3.4">over.match.oper</A>] bullet 3.3.4 as follows:</P>
+
+<UL>
+
+<LI>...</LI>
+
+<LI>do not have the same parameter-type-list as any non-member candidate <INS>or
+rewritten non-member candidate</INS> that is not a function template
+specialization.
+</LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

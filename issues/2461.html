@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2461</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2461"></A><H4>2461.
+  
+Diagnosing non-<TT>bool</TT> type constraints
+</H4>
+<B>Section: </B>13.8&#160; [<A href="https://wg21.link/temp.res">temp.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-04-20<BR>
+
+
+<P>[Accepted at the November, 2020 meeting.]</P>
+
+
+
+<P>Given the following example,</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A {};
+  template &lt;typename T&gt; void f() requires (sizeof(A&lt;T&gt;)) {}
+</PRE>
+
+<P>the current wording does not appear to allow diagnosis
+of the program as ill-formed. In particular, 13.8 [<A href="https://wg21.link/temp.res">temp.res</A>]
+bullet 8.2 says,</P>
+
+<BLOCKQUOTE>
+
+<P>The program is ill-formed, no diagnostic required, if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>no substitution of template arguments into
+a <I>type-constraint</I> or <I>requires-clause</I> would
+result in a valid expression, or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, substitution into the <I>requires-clause</I>
+in this case would result in a valid expression, but not
+one that is an atomic constraint that can be checked for
+satisfaction.</P>
+
+<P><B>Proposed resolution (April, 2020):</B></P>
+
+<P>Change bullet 8.2 of 13.8 [<A href="https://wg21.link/temp.res">temp.res</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The program is ill-formed, no diagnostic required, if:</P>
+
+<UL>
+<LI><P>...</P></LI>
+
+<LI><P>
+<DEL>no substitution of template arguments into
+a <I>type-constraint</I> or <I>requires-clause</I> would
+result in a valid expression</DEL> <INS>any
+<I>constraint-expression</I> in the program, introduced
+or otherwise, has (in its normal form) an atomic constraint
+<I>A</I> where no satisfaction check of <I>A</I> could be
+well-formed and no satisfaction check of <I>A</I> is
+performed</INS>, or</P></LI>
+
+<LI><P>...</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,313 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2862</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2862"></A><H4>2862.
+  
+Unclear boundaries of template declarations
+</H4>
+<B>Section: </B>13.1&#160; [<A href="https://wg21.link/temp.pre">temp.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-21<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/506">#506</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;int&gt;
+  struct S {} v;
+</PRE>
+
+<P>Is this a declaration of a class template or a declaration of a
+variable template, or neither?  Implementations uniformly reject.</P>
+
+<P>Another example:</P>
+
+<PRE>
+  template&lt;class T&gt;
+  typedef struct C F; 
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-04-05) [SUPERSEDED]:</B></P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#2">temp.pre</A>] paragraph 2 through 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>declaration</I> in a <I>template-declaration</I> (if any) shall
+<UL>
+<LI>declare or define a function, a class, or a variable, or</LI>
+<LI>define a member function, a member class, a member enumeration, or
+a static data member of a class template or of a class nested within a
+class template, or</LI>
+<LI>define a member template of a class or class template, or</LI>
+<LI>be a <I>deduction-guide</I>, or</LI>
+<LI>be an <I>alias-declaration</I>. </LI>
+</UL>
+<INS>The <I>declaration</I> shall not be an <I>export-declaration</I>
+or a <I>simple-declaration</I>
+whose <I>decl-specifier-seq</I> contains <TT>typedef</TT>.</INS>
+</P>
+
+<P>
+<DEL>A <I>template-declaration</I> is a <I>declaration</I>.</DEL>
+<INS>
+If</INS>
+<UL class="ins">
+<LI>the <I>declaration</I> in a <I>template-declaration</I> introduces
+an entity using a declarative <I>nested-name-specifier</I>
+(7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual">expr.prim.id.qual</A>]) that is dependent and equivalent to the
+injected-class-name of a class template or class template partial
+specialization <TT>C</TT>, and</LI>
+<LI>the <I>template-head</I> of
+the <I>template-declaration</I> is equivalent to that of <TT>C</TT>,</LI>
+</UL>
+<INS>the <I>template-declaration</I> declares a member of <TT>C</TT>, and
+the <I>nested-name-specifier</I> is treated as a non-dependent
+reference to <TT>C</TT> for the purpose of further interpreting the
+declaration. Otherwise:</INS>
+<UL class="ins">
+<LI>A <I>class template</I> is introduced by
+a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>simple-declaration</I> that either contains
+a <I>class-specifier</I> in its <I>decl-specifier-seq</I> or consists
+solely of an <I>elaborated-type-specifier</I>.</LI>
+<LI>A <I>function template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+function.</LI>
+<LI>An <I>alias template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> is
+an <I>alias-declaration</I>.</LI>
+<LI>A <I>variable template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+variable.</LI>
+</UL>
+<INS>[ Example:</INS>
+<PRE class="ins">
+  template&lt;typename T&gt; struct A {
+    template&lt;typename U&gt; struct B;
+    template&lt;typename U&gt; struct B&lt;U*&gt; {
+      template&lt;typename V&gt; void f();
+    };
+  };
+  template&lt;typename T&gt; //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename U&gt; //<SPAN CLASS="cmnt"> #2</SPAN>
+  template&lt;typename V&gt; //<SPAN CLASS="cmnt"> #3</SPAN>
+  void A&lt;T&gt;::B&lt;U*&gt;::f() {}
+</PRE>
+<INS>
+The <I>template-declaration</I> #1 declares a member of the class
+template <TT>A</TT>, because <TT>A&lt;T&gt;</TT> is equivalent to the
+injected-class-name of <TT>A</TT>.  The <I>template-declaration</I> #2
+declares a member of the class template partial specialization
+<TT>A&lt;T&gt;::B&lt;U*&gt;</TT>,
+because <TT>A&lt;T&gt;::B&lt;U*&gt;</TT> is equivalent to the
+injected-class-name of the partial specialization when <TT>A&lt;T&gt;</TT> is
+treated as a non-dependent reference to the primary template <TT>A</TT>.
+The <I>template-declaration</I> #3 declares a function template that
+is a member of the class template partial specialization.
+
+-- end example ]
+</INS>
+
+<DEL>A declaration introduced by a template declaration of a variable
+is a <I>variable template</I>.</DEL> A variable template at class
+scope is a <I>static data member template</I>. [ Example: ... ]</P>
+
+<P>
+[<I>Note 2:</I> A <I>template-declaration</I> can appear only as a
+namespace scope or class scope declaration. &#8212;<I>end note</I>]
+<DEL>Its <I>declaration</I> shall not be an
+<I>export-declaration</I>.</DEL> <INS>A <I>template-declaration</I>
+shall declare exactly one template or member of a template.</INS>
+<INS>[ Example:</INS>
+<PRE class="ins">
+template &lt;int&gt;
+struct S {} v;    // <SPAN CLASS="cmnt">error: declares both a class template and a variable template</SPAN>
+template &lt;int&gt;
+struct V *v;      // <SPAN CLASS="cmnt">OK: declares a variable template</SPAN>
+</PRE>
+<INS>-- end example ]</INS>
+
+In a function template
+declaration, the <I>unqualified-id</I> of the <I>declarator-id</I>
+shall be a name.  [<I>Note 3:</I> A class or variable template
+declaration of a <I>simple-template-id</I> declares a partial
+specialization (13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]).  &#8212;<I>end
+note</I>]</P>
+
+<P>In a <I>template-declaration</I>, explicit specialization, or
+explicit instantiation, the <I>init-declarator-list</I> in the
+declaration shall contain at most one declarator. <INS>[ Note:</INS>
+When such a declaration is used to declare a class template, no
+declarator is permitted<INS>, because the declarator would be
+considered to declare a variable or function template in addition to
+the class template</INS>. <INS>-- end note ]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>This drafting lacks the required positional association of
+<I>template-head</I>s with the respective component of the
+<I>nested-name-specifier</I>.</P>
+
+<P><U>Possible resolution (rebased on the current Working Draft):</U></P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#2">temp.pre</A>] paragraph 2 through 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>declaration</I> in a <I>template-declaration</I> (if any) shall
+<UL>
+<LI>declare or define a function, a class, or a variable, or</LI>
+<LI>define a member function, a member class, a member enumeration, or
+a static data member of a class template or of a class nested within a
+class template, or</LI>
+<LI>define a member template of a class or class template, or</LI>
+<LI>be a <I>friend-type-declaration</I>, or</LI>
+<LI>be a <I>deduction-guide</I>, or</LI>
+<LI>be an <I>alias-declaration</I>. </LI>
+</UL>
+<INS>The <I>declaration</I> shall not be an <I>export-declaration</I>
+or a <I>simple-declaration</I>
+whose <I>decl-specifier-seq</I> contains <TT>typedef</TT>.</INS>
+</P>
+
+<P>
+<DEL>A <I>template-declaration</I> is a <I>declaration</I>.</DEL>
+<INS>
+If</INS>
+<UL class="ins">
+<LI>the <I>declaration</I> in a <I>template-declaration</I> introduces
+an entity using a declarative <I>nested-name-specifier</I>
+(7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual">expr.prim.id.qual</A>]) that is dependent and equivalent to the
+injected-class-name of a class template or class template partial
+specialization <TT>C</TT>, and</LI>
+<LI>the <I>template-head</I> of
+the <I>template-declaration</I> is equivalent to that of <TT>C</TT>,</LI>
+</UL>
+<INS>the <I>template-declaration</I> declares a member of <TT>C</TT>, and
+the <I>nested-name-specifier</I> is treated as a non-dependent
+reference to <TT>C</TT> for the purpose of further interpreting the
+declaration.
+
+<FONT color="#0000ff">For a <I>template-declaration</I>
+whose <I>declaration</I> is another <I>template-declaration</I>,
+the <I>template-head</I> is associated with the positionally
+corresponding <I>simple-template-id</I> component of the
+declarative <I>nested-name-specifier</I>.
+</FONT>
+
+Otherwise:</INS>
+<UL class="ins">
+<LI>A <I>class template</I> is introduced by
+a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>simple-declaration</I> that either contains
+a <I>class-specifier</I> in its <I>decl-specifier-seq</I> or consists
+solely of an <I>elaborated-type-specifier</I>.</LI>
+<LI>A <I>function template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+function.</LI>
+<LI>An <I>alias template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> is
+an <I>alias-declaration</I>.</LI>
+<LI>A <I>variable template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+variable.</LI>
+</UL>
+<INS>[ Example:</INS>
+<PRE class="ins">
+  template&lt;typename T&gt; struct A {
+    template&lt;typename U&gt; struct B;
+    template&lt;typename U&gt; struct B&lt;U*&gt; {
+      template&lt;typename V&gt; void f();
+    };
+  };
+  template&lt;typename T&gt; //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename U&gt; //<SPAN CLASS="cmnt"> #2</SPAN>
+  template&lt;typename V&gt; //<SPAN CLASS="cmnt"> #3</SPAN>
+  void A&lt;T&gt;::B&lt;U*&gt;::f() {}
+</PRE>
+<INS>
+The <I>template-declaration</I> #1 declares a member of the class
+template <TT>A</TT>, because <TT>A&lt;T&gt;</TT> is equivalent to the
+injected-class-name of <TT>A</TT>.  The <I>template-declaration</I> #2
+declares a member of the class template partial specialization
+<TT>A&lt;T&gt;::B&lt;U*&gt;</TT>,
+because <TT>A&lt;T&gt;::B&lt;U*&gt;</TT> is equivalent to the
+injected-class-name of the partial specialization when <TT>A&lt;T&gt;</TT> is
+treated as a non-dependent reference to the primary template <TT>A</TT>.
+The <I>template-declaration</I> #3 declares a function template that
+is a member of the class template partial specialization.
+
+-- end example ]
+</INS>
+
+<DEL>A declaration introduced by a template declaration of a variable
+is a <I>variable template</I>.</DEL> A variable template at class
+scope is a <I>static data member template</I>. [ Example: ... ]</P>
+
+<P>
+[<I>Note 2:</I> A <I>template-declaration</I> can appear only as a
+namespace scope or class scope declaration. &#8212;<I>end note</I>]
+<DEL>Its <I>declaration</I> shall not be an
+<I>export-declaration</I>.</DEL> <INS>A <I>template-declaration</I>
+shall declare exactly one template or member of a template.</INS>
+<INS>[ Example:</INS>
+<PRE class="ins">
+template &lt;int&gt;
+struct S {} v;    // <SPAN CLASS="cmnt">error: declares both a class template and a variable template</SPAN>
+template &lt;int&gt;
+struct V *v;      // <SPAN CLASS="cmnt">OK: declares a variable template</SPAN>
+</PRE>
+<INS>-- end example ]</INS>
+
+In a function template
+declaration, the <I>unqualified-id</I> of the <I>declarator-id</I>
+shall be a name.  [<I>Note 3:</I> A class or variable template
+declaration of a <I>simple-template-id</I> declares a partial
+specialization (13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]).  &#8212;<I>end
+note</I>]</P>
+
+<P>In a <I>template-declaration</I>, explicit specialization, or
+explicit instantiation, the <I>init-declarator-list</I> in the
+declaration shall contain at most one declarator. <INS>[ Note:</INS>
+When such a declaration is used to declare a class template, no
+declarator is permitted<INS>, because the declarator would be
+considered to declare a variable or function template in addition to
+the class template</INS>. <INS>-- end note ]</INS>
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

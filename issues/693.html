@@ -1,0 +1,211 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 693</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="693"></A><H4>693.
+  
+New string types and deprecated conversion
+</H4>
+<B>Section: </B>7.3.3&#160; [<A href="https://wg21.link/conv.array">conv.array</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Alisdair Meredith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>21 April, 2008<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#DE4">N2800 comment
+  DE&#160;4<BR></A>
+
+<P>[Voted into WP at October, 2009 meeting.]</P>
+
+
+
+<P>The deprecated conversion from string literal to pointer to
+(non-const) character in 7.3.3 [<A href="https://wg21.link/conv.array#2">conv.array</A>] paragraph 2
+has been extended to apply to <TT>char16_t</TT> and
+<TT>char32_t</TT> types, but not to UTF8 and raw string
+literals.  Is this disparity intentional?  Should it be
+extended to all new string types, reverted to just the original
+character types, or revoked altogether?</P>
+
+<P>Additional places in the Standard that may need to change
+include 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 and
+12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3">over.ics.rank</A>] paragraph 3.</P>
+
+<P><B>Additional discussion (August, 2008):</B></P>
+
+
+
+<P>The removal of this conversion for current string literals
+would affect overload resolution for existing programs.  For
+example,</P>
+
+<PRE>
+    struct S {
+        S(const char*);
+    };
+    int f(char *);
+    int f(X);
+    int i = f("hello");
+</PRE>
+
+<P>If the conversion were removed, the result would be a quiet
+change in behavior.  Another alternative to consider would be a
+required diagnostic (without making the program ill-formed).</P>
+
+<P><B>Notes from the September, 2008 meeting:</B></P>
+
+<P>The CWG agreed that the deprecated conversion should continue
+to apply to the literals to which it applied in C++ 2003.  Consensus
+was not reached regarding whether it should apply only to those
+literals or to all the new literals as well, although it was agreed
+that the current situation in which it applies to some, but not all,
+of the new literals is unacceptable.</P>
+
+<P><B>Notes from the July, 2009 meeting:</B></P>
+
+<P>The CWG reached consensus that the deprecated conversion should
+be removed altogether.</P>
+
+<P><B>Proposed resolution (September, 2009):</B></P>
+
+<OL>
+<LI><P>Remove 7.3.3 [<A href="https://wg21.link/conv.array#2">conv.array</A>] paragraph 2:</P></LI>
+
+<BLOCKQUOTE>
+
+<DEL>A string literal (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) with no prefix, with a
+<TT>u</TT> prefix, with a <TT>U</TT> prefix, or with an <TT>L</TT>
+prefix can be converted to an rvalue of type &#8220;pointer to
+<TT>char</TT>&#8221;, &#8220;pointer to <TT>char16_t</TT>&#8221;,
+&#8220;pointer to <TT>char32_t</TT>&#8221;, or &#8220;pointer to
+<TT>wchar_t</TT>&#8221;, respectively. In any case, the result is a
+pointer to the first element of the array. This conversion is
+considered only when there is an explicit appropriate pointer target
+type, and not when there is a general need to convert from an lvalue
+to an rvalue. [<I>Note:</I> this conversion is deprecated.  See Annex
+Clause Annex D [<A href="https://wg21.link/depr">depr</A>].  &#8212;<I>end note</I>] For the purpose of
+ranking in overload resolution (12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]), this
+conversion is considered an array-to-pointer conversion followed by a
+qualification conversion (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]).  [<I>Example:</I>
+<TT>"abc"</TT> is converted to &#8220;pointer to <TT>const
+char</TT>&#8221; as an array-to-pointer conversion, and then to
+&#8220;pointer to <TT>char</TT>&#8221; as a qualification conversion.
+&#8212;<I>end example</I>]</DEL>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete the indicated text from the third sub-bullet of the
+first bullet of paragraph 3 of 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]:</P></LI>
+
+<UL><LI><P>
+<TT>S1</TT> and <TT>S2</TT> differ only in their
+qualification conversion and yield similar types <TT>T1</TT> and
+<TT>T2</TT> (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), respectively, and the
+cv-qualification signature of type <TT>T1</TT> is a proper subset of
+the cv-qualification signature of type <TT>T2</TT><DEL>, and <TT>S1</TT>
+is not the deprecated string literal array-to-pointer conversion
+(<TT>4.2</TT>)</DEL>. [<I>Example:</I> ...</P></LI></UL>
+
+<LI><P>Delete the note from 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3
+as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>throw-expression</I> initializes a temporary object, called the
+<I>exception object</I>, the type of which is determined by removing
+any top-level <I>cv-qualifier</I>s from the static type of the operand
+of <TT>throw</TT> and adjusting the type from &#8220;array of
+<TT>T</TT>&#8221; or &#8220;function returning <TT>T</TT>&#8221; to
+&#8220;pointer to <TT>T</TT>&#8221; or &#8220;pointer to function
+returning <TT>T</TT>&#8221;, respectively. <DEL>[<I>Note:</I> the temporary
+object created for a <I>throw-expression</I> that is a string literal
+is never of type <TT>char*</TT>, <TT>char16_t*</TT>,
+<TT>char32_t*</TT>, or <TT>wchar_t*</TT>; that is, the special
+conversions for string literals from the types &#8220;array of
+<TT>const char</TT>&#8221;, &#8220;array of <TT>const
+char16_t</TT>&#8221;, &#8220;array of <TT>const char32_t</TT>&#8221;,
+and &#8220;array of <TT>const wchar_t</TT>&#8221; to the types
+&#8220;pointer to <TT>char</TT>&#8221;, &#8220;pointer to
+<TT>char16_t</TT>&#8221;, &#8220;pointer to <TT>char32_t</TT>&#8221;,
+and &#8220;pointer to <TT>wchar_t</TT>&#8221;, respectively
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), are never applied to a
+<I>throw-expression</I>. &#8212;<I>end note</I>]</DEL> The temporary is
+an lvalue...
+
+</BLOCKQUOTE>
+
+<LI><P>Change the discussion of 5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>] in
+C.7.2 [<A href="https://wg21.link/diff.lex">diff.lex</A>] as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>
+<B>Change:</B> String literals made const<BR>
+The type of a string literal is changed... &#8220;array of
+<TT>const wchar_t</TT>.&#8221;</P>
+
+<PRE>
+<INS>    char* p = "abc";   //<SPAN CLASS="cmnt"> valid in C, invalid in C++</SPAN>
+</INS>
+</PRE>
+
+<P>...</P>
+
+<P>
+<B>Difficulty of converting:</B> <DEL>Simple syntactic
+transformation, because string literals can be converted to
+<TT>char*</TT>; (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]). The most common cases are
+handled by a new but deprecated standard conversion</DEL>
+<INS>Syntactic transformation. The fix is to add a cast</INS>:</P>
+
+<PRE>
+<DEL>  char* p = "abc";                //<SPAN CLASS="cmnt"> valid in C, deprecated in C++</SPAN>
+  char* q = expr ? "abc" : "de";  //<SPAN CLASS="cmnt"> valid in C, invalid in C++</SPAN></DEL>
+<INS>  void f(char*) {
+      char* p = (char*)"abc";  //<SPAN CLASS="cmnt"> cast added</SPAN>
+      f(p);
+      f((char*)"def");         //<SPAN CLASS="cmnt"> cast added</SPAN>
+   }</INS>
+</PRE>
+
+</BLOCKQUOTE>
+
+<LI><P>Delete _N3000_.D.4 [<A href="https://wg21.link/depr.string">depr.string</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL><B>D.4 Implicit conversion from const strings
+[depr.string]</B></DEL></P>
+
+<P><DEL>The implicit conversion from const to non-const qualification
+for string literals (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) is deprecated.</DEL></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

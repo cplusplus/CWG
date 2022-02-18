@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2676</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2676"></A><H4>2676.
+  
+Replacing a complete object having base subobjects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-06<BR>
+
+
+<P>Base subobjects cannot be transparently replaced with complete
+objects, as specified in 6.7.4 [<A href="https://wg21.link/basic.life#8.4">basic.life</A>] bullet 8.4:</P>
+
+<BLOCKQUOTE>
+
+An object o1 is transparently replaceable by an object o2 if:
+
+<UL>
+<LI>...</LI>
+<LI>neither o1 nor o2 is a potentially-overlapping
+subobject (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]), and</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, that bullet is over-reaching, because it disallows:</P>
+
+<PRE>
+  struct A { int n; };
+  struct B : A {};
+  B b;
+  new (&amp;b) B { {5} };  //<SPAN CLASS="cmnt"> New </SPAN>A<SPAN CLASS="cmnt"> base class does not transparently replace existing </SPAN>A<SPAN CLASS="cmnt"> base class due to /8.4.</SPAN>
+  int k = b.n;  //<SPAN CLASS="cmnt"> UB: member </SPAN>n<SPAN CLASS="cmnt"> of </SPAN>A<SPAN CLASS="cmnt"> base class is outside its lifetime</SPAN>
+</PRE>
+
+<P>See <A HREF="2677.html">issue 2677</A> for a suggested resolution.</P>
+
+<P><B>Additional notes (February, 2023)</B></P>
+
+<P>Consider this example:</P>
+
+<PRE>
+  struct A {
+   int n;
+   char c;
+   //<SPAN CLASS="cmnt"> tail padding</SPAN>
+  };
+  struct B {
+   [[no_unique_address]] A a;
+   char in_tail_padding[3];
+  };
+
+  B b;
+  void f() {
+   //<SPAN CLASS="cmnt"> Transparently replaces old member, potentially overwriting the data in the tail padding!</SPAN>
+   new (&amp;b.a) A{};
+  }
+</PRE>
+
+<P>The suggestions do not address this example.</P>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

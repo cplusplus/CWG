@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2485</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2485"></A><H4>2485.
+  
+Bit-fields in integral promotions
+</H4>
+<B>Section: </B>7.3.7&#160; [<A href="https://wg21.link/conv.prom">conv.prom</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-04-01<BR>
+
+
+<P>[Accepted as a DR at the June, 2023 meeting.]</P>
+
+<P>According to 7.3.7 [<A href="https://wg21.link/conv.prom#5">conv.prom</A>] paragraph 5,</P>
+
+<BLOCKQUOTE>
+
+A prvalue for an integral bit-field
+(11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]) can be converted to a prvalue
+of type <TT>int</TT> if <TT>int</TT> can represent all the
+values of the bit-field; otherwise, it can be converted
+to <TT>unsigned int</TT> if <TT>unsigned int</TT> can
+represent all the values of the bit-field. If the bit-field
+is larger yet, no integral promotion applies to it. If the
+bit-field has an enumerated type, it is treated as any other
+value of that type for promotion purposes.
+
+</BLOCKQUOTE>
+
+<P>This description has several problems. First, the
+&#8220;bit-field&#8221; semantic property only makes sense
+for glvalue expressions, so it's unclear why these rules are
+described as applying to a prvalue. Perhaps this should be
+rephrased as something like &#8220;An expression that was a
+bit-field glvalue prior to the application of the
+lvalue-to-rvalue conversion&#8221;?</P>
+
+<P>Second, suppose that <TT>char32_t</TT> is wider than
+<TT>int</TT>. Per paragraph 2, a <TT>char32_t</TT> prvalue
+promotes to <TT>unsigned long</TT> (because <TT>unsigned
+long</TT> is necessarily at least 32 bits wide). But per
+paragraph 5, a <TT>char32_t : 32</TT> bitfield does not
+promote. This seems inconsistent.</P>
+
+<P>Finally, it is not clear that the usual integral
+promotions are not applied to bit-fields. This should be
+made explicit.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-07):</B></P>
+
+<OL>
+
+<LI>
+<P>Insert a paragraph before 7.3.7 [<A href="https://wg21.link/conv.prom#1">conv.prom</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+For the purposes of 7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>], a <I>converted bit-field</I>
+is a prvalue that is the result of an lvalue-to-rvalue conversion
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) applied to a bit-field
+(11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>]).
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.7 [<A href="https://wg21.link/conv.prom#1">conv.prom</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue <DEL>of</DEL> <INS>that is not a converted bit-field and
+has</INS> an integer type other than bool, char8_t, char16_t,
+char32_t, or wchar_t whose integer conversion rank
+(6.8.6 [<A href="https://wg21.link/conv.rank">conv.rank</A>]) is less than the rank of int can be
+converted to a prvalue of type int if int can represent all the values
+of the source type; otherwise, the source prvalue can be converted to
+a prvalue of type unsigned int.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.7 [<A href="https://wg21.link/conv.prom#4">conv.prom</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue of an unscoped enumeration type whose underlying type is
+fixed (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) can be converted to a prvalue of
+its underlying type. Moreover, if integral promotion can be applied to
+its underlying type, a prvalue of an unscoped enumeration type whose
+underlying type is fixed can also be converted to a prvalue of the
+promoted underlying type.
+<INS>[ Note: A converted bit-field of enumeration type is treated as
+any other value of that type for promotion purposes. -- end note
+]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.7 [<A href="https://wg21.link/conv.prom#5">conv.prom</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <DEL>prvalue for an integral bit-field
+(11.4.10 [<A href="https://wg21.link/class.bit">class.bit</A>])</DEL> <INS>converted bit-field of
+integral type</INS> can be converted to a prvalue of type int if int
+can represent all the values of the bit-field; otherwise, it can be
+converted to unsigned int if unsigned int can represent all the values
+of the bit-field. <DEL>If the bit-field is larger yet, no integral
+promotion applies to it. If the bit-field has enumeration type, it is
+treated as any other value of that type for promotion purposes.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Move 7.3.7 [<A href="https://wg21.link/conv.prom#2">conv.prom</A>] paragraph 2 after paragraph 5 and
+change as follows:</P>
+
+<BLOCKQUOTE>
+
+A prvalue of type char8_t, char16_t, char32_t, or wchar_t
+(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+<INS>(including a converted bit-field that was not already promoted to
+int or unsigned int according to the rules above)</INS> can be
+converted to a prvalue of the first of the following types that can
+represent all the values of its underlying type: int, unsigned int,
+long int, unsigned long int, long long int, <DEL>or</DEL> unsigned
+long long int<DEL>. If none of the types in that list can represent
+all the values of its underlying type, a prvalue of type char8_t,
+char16_t, char32_t, or wchar_t can be converted to a prvalue
+of</DEL> <INS>, or</INS> its underlying type.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

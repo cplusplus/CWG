@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2888</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2888"></A><H4>2888.
+  
+Missing cases for reference and array types for argument-dependent lookup
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lewis Baker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-04-30<BR>
+
+
+
+
+<P>The specification for associated entities in argument-dependent
+lookup recurses into template argument types, but misses handling
+reference and array cases.  Those cannot appear for function
+arguments.  For example:
+
+<PRE>
+  namespace N {
+    template&lt;typename T&gt;
+    struct A {
+      operator T() const noexcept;
+    };
+  }
+  namespace M {
+    struct B {};
+    void f(B&amp;);
+  }
+
+  void caller() {
+    N::A&lt;M::B&amp;&gt; arg;
+    f(arg);
+  }
+</PRE>
+</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3">basic.lookup.argdep</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For each argument <DEL>type T</DEL> in the function call, there is a
+set of zero or more associated entities to be considered.  The set of
+entities is determined entirely by the types of the function arguments
+(and any template template arguments). Any <I>typedef-name</I>s
+and <I>using-declaration</I>s used to specify the types do not
+contribute to this set.  The set of <INS>associated</INS>
+entities <INS>for a type <I>cv</I> <TT>T</TT></INS> is determined in the
+following way:
+<UL>
+<LI>If T is a fundamental type, its <DEL>associated</DEL> set
+of <INS>associated</INS> entities is empty.</LI>
+<LI>If T is a class type (including unions), its associated entities
+are: the class itself; the class of which it is a member, if any; and,
+if it is a complete type, its direct and indirect base
+classes. Furthermore, if T is a class template specialization, its
+associated entities also include: the entities associated with the
+types of the template arguments provided for template type parameters;
+the templates used as template template arguments; and the classes of
+which any member templates used as template template arguments are
+members.  [<I>Note 2:</I> Non-type template arguments do not
+contribute to the set of associated entities. &#8212;<I>end
+note</I>]</LI>
+<LI>If T is an enumeration type, its associated entities are T and, if
+it is a class member, the member's class.</LI>
+<LI>If T is a pointer to U<INS>, a reference to <TT>U</TT>,</INS> or
+an array of U, its associated entities are those associated with
+U.</LI>
+<LI>If T is a function type, its associated entities are those
+associated with the function parameter types and those associated with
+the return type.</LI>
+<LI>If T is a pointer to a member function of a class X, its
+associated entities are those associated with the function parameter
+types and return type, together with those associated with X.</LI>
+<LI>If T is a pointer to a data member of class X, its associated
+entities are those associated with the member type together with those
+associated with X.</LI>
+</UL>
+
+<DEL>In addition, if the argument is an overload set or the
+address of such a set, its associated entities are the union of those
+associated with each of the members of the set, i.e., the entities
+associated with its parameter types and return type. Additionally,</DEL>
+
+<INS>The associated entities of a function call are the associated
+entities of each argument <I>A</I> of the call, consisting of
+</INS>
+<UL>
+<LI class="ins">if <I>A</I> is an <I>id-expression</I> whose terminal
+name refers to an overload set <I>O</I>, the union of the associated
+entities of the function types of the members of <I>O</I>, and</LI>
+<LI>if 
+<DEL>the aforementioned overload set is named with</DEL> <INS>A
+is</INS> a <I>template-id</I> <INS><I>I</I> whose terminal name refers
+to an overload set</INS>, <DEL>its associated entities also
+include its</DEL> <INS>the</INS> template <I>template-argument</I>s
+<INS>of <I>I</I></INS> and <DEL>those</DEL> <INS>the</INS>
+associated <DEL>with its</DEL> <INS>entities of each</INS> type
+<DEL><I>template-argument</I>s.</DEL> <INS><I>template-argument</I>
+of <I>I</I>, and</INS>
+</LI>
+<LI class="ins">
+otherwise, if <I>A</I> has a type, the associated entities of the type
+of <I>A</I>,
+</LI>
+<LI class="ins">
+otherwise, <I>A</I> has no associated entities.
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

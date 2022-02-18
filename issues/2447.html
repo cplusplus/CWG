@@ -1,0 +1,130 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2447</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2447"></A><H4>2447.
+  
+Unintended description of abbreviated function templates
+</H4>
+<B>Section: </B>9.2.9.7&#160; [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++20
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-10-15<BR>
+
+
+<P>[Accepted at the February, 2020 (Prague) meeting.]</P>
+
+
+
+<P>The current wording for abbreviated function
+templates could lead to the incorrect conclusion that
+<TT>f</TT> and <TT>g</TT> in the example below are well-formed
+abbreviated function templates. The <TT>g</TT> case is the
+abbreviated function template analog of
+<A HREF="2053.html">issue 2053</A> regarding generic
+lambdas.</P>
+
+<P>9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#4">dcl.spec.auto</A>] paragraph 4 clearly disallows
+the <TT>ap</TT> case. The inconsistency between the paragraph
+2 wording for abbreviated function templates and the paragraph
+4 wording is unintentional.</P>
+
+<PRE>
+  template &lt;typename&gt; struct A;
+  void f(A&lt;auto&gt; x);
+  void g(auto f() -&gt; int);
+  A&lt;auto&gt; *ap = static_cast&lt;A&lt;int&gt; *&gt;(0);
+</PRE>
+
+<P><B>Proposed resolution (February, 2020):</B></P>
+
+<OL>
+<LI><P>Change 9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto#2">dcl.spec.auto</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A <I>placeholder-type-specifier</I> of the
+form <I>type-constraint<SUB>opt</SUB></I> <TT>auto</TT> can
+be used <DEL>in</DEL> <INS>as a <I>decl-specifier</I>
+of</INS> the <I>decl-specifier-seq</I> of
+a <I>parameter-declaration</I> of a function declaration
+or <I>lambda-expression</I> and<INS>, if it is not
+the <TT>auto</TT> <I>type-specifier</I> introducing
+a <I>trailing-return-type</I> (see below), is a <I>generic
+parameter type placeholder</I> of the function declaration
+or <I>lambda-expression</I>. [<I>Note:</I> Having a generic
+parameter type placeholder</INS> signifies that the function
+is an abbreviated function template
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) or the lambda is a generic
+lambda (7.5.6 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]). <INS>&#8212;<I>end
+note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.3.4.6 [<A href="https://wg21.link/dcl.fct#18">dcl.fct</A>] paragraph 18 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+An <I>abbreviated function template</I> is a function
+declaration <DEL>whose <I>parameter-type-list</I> includes</DEL>
+<INS>that has</INS> one or more <INS>generic parameter
+type</INS> placeholders (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]). An
+abbreviated function template is equivalent to a function
+template (13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>])
+whose <I>template-parameter-list</I> includes one invented
+type <I>template-parameter</I> for each <DEL>occurrence of a</DEL>
+<INS>generic parameter type</INS> placeholder <DEL>type in
+the <I>decl-specifier-seq</I> of
+a <I>parameter-declaration</I> in the
+function's <I>parameter-type-list</I></DEL>
+<INS>of the function declaration</INS>, in order of
+appearance.  For a <I>placeholder-type-specifier</I> of the
+form...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#5">expr.prim.lambda</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A lambda is a <i>generic lambda</i> if <DEL>there is
+a <I>decl-specifier</I> that is
+a <I>placeholder-type-specifier</I> in
+the <I>decl-specifier-seq</I> of
+a <I>parameter-declaration</I> of</DEL>
+the <I>lambda-expression</I> <INS>has any generic parameter
+type placeholders (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>])</INS>, or
+if the lambda has a <I>template-parameter-list</I>.
+[<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<P>This resolution also resolves <A HREF="2053.html">issue 2053</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

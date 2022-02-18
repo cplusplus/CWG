@@ -1,0 +1,230 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 270</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="270"></A><H4>270.
+  
+Order of initialization of static data members of class templates
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan H. Lundquist
+ &#160;&#160;&#160;
+
+ <B>Date: </B>9 Feb 2001<BR>
+
+
+<P>[Moved to DR at 4/02 meeting.]</P>
+
+<P>The Standard does not appear to address how the rules for order
+of initialization apply to static data members of class templates.</P>
+
+<P>
+<U>Suggested resolution</U>: Add the following verbiage to either
+6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>] or 11.4.9.3 [<A href="https://wg21.link/class.static.data">class.static.data</A>]:</P>
+
+<BLOCKQUOTE>
+
+Initialization of static data members of class templates shall be
+performed during the initialization of static data members for the
+first translation unit to have static initialization performed for
+which the template member has been instantiated.  This requirement
+shall apply to both the static and dynamic phases of initialization.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from 04/01 meeting:</B></P>
+
+<P>Enforcing an order of initialization on static data members of
+class templates will result in substantial overhead on access to such
+variables. The problem is that the initialization be required as the
+result of instantiation in a function used in the initialization of a
+variable in another translation unit. In current systems, the order of
+initialization of static data data members of class templates is not
+predictable. The proposed resolution is to state that the order of
+initialization is undefined.</P>
+
+<P><B>Proposed resolution (04/01, updated slightly 10/01):</B></P>
+
+<P>Replace the following sentence in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1:
+</P>
+
+<BLOCKQUOTE>
+
+Objects with static storage duration defined in namespace scope in the
+same translation unit and dynamically initialized shall be initialized
+in the order in which their definition appears in the translation
+unit.
+
+</BLOCKQUOTE>
+
+<P>with</P>
+
+<BLOCKQUOTE>
+
+Dynamic initialization of an object is either ordered or unordered.
+Explicit specializations and definitions
+of class template static data members have ordered
+initialization. Other class template static data member instances have
+unordered initialization. Other objects defined in namespace scope
+have ordered initialization. Objects defined within a single
+translation unit and with ordered initialization shall be initialized
+in the order of their definitions in the translation unit. The order
+of initialization is unspecified for objects with unordered
+initialization and for objects defined in different translation units.
+
+</BLOCKQUOTE>
+
+<P><I>Note that this wording is further updated by
+<A HREF="362.html">issue 362</A>.</I></P>
+
+<P><B>Note (07/01):</B></P>
+
+<P>
+<U>Brian McNamara</U> argues against the proposed
+resolution.  The following excerpt captures the central point of
+a long message on comp.std.c++:</P>
+
+<BLOCKQUOTE>
+I have a class for representing linked lists which looks something like
+<PRE>
+    template &lt;class T&gt;
+    class List {
+       ...  static List&lt;T&gt;* sentinel; ...
+    };
+
+    template &lt;class T&gt;
+    List&lt;T&gt;* List&lt;T&gt;::sentinel( new List&lt;T&gt; ); // static member definition
+</PRE>
+<P>The sentinel list node is used to represent "nil" (the null pointer
+cannot be used with my implementation, for reasons which are immaterial
+to this discussion).  All of the List's non-static member functions and
+constructors depend upon the value of the sentinel.  Under the proposed
+resolution for issue #270, Lists cannot be safely instantiated before
+main() begins, as the sentinel's initialization is "unordered".</P>
+
+<P>(Some readers may propose that I should use the "singleton pattern" in the
+List class.  This is undesirable, for reasons I shall describe at the
+end of this post at the location marked "[*]".  For the moment, indulge
+me by assuming that "singleton" is not an adequate solution.)</P>
+
+<P>Though this is a particular example from my own experience, I believe it
+is representative of a general class of examples.  It is common to use
+static data members of a class to represent the "distinguished values"
+which are important to instances of that class.  It is imperative that
+these values be initialized before any instances of the class are
+created, as the instances depend on the values.</P>
+</BLOCKQUOTE>
+
+<P>In a comp.std.c++ posting on 28 Jul 2001, Brian McNamara proposes
+the following alternative resolution:</P>
+
+<P>Replace the following sentence in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1:
+</P>
+<BLOCKQUOTE>
+Objects with static storage duration defined in namespace scope in
+the same translation unit and dynamically initialized shall be
+initialized in the order in which their definition appears in the
+translation unit.
+</BLOCKQUOTE>
+with
+<BLOCKQUOTE>
+Objects with static storage duration defined in namespace scope
+shall be initialized in the order described below.
+</BLOCKQUOTE>
+and then after paragraph 1, add this text:
+<BLOCKQUOTE>
+Dynamic initialization is either ordered or quasi-ordered. Explicit
+specializations of class template static data members have ordered
+initialization. Other class template static data member instances have
+quasi-ordered initialization. All other objects defined in namespace
+scope have ordered initialization.  The order of initialization is
+specified as follows:
+<UL>
+<LI>
+Objects that are defined within a single translation unit and
+that have ordered initialization shall be initialized in the
+order of their definitions in the translation unit.
+</LI>
+<LI>
+Objects that are defined only within a single translation unit
+and that have quasi-ordered initialization shall also be
+initialized in the order of their definitions in the translation
+unit -- that is, as though these objects had ordered initialization.
+</LI>
+<LI>
+Objects that are defined within multiple translation units (which,
+therefore, must have quasi-ordered initialization) shall be
+initialized as follows: in exactly one translation unit
+(<I>which</I> one is unspecified), the object shall be treated as
+though it has ordered initialization; in the other translation
+units which define the object, the object will be initialized
+before all other objects that have ordered initialization in
+those translation units.
+</LI>
+<LI>
+For any two objects, "X" and "Y", with static storage duration
+and defined in namespace scope, if the previous bullets do not
+imply a relationship for the initialization ordering between "X"
+and "Y", then the relative initialization order of these objects
+is unspecified.
+</LI>
+</UL>
+</BLOCKQUOTE>
+along with a non-normative note along the lines of
+<BLOCKQUOTE>
+[ Note: The intention is that translation units can each be compiled
+separately with no knowledge of what objects may be re-defined in
+other translation units.  Each translation unit can contain a method
+which initializes all objects (both quasi-ordered and ordered) as
+though they were ordered.  When these translation units are linked
+together to create an executable program, all of these objects can
+be initialized by simply calling the initialization methods (one
+from each translation unit) in any order.  Quasi-ordered objects
+require some kind of guard to ensure that they are not initialized
+more than once (the first attempt to initialize such an object
+should succeed; any subsequent attempts should simply be ignored). ]
+</BLOCKQUOTE>
+
+<P>
+<U>Erwin Unruh</U> replies:
+There is a point which is not mentioned with this posting.
+It is the cost for implementing the scheme. It requires that each
+static template variable is instantiated in ALL translation units
+where it is used. There has to be a flag for each of these variables
+and this flag has to be checked in each TU where the instantiation
+took place.</P>
+
+<P>I would reject this idea and stand with the proposed resolution of
+issue 270.</P>
+
+<P>There just is no portable way to ensure the "right" ordering of
+construction.</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>The Core Working Group reaffirmed its previous decision.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,186 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 425</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="425"></A><H4>425.
+  
+Set of candidates for overloaded built-in operator with float operand
+</H4>
+<B>Section: </B>12.5&#160; [<A href="https://wg21.link/over.built">over.built</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daniel Frey
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 June 2003<BR>
+
+
+<P>[Voted into WP at March 2004 meeting.]</P>
+
+
+
+<P>During a discussion over at the boost mailing list (www.boost.org), we
+came across the following "puzzle":</P>
+<PRE>
+  struct A {
+    template&lt; typename T &gt; operator T() const;
+  } a;
+
+  template&lt;&gt; A::operator float() const
+  {
+    return 1.0f;
+  }
+
+  int main()
+  {
+    float f = 1.0f * a;
+  }
+</PRE>
+<P>The code is compiled without errors or warnings from EDG-based compilers
+(Comeau, Intel), but rejected from others (GCC, MSVC [7.1]). The
+question: Who is correct? Where should I file the bug report?</P>
+
+<P>To explain the problem: The EDG seems to see 1.0f*a as a call to the
+unambiguous operator*(float,float) and thus casts 'a' to 'float'. The
+other compilers have several operators (float*float, float*double,
+float*int, ...) available and thus can't decide which cast is
+appropriate. I think the latter is the correct behaviour, but I'd like
+to hear some comments from the language lawyers about the standard's
+point of view on this problem.</P>
+
+<P>
+<U>Andreas Hommel:</U>
+Our compiler also rejects this code:</P>
+<PRE>
+Error   : function call 'operator*(float, {lval} A)' is ambiguous
+'operator*(float, unsigned long long)'
+'operator*(float, int)'
+'operator*(float, unsigned int)'
+'operator*(float, long)'
+'operator*(float, unsigned long)'
+'operator*(float, float)'
+'operator*(float, double)'
+'operator*(float, long double)'
+'operator*(float, long long)'
+Test.cp line 12       float f = 1.0f * a;
+</PRE>
+<P>Is this example really legal? It was my understanding that all candidates
+from 12.5 [<A href="https://wg21.link/over.built">over.built</A>] participate in overload resolution.</P>
+
+<P>
+<U>Daveed Vandevoorde:</U>
+I believe the EDG-based compiler is right.  Note that the built-in operator*
+requires "usual arithmetic conversions" (see
+7.6.5 [<A href="https://wg21.link/expr.mul#2">expr.mul</A>] paragraph 2 and
+Clause 7 [<A href="https://wg21.link/expr">expr</A>] paragaph 9). This means that
+there is no candidate taking (float, double) arguments: Only (float, float)
+or
+(double, double).</P>
+
+<P>Since your first argument is of type float, the (float, float) case is
+preferred
+over the (double, double) case (the latter would require a floating-point
+promotion).</P>
+
+<P>
+<U>Stave Adamczyk:</U>
+Daveed's statement is wrong; as Andreas says, the prototypes in
+12.5 [<A href="https://wg21.link/over.built#12">over.built</A>] paragraph 12
+have pairs of types, not the same type twice.  However, the list of
+possibilities considered in Andreas' message is wrong also:
+12.5 [<A href="https://wg21.link/over.built#12">over.built</A>] paragraph 12
+calls for pairs of <B>promoted</B> arithmetic types, and float is not
+a promoted type (it promotes to double -- see
+7.3.8 [<A href="https://wg21.link/conv.fpprom">conv.fpprom</A>]).</P>
+
+<P>Nevertheless, the example is ambiguous.  Let's look at the overload
+resolution costs.  The right operand is always going to have a
+user-defined-conversion cost (the template conversion function
+will convert directly to the const version of the second
+parameter of the prototype).  The left operand is always going to
+have a promotion (float --&gt; double) or a standard conversion
+(anything else).  So the cases with promotions are better
+than the others.  However, there are several of those
+cases, with second parameters of type int, unsigned int, long,
+unsigned long, double, and long double, and all of those are
+equally good.  Therefore the example is ambiguous.</P>
+
+<P>Here's a reduced version that should be equivalent:</P>
+<PRE>
+  struct A {
+    template &lt;typename T&gt; operator T() const;
+  } a;
+  void f(double, int);
+  void f(double, unsigned int);
+  void f(double, long);
+  void f(double, unsigned long);
+  void f(double, double);
+  void f(double, long double);
+  int main() {
+    f(1.0f, a);  // Ambiguous
+  }
+</PRE>
+<P>Personally, I think this is evidence that
+12.5 [<A href="https://wg21.link/over.built">over.built</A>] doesn't really
+do quite what it should.  But the standard is clear, if possibly
+flawed.</P>
+
+<P>
+<U>Andreas Hommel:</U>
+You are right, "float" is not a promoted arithmetic type, this is a bug in
+our compiler.</P>
+
+<P>However, the usual arithmetic conversions
+(Clause 7 [<A href="https://wg21.link/expr#9">expr</A>] paragraph 9) do not promote the floating
+point types, so
+<PRE>
+  float operator+(float, float);
+</PRE>
+is a legal built-in operator function, so I wonder if it shouldn't be
+included in the candidate list.</P>
+
+<P>
+<U>Steve Adamczyk:</U> Hmm, the definition of the term in
+12.5 [<A href="https://wg21.link/over.built#2">over.built</A>] paragraph 2 is highly ambiguous:
+<BLOCKQUOTE>
+  Similarly, the  term  promoted  arithmetic type refers to promoted
+  integral types plus floating types.
+</BLOCKQUOTE>
+I can't tell if that's "promoted integral types plus (all) floating
+types" or "promoted integral types plus (promoted) floating types".
+I thought the latter was intended, but indeed the usual arithmetic
+conversions could give you "float + float", so it makes sense that
+float would be one of the possibilities.  We should discuss this to
+make sure everyone has the same interpretation.</P>
+
+<P><B>Proposed Resolution (October 2003):</B></P>
+
+<P>Change the second sentence of 13.6 paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+Similarly, the term <I>promoted arithmetic type</I> refers
+to <DEL>promoted integral types plus floating types</DEL>
+<INS>floating types plus promoted integral types</INS>.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

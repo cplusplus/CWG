@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 997</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="997"></A><H4>997.
+  
+Argument-dependent lookup and dependent function template parameter types
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++11
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>James Widman
+ &#160;&#160;&#160;
+
+ <B>Date: </B>6 November, 2009<BR>
+
+
+<P>[Voted into the WP at the March, 2011 meeting as part of paper N3262.]</P>
+
+
+
+<P>6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2 excludes dependent parameter
+types and return types from consideration in determining the associated
+classes and namespaces of a function template.  Presumably this means
+that an example like</P>
+
+<PRE>
+    namespace N {
+      template&lt;class T&gt; struct A { };
+      void f(void (*)());
+    }
+
+    template &lt;class T&gt;
+    void g(T, N::A&lt;T&gt;);
+
+    void g();
+
+    int main() {
+      f(g);
+    }
+</PRE>
+
+<P>is ill-formed because the second parameter of the function template
+<TT>g</TT> does not add namespace <TT>N</TT> to the list of associated
+namespaces.  This was probably unintentional.</P>
+
+<P>See also <A HREF="1015.html">issue 1015</A>.</P>
+
+<P><B>Notes from the November, 2010 meeting:</B></P>
+
+<P>The CWG agreed that the rules should be changed to make this
+example well-formed.</P>
+
+<P><B>Proposed resolution (November, 2010) [SUPERSEDED]:</B></P>
+
+<P>Change 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#2">basic.lookup.argdep</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...In addition, if the argument is the name or address of a set of
+overloaded functions and/or function templates, its associated classes
+and namespaces are the union of those associated with each of the
+members of the set, i.e., the classes and namespaces associated with
+its <DEL>(non-dependent)</DEL> parameter types and return type.
+<INS>Additionally, if the aforementioned set of overloaded functions
+is named with a <I>template-id</I>, its associated classes
+and namespaces are those of its type
+<I>template-argument</I>s and its template
+<I>template-argument</I>s.</INS>
+
+</BLOCKQUOTE>
+
+<P>This resolution also resolves <A HREF="1015.html">issue 1015</A>.</P>
+
+<P><I>[Drafting note: It's not clear that we need the inserted text
+above, because for the example in <A HREF="1015.html">issue 1015</A>, the type <TT>N::S</TT> is already represented in the
+type of the function address, so there is no need to pull it from
+template arguments. For cases where template parameters are not
+represented in the function type, it's not clear that we want ADL to
+reach further.]</I></P>
+
+<BR><BR>
+</BODY>
+</HTML>

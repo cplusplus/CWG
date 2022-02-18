@@ -1,0 +1,106 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2869</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2869"></A><H4>2869.
+  
+<TT>this</TT> in local classes
+</H4>
+<B>Section: </B>7.5.3&#160; [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-14<BR>
+
+
+<P>[Accepted as a DR at the June, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/515">#515</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static void f() {
+      struct B {
+        void *g() { return this; }
+       };
+     }
+  };
+</PRE>
+
+<P>According to 7.5.3 [<A href="https://wg21.link/expr.prim.this#3">expr.prim.this</A>] paragraph 3, this example is
+ill-formed, because <TT>this</TT> "appears within" the declaration of
+a static member function.  The qualification "of the current class"
+can be read as attaching to explicit object member functions only.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.5.3 [<A href="https://wg21.link/expr.prim.this#3">expr.prim.this</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a declaration declares a member function or member function
+template of a class X, the expression <TT>this</TT> is a prvalue of type
+&#8220;pointer to <I>cv-qualifier-seq</I> X&#8221; wherever X is the
+current class between the optional <I>cv-qualifier-seq</I> and the end
+of the <I>function-definition</I>, <I>member-declarator</I> , or
+<I>declarator</I>. <DEL>It shall not appear within
+the</DEL> <INS>The</INS> declaration <DEL>of either</DEL> <INS>that
+determines the type of <TT>this</TT> shall declare neither</INS> a
+static member function <DEL>or</DEL> <INS>nor</INS> an explicit object
+member function of the current class (although its type and value
+category are defined within such member functions as they are within
+an implicit object member function).
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-05-03</B></P>
+
+<P>CWG preferred a smaller surgery to avoid the English parsing issue.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-05-17):</B></P>
+
+<P>Change in 7.5.3 [<A href="https://wg21.link/expr.prim.this#3">expr.prim.this</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a declaration declares a member function or member function
+template of a class X, the expression <TT>this</TT> is a prvalue of type
+&#8220;pointer to <I>cv-qualifier-seq</I> X&#8221; wherever X is the
+current class between the optional <I>cv-qualifier-seq</I> and the end
+of the <I>function-definition</I>, <I>member-declarator</I>, or
+<I>declarator</I>. It shall not appear within
+the declaration of <DEL>either</DEL> a
+static <DEL>member function</DEL> or <DEL>an</DEL> explicit object
+member function of the current class (although its type and value
+category are defined within such member functions as they are within
+an implicit object member function).
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

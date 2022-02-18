@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 885</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="885"></A><H4>885.
+  
+Partial ordering of function templates with unordered parameter pairs
+</H4>
+<B>Section: </B>13.10.3.5&#160; [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>1 May, 2009<BR>
+
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+    template &lt;typename T&gt; void f(T** p, void (*)());  // #1
+    template &lt;typename T&gt; void f(T* p, void (&amp;)());   // #2
+    void x();
+    void g(int** p) {
+      f(p, x);    // #3
+    }
+</PRE>
+
+<P>The question is whether the call at #3 is ambiguous or not.</P>
+
+<P>The synthesized declarations for overload resolution are:</P>
+
+<PRE>
+    void f&lt;int&gt;(int**, void(*)());   // From #1
+    void f&lt;int*&gt;(int**, void(&amp;)());  // From #2
+</PRE>
+
+<P>Neither of these is a better match on the basis of conversion
+sequences (the function-to-pointer conversion and the reference
+binding have &#8220;exact match&#8221; rank), and both are function
+template specializations, so the tiebreaker in 12.2.4 [<A href="https://wg21.link/over.match.best#1">over.match.best</A>] paragraph 1 comes down to whether #1 is more
+specialized than #2 or vice versa.</P>
+
+<P>The determination of whether one of these templates is more
+specialized than the other is done (as described in 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]) by synthesizing a type for the template parameter of
+each function template (call them <TT>@1</TT> and <TT>@2</TT>,
+respectively), substituting that synthesized type for each occurrence
+of the template parameter in the function type of the template, and
+then performing deduction on each pair of corresponding function
+parameters as described in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>].</P>
+
+<P>For the first function parameter, #1 is more specialized: deduction
+succeeds with <TT>P=T*</TT> and <TT>A=@1**</TT>, giving
+<TT>T=@1*</TT>, but it fails with <TT>P=T**</TT> and <TT>A=@2*</TT>.
+For the second parameter, deduction fails in both directions, with
+<TT>P=void(*)()</TT> and <TT>A=void()</TT> as well as with
+<TT>P=void()</TT> and <TT>A=void(*)()</TT> (the reference is dropped
+from both the parameter and argument types, as described in
+13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#5">temp.deduct.partial</A>] paragraph 5).  This means that neither
+parameter type is at least as specialized as the other (paragraph
+8).</P>
+
+<P>According to 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#10">temp.deduct.partial</A>] paragraph 10,</P>
+
+<BLOCKQUOTE>
+
+If for each type being considered a given template is at
+least as specialized for all types and more specialized
+for some set of types and the other template is not more
+specialized for any types or is not at least as
+specialized for any types, then the given template is more
+specialized than the other template.  Otherwise,
+neither template is more specialized than the other.
+
+</BLOCKQUOTE>
+
+<P>According to this rule, #1 is not more specialized than #2
+because it is not &#8220;at least as specialized&#8221; for the second
+parameter type, so the call at #3 is ambiguous.</P>
+
+<P>Results vary among implementations, with some rejecting the
+call as ambiguous and others resolving it to #1.</P>
+
+<P>Would it be better to say that a function template F1 is more
+specialized than F2 if at least one of F1's types is more
+specialized than the corresponding F2 type and none of F2's
+types is more specialized than the corresponding F1 type?  That
+would be simpler and, for examples like this, arguably more
+intuitive.  The rationale for this change would be that if,
+for a given parameter pair, neither is more specialized than the
+other, then that parameter pair simply says nothing about whether
+one of the templates is more specialized than the other, rather
+than indicating that the templates cannot be ordered.</P>
+
+<P>(See also <A HREF="455.html">issue 455</A>.)</P>
+
+<P><B>Rationale (October, 2009):</B></P>
+
+<P>The consensus of the CWG is that this issue, in which corresponding
+parameters cannot be compared but the functions are equivalent in
+terms of overload resolution, arises so infrequently in practice that
+no change is warranted at this time.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

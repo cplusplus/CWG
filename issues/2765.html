@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2765</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2765"></A><H4>2765.
+  
+Address comparisons between potentially non-unique objects during constant evaluation
+</H4>
+<B>Section: </B>6.7.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-14<BR>
+
+
+<P>
+The (arguably) expanded treatment of backing arrays and string
+literals as potentially non-unique objects in
+<A HREF="2753.html">issue 2753</A> lead to the question how
+the resulting address comparisons are treated during constant evaluation.
+</P>
+
+<P>Subclause 7.7 [<A href="https://wg21.link/expr.const#5.24">expr.const</A>] bullet 5.24 specifies:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a <I>core constant expression</I> unless the
+evaluation of E, following the rules of the abstract machine
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This phrasing is understood to refer to explicitly unspecified
+outcomes only.  The treatment of an example such as</P>
+
+<PRE>
+  constexpr bool b = "abc" == "abc";
+</PRE>
+
+<P>is unclear, given that identical string literals may or may not
+yield distinct string literal objects.</P>
+
+<P>The assumption that equality comparison of
+<TT>std::string_view</TT> would compare addresses as a short-cut
+before comparing the character sequence could not be confirmed
+(27.2.2 [<A href="https://wg21.link/char.traits.require">char.traits.require</A>], 27.3.3.8 [<A href="https://wg21.link/string.view.ops#12">string.view.ops</A>] paragraph 12).</P>
+
+<P><B>CWG in Tokyo 2024-03-22</B></P>
+
+<P>Different approaches are feasible:</P>
+<UL>
+<LI>Require merging of string literals (and backing arrays of
+character types?) at compile-time: Comparing addresses of string
+literals is equivalent to comparing their contents.</LI>
+<LI>Being able to guarantee that addresses of string literals with
+different contents are unequal also at compile time seems useful. In
+particular, this idea would allow comparisons during constant
+evaluation if (and only if) the runtime result is reliable.</LI>
+<LI>At compile time, tag each evaluation of a string literal with a
+globally-unique counter value.  Comparing two such pointers with
+different tags makes the evaluation not a constant expressions.
+</LI>
+<LI>At compile time, each string literal (as written in the source
+code) yields a different address.  Repeated evaluations of the same
+string literal yield pointers that compare equal.  This can be
+achieved by tagging the pointer to the string literal obtained upon
+evaluation with the source location of the string literal.</LI>
+</UL>
+
+<P>In the latter cases, tag values can be preserved when performing
+pointer arithmetic.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

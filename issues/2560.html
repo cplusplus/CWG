@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2560</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2560"></A><H4>2560.
+  
+Parameter type determination in a <I>requirement-parameter-list</I>
+</H4>
+<B>Section: </B>7.5.8.1&#160; [<A href="https://wg21.link/expr.prim.req.general">expr.prim.req.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-01-21
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+    requires requires (T p[10]) { (decltype(p))nullptr; }
+  int v = 42;
+  auto r = v&lt;int&gt;; //<SPAN CLASS="cmnt"> well-formed? </SPAN>
+</PRE>
+
+<P>This example is only well-formed if the type of the
+parameter <TT>p</TT> is adjusted to <TT>T*</TT>, but the provisions in
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#5">dcl.fct</A>] paragraph 5 cover function parameters
+only.</P>
+
+<P>One option is to specify application of the same adjustments as for
+function parameters. Another option is to specify rules that arguably
+are more useful in a <I>requires-expression</I>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-11-07):</B></P>
+
+<P>Change in 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#3">expr.prim.req.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>requires-expression</I> may introduce local parameters using
+a <I>parameter-declaration-clause</I>
+<DEL>(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>])</DEL>. A local parameter of
+a <I>requires-expression</I> shall not have a default argument.
+<INS>The type of such a parameter is determined as specified for
+a function parameter in 9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>].</INS> These
+parameters have no linkage, storage, or lifetime; they are only used
+as notation for the purpose of defining
+requirements. The <I>parameter-declaration-clause</I> of
+a <I>requirement-parameter-list</I> shall not terminate with an
+ellipsis.<br> [<I>Example 2:</I>
+<PRE>
+  template&lt;typename T&gt;
+  concept C = requires(T t, ...) {  //<SPAN CLASS="cmnt"> error: terminates with an ellipsis</SPAN>
+    t;
+  };
+<INS>  template&lt;typename T&gt;
+  concept C2 = requires(T p[2]) {
+    (decltype(p))nullptr;           //<SPAN CLASS="cmnt"> OK, </SPAN>p<SPAN CLASS="cmnt"> has type "pointer to </SPAN>T<SPAN CLASS="cmnt">"</SPAN>
+  };</INS>
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2023-06-17</B></P>
+
+<P>There are arguments in favor of both options.
+Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/1582">paper issue 1582</A>.</P>
+
+<P><B>EWG 2023-11-07</B></P>
+
+<P>Accept the proposed resolution and forward to CWG for inclusion in C++26.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

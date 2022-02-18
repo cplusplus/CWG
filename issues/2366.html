@@ -1,0 +1,161 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2366</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2366"></A><H4>2366.
+  
+Can default initialization be constant initialization?
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD5
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Geoffrey Romer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-11-01<BR>
+
+
+<P>[Accepted as a DR at the July, 2019 meeting.]</P>
+
+<P>According to 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2,</P>
+
+<BLOCKQUOTE>
+
+<I>Constant initialization</I>
+is performed if a variable or temporary object with
+static or thread storage duration is initialized by a constant initializer
+for the entity. If constant initialization is not performed, a variable
+with static storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread storage
+duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is zero-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). Together, zero-initialization and constant
+initialization are called static initialization; all other initialization
+is <I>dynamic initialization</I>.
+
+</BLOCKQUOTE>
+
+<P>This appears to require an explicit initializer for constant
+initialization and would preclude examples like:</P>
+
+<PRE>
+  struct S {
+    int i = 1;
+  };
+  static constexpr S s;
+</PRE>
+
+<P>where there is no initializer.</P>
+
+<P><B>Notes from the October, 2018 teleconference:</B></P>
+
+<P>CWG agreed that the example should be well-formed.</P>
+
+<P><B>Proposed resolution, June, 2019:</B></P>
+
+<OL>
+<LI><P>Change 6.9.3.2 [<A href="https://wg21.link/basic.start.static#2">basic.start.static</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<I>Constant initialization</I>
+is performed if a variable or
+temporary object with static or thread storage duration is
+<INS>constant-</INS>initialized <DEL>by a constant initializer</DEL>
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) <DEL>for the entity</DEL>. If constant
+initialization is not performed, a variable with static
+storage duration (6.7.6.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>]) or thread
+storage duration (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]) is
+zero-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]). Together,
+zero-initialization and constant initialization...
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>A <DEL><I>constant initializer</I> for a</DEL> variable or
+temporary object <TT>o</TT> is <DEL>an initializer for which
+interpreting its full-expression as
+a <I>constant-expression</I> results in a constant
+expression</DEL> <INS><I>constant-initialized</I> if</INS>
+</P>
+
+<UL>
+
+<LI><P><INS>either it has an initializer or its
+default-initialization results in some initialization being
+performed, and</INS></P></LI>
+
+<LI><P>
+<INS>its initialization full-expression is a constant
+expression when interpreted as
+a <I>constant-expression</I></INS>, except that
+if <TT>o</TT> is an object, <DEL>such an initializer</DEL>
+<INS>the initialization full-expression</INS> may also
+invoke constexpr constructors for <TT>o</TT> and its
+subobjects even if those objects are of non-literal class
+types. [<I>Note:</I> Such a class may have a non-trivial
+destructor. Within this
+evaluation, <TT>std::is_constant_evaluated()</TT>
+(21.3.11 [<A href="https://wg21.link/meta.const.eval">meta.const.eval</A>])
+returns <TT>true</TT>. &#8212;<I>end note</I>]</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 7.7 [<A href="https://wg21.link/expr.const#3">expr.const</A>] paragraph 3 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+A variable is <I>usable in constant expressions</I> after
+its initializing declaration is encountered if it is a
+constexpr variable, or it is <INS>a constant-initialized
+variable</INS> of reference type or of const-qualified
+integral or enumeration type<DEL>, and its initializer is a
+constant initializer</DEL>.
+
+</BLOCKQUOTE>
+
+<LI><P>Change 9.2.6 [<A href="https://wg21.link/dcl.constexpr#5">dcl.constexpr</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+For a constexpr function or constexpr constructor that is
+neither defaulted nor a template, if no argument values
+exist such that an invocation of the function or constructor
+could be an evaluated subexpression of a core constant
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), or, for a
+constructor, <DEL>a constant initializer for</DEL>
+<INS>an evaluated subexpression of the initialization
+full-expression of</INS>
+some <INS>constant-initialized</INS> object
+(6.9.3.2 [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]), the program is ill-formed,
+no diagnostic required. [<I>Example:</I>...
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

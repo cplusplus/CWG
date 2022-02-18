@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 690</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="690"></A><H4>690.
+  
+The dynamic type of an rvalue reference
+</H4>
+<B>Section: </B>Clause 3&#160; [<A href="https://wg21.link/intro.defs">intro.defs</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Eelis van der Weegen
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 April, 2008<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2010/n3086.html#FR5">N2800 comment
+  FR&#160;5<BR></A>
+
+<P>[Voted into WP at March, 2010 meeting as document N3055.]</P>
+
+<P>According to Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>], &#8220;dynamic type,&#8221;</P>
+
+<BLOCKQUOTE>
+
+The dynamic type of an rvalue expression is its static type.
+
+</BLOCKQUOTE>
+
+<P>This is not true of an rvalue reference, which can be bound
+to an object of a class type derived from the reference's static
+type.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change Clause 3 [<A href="https://wg21.link/intro.defs">intro.defs</A>], &#8220;dynamic type,&#8221;
+as follows:</P>
+
+<BLOCKQUOTE>
+
+the type of the most derived object (6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) to
+which <DEL>the lvalue denoted by</DEL> an lvalue <INS>or an rvalue-reference
+(Clause 7 [<A href="https://wg21.link/expr">expr</A>])</INS> expression
+refers. [<I>Example:</I> if a pointer (9.3.4.2 [<A href="https://wg21.link/dcl.ptr">dcl.ptr</A>])
+<TT>p</TT> whose static type is &#8220;pointer to class
+<TT>B</TT>&#8221; is pointing to an object of class <TT>D</TT>,
+derived from <TT>B</TT> (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]), the dynamic
+type of the expression <TT>*p</TT> is &#8220;D.&#8221; References
+(9.3.4.3 [<A href="https://wg21.link/dcl.ref">dcl.ref</A>]) are treated similarly. &#8212;<I>end
+example</I>] The dynamic type of an rvalue expression <INS>that is not an
+rvalue reference</INS> is its static type.
+
+</BLOCKQUOTE>
+
+<P><B>Notes from the June, 2008 meeting:</B></P>
+
+<P>Because expressions have an rvalue reference type only fleetingly,
+immediately becoming either lvalues or rvalues and no longer
+references, the CWG expressed a desire for a different approach that
+would somehow describe an rvalue that resulted from an rvalue
+reference instead of using the concept of an expression that is an
+rvalue reference, as above.  This approach could also be used in the
+resolution of <A HREF="664.html">issue 664</A>.</P>
+
+<P><B>Additional note (August, 2008):</B></P>
+
+<P>This issue, along with <A HREF="664.html">issue 664</A>,
+indicates that rvalue references have more in common with lvalues
+than with other rvalues: they denote particular objects, thus
+allowing object identity and polymorphic behavior.  That suggests
+that these issues may be just the tip of the iceberg: restrictions
+on out-of-lifetime access to objects, the aliasing rules, and many
+other specifications are written to apply only to lvalues, on the
+assumption that only lvalues refer to specific objects.  That
+assumption is no longer valid with rvalue references.</P>
+
+<P>This suggests that it might be better to classify all rvalue
+references, not just named rvalue references, as lvalues instead
+of rvalues, and then just change the reference binding, overload
+resolution, and template argument deduction rules to cater to the
+specific kind of lvalues that are associated with rvalue references.</P>
+
+<P><B>Additional note, May, 2009:</B></P>
+
+<P>Another place in the Standard where the assumption is made that
+only lvalues can have dynamic types that differ from their static
+types is 7.6.1.8 [<A href="https://wg21.link/expr.typeid#2">expr.typeid</A>] paragraph 2.</P>
+
+<P>(See also issues <A HREF="846.html">846</A> and
+<A HREF="863.html">863</A>.)</P>
+
+<P><B>Additional note, September, 2009:</B></P>
+
+<P>Yet another complication is the statement in 7.2.1 [<A href="https://wg21.link/basic.lval#9">basic.lval</A>] paragraph 9 stating that &#8220;non-class rvalues always
+have cv-unqualified types.&#8221; If an rvalue reference is an rvalue,
+then the following example is well-formed:</P>
+
+<PRE>
+    void f(int&amp;&amp;);    //<SPAN CLASS="cmnt"> reference to non-const</SPAN>
+    void g() {
+        const int i = 0;
+        f(static_cast&lt;const int&amp;&amp;&gt;(i));
+    }
+</PRE>
+
+<P>The <TT>static_cast</TT> binds an rvalue reference to the const
+object <TT>i</TT>, but the fact that it's an rvalue means that the
+cv-qualification is lost, effectively allowing the parameter of
+<TT>f</TT>, a reference to non-const, to bind directly to the const
+object.</P>
+
+<P><B>Proposed resolution (February, 2010):</B></P>
+
+<P>See paper N3030.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

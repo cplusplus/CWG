@@ -1,0 +1,209 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 385</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="385"></A><H4>385.
+  
+How does protected member check of 11.5 interact with using-declarations?
+</H4>
+<B>Section: </B>11.8.5&#160; [<A href="https://wg21.link/class.protected">class.protected</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vincent Korstanje
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Sep 2002<BR>
+
+
+<P>[Voted into WP at October 2004 meeting.]</P>
+
+<P>We consider it not unreasonable to do the following </P>
+<PRE>
+  class A {
+    protected:
+    void g();
+  };
+  class B : public A {
+    public:
+      using A::g; // B::g is a public synonym for A::g
+  };
+
+  class C: public A {
+    void foo();
+  };
+
+  void C::foo() {
+    B b;
+    b.g();
+  }
+</PRE>
+<P>However the EDG front-end does not like and gives the error</P>
+<PRE>
+  #410-D: protected function "A::g" is not accessible through a "B" pointer or  object
+    b.g();
+      ^
+</PRE>
+
+<P>
+<U>Steve Adamczyk</U>:
+The error in this case is due to
+11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>] of the standard, which is an additional
+check on top of the other access checking.  When that section says
+"a protected nonstatic member function ... of a base class" it doesn't
+indicate whether the fact that there is a using-declaration is relevant.
+I'd say the current wording taken at face value would suggest that
+the error is correct -- the function is protected, even if the
+using-declaration for it makes it accessible as a public function.
+But I'm quite sure the wording in
+11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>] was written before using-declarations
+were invented and has not been reviewed since for consistency with
+that addition.</P>
+
+<P><B>Notes from April 2003 meeting:</B></P>
+
+<P>We agreed that the example should be allowed.</P>
+
+<P><B>Proposed resolution (April 2003, revised October 2003):</B></P>
+
+<P>Change 11.8.5 [<A href="https://wg21.link/class.protected#1">class.protected</A>] paragraph 1 from</P>
+
+<BLOCKQUOTE>
+When a friend or a member function of a derived class references a
+protected nonstatic member function or protected nonstatic data member
+of a base class, an access check applies in addition to those
+described earlier in 11.8 [<A href="https://wg21.link/class.access">class.access</A>].
+[Footnote: This
+additional check does not apply to other members, <I>e.g. </I>static
+data members or enumerator member constants.] Except
+when forming a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),
+the access must be through a
+pointer to, reference to, or object of the derived class itself (or
+any class derived from that class (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).
+If the access is to form a
+pointer to member, the <I>nested-name-specifier</I> shall name the
+derived class (or any class derived from that class).
+</BLOCKQUOTE>
+
+<P>to</P>
+
+<BLOCKQUOTE>
+An additional access check beyond those described earlier in
+11.8 [<A href="https://wg21.link/class.access">class.access</A>]
+is applied when a nonstatic data member or nonstatic member
+function is a protected member of its naming class
+(11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]).
+[Footnote: This additional check does not apply
+to other members, e.g., static data members or enumerator member
+constants.] As described
+earlier, access to a protected member is granted because the
+reference occurs in a friend or member of some
+class <TT>C</TT>.  If the access is to form a pointer to member
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]), the
+<I>nested-name-specifier</I> shall name <TT>C</TT> or a
+class derived from <TT>C</TT>.  All other accesses involve a
+(possibly implicit) object expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).
+In this case, the
+class of the object expression shall be <TT>C</TT> or a class derived
+from <TT>C</TT>.
+</BLOCKQUOTE>
+
+<P><B>Additional discussion (September, 2004):</B></P>
+
+<P>
+<U>Steve Adamczyk:</U> I wonder if this wording is incorrect.  Consider:</P>
+
+<PRE>
+    class A {
+    public:
+      int p;
+    };
+    class B : protected A {
+      // p is a protected member of B
+    };
+    class C : public B {
+      friend void fr();
+    };
+    void fr() {
+      B *pb = new B;
+      pb-&gt;p = 1;  // Access okay?  Naming class is B, p is a protected member of B,
+                  // the "C" of the issue 385 wording is C, but access is not via
+                  // an object of type C or a derived class thereof.
+    }
+</PRE>
+
+<P>I think the formulation that the member is a protected member
+of its naming class is not what we want.  I think we intended
+that the member is protected in the declaration that is found,
+where the declaration found might be a <I>using-declaration</I>.
+</P>
+
+<P>
+<U>Mike Miller:</U> I think the proposed wording makes the
+access <TT>pb-&gt;p</TT> ill-formed, and I think that's the right
+thing to do.</P>
+
+<P>First, protected inheritance of <TT>A</TT> by <TT>B</TT> means
+that <TT>B</TT> intends the public and protected members of
+<TT>A</TT> to be part of <TT>B</TT>'s implementation, available
+to <TT>B</TT>'s descendants only.  (That's why there's a
+restriction on converting from <TT>B*</TT> to <TT>A*</TT>, to
+enforce <TT>B</TT>'s intention on the use of members of
+<TT>A</TT>.)  Consequently, I see no difference in access policy
+between your example and</P>
+
+<PRE>
+    class B {
+    protected:
+        int p;
+    };
+</PRE>
+
+<P>Second, the reason we have this rule is that <TT>C</TT>'s use
+of inherited protected members might be different from their use
+in a sibling class, say <TT>D</TT>.  Thus members and friends of
+<TT>C</TT> can only use <TT>B::p</TT> in a manner consistent with
+<TT>C</TT>'s usage, i.e., in <TT>C</TT> or
+derived-from-<TT>C</TT> objects.  If we rewrote your example
+slightly,</P>
+
+<PRE>
+    class D: public B { };
+
+    void fr(B* pb) {
+        pb-&gt;p = 1;
+    }
+
+    void g() {
+        fr(new D);
+    }
+</PRE>
+
+<P>it's clear that the intent of this rule is broken &#8212;
+<TT>fr</TT> would be accessing <TT>B::p</TT> assuming
+<TT>C</TT>'s policies when the object in question actually
+required <TT>D</TT>'s policies.</P>
+
+<P>(See also issues <A HREF="471.html">471</A> and <A HREF="472.html">472</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

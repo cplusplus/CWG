@@ -1,0 +1,171 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 420</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="420"></A><H4>420.
+  
+postfixexpression-&gt;scalar_type_dtor() inconsistent
+</H4>
+<B>Section: </B>12.4.6&#160; [<A href="https://wg21.link/over.ref">over.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Markus Mauhart
+ &#160;&#160;&#160;
+
+ <B>Date: </B>8 June 2003<BR>
+
+
+<P>[Voted into WP at April, 2006 meeting.]</P>
+
+<P>Lets start with the proposed solution.
+In 12.4.6 [<A href="https://wg21.link/over.ref">over.ref</A>], replace line ...
+<BLOCKQUOTE>
+<I>postfix-expression</I> <TT>-&gt;</TT> <I>id-expression</I>
+</BLOCKQUOTE>
+.... with the lines ...
+<BLOCKQUOTE>
+<I>postfix-expression</I> <TT>-&gt;</TT> <I>template<SUB>opt</SUB> id-expression</I><BR>
+<I>postfix-expression</I> <TT>-&gt;</TT> <I>pseudo-destructor-name</I>
+</BLOCKQUOTE>
+(This then is a copy of the two lines in 7.6.1 [<A href="https://wg21.link/expr.post">expr.post</A>]
+covering "-&gt;dtor")</P>
+<P>Alternatively remove the sentence "It implements class member
+access using -&gt;" and the syntax line following.</P>
+
+<P>Reasons:</P>
+
+<P>Currently stdc++ is inconsistent when handling expressions of
+the form "postfixexpression-&gt;scalar_type_dtor()":
+If "postfixexpression" is a pointer to the scalar type, it is OK,
+but if "postfixexpression" refers to any smart pointer class
+(e.g. iterator or allocator::pointer) with class specific
+CLASS::operator-&gt;() returning pointer to the scalar type, then
+it is ill-formed; so while c++98 does allow CLASS::operator-&gt;()
+returning pointer to scalar type, c++98 prohibits any '-&gt;'-expression
+involving this overloaded operator function.</P>
+
+<P>Not only is this behaviour inconsistent, but also when
+comparing the corresponding chapters of c++pl2 and stdc++98
+it looks like an oversight and unintended result.
+Mapping between stdc++98 and c++pl2:
+<BLOCKQUOTE>
+  c++pl2.r.5.2 -&gt; 5.2 [expr.post]<BR>
+  c++pl2.r.5.2.4 -&gt; 5.2.4 [expr.pseudo] + 5.2.5 [expr.ref]<BR>
+  c++pl2.r.13.4 -&gt; 13.3.1.2 [over.match.oper]<BR>
+  c++pl2.r.13.4.6 -&gt; 13.5.6 [over.ref]
+</BLOCKQUOTE>
+For the single line of c++pl2.r.5.2 covering "-&gt;dtor",
+5.2 [expr.post] has two lines.
+Analogously c++pl2.r.5.2.4 has been doubled to 5.2.4 [expr.pseudo]
+and 5.2.5 [expr.ref].
+From 13.5.6 [over.ref], the sentence forbiding CLASS::operator-&gt;()
+returning pointer to scalar type has been removed.
+Only the single line of c++pl2.r.13.4.6 (&lt;-&gt; c++pl2.r.5.2's
+single line) has not gotten its 2nd line when converted
+into 13.5.6 [over.ref].</P>
+
+<P>Additionally GCC32 does is right (but against 13.5.6 [over.ref]).</P>
+
+<P>AFAICS this would not break old code except compilers like VC7x
+and Comeau4301.</P>
+
+<P>It does not add new functionality, cause any expression
+class_type-&gt;scalar_type_dtor() even today can be substituted
+through (*class_type).scalar_type_dtor().</P>
+
+<P>Without this fix, template functions like
+some_allocator&lt;T&gt;::destroy(p)
+must use "(*p).~T()" or "(*p).T::~T()" when calling the destructor,
+otherwise the simpler versions "p-&gt;~T()" or "p-&gt;T::~T()"
+could be used.</P>
+
+<P>Sample code, compiled with GCC32, VC7[1] and Comeau4301:</P>
+<PRE>
+struct A {};//any class
+
+template &lt;class T&gt;
+struct PTR
+    {
+    T&amp; operator*  () const;
+    T* operator-&gt; () const;
+    };
+
+template &lt;class T&gt;
+void f ()
+    {
+        {
+        T*  p               ;
+        p = new T           ;
+        (*p).T::~T()        ;//OK
+        p = new T           ;
+        (*p).~T()           ;//OK
+        p = new T           ;
+        p-&gt;T::~T()          ;//OK
+        p = new T           ;
+        p-&gt;~T()             ;//OK
+        }
+
+        {
+        PTR&lt;T&gt; p = PTR&lt;T&gt;() ;
+        (*p).T::~T()        ;//OK
+        (*p).~T()           ;//OK
+        p.operator-&gt;()      ;//OK !!!
+        p-&gt;T::~T()          ;//GCC32: OK; VC7x,Com4301: OK for A; ERROR w/ int
+        p-&gt;~T()             ;//GCC32: OK; VC7x,Com4301: OK for A; ERROR w/ int
+        }
+    }
+
+void test ()
+    {
+    f &lt;A&gt;  ();
+    f &lt;int&gt;();
+    }
+</PRE>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>Change 12.4.6 [<A href="https://wg21.link/over.ref#1">over.ref</A>] paragraph 1 as indicated:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<TT>operator-&gt;</TT> shall be a non-static member function taking
+no parameters. It implements <INS>the</INS> class member
+access <DEL>using</DEL> <INS>syntax that uses</INS> <TT>-&gt;</TT>
+</P>
+
+<UL>
+<I>postfix-expression</I> <TT>-&gt;</TT> <INS><TT>template</TT><SUB><I><SMALL>opt</SMALL></I></SUB></INS> <I>id-expression</I><BR>
+<INS><I>postfix-expression</I> <TT>-&gt;</TT> <I>pseudo-destructor-name</I></INS>
+</UL>
+
+<P>An expression <TT>x-&gt;m</TT> is interpreted
+as <TT>(x.operator-&gt;())-&gt;m</TT> for a class object <TT>x</TT> of
+type <TT>T</TT> if <TT>T::operator-&gt;()</TT> exists and if the
+operator is selected as the best match function by the overload
+resolution mechanism (12.2 [<A href="https://wg21.link/over.match">over.match</A>]).</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

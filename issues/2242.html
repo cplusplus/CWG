@@ -1,0 +1,92 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2242</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2242"></A><H4>2242.
+  
+ODR violation with constant initialization possibly omitted
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-03-05<BR><BR>
+
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2720r0.pdf#US5-033">P2720R0 comment
+  US&#160;5-033<BR></A>
+
+<P>[Accepted as a DR at the November, 2022 meeting.]</P>
+
+<P>Consider the following example:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> tu1.cpp</SPAN>
+  extern const int a = 1;
+  inline auto f() {
+    static const int b = a;
+    struct A { auto operator()() { return &amp;b; } } a;
+    return a;
+  }
+
+  //<SPAN CLASS="cmnt"> tu2.cpp</SPAN>
+  extern const int a;
+  inline auto f() {
+    static const int b = a;
+    struct A { auto operator()() { return &amp;b; } } a;
+    return a;
+  }
+  int main() {
+    return *decltype(f())()();
+  }
+</PRE>
+
+<P>Here, <TT>b</TT> may or may not have constant initialization.
+This example should be an ODR violation.</P>
+
+<P>(Split off from <A HREF="2123.html">issue 2123</A>.)</P>
+
+<P><B>Proposed resolution (approved by CWG 2022-11-11):</B></P>
+
+<P>Insert after 6.3 [<A href="https://wg21.link/basic.def.odr#14.7">basic.def.odr</A>] bullet 14.7 as follows:</P>
+
+<UL>
+
+<LI>...</LI>
+
+<LI>In each such definition, corresponding entities shall
+have the same language linkage.
+</LI>
+
+<LI><INS>In each such definition, const objects with static or thread
+storage duration shall be constant-initialized if the object is
+constant-initialized in any such definition.</INS></LI>
+
+<LI>...</LI>
+
+</UL>
+
+<BR><BR>
+</BODY>
+</HTML>

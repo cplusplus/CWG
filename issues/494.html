@@ -1,0 +1,156 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 494</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="494"></A><H4>494.
+  
+Problems with the resolution of issue 45
+</H4>
+<B>Section: </B>11.8&#160; [<A href="https://wg21.link/class.access">class.access</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lloyd J. Lewins
+ &#160;&#160;&#160;
+
+ <B>Date: </B>17 Dec 2004<BR>
+
+
+<P>[Voted into WP at the October, 2006 meeting.]</P>
+
+<P>The proposed resolution for <A HREF="45.html">issue 45</A> inserts the following sentence after 11.8 [<A href="https://wg21.link/class.access#1">class.access</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+A member of a class can also access all names as the class of
+which it is a member.
+</BLOCKQUOTE>
+
+<P>I don't think that this is correctly constructed English. I see two
+possibilities:</P>
+
+<OL>
+<LI><P>
+This is a typo, and the correct change is:
+
+<BLOCKQUOTE>
+A member of a class can also access all names of the class of which
+it is a member.
+</BLOCKQUOTE>
+</P></LI>
+
+<LI><P>
+The intent is something more like:
+
+<BLOCKQUOTE>
+A member of a nested class can also access all names accessible by
+any other member of the class of which it is a member.
+</BLOCKQUOTE>
+</P></LI>
+</OL>
+
+<P>[Note: this was editorially corrected at the time defect
+resolutions were being incorporated into the Working Paper to
+read, &#8220;...can also access all the names declared in the
+class of which it is a member,&#8221; which is essentially the
+same as the preceding option 1.]</P>
+
+<P>I would prefer to use the language proposed for 11.8.8 [<A href="https://wg21.link/class.access.nest">class.access.nest</A>]:</P>
+
+<BLOCKQUOTE>
+A nested class is a member and as such has the same access rights
+as any other member.
+</BLOCKQUOTE>
+
+<P>A second problem is with the text in 11.8.4 [<A href="https://wg21.link/class.friend#2">class.friend</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note:</I> this means that access to private and protected
+names is also granted to member functions of the friend class (as
+if the functions were each friends) and to the static data member
+definitions of the friend class. This also means that private and
+protected type names from the class granting friendship can be
+used in the <I>base-clause</I> of a nested class of the friend
+class. However, the declarations of members of classes nested
+within the friend class cannot access the names of private and
+protected members from the class granting friendship. Also,
+because the <I>base-clause</I> of the friend class is not part of
+its member declarations, the <I>base-clause</I> of the friend
+class cannot access the names of the private and protected
+members from the class granting friendship. For example,
+
+<PRE>
+    class A {
+        class B { };
+        friend class X;
+    };
+    class X : A::B {     //<SPAN CLASS="cmnt"> ill-formed: </SPAN>A::B<SPAN CLASS="cmnt"> cannot be accessed</SPAN>
+                         //<SPAN CLASS="cmnt"> in the base-clause for </SPAN>X
+        A::B mx;         //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> used to declare member of </SPAN>X
+        class Y: A::B {  //<SPAN CLASS="cmnt"> OK: </SPAN>A::B<SPAN CLASS="cmnt"> used to declare member of </SPAN>X
+            A::B my;     //<SPAN CLASS="cmnt"> ill-formed: </SPAN>A::B<SPAN CLASS="cmnt"> cannot be accessed</SPAN>
+                         //<SPAN CLASS="cmnt"> to declare members of nested class of </SPAN>X
+        };
+    };
+</PRE>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>
+This seems to be an oversight. The proposed change to
+11.8.8 [<A href="https://wg21.link/class.access.nest#1">class.access.nest</A>] paragraph 1 would appear to have
+eliminated the restrictions on nested class access.  However, at
+least one compiler (gcc 3.4.3) doesn't appear to take my view,
+and continues with the restrictions on access by classes within a
+friend class, while implementing the rest of the resolution of
+<A HREF="45.html">issue 45</A>.
+</P>
+
+<P><B>Note (March, 2005):</B></P>
+
+
+
+<P>
+<U>Andreas Hommel</U>: I think <A HREF="45.html">issue 45</A>
+requires an additional change in 11.4.12 [<A href="https://wg21.link/class.nest">class.nest</A>] paragraph
+4:</P>
+
+<BLOCKQUOTE>
+
+Like a member function, a friend function (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>])
+defined within a nested class is in the lexical scope of that class;
+it obeys the same rules for name binding as a static member function
+of that class (11.4.9 [<A href="https://wg21.link/class.static">class.static</A>]) and has no special access
+rights to members of an enclosing class.
+
+</BLOCKQUOTE>
+
+<P>I believe the &#8220;no special access rights&#8221;
+language should be removed.</P>
+
+<P><B>Proposed resolution (October, 2005):</B></P>
+
+<P>This issue is resolved by the resolution of <A HREF="372.html">issue 372</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1606</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1606"></A><H4>1606.
+  
+<TT>sizeof</TT> closure class
+</H4>
+<B>Section: </B>7.6.2.5&#160; [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-01-18<BR>
+
+
+<P>The standard forbids a lambda from appearing in a <TT>sizeof</TT>
+operand:</P>
+
+<BLOCKQUOTE>
+
+A <I>lambda-expression</I> shall not appear in an unevaluated operand
+(Clause 7 [<A href="https://wg21.link/expr">expr</A>]).
+
+</BLOCKQUOTE>
+
+<P>(7.5.6 [<A href="https://wg21.link/expr.prim.lambda#2">expr.prim.lambda</A>] paragraph 2).  However, there appears to be
+no prohibition of the equivalent usage when a variable or data member has a
+closure class as its type:</P>
+
+<PRE>
+  int main() {
+    int i = 1;
+    int j = 1;
+    auto f = [=]{ return i + j;};
+    return sizeof(f);
+  }
+</PRE>
+
+<P>According to 7.5.6 [<A href="https://wg21.link/expr.prim.lambda#3">expr.prim.lambda</A>] paragraph 3, the size
+of a closure class is not specified, so that it could vary between
+translation units or between otherwise link-compatible implementations,
+which could result in ODR violations if the size is used as a template
+non-type argument, for example.  Should the Standard forbid taking the
+size of a closure class?  Or should this simply be left as an ABI issue,
+as is done with other size and alignment questions?</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>It was observed that generic function wrappers like
+<TT>std::function</TT> rely on the ability to make compile-time
+decisions based on the size of the function object, and forbidding
+the application of <TT>sizeof</TT> to closure classes would make
+that unnecessarily difficult.  </P>
+
+<P><B>Rationale (April, 2013):</B></P>
+
+<P>CWG agreed that the ODR and portability considerations were not
+sufficient to outweigh the utility of applying <TT>sizeof</TT> to
+closure classes as mentioned in the April, 2013 note and that the
+issues are more appropriately dealt with in an ABI specification.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

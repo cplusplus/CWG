@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 847</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="847"></A><H4>847.
+  
+Error in rvalue reference deduction example
+</H4>
+<B>Section: </B>13.10.3.2&#160; [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD2
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>27 March, 2009<BR>
+
+
+<P>[Voted into WP at March, 2010 meeting.]</P>
+
+<P>The adoption of paper N2844 made it ill-formed to attempt to bind an
+rvalue reference to an lvalue.  However, the example in
+13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#3">temp.deduct.call</A>] paragraph 3 still reflects the previous
+specification:</P>
+
+<PRE>
+    template &lt;typename T&gt; int f(T&amp;&amp;);
+    int i;
+    int j = f(i);        //<SPAN CLASS="cmnt"> calls </SPAN>f&lt;int&amp;&gt;(i)
+    template &lt;typename T&gt; int g(const T&amp;&amp;);
+    int k;
+    int n = g(k);        //<SPAN CLASS="cmnt"> calls </SPAN>g&lt;int&gt;(k)
+</PRE>
+
+<P>The last line of that example is now ill-formed, attempting to bind
+the <TT>const int&amp;&amp;</TT> parameter of <TT>g</TT> to the lvalue
+<TT>k</TT>.</P>
+
+<P><B>Proposed resolution (July, 2009):</B></P>
+
+<P>Replace the example in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#3">temp.deduct.call</A>] paragraph 3 with:</P>
+
+<PRE>
+    template&lt;typename T&gt; int f(T&amp;&amp;);
+    template&lt;typename T&gt; int g(const T&amp;&amp;);
+    int i;
+    int n1 = f(i);    //<SPAN CLASS="cmnt"> calls </SPAN>f&lt;int&amp;&gt;(int&amp;)
+    int n2 = f(0);    //<SPAN CLASS="cmnt"> calls </SPAN>f&lt;int&gt;(int&amp;&amp;)
+    int n3 = g(i);    //<SPAN CLASS="cmnt"> error: would call </SPAN>g&lt;int&gt;(const int&amp;&amp;)<SPAN CLASS="cmnt">, which would</SPAN>
+                      //<SPAN CLASS="cmnt"> bind an rvalue reference to an lvalue</SPAN>
+</PRE>
+
+<P>(See also <A HREF="858.html">issue 858</A>.)</P>
+
+<BR><BR>
+</BODY>
+</HTML>

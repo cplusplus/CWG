@@ -1,0 +1,60 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 742</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="742"></A><H4>742.
+  
+Postfix increment/decrement with long bit-field operands
+</H4>
+<B>Section: </B>7.6.1.6&#160; [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>11 November, 2008<BR>
+
+
+<P>Given the following declarations:</P>
+
+<PRE>
+    struct S {
+        signed long long sll: 3;
+    };
+    S s = { -1 };
+</PRE>
+
+<P>the expressions <TT>s.sll-- &lt; 0u</TT> and <TT>s.sll &lt; 0u</TT>
+have different results.  The reason for this is that <TT>s.sll--</TT>
+is an rvalue of type <TT>signed long long</TT> (7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]), which means that the usual arithmetic conversions
+(Clause 7 [<A href="https://wg21.link/expr#10">expr</A>] paragraph 10) convert <TT>0u</TT> to
+<TT>signed long long</TT> and the result is <TT>true</TT>.
+<TT>s.sll</TT>, on the other hand, is a bit-field lvalue, which is
+promoted (7.3.7 [<A href="https://wg21.link/conv.prom#3">conv.prom</A>] paragraph 3) to <TT>int</TT>; both
+operands of <TT>&lt;</TT> have the same rank, so <TT>s.sll</TT> is
+converted to <TT>unsigned int</TT> to match the type of <TT>0u</TT>
+and the result is <TT>false</TT>.  This disparity seems
+undesirable.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

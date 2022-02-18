@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2910</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2910"></A><H4>2910.
+  
+Effect of <I>requirement-parameter-list</I>s on odr-usability
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-24<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/561">#561</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  bool f() {
+    constexpr int z = 42;
+    return requires {
+      sizeof(int [*&amp;z]);
+    } &amp;&amp; requires (int x) {
+      sizeof(int [*&amp;z]);
+    };
+  }
+</PRE>
+
+<P>The second <I>requires-expression</I> introduces a function
+parameter scope according to 6.4.4 [<A href="https://wg21.link/basic.scope.param">basic.scope.param</A>].  This affects
+odr-usability as specified in 6.3 [<A href="https://wg21.link/basic.def.odr#10">basic.def.odr</A>] paragraph 10, but
+the two <I>requires-expression</I> in the example ought to actually
+behave the same.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-19):</B></P>
+
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#10.2.2">basic.def.odr</A>] bullet 10.2.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A local entity (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) is odr-usable in a scope
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) if:
+
+<UL>
+<LI>...</LI>
+<LI>
+for each intervening scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) between the
+point at which the entity is introduced and the scope (where *this is
+considered to be introduced within the innermost enclosing class or
+non-lambda function definition scope), either:
+<UL>
+<LI>the intervening scope is a block scope, or</LI>
+<LI>the intervening scope is the function parameter scope of a
+<I>lambda-expression</I> <INS>or <I>requires-expression</I></INS>, or</LI>
+<LI>the intervening scope is the lambda scope of
+a <I>lambda-expression</I> that has a <I>simple-capture</I> naming the
+entity or has a <I>capture-default</I>, and the block scope of
+the <I>lambda-expression</I> is also an intervening scope.</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

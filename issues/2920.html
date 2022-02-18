@@ -1,0 +1,173 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2920</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2920"></A><H4>2920.
+  
+The <TT>template</TT> keyword for base classes
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-15<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;int T&gt;
+  struct BaseT {
+    void Foo() {}
+  };
+
+  template&lt;int T&gt;
+  struct DerivedT : BaseT&lt;T&gt; {
+    void Inner() {
+      this-&gt;template /* unnecessary keyword before CWG1835 */ BaseT&lt;T&gt;::Foo();
+    }
+  };
+</PRE>
+
+<P>The resolution of <A HREF="1835.html">issue 1835</A> in P1787
+now requires the <TT>template</TT> keyword in this situation.  This
+breaks code in several large projects.</P>
+
+<P>The reason to require the <TT>template</TT> keyword is that the
+injected-class-name, like any other member, is inherited from the base
+class, but the base class is dependent, and thus name lookup does not
+consider base class members when parsing the template definition.  For
+example:</P>
+
+<PRE>
+  namespace N
+  {
+    template&lt;int I&gt;
+    struct A { };
+
+    template&lt;int I&gt;
+    struct B
+    {
+      using C = A&lt;I&gt;;
+
+      template&lt;int J&gt;
+      using D = A&lt;J&gt;;
+    };
+  }
+
+  //<SPAN CLASS="cmnt"> impossible to determine the injected-class-name of the base class in the definition context since 'N::B' could be specialized.</SPAN>
+  //<SPAN CLASS="cmnt"> it might not be the injected-class-name of a template, and it might not even be 'C'/'D'!</SPAN>
+
+  template&lt;int I&gt;
+  struct X : N::B&lt;I&gt;::C { }; 
+
+  template&lt;int I&gt;
+  struct Y : N::B&lt;I&gt;::template D&lt;I&gt; { };
+</PRE>
+
+<P>
+Even if we specified how to find the injected-class-name of a dependent base class for a subset of cases, we would reintroduce the problem that the resolution to <A HREF="1835.html">issue 1835</A> solves:
+</P>
+
+<PRE>
+  template&lt;int I&gt;
+  struct A
+  {
+    int A;
+  };
+
+  bool f();
+
+  template&lt;int I&gt;
+  struct B : A&lt;I&gt;
+  {
+    bool g()
+    {
+      return this-&gt;A &lt; I; //<SPAN CLASS="cmnt"> do we interpret '&lt;' as the start of a template-argument-list here?</SPAN>
+    }
+
+    bool h()
+    {
+      return this-&gt;A &lt; I &gt; ::f(); //<SPAN CLASS="cmnt"> how about here?</SPAN>
+    }
+  };
+</PRE>
+
+<P>
+Using the unqualified lookup results from the template definition
+context for disambiguation when the object expression is dependent is
+also wrong since they are discarded if we find a member in the
+template instantiation context. Consider:
+</P>
+
+<PRE>
+  namespace N
+  {
+    template&lt;int I&gt;
+    struct A
+    {
+      int B;
+    };
+  }
+
+  template&lt;int I&gt;
+  using B = N::A&lt;I&gt;;
+
+  template&lt;int I&gt;
+  struct C : B&lt;I&gt;
+  {
+    bool f()
+    {
+      return this-&gt;B &lt; I;
+    }
+  };
+</PRE>
+
+<P>
+Since the lookup context of <TT>B</TT> in <TT>this-&gt;B</TT> is
+dependent, we cannot determine whether it would be invalid as a
+complete class member access expression.  We also cannot parse past
+the '&lt;' to determine whether <TT>B</TT> is the terminal name of a
+member-qualified <TT>nested-name-specifier</TT>, so we do not know if
+unqualified name lookup should happen.  <A HREF="1835.html">Issue 1835</A> resolves this by treating <TT>this-&gt;B</TT> as a
+complete class member access expression. Using the results of
+unqualified name lookup to determine whether <TT>B</TT> is the name of
+a template is incorrect because it may refer to a non-template member
+when <TT>C</TT> is instantiated.
+</P>
+
+<P><B>CWG 2024-08-16</B></P>
+
+<P>The resolution for <A HREF="1835.html">issue 1835</A> in P1787
+has addressed real concerns.  CWG recognizes that real-world code now
+no longer compiles, although the fix for the affected source code is
+trivial.  A limited exception to support some of the existing code
+might be feasible.  CWG solicits a paper with specification and
+analysis.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

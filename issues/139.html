@@ -1,0 +1,111 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 139</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="139"></A><H4>139.
+  
+Error in <TT>friend</TT> lookup example
+</H4>
+<B>Section: </B>6.5.3&#160; [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>14 Jul 1999<BR>
+
+
+
+<P>[Moved to DR at 10/01 meeting.]</P>
+
+<P>The example in
+6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#3">basic.lookup.unqual</A>] paragraph 3
+is
+incorrect:</P>
+
+<PRE>
+    typedef int f;
+    struct A {
+        friend void f(A &amp;);
+        operator int();
+        void g(A a) {
+            f(a);
+        }
+    };
+</PRE>
+
+Regardless of the resolution of other issues concerning the lookup
+of names in <TT>friend</TT> declarations, this example is ill-formed
+(the function and the typedef cannot exist in the same scope).
+
+<P>One possible repair of the example would be to make <TT>f</TT>
+a class with a constructor taking either <TT>A</TT> or <TT>int</TT>
+as its parameter.</P>
+
+<P>(See also issues
+<A HREF="95.html">95</A>,
+<A HREF="136.html">136</A>,
+<A HREF="138.html">138</A>,
+<A HREF="143.html">143</A>,
+<A HREF="165.html">165</A>, and
+<A HREF="166.html">166</A>.)</P>
+
+<P><B>Proposed resolution (04/01):</B></P>
+
+<OL>
+
+<LI>
+<P>Change the example in 6.5.3 [<A href="https://wg21.link/basic.lookup.unqual#3">basic.lookup.unqual</A>] paragraph 3
+to read:</P>
+
+<PRE>
+    typedef int f;
+    namespace N {
+        struct A {
+            friend int f(A &amp;);
+            operator int();
+            void g(A a) {
+                int i = f(a);
+                      // f is the typedef, not the friend function:
+                      // equivalent to int(a)
+            }
+        };
+    }
+</PRE>
+</LI>
+
+<LI>
+<P>Delete the sentence immediately following the example:</P>
+
+<BLOCKQUOTE>
+
+The expression <TT>f(a)</TT> is a <I>cast-expression</I>
+equivalent to <TT>int(a)</TT>.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

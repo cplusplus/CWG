@@ -1,0 +1,153 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 594</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="594"></A><H4>594.
+  
+Coordinating issues 119 and 404 with delegating constructors
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tom Plum
+ &#160;&#160;&#160;
+
+ <B>Date: </B>30 August 2006<BR>
+
+
+<P>[Voted into the WP at the September, 2008 meeting.]</P>
+
+<P>In ISO/IEC 14882:2003, the second bullet of 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 reads,</P>
+
+<BLOCKQUOTE>
+
+if <TT>T</TT> is a class type with a non-trivial constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), the constructor call has completed.
+
+</BLOCKQUOTE>
+
+<P>
+<A HREF="119.html">Issue 119</A> pointed out that
+aggregate initialization can be used with some classes with a
+non-trivial implicitly-declared default constructor, and that
+in such cases there is no call to the object's constructor.
+The resolution for that issue was to change the previously-cited
+wording to read,</P>
+
+<BLOCKQUOTE>
+
+If <TT>T</TT> is a class type with a non-trivial constructor
+(11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>], <INS>the initialization is complete</INS>.
+
+</BLOCKQUOTE>
+
+<P>Later (but before the WP was revised with the wording from
+the resolution of <A HREF="119.html">issue 119</A>),
+<A HREF="404.html">issue 404</A> changed the 2003 wording to
+read,</P>
+
+<BLOCKQUOTE>
+
+If <TT>T</TT> is a class type <INS>and the constructor invoked to
+create the object is non-trivial</INS> (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]),
+the constructor call has completed.
+
+</BLOCKQUOTE>
+
+<P>thus reversing the effect of <A HREF="119.html">issue 119</A>,
+whose whole purpose was to cover objects with non-trivial constructors
+that are <I>not</I> invoked.</P>
+
+<P>Through an editorial error, the post-Redmond draft (N1905)
+still contained the original 2003 wording that should have been
+replaced by the resolution of <A HREF="119.html">issue 119</A>, <I>in addition to</I> the new wording from the
+resolution:</P>
+
+<BLOCKQUOTE>
+
+if <TT>T</TT> is a class type and the constructor invoked to
+create the object is non-trivial (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]),
+the constructor call has completed. the initialization is
+complete.
+
+</BLOCKQUOTE>
+
+<P>Finally, during the application of the edits for delegating
+constructors (N1986), this editing error was &#8220;fixed&#8221;
+by retaining the original 2003 wording (which was needed for the
+application of the change specified in N1986), so that the
+current draft (N2009) reads,</P>
+
+<BLOCKQUOTE>
+
+if <TT>T</TT> is a class type and the constructor invoked to
+create the object is non-trivial (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]),
+the principal constructor call 11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has
+completed.
+
+</BLOCKQUOTE>
+
+<P>Because the completion of the call to the principal constructor
+corresponds to the point at which the object is &#8220;fully
+constructed&#8221; (14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2), i.e.,
+its initialization is complete, I believe that the exact wording
+of the <A HREF="119.html">issue 119</A> resolution would be
+correct and should be restored verbatim.</P>
+
+<P><B>Proposed resolution (June, 2008):</B></P>
+
+<P>Change 6.7.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>lifetime</I> of an object is a runtime property of the
+object. <INS>An object is said to have non-trivial initialization if it
+is of a class or aggregate type and it or one of its members is
+initialized by a constructor other than a trivial default
+constructor. [<I>Note:</I> Initialization by a trivial copy
+constructor is non-trivial initialization. &#8212;<I>end note</I>]</INS>
+The lifetime of an object <DEL>of type <TT>T</TT></DEL> begins when:</P>
+
+<UL>
+<LI><P>storage with the proper alignment and size <DEL>for type
+<TT>T</TT></DEL> is obtained, and</P></LI>
+
+<LI><P>if <DEL><TT>T</TT> is a class type and the constructor invoked to
+create the object is non-trivial (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]), the
+principal constructor call (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has
+completed. [<I>Note:</I> the initialization can be performed by a
+constructor call or, in the case of an aggregate with an
+implicitly-declared non-trivial default constructor, an aggregate
+initialization 9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]. &#8212;<I>end note</I>]</DEL>
+<INS>the object has non-trivial initialization, its initialization is
+complete.</INS>
+</P></LI>
+
+</UL>
+
+<P>The lifetime of an object of type <TT>T</TT> ends when...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

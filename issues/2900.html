@@ -1,0 +1,136 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2900</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2900"></A><H4>2900.
+  
+Deduction of non-type template arguments with placeholder types
+</H4>
+<B>Section: </B>13.10.3.6&#160; [<A href="https://wg21.link/temp.deduct.type">temp.deduct.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-05<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/546">#546</A>.)</P>
+
+<P>The deduction rule for non-type template parameters in
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#20">temp.deduct.type</A>] paragraph 20seems lacking:</P>
+
+<BLOCKQUOTE>
+
+If P has a form that contains &lt;i&gt;, and if the type of i differs
+from the type of the corresponding template parameter of the template
+named by the enclosing <I>simple-template-id</I>, deduction fails. If
+P has a form that contains [i], and if the type of i is not an
+integral type, deduction fails. [ Footnote: ... ] ...
+
+</BLOCKQUOTE>
+
+<P>This wording does not address the situation when the declared type
+of <TT>i</TT> is a placeholder type, or when the type of the
+corresponding template parameter of the template named by the
+enclosing <I>simple-template-id</I> is a placeholder type.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#20">temp.deduct.type</A>] paragraph 20 as follows:</P>
+
+<BLOCKQUOTE>
+
+If P has a form that contains &lt;i&gt;,
+<DEL>and if the type of i differs from the type</DEL>
+<INS>deduction fails unless the type of <TT>i</TT> is the same as that</INS>
+of the corresponding template parameter <INS><TT>p</TT> in the
+specialization (from A)</INS> of the template named by the
+enclosing <I>simple-template-id</I><DEL>, deduction fails</DEL> <INS>; if
+the declared type of <TT>i</TT> contains a placeholder type, the
+corresponding template argument for the purposes of placeholder type
+deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) is an <I>id-expression</I>
+for <TT>p</TT></INS>.  If P has a form that contains [i], and if the
+type of i is not an integral type, deduction fails. [ Footnote: ... ]
+...  [ Example 13:
+<PRE>
+  template&lt;int i&gt; class A { /* ... */ };
+  template&lt;short s&gt; void f(A&lt;s&gt;);
+  void k1() {
+    A&lt;1&gt; a;
+    f(a);      //<SPAN CLASS="cmnt"> error: deduction fails for conversion from int to short</SPAN>
+    f&lt;1&gt;(a);   //<SPAN CLASS="cmnt"> OK</SPAN>
+  }
+  template&lt;const short cs&gt; class B { };
+  template&lt;short s&gt; void g(B&lt;s&gt;);
+  void k2() {
+    B&lt;1&gt; b;
+    g(b);  //<SPAN CLASS="cmnt"> OK, cv-qualifiers are ignored on template parameter types</SPAN>
+  }
+<P class="ins">
+  template&lt;auto&gt; struct C;
+  template&lt;long long x&gt; void f(C&lt;x&gt; *);
+  void g(C&lt;0LL&gt; *ap) {
+    f(ap);     //<SPAN CLASS="cmnt"> OK, deduces </SPAN>long long<SPAN CLASS="cmnt"> value from </SPAN>0LL
+  }
+
+  template&lt;int&gt; struct D;
+  template&lt;auto x&gt; void f(D&lt;x&gt; *);
+  void g(D&lt;0LL&gt; *ap) {
+    f(ap);   //<SPAN CLASS="cmnt"> OK, deduces </SPAN>x<SPAN CLASS="cmnt"> as an </SPAN>int<SPAN CLASS="cmnt"> value</SPAN>
+  }
+
+  template&lt;int &amp;&gt; struct E;
+  template&lt;auto x&gt; void f(E&lt;x&gt; *);
+  int v;
+  void g(E&lt;v&gt; *bp) {
+    f(bp);    //<SPAN CLASS="cmnt"> error: type </SPAN>int<SPAN CLASS="cmnt"> of </SPAN>x<SPAN CLASS="cmnt"> does not match the </SPAN>int &amp;<SPAN CLASS="cmnt"> type of the template parameter in the </SPAN>E&lt;v&gt;<SPAN CLASS="cmnt"> specialization of </SPAN>E
+  }
+
+  template&lt;const int &amp;&gt; struct F;
+  template&lt;decltype(auto) x&gt; void f(F&lt;x&gt; *);
+  int i;
+  void g(F&lt;i&gt; *ap) {
+    f(ap);   //<SPAN CLASS="cmnt"> OK, deduces </SPAN>x<SPAN CLASS="cmnt"> as a non-type template parameter of type </SPAN>const int &amp;
+  }
+
+  template &lt;decltype(auto)&gt; struct G;
+  template &lt;auto x&gt; long *f(G&lt;x&gt; *);   //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;decltype(auto) x&gt; short *f(G&lt;x&gt; *); //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  const int j = 0;
+  short *g(G&lt;(j)&gt; *ap) {
+    return f(ap);     //<SPAN CLASS="cmnt"> OK, only #2 matches</SPAN>
+  }
+
+  long *g(G&lt;j&gt; *ap) {
+    return f(ap);     //<SPAN CLASS="cmnt"> OK, #1 is more specialized</SPAN>
+  }
+</P>
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

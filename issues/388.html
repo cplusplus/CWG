@@ -1,0 +1,237 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 388</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="388"></A><H4>388.
+  
+Catching base<TT>*&amp;</TT> from a throw of derived<TT>*</TT>
+</H4>
+<B>Section: </B>14.4&#160; [<A href="https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD3
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>John Spicer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>28 Oct 2002<BR>
+
+
+<P>[Voted into the WP at the February, 2012 meeting;
+moved to DR at the October, 2012 meeting.]</P>
+
+
+
+<P>I have a question about exception handling with respect to derived to base
+conversions of pointers caught by reference.</P>
+
+<P>What should the result of this program be?</P>
+<PRE>
+  struct S             {};
+  struct SS : public S {};
+
+  int main()
+  {
+  	SS ss;
+  	int result = 0;
+  	try
+  	{
+  		throw &amp;ss; // throw object has type SS*
+  		           // (pointer to derived class)
+  	}
+  	catch (S*&amp; rs) // (reference to pointer to base class)
+  	{
+  		result = 1;
+  	}
+  	catch (...)
+  	{
+  		result = 2;
+  	}
+  	return result;
+  }
+</PRE>
+
+<P>The wording of 14.4 [<A href="https://wg21.link/except.handle#3">except.handle</A>] paragraph 3
+would seem to say that the catch of S*&amp; does not
+match and so the catch ... would be taken.</P>
+
+<P>All of the compilers I tried (EDG, g++, Sun, and Microsoft) used the catch
+of S*&amp; though.</P>
+
+<P>What do we think is the desired behavior for such cases?</P>
+
+<P>My initial reaction is that this is a bug in all of these compilers, but
+the fact that they all do the same thing gives me pause.</P>
+
+<P>On a related front, if the handler changes the parameter using the
+reference, what is caught by a subsequent handler?</P>
+<PRE>
+  extern "C" int printf(const char *, ...);
+  struct S             {};
+  struct SS : public S {};
+  SS ss;
+
+  int f()
+  {
+  	try
+  	{
+  		throw &amp;ss;
+  	}
+  	catch (S*&amp; rs) // (reference to pointer to base class)
+  	{
+  		rs = 0;
+  		throw;
+  	}
+  	catch (...)
+  	{
+  	}
+  	return 0;
+  }
+
+  int main()
+  {
+  	try { f(); }
+  	catch (S*&amp; rs) {
+  		printf("rs=%p, &amp;ss=%p\n", rs, &amp;ss);
+  	}
+  }
+</PRE>
+
+<P>EDG, g++, and Sun all catch the original (unmodified) value.  Microsoft
+catches the modified value.  In some sense the EDG/g++/Sun behavior makes
+sense because the later catch could catch the derived class instead of the
+base class, which would be difficult to do if you let the catch clause
+update the value to be used by a subsequent catch.</P>
+
+<P>But on this non-pointer case, all of the compilers later catch the
+modified value:</P>
+<PRE>
+  extern "C" int printf(const char *, ...);
+  int f()
+  {
+  	try
+  	{
+  		throw 1;
+  	}
+  	catch (int&amp; i)
+  	{
+  		i = 0;
+  		throw;
+  	}
+  	catch (...)
+  	{
+  	}
+  	return 0;
+  }
+
+  int main()
+  {
+  	try { f(); }
+  	catch (int&amp; i) {
+  		printf("i=%p\n", i);
+  	}
+  }
+</PRE>
+
+<P>To summarize:</P>
+<OL>
+<LI>Should "base*const&amp;" be able to catch a "derived*"?
+The current standard
+seems to say "no" but parallels to how calls work, and existing practice,
+suggest that the answer should be "yes".</LI>
+
+<LI>Should "base*&amp;" be able to catch a "derived*".  Again,
+the standard seems
+seems to say "no".  Parallels to how calls work still suggest "no", but
+existing practice suggests "yes".</LI>
+
+<LI>If either of the above is "yes", what happens if you modify the pointer
+referred to by the reference.  This requires a cast to remove const for
+case #2.</LI>
+
+<LI>On a related front, if you catch
+"derived*&amp;" when a "derived*" is thrown,
+what happens if you modify the pointer referred to by the reference?
+EDG/g++/Sun still don't modify the underlying value that would be
+caught by a rethrow in this case.  This case seems like it should be
+the same as the "int&amp;" example above, but is not on the three compilers
+mentioned.</LI>
+</OL>
+
+<P>(See also <A HREF="729.html">issue 729</A>.)</P>
+
+
+
+<P><B>Notes from the October, 2009 meeting:</B></P>
+
+<P>The consensus of the CWG was that it should not be possible to catch
+a pointer to a derived class using a reference to a base class pointer,
+and that a handler that takes a reference to non-const pointer should
+allow the pointer to be modified by the handler.</P>
+
+<P><B>Proposed resolution (March, 2010):</B></P>
+
+<P>Change 14.4 [<A href="https://wg21.link/except.handle#3">except.handle</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A <I>handler</I> is a match for an exception object of type
+<TT>E</TT> if</P>
+
+<UL>
+<LI><P>The <I>handler</I> is of type <I>cv</I> <TT>T</TT> or
+<I>cv</I> <TT>T&amp;</TT> and <TT>E</TT> and <TT>T</TT> are the
+same type (ignoring the top-level <I>cv-qualifier</I>s), or</P></LI>
+
+<LI><P>the <I>handler</I> is of type <I>cv</I> <TT>T</TT> or
+<I>cv</I> <TT>T&amp;</TT> and <TT>T</TT> is an unambiguous public
+base class of <TT>E</TT>, or</P></LI>
+
+<LI><P>the <I>handler</I> is of type <I>cv<DEL>1</DEL></I>
+<TT>T<DEL>*</DEL></TT><DEL> <I>cv2</I></DEL> <INS>or <TT>const
+T&amp;</TT> where <TT>T</TT> is a pointer type</INS> and <TT>E</TT> is
+a pointer type that can be converted to <DEL>the type of the
+handler</DEL> <INS><TT>T</TT></INS> by either or both of</P></LI>
+
+<UL>
+<LI><P>a standard pointer conversion (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) not involving conversions to pointers to private or
+protected or ambiguous classes</P></LI>
+
+<LI><P>a qualification conversion</P></LI>
+
+</UL>
+
+<LI><P>the <I>handler</I> is <INS>of type <I>cv</I> <TT>T</TT> or <TT>const T&amp;</TT> where <TT>T</TT> is</INS> a pointer or pointer to member type
+and <TT>E</TT> is <TT>std::nullptr_t</TT>.</P></LI>
+
+</UL>
+
+</BLOCKQUOTE>
+
+<P>(This resolution also resolves <A HREF="729.html">issue 729</A>.)</P>
+
+<P><B>Notes from the March, 2011 meeting:</B></P>
+
+<P>This resolution would require an ABI change and was thus deferred
+for further consideration.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

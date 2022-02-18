@@ -1,0 +1,352 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2521</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2521"></A><H4>2521.
+  
+User-defined literals and reserved identifiers
+</H4>
+<B>Section: </B>12.6&#160; [<A href="https://wg21.link/over.literal">over.literal</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++23
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-01-07
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+<P>[Accepted as a DR at the February, 2023 meeting.]</P>
+
+<P>The example in 12.6 [<A href="https://wg21.link/over.literal#8">over.literal</A>] paragraph 8
+has the following lines:</P>
+
+<PRE>
+  double operator""_Bq(long double);  //<SPAN CLASS="cmnt"> OK: does not use the reserved identifier </SPAN>_Bq<SPAN CLASS="cmnt"> (5.10)</SPAN>
+  double operator"" _Bq(long double); //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required:</SPAN>
+                                      //<SPAN CLASS="cmnt"> uses the reserved identifier </SPAN>_Bq<SPAN CLASS="cmnt"> (5.10)</SPAN>
+</PRE>
+
+<P>The referenced rule in 5.11 [<A href="https://wg21.link/lex.name">lex.name</A>] is in
+bullet 3.1:</P>
+
+<BLOCKQUOTE>
+
+Each identifier that contains a double
+underscore <TT>__</TT> or begins with an underscore followed
+by an uppercase letter is reserved to the implementation for
+any use.
+
+</BLOCKQUOTE>
+
+<P>The distinction being drawn in the user-defined literal
+example apparently relies on the grammar for
+<I>literal-operator-id</I> at the beginning of
+12.6 [<A href="https://wg21.link/over.literal">over.literal</A>]:</P>
+
+<UL>
+<I>literal-operator-id:</I>
+<UL>
+<TT>operator</TT> <I>string-literal identifier</I><BR>
+<TT>operator</TT> <I>user-defined-string-literal</I>
+</UL>
+</UL>
+
+<P>The second production does not mention the syntactic
+non-terminal <I>identifier</I>, so
+the <I>literal-operator-id</I> <TT>operator""_Bq</TT>
+presumably does not run afoul of the restriction in
+5.11 [<A href="https://wg21.link/lex.name">lex.name</A>]. However, the grammar for
+<I>user-defined-string-literal</I> in
+5.13.9 [<A href="https://wg21.link/lex.ext">lex.ext</A>] is:</P>
+
+<UL>
+<I>user-defined-string-literal:</I>
+<UL>
+<I>string-literal ud-suffix</I>
+</UL>
+<BR>
+<I>ud-suffix:</I>
+<UL>
+<I>identifier</I>
+</UL>
+</UL>
+
+<P>There doesn't seem to be a rule that exempts the
+<I>identifier</I> that is the <I>ud-suffix</I> of a
+<I>user-defined-string-literal</I> from the restriction in
+5.11 [<A href="https://wg21.link/lex.name">lex.name</A>]. Either the example is incorrect
+or there needs to be a refinement of the rule in
+5.11 [<A href="https://wg21.link/lex.name">lex.name</A>].</P>
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>CWG feels that the ostensible significance of whitespace in this
+context is unfortunate. In addition, since the normative rule is not
+consistent with the example, CWG solicits EWG input on the handling of
+this issue via
+<A HREF="https://github.com/cplusplus/papers/issues/1367">cplusplus/papers#1367</A>.</P>
+
+<P><B>EWG 2023-02-06</B></P>
+
+<P>EWG had consensus on "The form of User Defined Literals that
+permits a space between the quotes and the name of the literal should
+be deprecated, and eventually removed. Additionally, the UDL name
+should be excluded from the restriction in 5.11 [<A href="https://wg21.link/lex.name">lex.name</A>] in the
+non-deprecated form (sans space)."</P>
+
+<P><B>Proposed resolution (February, 2023) [SUPERSEDED]:</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 5.11 [<A href="https://wg21.link/lex.name#3">lex.name</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+In addition, some identifiers <INS>appearing as a <I>token</I>
+or <I>pp-token</I></INS> are reserved for use by C++ implementations
+and shall not be used otherwise; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 12.6 [<A href="https://wg21.link/over.literal#1">over.literal</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>string-literal</I> or <I>user-defined-string-literal</I> in
+a <I>literal-operator-id</I> shall have no <I>encoding-prefix</I> and
+shall contain no characters other than the implicit terminating
+'\0'. The <I>ud-suffix</I> of the <I>user-defined-string-literal</I>
+or the identifier in a <I>literal-operator-id</I> is called
+a <I>literal suffix identifier</I>. <INS>The first form
+of <I>literal-operator-id</I> is deprecated.</INS> Some literal suffix
+identifiers are reserved for future standardization; see
+16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>]. A declaration
+whose <I>literal-operator-id</I> uses such a literal suffix identifier
+is ill-formed, no diagnostic required.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 12.6 [<A href="https://wg21.link/over.literal#8">over.literal</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  void operator ""<DEL> </DEL>_km(long double);         //<SPAN CLASS="cmnt"> OK</SPAN>
+  string operator "" _i18n(const char*, std::size_t); //<SPAN CLASS="cmnt"> OK<INS>, deprecated</INS></SPAN>
+  template &lt;char...&gt; double operator ""<DEL> </DEL>_\u03C0();  //<SPAN CLASS="cmnt"> OK, UCN for lowercase pi</SPAN>
+  float operator ""_e(const char*);          //<SPAN CLASS="cmnt"> OK</SPAN>
+  float operator ""E(const char*);          //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required:</SPAN>
+			    //<SPAN CLASS="cmnt"> reserved literal suffix ([usrlit.suffix], [lex.ext])</SPAN>
+  double operator""_Bq(long double);         //<SPAN CLASS="cmnt"> OK, does not use the reserved identifier _Bq ([lex.name])</SPAN>
+  double operator"" _Bq(long double);         //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required:</SPAN>
+			    //<SPAN CLASS="cmnt"> uses the reserved identifier _Bq ([lex.name])</SPAN>
+  float operator " "<DEL> </DEL>B(const char*);         //<SPAN CLASS="cmnt"> error: non-empty string-literal</SPAN>
+  string operator ""<DEL> </DEL>5X(const char*, std::size_t);  //<SPAN CLASS="cmnt"> error: invalid literal suffix identifier</SPAN>
+  double operator ""<DEL> </DEL>_miles(double);         //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+  template &lt;char...&gt; int operator ""<DEL> </DEL>_j(const char*); //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+  extern "C" void operator ""<DEL> </DEL>_m(long double);    //<SPAN CLASS="cmnt"> error: C language linkage</SPAN>
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Add a new subclause after D.6 [<A href="https://wg21.link/depr.impldec">depr.impldec</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P><B>D.9 Literal operator function declarations using an identifier
+[depr.lit]</B></P>
+
+<P>A <I>literal-operator-id</I> (12.6 [<A href="https://wg21.link/over.literal">over.literal</A>]) of the form</P>
+<PRE>
+    <TT>operator</TT> <I>string-literal identifier</I>
+</PRE>
+is deprecated.
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<P><B>CWG 2023-02-07</B></P>
+
+<P>Some implementers are concerned about the lack of space for
+implementation extensions.  The suggestion is to reserve literal
+suffix identifiers starting with two underscores for the
+implementation in 16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>]. EWG is invited to
+comment on that direction.</P>
+
+<P><B>EWG / LEWG 2023-02-07</B></P>
+
+<P>EWG and LEWG resolved to amend the proposed resolution for CWG2521
+to reserve literal suffix identifiers with double underscores anywhere
+for implementation use.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-02-09):</B></P>
+
+<OL>
+
+<LI>
+
+<P>Change in 5.11 [<A href="https://wg21.link/lex.name#3">lex.name</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+In addition, some identifiers <INS>appearing as a <I>token</I>
+or <I>pp-token</I></INS> are reserved for use by C++ implementations
+and shall not be used otherwise; no diagnostic is required.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>In 5.13.9 [<A href="https://wg21.link/lex.ext">lex.ext</A>], modify all occurrences as follows:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+operator ""<DEL> </DEL><I>X</I>
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 5.13.9 [<A href="https://wg21.link/lex.ext#7">lex.ext</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+long double operator ""<DEL> </DEL>_w(long double);
+std::string operator ""<DEL> </DEL>_w(const char16_t*, std::size_t);
+unsigned operator ""<DEL> </DEL>_w(const char*);
+int main() {
+  1.2_w;      //<SPAN CLASS="cmnt"> calls </SPAN>operator ""<DEL> </DEL>_w(1.2L)
+  u"one"_w;   //<SPAN CLASS="cmnt"> calls </SPAN>operator ""<DEL> </DEL>_w(u"one", 3)
+  12_w;       //<SPAN CLASS="cmnt"> calls </SPAN>operator ""<DEL> </DEL>_w("12")
+  "two"_w;    //<SPAN CLASS="cmnt"> error: no applicable literal operator</SPAN>
+}
+</PRE>
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 12.6 [<A href="https://wg21.link/over.literal#1">over.literal</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>string-literal</I> or <I>user-defined-string-literal</I> in
+a <I>literal-operator-id</I> shall have no <I>encoding-prefix</I> and
+shall contain no characters other than the implicit terminating
+'\0'. The <I>ud-suffix</I> of the <I>user-defined-string-literal</I>
+or the identifier in a <I>literal-operator-id</I> is called
+a <I>literal suffix identifier</I>. <INS>The first form
+of <I>literal-operator-id</I> is deprecated.</INS> Some literal suffix
+identifiers are reserved for future standardization; see
+16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>]. A declaration
+whose <I>literal-operator-id</I> uses such a literal suffix identifier
+is ill-formed, no diagnostic required.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+
+<P>Change in 12.6 [<A href="https://wg21.link/over.literal#8">over.literal</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  void operator ""<DEL> </DEL>_km(long double);         //<SPAN CLASS="cmnt"> OK</SPAN>
+  string operator "" _i18n(const char*, std::size_t); //<SPAN CLASS="cmnt"> OK<INS>, deprecated</INS></SPAN>
+  template &lt;char...&gt; double operator ""<DEL> </DEL>_\u03C0();  //<SPAN CLASS="cmnt"> OK, UCN for lowercase pi</SPAN>
+  float operator ""_e(const char*);          //<SPAN CLASS="cmnt"> OK</SPAN>
+  float operator ""E(const char*);          //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required:</SPAN>
+			    //<SPAN CLASS="cmnt"> reserved literal suffix ([usrlit.suffix], [lex.ext])</SPAN>
+  double operator""_Bq(long double);         //<SPAN CLASS="cmnt"> OK, does not use the reserved identifier _Bq ([lex.name])</SPAN>
+  double operator"" _Bq(long double);         //<SPAN CLASS="cmnt"> ill-formed, no diagnostic required:</SPAN>
+			    //<SPAN CLASS="cmnt"> uses the reserved identifier _Bq ([lex.name])</SPAN>
+  float operator " "<DEL> </DEL>B(const char*);         //<SPAN CLASS="cmnt"> error: non-empty string-literal</SPAN>
+  string operator ""<DEL> </DEL>5X(const char*, std::size_t);  //<SPAN CLASS="cmnt"> error: invalid literal suffix identifier</SPAN>
+  double operator ""<DEL> </DEL>_miles(double);         //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+  template &lt;char...&gt; int operator ""<DEL> </DEL>_j(const char*); //<SPAN CLASS="cmnt"> error: invalid parameter-declaration-clause</SPAN>
+  extern "C" void operator ""<DEL> </DEL>_m(long double);    //<SPAN CLASS="cmnt"> error: C language linkage</SPAN>
+</PRE>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 16.4.5.3.6 [<A href="https://wg21.link/usrlit.suffix">usrlit.suffix</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+Literal suffix identifiers (12.6 [<A href="https://wg21.link/over.literal">over.literal</A>]) that do not
+start with an underscore are reserved for future standardization.
+<INS>Literal suffix identifiers that contain a double
+underscore <TT>__</TT> are reserved for use by C++ implementations.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+
+<P>Add a new subclause after D.6 [<A href="https://wg21.link/depr.impldec">depr.impldec</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P><B>D.9 Literal operator function declarations using an identifier
+[depr.lit]</B></P>
+
+<P>A <I>literal-operator-id</I> (12.6 [<A href="https://wg21.link/over.literal">over.literal</A>]) of the form</P>
+<PRE>
+    <TT>operator</TT> <I>string-literal identifier</I>
+</PRE>
+is deprecated.
+</BLOCKQUOTE>
+
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

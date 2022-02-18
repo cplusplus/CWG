@@ -1,0 +1,275 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 298</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="298"></A><H4>298.
+  
+<TT>T::x</TT> when <TT>T</TT> is cv-qualified
+</H4>
+<B>Section: </B>6.5.5.2&#160; [<A href="https://wg21.link/class.qual">class.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Steve Adamczyk
+ &#160;&#160;&#160;
+
+ <B>Date: </B>7 Jul 2001<BR>
+
+
+<P>[Voted into WP at April 2003 meeting.]</P>
+
+<P>Can a typedef <TT>T</TT> to a cv-qualified class type be used
+in a qualified name <TT>T::x</TT>?</P>
+
+<PRE>
+    struct A { static int i; };
+    typedef const A CA;
+    int main () {
+      CA::i = 0;  // Okay?
+    }
+</PRE>
+
+<P>Suggested answer: Yes.  All the compilers I tried accept the test case.</P>
+
+<P><B>Proposed resolution (10/01):</B></P>
+
+<P>In 6.5.5.2 [<A href="https://wg21.link/class.qual#1">class.qual</A>] paragraph 1 add the indicated text:
+<BLOCKQUOTE>
+If the <I>nested-name-specifier</I> of a <I>qualified-id</I> nominates
+a class,  the
+name  specified  after  the  <I>nested-name-specifier</I> is looked up in the
+scope of the  class  (6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]),  except  for  the  cases
+listed  below.   The  name shall represent one or more members of that
+class or of one of its base classes (11.7 [<A href="https://wg21.link/class.derived">class.derived</A>]).
+<INS>If the <I>class-or-namespace-name</I> of the <I>nested-name-specifier</I>
+names a cv-qualified class type, it nominates the underlying class
+(the cv-qualifiers are ignored).</INS>
+</BLOCKQUOTE>
+</P>
+
+<P><B>Notes from 4/02 meeting:</B></P>
+
+<P>There is a problem in that <I>class-or-namespace-name</I> does not
+include typedef names for cv-qualified class types.  See
+9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4:</P>
+
+<P><B>Argument and text removed from proposed resolution
+(October 2002):</B></P>
+
+<P><B>9.2.4 [<A href="https://wg21.link/dcl.typedef#5">dcl.typedef</A>] paragraph 5:</B></P>
+<P>
+Here's a good question: in this example, should <TT>X</TT>
+be used as a name-for-linkage-purposes (FLP name)?
+</P>
+<PRE>
+  typedef class { } const X;
+</PRE>
+<P>
+Because a <I>type-qualifier</I> is parsed as a
+<I>decl-specifier</I>, it isn't possible to declare cv-qualified
+and cv-unqualified typedefs for a type in a single declaration.
+Also, of course, there's no way to declare a typedef for the
+cv-unqualified version of a type for which only a cv-qualified version
+has a name.
+So, in the above example, if <TT>X</TT> isn't used as the FLP name,
+then there can be no FLP name.
+Also note that a FLP name usually represents a parameter type, where
+top-level cv-qualifiers are usually irrelevant anyway.
+</P>
+<P>
+Data points: for the above example, Microsoft uses <TT>X</TT> as the
+FLP name; GNU and EDG do not.
+</P>
+<P>
+My recommendation: for consistency with the direction we're going on
+this issue, for simplicity of description (e.g., "the first
+<I>class-name</I> declared by the declaration"), and for (very
+slightly) increased utility, I think Microsoft has this right.
+</P>
+<BLOCKQUOTE>
+If the typedef declaration defines an unnamed class <INS>type</INS> (or
+enum <INS>type</INS>), the first <I>typedef-name</I> declared by the
+declaration to <DEL>be</DEL> <INS>have</INS> that <DEL>class</DEL> type
+<DEL>(or enum type)</DEL> <INS>or a cv-qualified version thereof</INS>
+is used to denote the class type (or enum type) for linkage purposes
+only (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+[<I>Example:</I> ...
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (October 2002):</B></P>
+
+<P><B>6.5.6 [<A href="https://wg21.link/basic.lookup.elab">basic.lookup.elab</A>] paragraphs 2 and 3:</B></P>
+<P>
+This sentence is deleted twice:
+</P>
+<BLOCKQUOTE>
+...
+<DEL>If this name lookup finds a <I>typedef-name</I>, the
+<I>elaborated-type-specifier</I> is ill-formed.</DEL>
+...
+</BLOCKQUOTE>
+<P>Note that the above changes are included in
+N1376 as part of the resolution of <A HREF="245.html">issue 245</A>.</P>
+
+<P><B>_N4567_.5.1.1 [<A href="https://wg21.link/expr.prim.general#7">expr.prim.general</A>] paragraph 7:</B></P>
+<P>
+This is only a note, and it is at least incomplete (and quite possibly
+inaccurate), despite (or because of) its complexity.
+I propose to delete it.
+</P>
+<BLOCKQUOTE>
+...
+[<I>Note:</I> a <I>typedef-name</I> that names a class is a
+<I>class-name</I> (11.3 [<A href="https://wg21.link/class.name">class.name</A>]).
+<DEL>Except as the <I>identifier</I> in the declarator for a constructor
+or destructor definition outside of a class
+<I>member-specification</I> (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>],
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]), a <I>typedef-name</I>
+that names a class may be used in a <I>qualified-id</I> to refer to
+a constructor or destructor.</DEL> ]
+</BLOCKQUOTE>
+
+<P><B>9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4:</B></P>
+<P>
+My first choice would have been to make this the primary statement about
+the equivalence of <I>typedef-name</I> and <I>class-name</I>,
+since the equivalence comes about as a result of a typedef declaration.
+Unfortunately, references to <I>class-name</I> point to
+11.3 [<A href="https://wg21.link/class.name">class.name</A>], so it
+would seem that the primary statement should be there instead.
+To avoid the possiblity of conflicts in the future, I propose to make
+this a note.
+</P>
+<BLOCKQUOTE>
+<INS>[<I>Note:</I></INS>
+A <I>typedef-name</I> that names a class <INS>type, or a cv-qualified
+version thereof,</INS> is <INS>also</INS> a <I>class-name</I>
+(11.3 [<A href="https://wg21.link/class.name">class.name</A>]).
+If a <I>typedef-name</I> is used <DEL>following the
+<I>class-key</I> in an <I>elaborated-type-specifier</I>
+(9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]),
+or in the <I>class-head</I> of a class declaration (Clause 11 [<A href="https://wg21.link/class">class</A>]),
+or is used as the <I>identifier</I> in the declarator for a
+constructor or destructor declaration (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>],
+11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]),</DEL>
+<INS>to identify the subject of an <I>elaborated-type-specifier</I>
+(9.2.9.5 [<A href="https://wg21.link/dcl.type.elab">dcl.type.elab</A>]),
+class declaration (Clause 11 [<A href="https://wg21.link/class">class</A>]),
+constructor declaration (11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>]),
+or destructor declaration (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]),</INS>
+the program is ill-formed.
+<INS>]</INS>
+[<I>Example:</I> ...
+</BLOCKQUOTE>
+
+<P><B>9.2.9.5 [<A href="https://wg21.link/dcl.type.elab#2">dcl.type.elab</A>] paragraph 2:</B></P>
+<P>
+This is the only remaining (normative) statement that a
+<I>typedef-name</I> can't be used in an
+<I>elaborated-type-specifier</I>.
+The reference to template <I>type-parameter</I> is deleted by the
+resolution of <A HREF="283.html">issue 283</A>.
+</P>
+<BLOCKQUOTE>
+...
+If the <I>identifier</I> resolves to a <I>typedef-name</I>
+<DEL>or a template <I>type-parameter</I></DEL>, the
+<I>elaborated-type-specifier</I> is ill-formed.
+[<I>Note:</I> ...
+</BLOCKQUOTE>
+
+<P><B>9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>] grammar rule <I>declarator-id</I>:</B></P>
+<P>
+When I looked carefully into the statement of the rule prohibiting a
+<I>typedef-name</I> in a constructor declaration, it appeared to me
+that this grammar rule (inadvertently?) allows something that's always
+forbidden semantically.
+</P>
+<BLOCKQUOTE>
+<UL>
+<I>declarator-id</I>:
+<UL>
+<I>id-expression</I>
+<BR><TT>::</TT><I><SUB>opt</SUB> nested-name-specifier<SUB>opt</SUB>
+<DEL>type-name</DEL> <INS>class-name</INS></I>
+</UL>
+</UL>
+</BLOCKQUOTE>
+
+<P><B>11.3 [<A href="https://wg21.link/class.name#5">class.name</A>] paragraph 5:</B></P>
+<P>
+Unlike the prohibitions against appearing in an
+<I>elaborated-type-specifier</I> or constructor or destructor
+declarator, each of which was expressed more than once, the prohibition
+against a <I>typedef-name</I> appearing in a <I>class-head</I>
+was previously stated only in 9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>].
+It seems to me that that prohibition belongs here instead.
+Also, it seems to me important to clarify that a <I>typedef-name</I>
+that is a <I>class-name</I> is still a <I>typedef-name</I>.
+Otherwise, the various prohibitions can be argued around easily, if
+perversely ("But that
+isn't a <I>typedef-name</I>, it's a <I>class-name</I>; it says
+so right there in 11.3 [<A href="https://wg21.link/class.name">class.name</A>].")
+</P>
+<BLOCKQUOTE>
+A <I>typedef-name</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>])
+that names a class <INS>type or a
+cv-qualified version thereof</INS> is
+<INS>also</INS> a <I>class-name</I>, but shall not be used
+<DEL>in an <I>elaborated-type-specifier</I>; see also
+9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>].</DEL>
+<INS>as the <I>identifier</I> in a <I>class-head</I>.</INS>
+</BLOCKQUOTE>
+
+<P><B>11.4.5 [<A href="https://wg21.link/class.ctor#3">class.ctor</A>] paragraph 3:</B></P>
+<P>
+The new nonterminal references are needed to really nail down what we're
+talking about here.
+Otherwise, I'm just eliminating redundancy.
+(A <I>typedef-name</I> that doesn't name a class type is no more
+valid here than one that does.)
+</P>
+<BLOCKQUOTE>
+<DEL>A <I>typedef-name</I> that names a class is a
+<I>class-name</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); however, a</DEL> <INS>A</INS>
+<I>typedef-name</I> <DEL>that names a class</DEL> shall not be
+used as the <DEL><I>identifier</I></DEL>
+<INS><I>class-name</I></INS> in the <DEL>declarator</DEL>
+<INS><I>declarator-id</I></INS> for a constructor declaration.
+</BLOCKQUOTE>
+
+<P><B>11.4.7 [<A href="https://wg21.link/class.dtor#1">class.dtor</A>] paragraph 1:</B></P>
+<P>
+The same comments apply here as to 11.4.5 [<A href="https://wg21.link/class.ctor">class.ctor</A>].
+</P>
+<BLOCKQUOTE>
+...
+<DEL>A <I>typedef-name</I> that names a class is a
+<I>class-name</I> (7.1.3); however, a</DEL> <INS>A</INS>
+<I>typedef-name</I> <DEL>that names a class</DEL> shall not be
+used as the <DEL><I>identifier</I></DEL> <INS><I>class-name</I>
+following the <TT>~</TT></INS> in the declarator for a destructor
+declaration.
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

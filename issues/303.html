@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 303</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="303"></A><H4>303.
+  
+Integral promotions on bit-fields
+</H4>
+<B>Section: </B>7.3.7&#160; [<A href="https://wg21.link/conv.prom">conv.prom</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>NAD
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Kiril Avdeiv
+ &#160;&#160;&#160;
+
+ <B>Date: </B>24 Jul 2001<BR>
+
+
+<P>Paragraph 3 of section 7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>] contains a statement
+saying that if a bit-field is larger than int or unsigned int, no integral
+promotions apply to it. This phrase needs further clarification, as it
+is hardly possible to fugure out what it means. See below.</P>
+
+<P>Assuming a machine with a size of general-purpose register equal 32
+bits (where a byte takes up 8 bits) and a C++ implementation where an
+int is 32 bits and a long is 64 bits. And the following snippet of
+code:</P>
+<PRE>
+    struct ExternalInterface {
+      long field1:36, field2:28;
+    };
+    int main() {
+      ExternalInterface  myinstance = { 0x100000001L, 0x12,};
+      if(myinstance.field1 &lt; 0x100000002L) { //do something }
+    }
+</PRE>
+
+<P>Does the standard prohibit the implementation from promoting field1's
+value into two general purpose registers? And imposes a burden of
+using shift machine instructions to work with the field's value? What
+else could that phrase mean?</P>
+
+<P>Either alternative is implementation specific, so I don't understand
+why the phrase "If the bit-field is larger yet, no integral promotions
+apply to it" made it to the standard.</P>
+
+<P><B>Notes from 10/01 meeting:</B></P>
+
+<P>The standard of course does not dictate what an implementation
+might do with regard to use of registers or shift instructions in
+the generated code.  The phrase cited means only that a larger
+bit-field does not undergo integral promotions, and therefore it
+retains the type with which it was declared (<TT>long</TT> in
+the above example).  The Core Working Group judged that this
+was sufficiently clear in the standard.</P>
+<P>Note that 11.4.10 [<A href="https://wg21.link/class.bit#1">class.bit</A>] paragraph 1
+indicates that any bits in excess of the size of the underlying type
+are padding bits and do not participate in the value representation.
+Therefore the <TT>field1</TT> bit field in the above example is not
+capable of holding the indicated values, which require more than 32 bits.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

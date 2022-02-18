@@ -1,0 +1,226 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2369</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2369"></A><H4>2369.
+  
+Ordering between constraints and substitution
+</H4>
+<B>Section: </B>13.10.3&#160; [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Agustin Berg&#233;
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-10-09<BR>
+
+
+<P>[Accepted at the November, 2020 meeting.]</P>
+
+<P>The specification of template argument deduction in
+13.10.3 [<A href="https://wg21.link/temp.deduct#5">temp.deduct</A>] paragraph 5 specifies the order of
+processing as:</P>
+
+<OL>
+<LI><P>substitute explicitly-specified template arguments
+throughout the template parameter list and type;</P></LI>
+
+<LI><P>deduce template arguments from the resulting function
+signature;</P></LI>
+
+<LI><P>check that non-dependent parameters can be initialized from
+their arguments;</P></LI>
+
+<LI><P>substitute deduced template arguments into the template
+parameter list and particularly into any needed default arguments
+to form a complete template argument list;;</P></LI>
+
+<LI><P>substitute resulting template arguments throughout the
+type;</P></LI>
+
+<LI><P>check that the associated constraints are satisfied;</P></LI>
+
+<LI><P>check that remaining parameters can be initialized from
+their arguments.</P></LI>
+
+</OL>
+
+<P>This ordering yields unexpected differences between concept and
+SFINAE implementations. For example:</P>
+
+<PRE>
+   template &lt;typename T&gt;
+   struct static_assert_integral {
+     static_assert(std::is_integral_v&lt;T&gt;);
+     using type = T;
+   };
+
+   struct fun {
+     template &lt;typename T,
+       typename Requires = std::enable_if_t&lt;std::is_integral_v&lt;T&gt;&gt;&gt;
+       typename static_assert_integral&lt;T&gt;::type
+     operator()(T) {}
+   };
+</PRE>
+
+<P>Here the substitution ordering guarantees are leveraged to prevent
+<TT>static_assert_integral&lt;T&gt;</TT> from being instantiated
+when the constraints are not satisfied. As a result, the following
+assertion holds:</P>
+
+<PRE>
+   static_assert(!std::is_invocable_v&lt;fun, float&gt;);
+</PRE>
+
+<P>A version of this code written using constraints
+unexpectedly behaves differently:</P>
+
+<PRE>
+   struct fun {
+     template &lt;typename T&gt;
+       requires std::is_integral_v&lt;T&gt;
+     typename static_assert_integral&lt;T&gt;::type
+     operator()(T) {}
+   };
+</PRE>
+
+<P>or</P>
+
+<PRE>
+   struct fun {
+     template &lt;typename T&gt;
+     typename static_assert_integral&lt;T&gt;::type
+     operator()(T) requires std::is_integral_v&lt;T&gt; {}
+   };
+
+   static_assert(!std::is_invocable_v&lt;fun, float&gt;); //<SPAN CLASS="cmnt"> error: static assertion failed: </SPAN>std::is_integral_v&lt;T&gt;
+</PRE>
+
+<P>Perhaps steps 5 and 6 should be interchanged.</P>
+
+
+
+<P><B>Proposed resolution (August, 2020):</B></P>
+
+<OL>
+<LI><P>Delete paragraph 10 of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]:</P></LI>
+
+<BLOCKQUOTE>
+
+<P><DEL>If deduction succeeds for all parameters that
+contain <I>template-parameter</I>s that participate in
+template argument deduction, and all template arguments are
+explicitly specified, deduced, or obtained from default
+template arguments, remaining parameters are then compared
+with the corresponding arguments. For each
+remaining parameter P with a type that was non-dependent
+before substitution of any explicitly-specified template
+arguments, if the corresponding argument A cannot be
+implicitly converted to P, deduction fails.  [<I>Note 2:</I>
+Parameters with dependent types in which
+no <I>template-parameter</I>s participate in template
+argument deduction, and parameters that became non-dependent
+due to substitution of explicitly-specified template
+arguments, will be checked during overload
+resolution. &#8212;<I>end note</I>]</DEL></P>
+
+<P><DEL>[<I>Example 9:</I></DEL></P>
+
+<PRE>
+<DEL>  template &lt;class T&gt; struct Z {
+    typedef typename T::x xx;
+  };
+  template &lt;class T&gt; typename Z&lt;T&gt;::xx f(void *, T); //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;class T&gt; void f(int, T);                 //<SPAN CLASS="cmnt"> #2</SPAN>
+  struct A {} a;
+  int main() {
+    f(1, a);   //<SPAN CLASS="cmnt"> OK, deduction fails for #1 because there is no conversion from </SPAN>int<SPAN CLASS="cmnt"> to </SPAN>void*
+  }</DEL>
+</PRE>
+
+<P><DEL>&#8212;<I>end example</I>]</DEL></P>
+
+</BLOCKQUOTE>
+
+<LI><P>Change 13.10.3.1 [<A href="https://wg21.link/temp.deduct.general#5">temp.deduct.general</A>] paragraph 5 as follows:</P></LI>
+
+<BLOCKQUOTE>
+
+<P>...When all template arguments have been deduced or obtained
+from default template arguments, all uses of template
+parameters in the template parameter list of the template
+<DEL>and the function type</DEL> are replaced with the
+corresponding deduced or default argument values. If the
+substitution results in an invalid type, as described above,
+type deduction fails. If the function template has
+associated constraints (13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]), those
+constraints are checked for satisfaction
+(13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.constr</A>]). If the constraints are not
+satisfied, type deduction fails. <INS>In the context of a
+function call, if type deduction has not yet failed, then
+for those function parameters for which the function call
+has arguments, each function parameter with a type that was
+non-dependent before substitution of any explicitly-specified
+template arguments is checked against its corresponding
+argument; if the corresponding argument cannot be implicitly
+converted to the parameter type, type deduction fails.
+[<I>Note:</I> Overload resolution will check the other
+parameters, including parameters with dependent types in
+which no template parameters participate in template
+argument deduction and parameters that became non-dependent
+due to substitution of explicitly-specified template
+arguments. &#8212;<I>end note</I>] If type deduction has not
+yet failed, then all uses of template parameters in the
+function type are replaced with the corresponding deduced or
+default argument values. If the substitution results in an
+invalid type, as described above, type deduction fails.
+[<I>Example:</I></INS>
+</P>
+
+<PRE>
+<INS>  template &lt;class T&gt; struct Z {
+    typedef typename T::x xx;
+  };
+  template &lt;class T&gt; concept C = requires { typename T::A; };
+  template &lt;C T&gt; typename Z&lt;T&gt;::xx f(void *, T); //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;class T&gt; void f(int, T);             //<SPAN CLASS="cmnt"> #2</SPAN>
+  struct A {} a;
+  struct ZZ {
+    template &lt;class T, class = typename Z&lt;T&gt;::xx&gt; operator T *();
+    operator int();
+  };
+  int main() {
+    ZZ zz;
+    f(1, a);   //<SPAN CLASS="cmnt"> OK, deduction fails for #1 because there is no conversion from </SPAN>int<SPAN CLASS="cmnt"> to </SPAN>void*
+    f(zz, 42); //<SPAN CLASS="cmnt"> OK, deduction fails for #1 because </SPAN>C&lt;int&gt;<SPAN CLASS="cmnt"> is not satisfied</SPAN>
+  }</INS>
+</PRE>
+
+<P><INS>&#8212;<I>end example</I>]</INS></P>
+
+</BLOCKQUOTE>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,117 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2486</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2486"></A><H4>2486.
+  
+Call to <TT>noexcept</TT> function via <TT>noexcept(false)</TT> pointer/lvalue
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-03-27<BR>
+
+
+<P>[Accepted as a DR at the October, 2021 meeting.]</P>
+
+<P>According to 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6,</P>
+
+<BLOCKQUOTE>
+
+Calling a function through an expression whose function type
+is different from the function type of the called function's
+definition results in undefined behavior.
+
+</BLOCKQUOTE>
+
+<P>This restriction should exempt calling a <TT>noexcept</TT>
+function where the function type of the expression is
+identical except that it is <TT>noexcept(false)</TT>.</P>
+
+<P>In addition, 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#7">expr.static.cast</A>] paragraph 7
+currently forbids <TT>static_cast</TT> from converting a
+function pointer or member function pointer from
+<TT>noexcept(false)</TT> to <TT>noexcept</TT>:</P>
+
+<BLOCKQUOTE>
+
+The inverse of any standard conversion sequence
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) not containing an
+lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]), null
+pointer (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), null member pointer
+(7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]), boolean
+(7.3.15 [<A href="https://wg21.link/conv.bool">conv.bool</A>]), or function pointer
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]) conversion, can be performed
+explicitly using static_cast.
+
+</BLOCKQUOTE>
+
+<P>This restriction should also be relaxed, allowing
+binding a constexpr reference to the result of the
+reversed conversion.</P>
+
+
+
+<P><B>Notes from the August, 2021 teleconference:</B></P>
+
+<P>CWG agreed that it should be permitted to call a
+<TT>noexcept</TT> function via an expression that is
+<TT>noexcept(false)</TT>; since the implicit conversion
+is allowed, the failure to allow the call is clearly
+just an oversight. The question of whether to allow the
+<TT>static_cast</TT> in the inverse direction, as well as
+whether to allow calling a <TT>noexcept(false)</TT> function
+via a <TT>noexcept</TT> expression (which would result in
+undefined behavior only if the function actually threw an
+exception) was deemed to be a matter for EWG and was thus
+split off into <A HREF="2500.html">issue 2500</A>.
+</P>
+
+<P><B>Proposed resolution (September, 2021):</B></P>
+
+<P>Change 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Calling a function through an expression whose function type
+<INS><TT>E</TT></INS> is different from the function
+type <INS><TT>F</TT></INS> of the called function's
+definition results in undefined behavior <INS>unless the
+type &#8220;pointer to <TT>F</TT>&#8221; can be converted to
+the type &#8220;pointer to <TT>E</TT>&#8221; via a function
+pointer conversion
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>])</INS>. <INS>[<I>Note:</I> The
+exception applies when the expression has the type of a
+potentially-throwing function, but the called function has a
+non-throwing exception specification, and the function types
+are otherwise the same. &#8212;<I>end note</I>]</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

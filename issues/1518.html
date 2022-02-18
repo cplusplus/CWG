@@ -1,0 +1,159 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1518</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1518"></A><H4>1518.
+  
+Explicit default constructors and copy-list-initialization
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2012-07-08<BR>
+
+
+<P>[Adopted at the June, 2016 meeting as paper P0398R0.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct A {
+   explicit A() = default;
+  };
+
+  struct B : A {
+   explicit B() = default;
+  };
+
+  struct C {
+   explicit C();
+  };
+
+  struct D : A {
+   C c;
+   explicit D() = default;
+  };
+
+  template&lt;typename T&gt; void f() {
+   T t = {};
+  }
+  template&lt;typename T&gt; void g() {
+   void x(T t);
+   x({});
+  }
+</PRE>
+
+<P>The question is whether <TT>f&lt;B&gt;</TT>, f<TT>&lt;C&gt;</TT>,
+<TT>f&lt;D&gt;</TT>, <TT>g&lt;B&gt;</TT>, <TT>g&lt;C&gt;</TT>, and
+<TT>g&lt;D&gt;</TT> are well-formed or ill-formed.
+</P>
+
+<P>The crux here is whether 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] is the
+governing law in each of these cases. If it is, the initialization is
+ill-formed, because copy-list-initialization has selected an explicit
+constructor. The standard seems clear that <TT>f&lt;A&gt;</TT> and
+<TT>g&lt;A&gt;</TT> are valid (because <TT>A</TT> is an aggregate, so
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] is not reached nor applicable),
+<TT>f&lt;B&gt;</TT> is valid (because value-initialization does not
+call the default constructor, so 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] is not
+reached), and that <TT>g&lt;B&gt;</TT>, <TT>g&lt;C&gt;</TT>, and
+<TT>g&lt;D&gt;</TT> are ill-formed (because 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] is reached from 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>] and
+selects an explicit constructor). The difference between
+<TT>f&lt;B&gt;</TT> and <TT>g&lt;B&gt;</TT> is troubling.
+</P>
+
+<P>For <TT>f&lt;C&gt;</TT> and <TT>f&lt;D&gt;</TT>, it's not clear
+whether the default constructor call within value-initialization
+within list-initialization uses 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] &#8212;
+but some form of overload resolution seems to be implied, since
+presumably we want to apply SFINAE to variadic constructor templates,
+diagnose classes which have multiple default constructors through the
+addition of default arguments, and the like.
+</P>
+
+<P>It has been suggested that perhaps we are supposed to reach
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] for an empty initializer list for a
+non-aggregate class with a default constructor only when we're coming
+from 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>], and not when 9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>] delegates to value-initialization. That would make all
+the <TT>f</TT>s valid, but <TT>g&lt;B&gt;</TT>, <TT>g&lt;C&gt;</TT>,
+and <TT>g&lt;D&gt;</TT> ill-formed.
+</P>
+
+<P>11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#2">class.conv.ctor</A>] paragraph 2 says explicit constructors
+are only used for direct-initialization or casts, which argues for at
+least <TT>f&lt;C&gt;</TT>, <TT>f&lt;D&gt;</TT>, <TT>g&lt;C&gt;</TT>
+and <TT>g&lt;D&gt;</TT> being ill-formed.
+</P>
+
+<P>See also <A HREF="2116.html">issue 2116</A>.</P>
+
+
+
+<P><B>Proposed resolution (May, 2015): [SUPERSEDED]</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1630.html">issue 1630</A>: default initialization
+now uses 12.2.2.4 [<A href="https://wg21.link/over.match.ctor">over.match.ctor</A>], which now permits explicit
+constructors for default-initialization.</P>
+
+<P><B>Additional note, October, 2015:</B></P>
+
+<P>It has been suggested that the resolution of
+<A HREF="1630.html">issue 1630</A> went too far in
+allowing use of <TT>explicit</TT> constructors for default
+initialization, and that default initialization should be
+considered to model copy initialization instead.  The
+resolution of this issue would provide an opportunity to
+adjust that.  </P>
+
+<P><B>Proposed resolution (October, 2015):</B></P>
+
+<P>Change 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), copy-initialized from an
+expression of the same or a derived class type
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or default-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload resolution selects the
+constructor. For direct-initialization <DEL>or
+default-initialization</DEL>, the candidate functions are
+all the constructors of the class of the object being
+initialized. For copy-initialization, the candidate
+functions are all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument
+list is the <I>expression-list</I>
+or <I>assignment-expression</I> of the initializer.
+
+</BLOCKQUOTE>
+
+
+
+<BR><BR>
+</BODY>
+</HTML>

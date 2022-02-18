@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1737</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1737"></A><H4>1737.
+  
+Type dependence of call to a member of the current instantiation
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>C++14
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-08-14<BR>
+
+
+<P>[Moved to DR at the February, 2014 meeting.]</P>
+
+
+
+
+
+<P>Since we don't deduce the return type of a function temploid until it is
+instantiated, it seems that a call to such a function as a member of the
+current instantiation must have a dependent type, but
+13.8.3.3 [<A href="https://wg21.link/temp.dep.expr">temp.dep.expr</A>] doesn't appear to say that.  For example:</P>
+
+<PRE>
+   template&lt;typename T&gt; struct X { typedef int type; };
+   template&lt;typename T&gt; struct S {
+     auto f() { return 0; }
+     void g() {
+       X&lt;decltype(f())&gt;::type x; //<SPAN CLASS="cmnt"> </SPAN>typename<SPAN CLASS="cmnt"> presumably needed here</SPAN>
+     }
+   }
+</PRE>
+
+<P>Presumably there should be a bullet in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#8">temp.dep.type</A>] paragraph 8
+for this case.</P>
+
+<P><B>Proposed resolution (November, 2013):</B></P>
+
+<P>Change 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An <I>id-expression</I> is type-dependent if it contains</P>
+
+<UL>
+<LI><P>an <I>identifier</I> associated by name lookup with one or more
+declarations declared with a dependent type,</P></LI>
+
+<LI><P><INS>an <I>identifier</I> associated by name lookup with one or
+more declarations of member functions of the current instantiation
+declared with a return type that contains a placeholder type
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]),</INS></P></LI>
+
+<LI><P>a <I>template-id</I> that is dependent,</P></LI>
+
+<LI><P>a <I>conversion-function-id</I> that specifies a dependent type,
+or</P></LI>
+
+<LI><P>a <I>nested-name-specifier</I> or a <I>qualified-id</I> that names a
+member of an unknown specialization;</P></LI>
+
+</UL>
+
+<P>or if it names a dependent member...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2828</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2828"></A><H4>2828.
+  
+Ambiguous interpretation of C-style cast
+</H4>
+<B>Section: </B>7.6.3&#160; [<A href="https://wg21.link/expr.cast">expr.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-03-21<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>(From editorial issue
+<A HREF="https://github.com/cplusplus/draft/issues/5355">5355</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+   int*** ptr = 0;
+   auto t = (int const*const*const*)ptr;
+</PRE>
+
+<P>There is more than one way how this can be interpreted as
+a <TT>static_cast</TT> followed by a <TT>const_cast</TT>, namely:</P>
+
+<PRE>
+  const_cast&lt;int const * const * const * &gt;(static_cast&lt;int * * const * &gt;(ptr));
+  const_cast&lt;int const * const * const * &gt;(static_cast&lt;int * const * const * &gt;(ptr));
+</PRE>
+
+<P>Subclause 7.6.3 [<A href="https://wg21.link/expr.cast#4">expr.cast</A>] paragraph 4 makes such a program ill-formed:</P>
+
+<BLOCKQUOTE>
+
+... If a conversion can be interpreted in more than one way as a
+<TT>static_cast</TT> followed by a <TT>const_cast</TT>, the conversion
+is ill-formed.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-20):</B></P>
+
+<P>Change in 7.6.3 [<A href="https://wg21.link/expr.cast#4">expr.cast</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If a conversion can be interpreted in more than one of the ways listed
+above, the interpretation that appears first in the list is used, even
+if a cast resulting from that interpretation is ill-formed. If a
+<DEL>conversion can be interpreted in more than one way as
+a</DEL> <TT>static_cast</TT> followed by a <TT>const_cast</TT> <INS>is
+used and the conversion can be interpreted in more than one way as
+such</INS>, the conversion is ill-formed.
+[ Example 1 :
+<PRE>
+  struct A { };
+  struct I1 : A { };
+  struct I2 : A { };
+  struct D : I1, I2 { };
+  A* foo( D* p ) {
+    return (A*)( p );  //<SPAN CLASS="cmnt"> ill-formed static_cast interpretation</SPAN>
+  }
+
+<INS>  int*** ptr = 0;
+  auto t = (int const*const*const*)ptr;  //<SPAN CLASS="cmnt"> OK, </SPAN>const_cast<SPAN CLASS="cmnt"> interpretation</SPAN>
+
+  struct S {
+    operator const int*();
+    operator volatile int*();
+  };
+  int *p = (int*)S();  //<SPAN CLASS="cmnt"> error: two possible interpretations using </SPAN>static_cast<SPAN CLASS="cmnt"> followed by </SPAN>const_cast</INS>
+</PRE>
+-- end example ]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

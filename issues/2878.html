@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2878</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2878"></A><H4>2878.
+  
+C-style casts to reference types
+</H4>
+<B>Section: </B>7.6.3&#160; [<A href="https://wg21.link/expr.cast">expr.cast</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-20
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/522">#522</A>.)</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {};
+  struct B : A {};
+  const B b;
+  void f() {
+    (A &amp;&amp;)b;          //<SPAN CLASS="cmnt"> #1</SPAN>
+    const_cast&lt;A &amp;&amp;&gt;(static_cast&lt;const A &amp;&gt;(b));
+    const_cast&lt;A &amp;&amp;&gt;(static_cast&lt;const volatile A &amp;&amp;&gt;(b));
+    const_cast&lt;A &amp;&amp;&gt;(static_cast&lt;A&gt;(b));  //<SPAN CLASS="cmnt"> slicing interpretation</SPAN>
+  }
+</PRE>
+
+<P>Is #1 ill-formed because of the three alternative valid
+interpretations shown in the following lines?</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct B { };
+  const B f();
+  B&amp; b1 = const_cast&lt;B&amp;&gt;(static_cast&lt;const B&amp;&gt;(f())); //<SPAN CLASS="cmnt"> OK</SPAN>
+  B&amp; b2 = (B&amp;)f(); //<SPAN CLASS="cmnt"> ???</SPAN>
+</PRE>
+
+<P>There is implementation divergence: gcc and MSVC accept, clang and
+EDG accept <TT>b1</TT> and reject <TT>b2</TT>.  If <TT>f</TT> is
+changed to return non-const, gcc also rejects <TT>b2</TT>.</P>
+
+<P>For another example:</P>
+
+<PRE>
+  struct A {
+    operator const B() = delete;
+  } a;
+
+  B&amp; b3 = const_cast&lt;B&amp;&gt;(static_cast&lt;const B&amp;&gt;(a)); //<SPAN CLASS="cmnt"> error, deleted</SPAN>
+  B&amp; b4 = (B&amp;)a; //<SPAN CLASS="cmnt"> error or reinterpret_cast?</SPAN>
+</PRE>
+
+<P>Implementations agree that <TT>b3</TT> is ill-formed for selecting
+the deleted conversion operator function, but <TT>b4</TT> is
+considered a <TT>reinterpret_cast</TT> by the majority of
+implementations.</P>
+
+<P><B>CWG 2024-05-17</B></P>
+
+<P>Casting away rvalueness in example <TT>b2</TT> is surprising to
+perform in a C-style cast.  The <TT>b4</TT> example is also
+interesting, because the <TT>reinterpret_cast</TT> interpretation
+might be undesirable.  EWG is requested to offer guidance, preferably
+in the form of a comprehensive mental model.  The current model
+"static_cast, then const_cast" might not be appropriate.</P>
+
+<P>
+See <A HREF="https://github.com/cplusplus/papers/issues/1970">paper issue 1970</A>.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

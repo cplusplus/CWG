@@ -1,0 +1,124 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 197</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="197"></A><H4>197.
+  
+Issues with two-stage lookup of dependent names
+</H4>
+<B>Section: </B>13.8.4.2&#160; [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Derek Inglis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Jan 2000<BR>
+
+
+
+<P>[Voted into WP at October 2005 meeting.]</P>
+
+
+
+<P>The example in
+13.8 [<A href="https://wg21.link/temp.res#9">temp.res</A>] paragraph 9
+is incorrect,
+according to 13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>]
+.  The
+example reads,</P>
+
+<PRE>
+    void f(char);
+
+    template &lt;class T&gt; void g(T t)
+    {
+        f(1);        // f(char);
+        f(T(1));     // <I>dependent</I>
+        f(t);        // <I>dependent</I>
+        dd++;        // <I>not dependent</I>
+                     // <I>error: declaration for dd not found</I>
+    }
+
+    void f(int);
+
+    double dd;
+    void h()
+    {
+        g(2);        // <I>will cause one call of </I>f(char)<I> followed</I>
+                     // <I>by two calls of </I>f(int)
+        g('a');      // <I>will cause three calls of </I>f(char)
+    }
+</PRE>
+
+Since 13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>]
+ says that
+only Koenig lookup is done from the instantiation context, and since
+6.5.4 [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ says that
+fundamental types have no associated namespaces, either the example is
+incorrect (and <TT>f(int)</TT> will never be called) or the
+specification in 13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>]
+
+is incorrect.
+
+<P><B>Notes from 04/00 meeting:</B></P>
+
+<P>The core working group agreed that the example as written is
+incorrect and should be reformulated to use a class type instead of a
+fundamental type.  It was also decided to open a new issue dealing
+more generally with Koenig lookup and fundamental types.</P>
+
+<P>(See also issues <A HREF="213.html">213</A> and
+<A HREF="225.html">225</A>.)</P>
+
+<P><B>Proposed resolution (April, 2005):</B></P>
+
+<P>Change the example in 13.8 [<A href="https://wg21.link/temp.res#9">temp.res</A>] paragraph 9 as
+follows:</P>
+
+<PRE>
+    void f(char);
+
+    template &lt;class T&gt; void g(T t)
+    {
+        f(1);        // f(char);
+        f(T(1));     // <I>dependent</I>
+        f(t);        // <I>dependent</I>
+        dd++;        // <I>not dependent</I>
+                     // <I>error: declaration for </I>dd<I> not found</I>
+    }
+
+    <INS>enum E { e };</INS>
+    void f(<DEL>int</DEL><INS>E</INS>);
+
+    double dd;
+    void h()
+    {
+        g(<DEL>2</DEL><INS>e</INS>);       // <I>will cause one call of </I>f(char)<I> followed</I>
+                     // <I>by two calls of </I>f(<DEL>int</DEL><INS>E</INS>)
+        g('a');      // <I>will cause three calls of</I> f(char)
+    }
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>

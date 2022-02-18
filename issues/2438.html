@@ -1,0 +1,82 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2438</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2438"></A><H4>2438.
+  
+Problems in the specification of qualification conversions
+</H4>
+<B>Section: </B>7.3.6&#160; [<A href="https://wg21.link/conv.qual">conv.qual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-08-14<BR>
+
+
+<OL>
+<LI><P>A type has multiple cv-decompositions, and
+7.3.6 [<A href="https://wg21.link/conv.qual#3">conv.qual</A>] paragraph 3 does not say which one
+to use when determining the cv-combined type. Should this be
+the longest decomposition that works, i.e., the greatest
+<I>n</I> for which you can decompose both types? (We used to
+refer to the cv-qualification signature, which implicitly
+meant to take the longest decomposition.)</P></LI>
+
+<LI><P>When computing the cv-combined types of two types
+<TT>T1</TT> and <TT>T2</TT>, if <TT>U1</TT> and <TT>U2</TT>
+are different, shouldn't we add <TT>const</TT> to all layers
+above that in the type?</P></LI>
+
+<LI><P>
+<I>cv<SUB>0</SUB><SUP>3</SUP></I> is left unspecified
+by the wording in paragraph 3.</P></LI>
+
+<LI><P>We are too eager to replace a <I>P<SUB>i</SUB><SUP>3</SUP></I>
+with &#8220;array of unknown bound of&#8221;. That should only
+happen if both <I>P<SUB>i</SUB><SUP>1</SUP></I> and
+<I>P<SUB>i</SUB><SUP>2</SUP></I> are array types, or we end up
+not forming a type <I>T3</I> that is similar to <I>T1</I>. For
+example, the cv-combined type of <TT>int**</TT> and
+<TT>const int (*)[]</TT>, when decomposed with <I>n</I> == 2,
+is required to be <TT>const int (*)[]</TT> by the bulleted
+rules, and that type is not similar to the original <TT>T1</TT>.</P></LI>
+
+<LI><P>In various places, we have operators that say,
+&#8220;if one operand is of pointer type, apply array-to-pointer
+conversions, pointer conversions, and qualification conversions
+to bring the two operands to their composite pointer type,&#8221;
+but that doesn't work, because the definition of composite
+pointer type can't cope with one operand being a pointer and the
+other being an array. We either need to define the composite
+pointer type of a pointer and an array (and, if that's done in
+terms of computing the cv-combined type, be careful to ensure
+that computing the cv-combined type actually works in that case)
+or to perform the array-to-pointer conversion before considering
+the composite pointer type.</P></LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

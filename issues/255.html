@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 255</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="255"></A><H4>255.
+  
+Placement deallocation functions and lookup ambiguity
+</H4>
+<B>Section: </B>11.4.11&#160; [<A href="https://wg21.link/class.free">class.free</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD6
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>26 Oct 2000<BR>
+
+
+<P>[Accepted at the November, 2020 meeting as part of paper P1787R6 and
+moved to DR at the February, 2021 meeting.]</P>
+
+<P>Paragraph 4 of 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>] speaks of looking up a
+deallocation function.  While it is an error if a placement
+deallocation function alone is found by this lookup, there seems to be
+an assumption that a placement deallocation function and a usual
+deallocation function can both be declared in a given class scope
+without creating an ambiguity.  The normal mechanism by which
+ambiguity is avoided when functions of the same name are declared in
+the same scope is overload resolution; however, there is no mention of
+overload resolution in the description of the lookup.  In fact, there
+appears to be nothing in the current wording that handles this case.
+That is, the following example appears to be ill-formed, according to
+the current wording:</P>
+
+<PRE>
+    struct S {
+        void operator delete(void*);
+        void operator delete(void*, int);
+    };
+    void f(S* p) {
+        delete p;    // ill-formed: ambiguous operator delete
+    }
+</PRE>
+
+<P>
+<B>Suggested resolution</B> (Mike Miller, March 2002):</P>
+
+<P>I think you might get the right effect by replacing
+the last sentence of 11.4.11 [<A href="https://wg21.link/class.free#4">class.free</A>] paragraph 4
+with something like:</P>
+<BLOCKQUOTE>
+After removing all placement deallocation functions,
+the result of the lookup shall contain an unambiguous
+and accessible deallocation function.
+</BLOCKQUOTE>
+
+<P><B>Additional notes (October, 2012):</B></P>
+
+<P>This issue should be reconsidered in list of paper N3396, as it would
+add additional overloads for allocation and deallocation functions.
+
+</P>
+
+<P>The term &#8220;usual deallocation function&#8221; is defined in
+6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation#2">basic.stc.dynamic.deallocation</A>] paragraph 2; perhaps it could be used to
+good effect in 7.6.2.9 [<A href="https://wg21.link/expr.delete#7">expr.delete</A>] paragraph 7.  The specifications
+in 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>] paragraphs 4 and 5 should probably also be
+moved into 7.6.2.9 [<A href="https://wg21.link/expr.delete">expr.delete</A>].</P>
+
+<BR><BR>
+</BODY>
+</HTML>

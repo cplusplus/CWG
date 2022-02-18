@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2748</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2748"></A><H4>2748.
+  
+Accessing static data members via null pointer
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-13<BR>
+
+
+<P>[Accepted as a DR at the March, 2024 meeting.]</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct C { static int foo; };
+  C* c = nullptr;
+</PRE>
+
+<P>The behavior of <TT>(*c).foo</TT> is clearly undefined per
+7.6.1.5 [<A href="https://wg21.link/expr.ref#1">expr.ref</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+The postfix expression before the dot or arrow is evaluated ...
+
+</BLOCKQUOTE>
+
+<P>However, the treatment of <TT>c-&gt;foo</TT> is less clear, because
+the transformation to the form <TT>(*(E1)).E2</TT> occurs later.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-12-15):</B></P>
+
+<P>Move a part of 7.6.1.5 [<A href="https://wg21.link/expr.ref#1">expr.ref</A>] paragraph 1 to before paragraph 3
+and edit as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>A postfix expression followed by a dot . or an arrow -&gt;, optionally
+followed by the keyword template, and then followed by
+an <I>id-expression</I>, is a postfix expression. <DEL>The postfix
+expression before the dot or arrow is evaluated; [ Footnote: ... ] the
+result of that evaluation, together with the <I>id-expression</I>,
+determines the result of the entire postfix expression.</DEL>  [<I>Note
+1:</I> If the keyword template is used, the following unqualified name
+is considered to refer to a template (13.3 [<A href="https://wg21.link/temp.names">temp.names</A>]).  If
+a <I>simple-template-id</I> results and is followed by a ::,
+the <I>id-expression</I> is a <I>qualified-id</I>. &#8212;<I>end
+note</I>]
+</P>
+
+<P>For the first option (dot) the first expression shall be a
+glvalue. For the second option (arrow) the first expression shall be a
+prvalue having pointer type. The expression E1-&gt;E2 is converted to
+the equivalent form (*(E1)).E2; the remainder of
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>] will address only the first option
+(dot). [ Footnote: ... ]
+</P>
+
+<P class="ins">
+The postfix
+expression before the dot is evaluated; [ Footnote: ... ] the
+result of that evaluation, together with the <I>id-expression</I>,
+determines the result of the entire postfix expression.
+</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

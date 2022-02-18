@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1758</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1758"></A><H4>1758.
+  
+Explicit conversion in copy/move list initialization
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD4
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-09-21<BR>
+
+
+<P>[Moved to DR at the November, 2014 meeting.]</P>
+
+
+
+<P>Consider the following example:</P>
+
+<PRE>
+  struct X { X(); };
+  struct Y { explicit operator X(); } y;
+  X x{y};
+</PRE>
+
+<P>This appears to be ill-formed, although the corresponding case with
+parentheses is well-formed.  There seem to be two factors that prevent
+this from being accepted:</P>
+
+<P>First, the special provision allowing an explicit conversion function to be
+used when initializing the parameter of a copy/move constructor is in
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], and this case takes us to
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] instead.</P>
+
+<P>Second, 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4 says that in this
+case, because we are in 12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>], and we have a single
+argument, and we are calling a copy/move constructor, we are not allowed to
+consider a user-defined conversion sequence for the argument.</P>
+
+<P>Similarly, in an example like</P>
+
+<PRE>
+  struct A {
+   A() {}
+   A(const A &amp;) {}
+  };
+  struct B {
+   operator A() { return A(); }
+  } b;
+  A a{b};
+</PRE>
+
+<P>the wording in 12.2.4.2 [<A href="https://wg21.link/over.best.ics#4">over.best.ics</A>] paragraph 4 with regard to
+12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>] prevents considering <TT>B</TT>'s conversion
+function when initializing the first parameter of <TT>A</TT>'s copy
+constructor, thereby making this code ill-formed.</P>
+
+<P><B>Notes from the February, 2014 meeting:</B></P>
+
+<P>This issue should be addressed by the eventual resolution of
+<A HREF="1467.html">issue 1467</A>.</P>
+
+<P><B>Proposed resolution (June, 2014):</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="1467.html">issue 1467</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

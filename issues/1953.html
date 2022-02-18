@@ -1,0 +1,208 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1953</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="1953"></A><H4>1953.
+  
+Data races and common initial sequence
+</H4>
+<B>Section: </B>6.7.1&#160; [<A href="https://wg21.link/intro.memory">intro.memory</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Faisal Vali
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-06-23<BR>
+
+
+<P>[Accepted as a DR at the November, 2024 meeting.]</P>
+
+
+
+<P>According to 6.7.1 [<A href="https://wg21.link/intro.memory#3">intro.memory</A>] paragraph 3,</P>
+
+<BLOCKQUOTE>
+
+A <I>memory location</I> is either an object of scalar type or a
+maximal sequence of adjacent bit-fields all having non-zero
+width. [<I>Note:</I> Various features of the language, such
+as references and virtual functions, might involve
+additional memory locations that are not accessible to
+programs but are managed by the
+implementation. &#8212;<I>end note</I>] Two or more threads
+of execution (6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]) can update and
+access separate memory locations without interfering with
+each other.
+
+</BLOCKQUOTE>
+
+<P>It is not clear how this relates to the permission
+granted in 11.4 [<A href="https://wg21.link/class.mem#18">class.mem</A>] paragraph 18 to inspect
+the common initial sequence of standard-layout structs that
+are members of a standard-layout union.  If one thread is
+writing to the common initial sequence and another is
+reading from it via a different struct, that should
+constitute a data race, but the current wording does not
+clearly state that.</P>
+
+<P><B>Additional notes (October, 2024)</B></P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/621">#621</A>.)
+</P>
+
+<P>A similar concern arises for the following example:</P>
+
+<PRE>
+  union U { int x, y; } u;
+  (u.x = 1, 0) + (u.y = 2, 0);
+</PRE>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.7.1 [<A href="https://wg21.link/intro.memory#3">intro.memory</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>memory location</I> is <INS>the storage occupied by the object
+representation of</INS> either an object of scalar type that is not a
+bit-field or a maximal sequence of adjacent bit-fields all having
+nonzero width. ...
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-10-25</B></P>
+
+<P>Subclause 6.9.1 [<A href="https://wg21.link/intro.execution#10">intro.execution</A>] paragraph 10 does not cover
+unsequenced object creation that does not change any bits of storage,
+such as a placement new invoking a trivial default constructor.  The
+original concern in this issue was addressed by P0137R1, adding the
+following in 11.4.2 [<A href="https://wg21.link/class.mfct#28">class.mfct</A>] paragraph 28:
+
+<BLOCKQUOTE>
+
+In a standard-layout union with an active member
+(11.5 [<A href="https://wg21.link/class.union">class.union</A>]) of struct type T1, it is permitted to read
+a non-static data member m of another union member of struct type T2
+provided m is part of the common initial sequence of T1 and T2; the
+behavior is as if the corresponding member of T1 were nominated.
+
+</BLOCKQUOTE>
+</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-11-08):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.1 [<A href="https://wg21.link/intro.memory#3">intro.memory</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>memory location</I> is <INS>the storage occupied by the object
+representation of</INS> either an object of scalar type that is not a
+bit-field or a maximal sequence of adjacent bit-fields all having
+nonzero width. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/intro.execution#10">intro.execution</A>] paragraph 10 and add bullets as
+follows:</P>
+
+<BLOCKQUOTE>
+
+... The value computations of the operands of an operator are
+sequenced before the value computation of the result of the
+operator. <DEL>If</DEL> <INS>The behavior is undefined if</INS>
+<UL>
+<LI>a side effect on a memory location
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) <INS>or</INS>
+</LI>
+<LI class="ins">starting or ending the lifetime of an object in a memory location</LI>
+</UL>
+is unsequenced relative to <DEL>either</DEL>
+<UL>
+<LI>another side effect on the same memory location<INS>,</INS>
+</LI>
+<LI>
+<INS>starting or ending the lifetime of an object occupying
+storage that overlaps with the memory location,</INS> or</LI>
+<LI>a value computation using the value of any object in the
+same memory location,</LI>
+</UL>
+and <DEL>they</DEL> <INS>the two evaluations</INS> are not potentially
+concurrent (6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>])
+<DEL>, the behavior is undefined</DEL>.
+<INS>[ Note: Starting the lifetime of an object in a memory location
+can end the lifetime of objects in other memory locations
+(6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). -- end note ]</INS>
+
+<P>[ Note: ... ]</P>
+
+<P>[ Example:</P>
+<PRE>
+  void g(int i) {
+    i = 7, i++, i++;     //<SPAN CLASS="cmnt"> i becomes 9</SPAN>
+    i = i++ + 1;   //<SPAN CLASS="cmnt"> the value of i is incremented</SPAN>
+    i = i++ + i;   //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+    i = i + 1;     //<SPAN CLASS="cmnt"> the value of i is incremented</SPAN>
+<INS>    union U { int x, y; } u;
+    (u.x = 1, 0) + (u.y = 2, 0);   //<SPAN CLASS="cmnt"> undefined behavior</SPAN></INS>
+  }
+</PRE>
+<P>-- end example ]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.2.2 [<A href="https://wg21.link/intro.races#2">intro.races</A>] paragraph 2 as follows, adding
+bullets:</P>
+
+<BLOCKQUOTE>
+
+Two expression evaluations <I>conflict</I> if one of them
+<UL>
+<LI>modifies (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) a memory location
+(6.7.1 [<A href="https://wg21.link/intro.memory">intro.memory</A>]) <INS>or</INS>
+</LI>
+<LI class="ins">starts or ends the lifetime of an object in a memory
+location</LI>
+</UL>
+and the other one
+<UL>
+<LI>reads or modifies the same memory location <INS>or</INS>
+</LI>
+<LI>
+<INS>starts or ends the lifetime of an object occupying storage
+that overlaps with the memory location</INS>.</LI>
+</UL>
+[<I>Note 2:</I> A modification can still conflict even if it does not
+alter the value of any bits. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

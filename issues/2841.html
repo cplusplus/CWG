@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2841</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-19</P>
+<HR>
+<A NAME="2841"></A><H4>2841.
+  
+When do const objects start being const?
+</H4>
+<B>Section: </B>11.4.5.1&#160; [<A href="https://wg21.link/class.ctor.general">class.ctor.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tom Honermann
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-14<BR>
+
+
+
+
+<P>Subclause 11.4.5.1 [<A href="https://wg21.link/class.ctor.general#5">class.ctor.general</A>] paragraph 5 specifies:</P>
+
+<BLOCKQUOTE>
+
+A constructor can be invoked for a const, volatile or const volatile
+object. const and volatile semantics (9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>])
+are not applied on an object under construction. They come into effect
+when the constructor for the most derived object
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) ends.
+
+</BLOCKQUOTE>
+
+<P>This is referring to the "constructor ending", but
+6.7.4 [<A href="https://wg21.link/basic.life#1.3">basic.life</A>] bullet 1.3 refers to "the initialization
+is complete".  These two points in the evaluation are different at
+least for delegating constructors and named return value
+optimization, and thus the rules are in conflict.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 11.4.5.1 [<A href="https://wg21.link/class.ctor.general#5">class.ctor.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>[ Note:</INS> A constructor can be invoked for a const, volatile
+or const volatile object. const and volatile semantics
+(9.2.9.2 [<A href="https://wg21.link/dcl.type.cv">dcl.type.cv</A>]) are not applied on an object under
+construction<DEL>. They</DEL> <INS>; they</INS> come into effect when
+the <DEL>constructor for the most derived object
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) ends</DEL> <INS>initialization of the
+result object completes (6.7.4 [<A href="https://wg21.link/basic.life">basic.life</A>])</INS>. <INS>--
+end note ]</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-02-02</B></P>
+
+<P>There are various properties that come to be for an object during
+its initialization.  For example, the vtable is fully set up and the
+destructor will be invoked once the non-delegating constructor
+completes (<A HREF="2756.html">issue 2756</A>).  The main property
+of a const object is its immutability from an optimizer perspective.
+With NRVO (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]), it is possible to have
+multiple defining declarations for the same object, for example:</P>
+<PRE>
+  struct A {
+    int x;
+  };
+  int foo(const A* p)
+  {
+    A a{10};            // #1
+    a.x = 1 + p-&gt;x;     // <SPAN CLASS="cmnt">what's the value of</SPAN> a.x<SPAN CLASS="cmnt">?</SPAN>
+    return a;
+  }
+  const A g = foo(&amp;g);  // #2
+</PRE>
+
+<P>Given NRVO, both #1 and #2 are declarations of the same object.
+Those declarations may differ in their cv-qualification for the
+object.  CWG tentatively agreed on the direction that the innermost
+declaration defines the object's properties, in particular whether it
+has been initialized and whether it is const.</P>
+
+<P>While NRVO is disallowed in constant evaluation, it was noted that
+user code can determine whether NRVO occurs at runtime by comparing a
+pointer to the local object with a pointer to the object in the
+surrounding context.</P>
+
+<BR><BR>
+</BODY>
+</HTML>
