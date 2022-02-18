@@ -1,0 +1,101 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3188</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3188"></A><H4>3188.
+  
+Behavior change for class template argument deduction
+</H4>
+<B>Section: </B>C.2&#160; [<A href="https://wg21.link/diff.cpp20">diff.cpp20</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Christof Meerwald
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-04-30<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct B {
+     B(T);
+   };
+
+   template&lt;typename T&gt;
+   struct D : B&lt;T *&gt; {
+     D(T);
+     using B&lt;T *&gt;::B;
+     T m = "a";   //<SPAN CLASS="cmnt"> #1</SPAN>
+   };
+
+   D d("");       //<SPAN CLASS="cmnt"> #1 is OK with C++20 (</SPAN>T<SPAN CLASS="cmnt"> deduced as </SPAN>const char*<SPAN CLASS="cmnt">), but ill-formed with C++23 (</SPAN>T<SPAN CLASS="cmnt"> deduced as </SPAN>const char<SPAN CLASS="cmnt">)</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<P>Add a new subclause in C.2 [<A href="https://wg21.link/diff.cpp20">diff.cpp20</A>] as follows:</P>
+
+
+<BLOCKQUOTE class="ins">
+<P><B>C.2.5+ Clause 12: overloading [diff.cpp20.over]</B></P>
+<B>Affected subclause:</B> 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]<BR>
+<B>Change:</B> Deducing class template arguments from inherited constructors.<BR>
+<B>Rationale:</B> Adding missing feature for class template argument deduction.<BR>
+<B>Effect on original feature:</B> Valid ISO C++ 2020 code may become
+ill-formed or change meaning.<BR>
+[Example 1 :
+<PRE>
+   template&lt;typename T&gt;
+   struct B {
+     B(T);
+   };
+
+   template&lt;typename T&gt;
+   struct D : B&lt;T *&gt; {
+     D(T);
+     using B&lt;T *&gt;::B;
+     T m = "a";   //<SPAN CLASS="cmnt"> #1</SPAN>
+   };
+
+   D d("");       //<SPAN CLASS="cmnt"> ill-formed at #1 (</SPAN>T<SPAN CLASS="cmnt"> deduced as </SPAN>const char<SPAN CLASS="cmnt">); previously well-formed (</SPAN>T<SPAN CLASS="cmnt"> deduced as </SPAN>const char*<SPAN CLASS="cmnt">)</SPAN>
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

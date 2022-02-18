@@ -1,0 +1,190 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3100</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3100"></A><H4>3100.
+  
+Destruction order for objects with static storage duration
+</H4>
+<B>Section: </B>6.10.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CA
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-10-01<BR><BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#CA045">N5028 comment
+  CA&#160;045<BR></A>
+
+<P>Subclause 6.10.3.4 [<A href="https://wg21.link/basic.start.term#3">basic.start.term</A>] paragraph 3 conflates the idea
+of completing a constructor (which, in theory, can include the
+non-delegating constructor called by a delegating constructor) and
+completing dynamic initialization of an object (possibly including the
+destruction of any temporaries). Additional clarity over what happens
+for block-scope statics initialized as part of executing destructor
+calls for temporaries of the initialization construct is needed.</P>
+
+<P>Furthermore, the subject paragraph talks about the destructor of
+objects (of which arrays of class objects have none) and is
+incompatible with the treatment (consistent with the 2024-11-22
+proposed resolution to <A HREF="2929.html">issue 2929</A>,
+"Lifetime of trivially-destructible static or thread-local objects")
+where cleanup registration does not happen individually for the
+destruction of array elements.</P>
+
+<P>Also, the word "during" in the last sentence of the subject
+paragraph seems imprecise in the presence of asynchronous
+execution.</P>
+
+<P>Additionally, without changes like the proposed resolution to
+<A HREF="2929.html">issue 2929</A>, that last sentence raises
+questions as to whether the destruction of subobjects occurs when exit
+is called during initialization of a complete class object of static
+storage duration.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-07):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.10.3.4 [<A href="https://wg21.link/basic.start.term#3">basic.start.term</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <DEL>completion of the constructor or dynamic initialization</DEL>
+<INS>deemed construction (9.5.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>])</INS>
+of <DEL>an</DEL> <INS>a complete</INS> object with static storage
+duration strongly happens before that of another, the completion of
+the <DEL>destructor</DEL> <INS>destruction</INS> of the second is
+sequenced before the initiation of the <DEL>destructor</DEL>
+<INS>destruction</INS> of the first.  If the <DEL>completion of the
+constructor or dynamic initialization</DEL> <INS>deemed
+construction</INS> of <DEL>an</DEL> <INS>a complete</INS> object with
+thread storage duration is sequenced before that of another, the
+completion of the <DEL>destructor</DEL> <INS>destruction</INS> of the
+second is sequenced before the initiation of the <DEL>destructor</DEL>
+<INS>destruction</INS> of the first. If an object is initialized
+statically, the object is destroyed in the same order as if the object
+was dynamically initialized. <DEL>For an object of array or class
+type, all subobjects of that object are destroyed before any block
+variable with static storage duration initialized during the
+construction of the subobjects is destroyed.</DEL> If the destruction
+of an object with static or thread storage duration exits via an
+exception, the function std::terminate is called
+(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+
+<INS>[ Example: In the following program, the elements of <TT>a</TT>
+are destroyed, followed by <TT>dt</TT>, and finally the
+two <TT>BTemp</TT> objects:</INS>
+<PRE class="ins">
+  struct DTemp { ~DTemp(); };
+  struct Temp {
+    ~Temp() {
+      static DTemp dt;
+    }
+  };
+  struct BTemp {
+    ~BTemp();
+  };
+  struct A {
+    const BTemp &amp;tb;
+    ~A();
+  };
+  A a[] = { (Temp(), BTemp()), BTemp() };
+
+  int main() {}
+</PRE>
+<INS>
+If the array <TT>a</TT> were an object with automatic storage
+duration, the <TT>BTemp</TT> temporaries would be destroyed as each
+element of the array is destroyed (6.8.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]).  --
+end example ]</INS>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.10.3.4 [<A href="https://wg21.link/basic.start.term#5">basic.start.term</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <DEL>completion of the initialization</DEL> <INS>deemed
+construction</INS> of <DEL>an</DEL> <INS>a complete</INS> object with
+static storage duration strongly happens before a call to std::atexit
+(see &lt;cstdlib&gt;, 17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]), the call to the
+function passed to std::atexit is sequenced before the <DEL>call to
+the destructor for</DEL> <INS>initiation of the destruction of</INS>
+the object. If a call to std::atexit strongly happens before the
+<DEL>completion of the initialization</DEL> <INS>deemed
+construction</INS> of <DEL>an</DEL> <INS>a complete</INS> object with
+static storage duration, the <DEL>call to the destructor
+for</DEL> <INS>completion of the destruction of</INS> the object is
+sequenced before the call to the function passed to std::atexit. If a
+call to std::atexit strongly happens before another call to
+std::atexit, the call to the function passed to the second std::atexit
+call is sequenced before the call to the function passed to the first
+std::atexit call.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.5.1 [<A href="https://wg21.link/dcl.init.general#22">dcl.init.general</A>] paragraph 22</P>
+
+<BLOCKQUOTE>
+
+<DEL>An object whose initialization has completed</DEL>
+<INS>The <I>deemed construction</I> of an object occurs when its
+initialization completes; for the purposes of
+6.10.3.4 [<A href="https://wg21.link/basic.start.term">basic.start.term</A>], if the initialization is a
+full-expression, deemed construction occurs when the evaluation of
+that full-expression completes.  The object</INS> is deemed to be
+constructed, even if the object is of non-class type or no constructor
+of the object's class is invoked for the initialization.  [<I>Note
+9:</I> Such an object might have been value-initialized or initialized
+by aggregate initialization (9.5.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]) or by an
+inherited constructor (11.9.4 [<A href="https://wg21.link/class.inhctor.init">class.inhctor.init</A>]). &#8212;<I>end
+note</I>] Destroying an object of class type invokes the destructor of
+the class. Destroying a scalar type has no effect other than ending
+the lifetime of the object (6.8.4 [<A href="https://wg21.link/basic.life">basic.life</A>]). Destroying an
+array destroys each element in reverse subscript order.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

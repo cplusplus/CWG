@@ -1,0 +1,110 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3042</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3042"></A><H4>3042.
+  
+Implicit object creation is insufficient to model effective type rule of C
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-04<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/723">#723</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;stdlib.h&gt;
+
+  int main() {
+   void* p = malloc(sizeof(int) + sizeof(float));
+
+   *(int*)p = 0;        //<SPAN CLASS="cmnt"> #1</SPAN>
+   *(float*)p = 0.0f;   //<SPAN CLASS="cmnt"> #2</SPAN>
+  }
+</PRE>
+
+<P>This example has well-defined behavior in C, because C23 6.5.1p6
+says</P>
+
+<BLOCKQUOTE>
+
+... If a value is stored into an object having no declared type through an
+lvalue having a type that is not a non-atomic character type, then the
+type of the lvalue becomes the effective type of the object for that
+access and for subsequent accesses that do not modify the stored
+value. ...
+
+</BLOCKQUOTE>
+
+<P>In contrast, implicit object creation for <TT>malloc</TT> happens
+once, and there is no single type that would make the program have
+defined behavior at both #1 and #2, since copy-assignment cannot
+create objects in C++.
+</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Add to C.7.4 [<A href="https://wg21.link/diff.expr">diff.expr</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 7.6.19 [<A href="https://wg21.link/expr.assign">expr.assign</A>]<BR>
+<B>Change:</B> Effective type rules are approximated with implicit object creation.<BR>
+<B>Rationale:</B> C++ has a stronger type system than C.<BR>
+<B>Effect on original feature:</B> Change to semantics of well-defined feature. Some well-defined C expressions will have undefined behavior in C++.<BR>
+[Example:
+<PRE>
+  void f() {
+    void* p = malloc(sizeof(int) + sizeof(float));
+
+    *(int*)p = 0;
+    *(float*)p = 0.0f;   //<SPAN CLASS="cmnt"> well-formed in both C and C++; undefined behavior in C++</SPAN>
+  }
+</PRE>
+--end example]<BR>
+<B>Difficulty of converting:</B> Programs must avoid implicit type changes of objects.<BR>
+<B>How widely used:</B> Seldom.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

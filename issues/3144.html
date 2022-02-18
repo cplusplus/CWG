@@ -1,0 +1,94 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3144</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3144"></A><H4>3144.
+  
+Granularity of implementation choice for <TT>sizeof</TT> and subobject offsets
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-16<BR>
+
+
+
+
+<P>The size of an object depends on the implementation
+(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>]).  Similarly, the size and location of
+padding depends on the implementation (6.9.1 [<A href="https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4).</P>
+
+<P>Equality-comparing pointers compares their addresses (independent
+of provenance) (7.6.10 [<A href="https://wg21.link/expr.eq#3">expr.eq</A>] paragraph 3), which makes the
+padding choices of implementations observable.  Reflection facilities
+provide similar means. Note that such address comparisons need to be
+supported only within a single complete object, not across complete
+objects (see also <A HREF="2765.html">issue 2765</A>).</P>
+
+<P>It is intended that the implemenation can choose size and padding
+per type and per program, but these choices cannot vary for a given
+type within a single program.  However, there is insufficient
+specification to that end.  The question arises in particular whether
+equality-comparing pointers to subobjects (or elements of the object
+representation) at compile time and at runtime is permitted to yield
+different outcomes.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>object representation</I> of a complete object type T is the
+sequence of N unsigned char objects taken up by a non-bit-field
+complete object of type T, where N equals sizeof(T)
+<INS>(7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>])</INS>.  ... For
+trivially copyable types, the value representation is a set of bits in
+the object representation that determines a value, which is one
+discrete element of an implementation-defined set of values.  [
+Footnote: ... ]</P>
+
+<P class="ins">
+For any complete object type, its size and the presence and placement
+of padding does not vary within a program.  [ Note: In particular,
+these properties are not affected by constant evaluation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). -- end note ]
+</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3031</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3031"></A><H4>3031.
+  
+Finding declarations for conversion operators for access checking
+</H4>
+<B>Section: </B>12.2.2.1&#160; [<A href="https://wg21.link/over.match.funcs.general">over.match.funcs.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-29<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  class B {
+    protected:
+      operator int&amp;() { static int x; return x; }
+  };
+
+  struct D : B { using B::operator int&amp;; };
+
+  int x = D();   //<SPAN CLASS="cmnt"> OK</SPAN>
+</PRE>
+
+<P>The function <TT>B::operator int&amp;</TT> is a candidate, but
+the <I>using-declaration</I> in <TT>D</TT> is not considered when
+checking accessibility, because name lookup is not actually performed.</P>
+
+<P>
+<U>Suggested resolution</U>:</P>
+
+<P>Change in 12.2.2.1 [<A href="https://wg21.link/over.match.funcs.general#7">over.match.funcs.general</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+In each case where conversion functions of a class S are considered
+for initializing an object or reference of type T, the candidate
+functions include the result of a search for
+the <I>conversion-function-id</I> operator T in S.  [<I>Note 3:</I>
+This search can find a specialization of a conversion function
+template (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]). &#8212;<I>end note</I>] Each such
+case also defines sets of permissible types for explicit and
+non-explicit conversion functions; <INS>for</INS> each (non-template) conversion
+function <INS><TT>F</TT></INS> that
+<UL>
+<LI class="del">is a non-hidden member of S,</LI>
+<LI>yields a permissible type <INS><TT>U</TT></INS><DEL>,</DEL> and,</LI>
+<LI>for the former set, is non-explicit<INS>,</INS>
+</LI>
+</UL>
+<DEL>is also a candidate function</DEL>
+<INS>if looking up <TT>operator U</TT> in the scope of <TT>S</TT>
+succeeds and finds a declaration of <TT>F</TT>, that declaration is
+added to the candidate set</INS>. If initializing an object, for any
+permissible type cv U, any cv2 U, cv2 U&amp;, or cv2 U&amp;&amp; is
+also a permissible type. If the set of permissible types for explicit
+conversion functions is empty, any candidates that are explicit are
+discarded.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

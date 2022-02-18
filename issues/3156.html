@@ -1,0 +1,93 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3156</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3156"></A><H4>3156.
+  
+Handling of deleted functions in unevaluated <I>lambda-capture</I>s
+</H4>
+<B>Section: </B>7.5.6.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop S. Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-01-29<BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/841">#841</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct C
+  {
+    C(int) = delete;
+    C(){};
+  };
+
+  decltype([b = C(3)](){ return 4; }()) x; //<SPAN CLASS="cmnt">MSVC accepts; gcc and clang reject</SPAN>
+</PRE>
+
+<P>Arguably, 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture#15">expr.prim.lambda.capture</A>] paragraph 15 specifies that the
+initialization of the non-static data members only happens when
+the <I>lambda-expression</I> is evaluated, but there is no statement
+when the semantic contraints of such an initialization are
+checked.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-27):</B></P>
+
+<P>Change in 7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture#15">expr.prim.lambda.capture</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When the <I>lambda-expression</I> is evaluated, the</DEL>
+<INS>The</INS> entities that are captured by copy are used to
+direct-initialize each corresponding non-static data member of the
+resulting closure object, and the non-static data members
+corresponding to the <I>init-capture</I>s are initialized as indicated
+by the corresponding initializer (which may be copy- or
+direct-initialization). (For array members, the array elements are
+direct-initialized in increasing subscript order.) These
+initializations are performed <INS>when the <I>lambda-expression</I>
+is evaluated and</INS> in the (unspecified) order in which the
+non-static data members are declared.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

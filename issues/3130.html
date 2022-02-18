@@ -1,0 +1,257 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3130</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3130"></A><H4>3130.
+  
+Naming function members of anonymous unions
+</H4>
+<B>Section: </B>7.5.5.1&#160; [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-11<BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/802">#802</A>.)</P>
+
+<P>Subclause 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#3">expr.prim.id.general</A>] paragraph 3 does not properly
+handle an <I>id-expression</I> that denotes a function member of a
+namespace-scope anonymous union.  With reflection, those can be
+named.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#3.1">expr.prim.id.general</A>] bullet 3.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+If an <I>id-expression</I> E denotes a <INS>variant</INS> member M of an anonymous union
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) U:
+<UL>
+<LI>...</LI>
+</UL>
+[<I>Note 3:</I> Under this interpretation, E no longer denotes a
+non-static data member. &#8212;<I>end note</I>] [<I>Example 3:</I>
+N::x is interpreted as N::u.x, where u names the anonymous union
+variable. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2025-11-21</B></P>
+
+<P>Additional discussion has shown many issues arising from the
+ability to designate anonymous unions via reflection, inspect its
+implicitly-declared special member functions, and create complete
+objects of anonymous union type.  Not declaring those special member
+functions in the first place resolves most of these concerns; users
+cannot declare member functions of anonymous unions anyway.  CWG is
+interested in adding a type trait (both at the type and reflection
+levels) that identifies anonymous unions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-02-06):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#3.1">expr.prim.id.general</A>] bullet 3.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+If an <I>id-expression</I> E denotes a <INS>variant</INS> member M of
+an anonymous union (11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) U:
+<UL>
+<LI>...</LI>
+</UL>
+[<I>Note 3:</I> Under this interpretation, E no longer denotes a
+non-static data member. &#8212;<I>end note</I>] [<I>Example 3:</I>
+N::x is interpreted as N::u.x, where u names the anonymous union
+variable. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#1">class.default.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If there is no user-declared constructor or constructor template
+for class X <INS>and <TT>X</TT> is not an anonymous union</INS>, a
+non-explicit constructor having no parameters is implicitly declared
+as defaulted (9.6 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). An implicitly-declared
+default constructor is an inline public member of its class.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#6">class.copy.ctor</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the class definition does not explicitly declare a copy
+constructor <INS>and the class is not an anonymous union</INS>, a
+non-explicit one is declared implicitly.  If the class definition
+declares a move constructor or move assignment operator, the
+implicitly declared copy constructor is defined as deleted; otherwise,
+it is defaulted (9.6 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). The latter case is
+deprecated if the class has a user-declared copy assignment operator
+or a user-declared destructor (D.6 [<A href="https://wg21.link/depr.impldec">depr.impldec</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#8">class.copy.ctor</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the definition of a class X does not explicitly declare a move
+constructor, a non-explicit one will be implicitly declared as
+defaulted if and only if
+<UL>
+<LI class="ins">
+<TT>X</TT> is not an anonymous union,</LI>
+<LI>X does not have a user-declared copy constructor,</LI>
+<LI>X does not have a user-declared copy assignment operator,</LI>
+<LI>X does not have a user-declared move assignment operator, and</LI>
+<LI>X does not have a user-declared destructor.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#2">class.copy.assign</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the class definition does not explicitly declare a copy assignment
+operator <INS>and the class is not an anonymous union</INS>, one is
+declared implicitly. If the class definition declares a move
+constructor or move assignment operator, the implicitly declared copy
+assignment operator is defined as deleted; otherwise, it is defaulted
+(9.6 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). The latter case is deprecated if the class
+has a user-declared copy constructor or a user-declared destructor
+(D.6 [<A href="https://wg21.link/depr.impldec">depr.impldec</A>]). ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#4">class.copy.assign</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the definition of a class X does not explicitly declare a move
+assignment operator, one will be implicitly declared as defaulted if
+and only if
+<UL>
+<LI class="ins">
+<TT>X</TT> is not an anonymous union,</LI>
+<LI>X does not have a user-declared copy constructor,</LI>
+<LI>X does not have a user-declared move constructor,</LI>
+<LI>X does not have a user-declared copy assignment operator, and</LI>
+<LI>X does not have a user-declared destructor.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#2">class.dtor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a class has no user-declared prospective destructor <INS>and the
+class is not an anonymous union</INS>, a prospective destructor is
+implicitly declared as defaulted (9.6 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). An
+implicitly-declared prospective destructor is an inline public member
+of its class.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#4">class.dtor</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+At the end of the definition of a class <INS>other than an anonymous
+union</INS>, overload resolution is performed among the prospective
+destructors declared in that class with an empty argument list to
+select the destructor for the class, also known as the selected
+destructor. The program is ill-formed if overload resolution
+fails. Destructor selection does not constitute a reference to, or
+odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) of, the selected destructor, and in
+particular, the selected destructor may be deleted
+(9.6.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.5.2 [<A href="https://wg21.link/class.union.anon#1">class.union.anon</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A union of the form
+<PRE>
+  union { <I>member-specification</I> } ;
+</PRE>
+is called an anonymous union; it defines an unnamed type and an
+unnamed object of that type called an anonymous union member if it is
+a non-static data member or an anonymous union variable
+otherwise.
+<INS>Each object of such an unnamed type shall be such an unnamed
+object.</INS> Each <I>member-declaration</I> in the
+<I>member-specification</I> of an anonymous union shall either
+define one or more public non-static data members or be a
+<I>static_assert-declaration</I>. Nested types, anonymous unions, and
+functions shall not be declared within an anonymous union. The names
+of the members of an anonymous union are bound in the scope inhabited
+by the union declaration.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2744</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2744"></A><H4>2744.
+  
+Multiple objects of the same type at the same address
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Chris Hallock
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-08<BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<P>(From thread beginning
+<A HREF="https://groups.google.com/a/isocpp.org/g/std-discussion/c/GHwA_pOc4CA/m/RF4qoKgZAAAJ">here</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;new&gt;
+
+  struct A { unsigned char buf[1]; };
+  static_assert(sizeof(A) == 1); // A<SPAN CLASS="cmnt"> can fit within </SPAN>A::buf
+
+  int main()
+  {
+    A x{};
+    new (x.buf) A{};
+  }
+</PRE>
+
+<P>
+<TT>A::buf</TT> provides storage for another <TT>A</TT> object.
+Thus, there are now two objects of type <TT>A</TT> within lifetime,
+which is inconsistent with the goal expressed by
+6.8.2 [<A href="https://wg21.link/intro.object#9">intro.object</A>] paragraph 9.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.8.2 [<A href="https://wg21.link/intro.object#3">intro.object</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a complete object <INS>of type T</INS> is created
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]) in storage associated with another
+object e of type &#8220;array of N unsigned char&#8221; or of type
+&#8220;array of N std::byte&#8221; (17.2.1 [<A href="https://wg21.link/cstddef.syn">cstddef.syn</A>]), that
+array provides storage for the created object if:
+<UL>
+<LI>the lifetime of e has begun and not ended, and</LI>
+<LI>the storage for the new object fits entirely within e, and</LI>
+<LI class="ins">
+<I>e</I> is not and is not nested within an object of
+type similar (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to <TT>T</TT> that is within
+its lifetime, and</LI>
+<LI>there is no array object that satisfies these constraints
+nested within e.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (CWG 2026-01-23):</B></P>
+
+Consider:
+
+<PRE>
+  A x{}: //<SPAN CLASS="cmnt"> implicit object creation for </SPAN>x.buf
+  A* p = reinterpret_cast&lt;A*&gt;(x.buf); //<SPAN CLASS="cmnt"> nailed down A at x.buf</SPAN>
+</PRE>
+
+<P>There is no pointer interconvertibility between <TT>x.buf</TT>
+and <TT>x</TT>, so there must be a second A at <TT>x.buf</TT>.</P>
+
+Also consider:
+
+<PRE>
+  struct S {
+    unsigned char c[1];
+  };
+  unsigned char a[sizeof(S)];
+  S* ps = new (a) S;  //<SPAN CLASS="cmnt"> must create S inside a buffer; now we have two "array of unsigned char" at the same address</SPAN>
+</PRE>
+
+Also consider:
+
+<PRE>
+  struct B {};
+  struct A : B {};
+  struct C : B {};
+  struct D : A, C { unsigned char x[2]; };
+
+  D d;
+  new (d.x+1) C();
+</PRE>
+
+<P>The A and C base classes must have different offsets (because their
+B bases must have different offsets), thus #2 creates a C object at
+the offset of the existing C base class object.</P>
+
+<P>CWG leaned towards adding a targeted exception that two objects of
+the same type may be located at the same address if both are nested
+within the same complete object.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-02-06):</B></P>
+
+<P>Change in 6.8.2 [<A href="https://wg21.link/intro.object#10">intro.object</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Two objects with overlapping lifetimes that are not bit-fields may
+have the same address if
+<UL>
+<LI>one is nested within the other,</LI>
+<LI class="ins">they are both nested within some complete object
+<I>o</I>, exactly one is a subobject of <I>o</I>, and the subobject is
+of zero size,</LI>
+<LI>
+<INS>they are both subobjects of the same complete object,</INS>
+at least one is a subobject of zero size<INS>,</INS> and they are not
+of similar types (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), or</LI>
+<LI>they are both potentially non-unique objects;</LI>
+</UL>otherwise, they have distinct addresses and occupy disjoint bytes
+of storage. [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

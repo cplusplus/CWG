@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3137</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3137"></A><H4>3137.
+  
+Composite pointer type with qualification and pointer-to-member conversions
+</H4>
+<B>Section: </B>7.2.2&#160; [<A href="https://wg21.link/expr.type">expr.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-25<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/822">#822</A>.)</P>
+
+<P>There is a specification gap for "composite pointer type" in the
+case where both a qualification conversion and a pointer-to-member
+conversion is needed to achieve a common type.  For example:</P>
+
+<PRE>
+  using P = int*;
+  using CP = const int* const;
+  struct B {
+    P a;
+  };
+  struct D : B {};
+
+  constexpr P (B::*bnc) = &amp;B::a;
+  constexpr CP (B::*bc) = &amp;B::a;
+  constexpr P (D::*dnc) = &amp;B::a;
+  constexpr CP (D::*dc) = dnc;     //<SPAN CLASS="cmnt"> work around GCC bug</SPAN>
+
+  static_assert(bnc == dc);
+  static_assert(bc == dnc);        //<SPAN CLASS="cmnt"> EDG rejects</SPAN>
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.2.2 [<A href="https://wg21.link/expr.type#3.7">expr.type</A>] bullet 3.7 and 3.8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>if T1 is &#8220;pointer to member of C1 of type <DEL>cv1
+U</DEL> <INS>U1</INS>&#8221; and T2 is &#8220;pointer to member of C2
+of type <DEL>cv2 U</DEL> <INS>U2</INS>&#8221;, for <DEL>some
+non-function type U</DEL> <INS>similar types <TT>U1</TT> and
+<TT>U2</TT></INS>, where C1 is reference-related to C2 or C2 is
+reference-related to C1 <DEL>(9.5.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>])</DEL>, the
+qualification-combined type of T2 and T1 or the qualification-combined
+type of T1 and T2, respectively;</LI>
+<LI class="del">if T1 and T2 are similar types (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]), the
+qualification-combined type of T1 and T2;</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

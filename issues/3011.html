@@ -1,0 +1,225 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3011</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3011"></A><H4>3011.
+  
+Parenthesized aggregate initialization for <I>new-expression</I>s
+</H4>
+<B>Section: </B>7.6.2.8&#160; [<A href="https://wg21.link/expr.new">expr.new</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Benjamin Sch.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-17<BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/685">#685</A>.)</P>
+
+<P>Subclause 7.6.2.8 [<A href="https://wg21.link/expr.new#8">expr.new</A>] paragraph 8 and paragraph 9
+contain special cases involving aggregate initialization
+using <I>braced-init-list</I>s, which need to be amended for
+parenthesized aggregate initialization.  The corresponding rules for
+the initialization of variables are in 9.5.1 [<A href="https://wg21.link/dcl.init.general#16.5">dcl.init.general</A>] bullet 16.5 for arrays and in 9.5.1 [<A href="https://wg21.link/dcl.init.general#16.6.2.2">dcl.init.general</A>] bullet 16.6.2.2 for aggregate classes.</P>
+
+<P><U>Possible resolution (March, 2025) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#8.4">expr.new</A>] bullet 8.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the expression in a <I>noptr-new-declarator</I> is present, it is
+implicitly converted to std::size_t. The value of the expression is
+invalid if
+<UL>
+<LI>...</LI>
+<LI>the <I>new-initializer</I>
+is <DEL>a <I>braced-init-list</I></DEL> <INS>present</INS> and the
+number of array elements for which initializers are provided
+(including the terminating '\0' in a <I>string-literal</I>
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>])) <INS>in a <I>braced-init-list</I> or
+parenthesized <I>expression-list</I></INS> exceeds the number of
+elements to initialize.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#9">expr.new</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the allocated type is an array, the <I>new-initializer</I> is
+<DEL>a <I>braced-init-list</I></DEL> <INS>present and is
+not <TT>()</TT></INS>, and the <I>expression</I> is
+potentially-evaluated and not a core constant expression, the semantic
+constraints of <DEL>copy-</DEL>initializing a hypothetical element of
+the array <DEL>from an empty initializer list</DEL> are
+checked <INS>as follows:</INS>
+<UL>
+<LI>
+<INS>If the <I>new-initializer</I> is a <I>braced-init-list</I>,
+the hypothetical element is copy-initialized from an empty initializer
+list</INS> (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</LI>
+<LI class="ins">If the <I>new-initializer</I> is a
+parenthesized <I>expression-list</I>, the hypothetical element is
+value-initialized (9.5.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]).</LI>
+</UL>
+[<I>Note 5:</I> The array can contain more elements than there are
+elements in the <DEL><I>braced-init-list</I></DEL>
+<INS><I>new-initializer</I></INS>, requiring initialization of the
+remainder of the array elements <DEL>from an empty initializer
+list</DEL> <INS>as appropriate</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><U>Possible resolution (per CWG reflector review starting 2025-05-07) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#8.4">expr.new</A>] bullet 8.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the expression in a <I>noptr-new-declarator</I> is present, it is
+implicitly converted to std::size_t. The value of the expression is
+invalid if
+<UL>
+<LI>...</LI>
+<LI>the <I>new-initializer</I>
+is a <DEL><I>braced-init-list</I></DEL> <INS>present</INS> and the
+number of array elements for which initializers are provided
+(including the terminating '\0' in a <I>string-literal</I>
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>])) <INS>in a <I>braced-init-list</I> or
+parenthesized <I>expression-list</I></INS> exceeds the number of
+elements to initialize.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#9">expr.new</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the allocated type is an array, the <I>new-initializer</I> is
+a <I>braced-init-list</I> <INS>present</INS>, and
+the <I>expression</I> is potentially-evaluated and not a core constant
+expression, the semantic constraints of <DEL>copy-</DEL>initializing a
+hypothetical element of the array <DEL>from an empty initializer
+list</DEL> are checked <INS>as follows:</INS>
+<UL>
+<LI>
+<INS>If the <I>new-initializer</I> is a <I>braced-init-list</I>,
+the hypothetical element is copy-initialized from an empty initializer
+list</INS> (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</LI>
+<LI class="ins">If the <I>new-initializer</I> is a
+parenthesized <I>expression-list</I>, the hypothetical element is
+value-initialized (9.5.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]).</LI>
+</UL>
+[<I>Note 5:</I> The array can contain more elements than there are
+elements in the <DEL><I>braced-init-list</I></DEL>
+<INS><I>new-initializer</I></INS>, requiring initialization of the
+remainder of the array elements <DEL>from an empty initializer
+list</DEL> <INS>as appropriate</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2025-10-10):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#8.4">expr.new</A>] bullet 8.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the expression in a <I>noptr-new-declarator</I> is present, it is
+implicitly converted to std::size_t. The value of the expression is
+invalid if
+<UL>
+<LI>...</LI>
+<LI>the <I>new-initializer</I>
+is a <I>braced-init-list</I> <INS>or a parenthesized <I>expression-list</I></INS> and the
+number of array elements for which initializers are provided
+(including the terminating '\0' in a <I>string-literal</I>
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>])) exceeds the number of
+elements to initialize.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.8 [<A href="https://wg21.link/expr.new#9">expr.new</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the allocated type is an array, the <I>new-initializer</I> is
+a <I>braced-init-list</I> <INS>or a parenthesized <I>expression-list</I></INS>, and
+the <I>expression</I> is potentially-evaluated and not a core constant
+expression, the semantic constraints of <DEL>copy-</DEL>initializing a
+hypothetical element of the array <DEL>from an empty initializer
+list</DEL> are checked <INS>as follows:</INS>
+<UL>
+<LI>
+<INS>If the <I>new-initializer</I> is a <I>braced-init-list</I>,
+the hypothetical element is copy-initialized from an empty initializer
+list</INS> (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]).</LI>
+<LI class="ins">Otherwise, the hypothetical element is
+value-initialized (9.5.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>]).</LI>
+</UL>
+[<I>Note 5:</I> The array can contain more elements than there are
+elements in the <DEL><I>braced-init-list</I></DEL>
+<INS><I>new-initializer</I></INS>, requiring initialization of the
+remainder of the array elements <DEL>from an empty initializer
+list</DEL> <INS>as appropriate</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

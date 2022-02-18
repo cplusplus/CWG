@@ -1,0 +1,606 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3150</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3150"></A><H4>3150.
+  
+Incomplete consteval-only class types
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-01-19
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/836">#836</A>.)</P>
+
+<P>A class type is consteval-only depending on its member types.
+However, a class type may be incomplete, and thus the question cannot
+be answered where needed.</P>
+
+<P>For example,</P>
+
+<PRE>
+  struct S;
+  void f(S*);   // #1
+  struct S {    // #2
+    std::meta::info x;
+  };
+</PRE>
+
+<P>Does the class definition at #2 make the function declaration #1
+retroactively ill-formed?  What if #1 and #2 are not mutually
+reachable?</P>
+
+<P><U>Suggested resolution (February, 2026):</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#12">basic.types.general</A>] paragraph 12 and split into
+separate paragraphs as follows:</P>
+
+<BLOCKQUOTE>
+
+A type is <I>consteval-only</I> if it is
+<UL>
+<LI>
+<TT>std::meta::info</TT>,</LI>
+<LI>cv <TT>T</TT>, <INS>pointer to <TT>T</TT>, reference to <TT>T</TT>, or
+array of <TT>T</TT>,</INS> where T is a consteval-only type,</LI>
+<LI class="del">a pointer or reference to a consteval-only type,</LI>
+<LI class="del">an array of consteval-only type,</LI>
+<LI>a function type having a return type or any parameter type
+that is consteval-only,</LI>
+<LI>a class type with <DEL>any</DEL> <INS>a</INS> non-static data
+member <DEL>having</DEL> <INS>of</INS> consteval-only type, or</LI>
+<LI>a type &#8220;pointer to member of class C of type T&#8221;, where
+at least one of C or T is <DEL>a</DEL>
+consteval-only <DEL>type</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+A type is <I>observably consteval-only</I> from a program
+point <I>P</I> if it is
+<UL>
+<LI>
+<TT>std::meta::info</TT>,</LI>
+<LI>
+<I>cv</I> <TT>T</TT>, pointer to <TT>T</TT>, reference
+to <TT>T</TT>, or an array of <TT>T</TT>, where <TT>T</TT> is
+observably consteval-only from <I>P</I>,</LI>
+<LI>a function type having
+return type or any parameter type that is observably consteval-only
+from <I>P</I>,</LI>
+<LI>a class type that is complete from <I>P</I> with a non-static data
+member whose type is observably consteval-only from <I>P</I>, or</LI>
+<LI>a type "pointer to member of class <TT>C</TT> of type <TT>T</TT>",
+where at least one of <TT>C</TT> or <TT>T</TT> is observably
+consteval-only from <I>P</I>.</LI>
+</UL>
+
+<P>[ Note: Every type which is observably consteval-only from some
+program point is also consteval-only. --end note]</P>
+
+<P>[ Example:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> a.cpp</SPAN>
+  struct S { std::meta::info m; };
+  struct T;
+  struct U { T *m; };
+
+  //<SPAN CLASS="cmnt"> b.cpp</SPAN>
+  struct S;
+  struct T { S *m; };
+</PRE>
+<P>
+<TT>S</TT>, <TT>T</TT>, and <TT>U</TT> are all consteval-only
+types, even though neither <TT>T</TT> nor <TT>U</TT> is observably
+consteval-only from any point in the program.  -- end example]</P>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="del">
+
+Every object of consteval-only type shall be
+<UL>
+<LI>the object associated with a constexpr variable or a subobject
+thereof,</LI>
+<LI>a template parameter object (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) or a
+subobject thereof, or</LI>
+<LI>an object whose lifetime begins and ends during the evaluation of
+a core constant expression.</LI>
+</UL>
+Every function of consteval-only type shall be an immediate function
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+Each declaration <I>D</I> of a variable or structured binding with
+consteval-only type <TT>T</TT> shall be either
+<UL>
+<LI>
+<TT>constexpr</TT> or</LI>
+<LI>introduced by the declaration of an object or reference whose
+lifetime begins and ends within a manifestly constant-evaluated
+expression;</LI>
+</UL>
+a diagnostic is required only if <I>D</I> is reachable from a program
+point from which <TT>T</TT> is observably consteval-only.
+
+<P>Each declaration <I>D</I> of a function of consteval-only
+type <TT>T</TT> shall be either</P>
+<UL>
+<LI>
+<TT>consteval</TT> or</LI>
+<LI>a declaration of an immediate-escalating function
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]);</LI>
+</UL>
+<P>a diagnostic is required only if <I>D</I> is reachable from a program
+point from which <TT>T</TT> is observably consteval-only.</P>
+
+<P>[Note: Immediate-escalating functions of consteval-only type are
+immediate functions (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). --end note]</P>
+
+<P>Each potentially-evaluated expression or conversion <I>E</I> of
+consteval-only type <TT>T</TT> shall be in an immediate function
+context; a diagnostic is required only if the innermost declaration
+that contains <I>E</I> is reachable from a program point
+where <TT>T</TT> is observably consteval-only.</P>
+
+<P>[Note: An expression is immediate-escalating if its type is
+observably consteval-only from the program point following the
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). --end note]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#21">expr.const</A>] paragraph 21 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constant expression is either
+<UL>
+<LI>a glvalue core constant expression E for which
+<UL>
+<LI>E refers to a non-immediate function,</LI>
+<LI>E designates an object o, and if the complete object of o is
+of <INS>observably</INS> consteval-only type <INS>from the program
+point immediately following <I>E</I></INS> then so is E,</LI>
+</UL>
+[<I>Example 11:</I> ... &#8212;<I>end example</I>] or</LI>
+<LI>a prvalue core constant expression <I>E</I> whose result object
+(7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) satisfies the following constraints:
+<UL>
+<LI>each constituent reference refers to an object or a non-immediate
+function,</LI>
+<LI>no constituent value of scalar type is an indeterminate or
+erroneous value (6.8.5 [<A href="https://wg21.link/basic.indet">basic.indet</A>]),</LI>
+<LI>no constituent value of pointer type is a pointer to an immediate
+function or an invalid pointer value
+(6.9.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]),</LI>
+<LI>no constituent value pointer-to-member type designates an
+immediate function, and</LI>
+<LI>unless the value is of consteval-only type,
+<UL>
+<LI>no constituent value of pointer-to-member type points to a direct
+member of a <INS>class that is observably</INS>
+consteval-only <INS>from the program point immediately
+following <I>E</I></INS> <DEL>class type</DEL>,</LI>
+<LI>no constituent value of pointer type points to or past an object
+whose complete object is of <INS>observably</INS> consteval-only
+type <INS>from the program point immediately following <I>E</I></INS>,
+and</LI>
+<LI>no constituent reference refers to an object whose complete object
+is of <INS>observably</INS> consteval-only type <INS>from the program
+point immediately following <I>E</I></INS>.</LI>
+</UL>
+</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#24">expr.const</A>] paragraph 24 as follows:</P>
+
+<BLOCKQUOTE>
+
+A potentially-evaluated expression or conversion <INS><I>E</I></INS>
+is immediate-escalating if it is neither initially in an immediate
+function context nor a subexpression of an immediate invocation, and
+<UL>
+<LI>it is an <I>id-expression</I> or <I>splice-expression</I> that
+designates an immediate function,</LI>
+<LI>it is an immediate invocation that is not a constant expression,
+or</LI>
+<LI>it is of <INS>observably</INS> consteval-only type <INS>from the
+program point immediately following <I>E</I></INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#26">expr.const</A>] paragraph 26 as follows:</P>
+
+<BLOCKQUOTE>
+
+An immediate function is a function that is
+<UL>
+<LI>declared with the <TT>consteval</TT> specifier,</LI>
+<LI>an immediate-escalating function whose type
+is <INS>observably</INS> consteval-only <INS>from the program point
+immediately following its definition</INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]), or</LI>
+<LI>an immediate-escalating function <I>F</I> whose function body contains
+either
+<UL>
+<LI>an immediate-escalating expression or</LI>
+<LI>a definition of a non-constexpr variable <DEL>with</DEL>
+<INS>whose type is observably</INS>
+consteval-only <DEL>type</DEL> <INS>from the program point immediately
+following the expression</INS>
+</LI>
+</UL>
+whose innermost enclosing non-block scope is F's function parameter
+scope.
+</LI>
+</UL>
+[<I>Note 11:</I> Default member initializers used to initialize a base
+or member subobject (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) are considered to be
+part of the function body (9.6.1 [<A href="https://wg21.link/dcl.fct.def.general">dcl.fct.def.general</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.7.3 [<A href="https://wg21.link/class.virtual#18">class.virtual</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>A class with a consteval</DEL> <INS>An immediate</INS> virtual
+function that overrides a virtual function that is
+not <DEL>consteval</DEL> <INS>immediate</INS> shall <DEL>have
+consteval-only type</DEL> <INS>be a member of a class <TT>C</TT> that
+is observably consteval-only from the program point immediate
+following the definition of <TT>C</TT></INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]). <DEL>A consteval</DEL> <INS>An
+immediate</INS> virtual function shall not be overridden by a virtual
+function that is not <DEL>consteval</DEL> <INS>an immediate
+function</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change the condition for <TT>is_consteval_only</TT> in
+21.3.5.4 [<A href="https://wg21.link/meta.unary.prop">meta.unary.prop</A>] as follows:</P>
+
+<BLOCKQUOTE>
+<TT>T</TT> is <INS>observably</INS> consteval-only
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]) <INS>from a program point in the
+instantiation context</INS>
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2026-03-06</B></P>
+
+<P>Drop the last change, which is covered by LWG4534.  The approach
+above would cause excessive template instantiations:</P>
+
+<PRE>
+   template&lt;class T&gt; struct S { };
+   void f(S&lt;int&gt;*);  //<SPAN CLASS="cmnt"> now instantiates </SPAN>S<SPAN CLASS="cmnt"> to determine whether </SPAN>S<SPAN CLASS="cmnt"> is consteval-only, because the completeness of </SPAN>S&lt;int&gt;<SPAN CLASS="cmnt"> affects the semantics of the program</SPAN>
+</PRE>
+
+<P>The current phrasing with "reachable" requires checking module
+contents without naming the respective entity in source code at the
+point where the check is supposed to occur.  This is not in harmony
+with the design of modules.</P>
+
+<P>Further discussion generated ideas that may substantially alter the
+design around consteval-only types.
+<A HREF="https://github.com/cplusplus/papers/issues/2671">Paper issue 2671</A>
+requests EWG involvement, if necessary.</P>
+
+<P><B>Proposed resolution (March 2026; work in progress):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#12">basic.types.general</A>] paragraph 12 and split into
+separate paragraphs as follows:</P>
+
+<BLOCKQUOTE>
+
+A type is <I>consteval-only</I> if it is
+<UL>
+<LI>
+<TT>std::meta::info</TT>,</LI>
+<LI>cv <TT>T</TT>, <INS>pointer to <TT>T</TT>, reference to <TT>T</TT>, or
+array of <TT>T</TT>,</INS> where T is a consteval-only type,</LI>
+<LI class="del">a pointer or reference to a consteval-only type,</LI>
+<LI class="del">an array of consteval-only type,</LI>
+<LI>a function type having a return type or any parameter type
+that is consteval-only,</LI>
+<LI>a class type with <DEL>any</DEL> <INS>a</INS> non-static data
+member <DEL>having</DEL> <INS>of</INS> consteval-only type, or</LI>
+<LI>a type &#8220;pointer to member of class C of type T&#8221;, where
+at least one of C or T is <DEL>a</DEL>
+consteval-only <DEL>type</DEL>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+A type is <I>observably consteval-only</I> from a program
+point <I>P</I> if it is
+<UL>
+<LI>
+<TT>std::meta::info</TT>,</LI>
+<LI>
+<I>cv</I> <TT>T</TT>, pointer to <TT>T</TT>, reference
+to <TT>T</TT>, or an array of <TT>T</TT>, where <TT>T</TT> is
+observably consteval-only from <I>P</I>,</LI>
+<LI>a function type having
+return type or any parameter type that is observably consteval-only
+from <I>P</I>,</LI>
+<LI>a class type that is complete from <I>P</I> with a non-static data
+member whose type is observably consteval-only from <I>P</I>, or</LI>
+<LI>a type "pointer to member of class <TT>C</TT> of type <TT>T</TT>",
+where at least one of <TT>C</TT> or <TT>T</TT> is observably
+consteval-only from <I>P</I>.</LI>
+</UL>
+
+<P>[ Note: Every type which is observably consteval-only from some
+program point is also consteval-only. --end note]</P>
+
+<P>[ Example:</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> a.cpp</SPAN>
+  struct S { std::meta::info m; };
+  struct T;
+  struct U { T *m; };
+
+  //<SPAN CLASS="cmnt"> b.cpp</SPAN>
+  struct S;
+  struct T { S *m; };
+</PRE>
+<P>
+<TT>S</TT>, <TT>T</TT>, and <TT>U</TT> are all consteval-only
+types, even though neither <TT>T</TT> nor <TT>U</TT> is observably
+consteval-only from any point in the program.  -- end example]</P>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="del">
+
+Every object of consteval-only type shall be
+<UL>
+<LI>the object associated with a constexpr variable or a subobject
+thereof,</LI>
+<LI>a template parameter object (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) or a
+subobject thereof, or</LI>
+<LI>an object whose lifetime begins and ends during the evaluation of
+a core constant expression.</LI>
+</UL>
+Every function of consteval-only type shall be an immediate function
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+Each declaration <I>D</I> of a variable or structured binding with
+consteval-only type <TT>T</TT> shall be either
+<UL>
+<LI>
+<TT>constexpr</TT> or</LI>
+<LI>introduced by the declaration of an object or reference whose
+lifetime begins and ends within a manifestly constant-evaluated
+expression;</LI>
+</UL>
+a diagnostic is required only if <I>D</I> is reachable from a program
+point from which <TT>T</TT> is observably consteval-only.
+
+<P>Each declaration <I>D</I> of a function of consteval-only
+type <TT>T</TT> shall be either</P>
+<UL>
+<LI>
+<TT>consteval</TT> or</LI>
+<LI>a declaration of an immediate-escalating function
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]);</LI>
+</UL>
+<P>a diagnostic is required only if <I>D</I> is reachable from a program
+point from which <TT>T</TT> is observably consteval-only.</P>
+
+<P>[Note: Immediate-escalating functions of consteval-only type are
+immediate functions (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). --end note]</P>
+
+<P>Each potentially-evaluated expression or conversion <I>E</I> of
+consteval-only type <TT>T</TT> shall be in an immediate function
+context; a diagnostic is required only if the innermost declaration
+that contains <I>E</I> is reachable from a program point
+where <TT>T</TT> is observably consteval-only.</P>
+
+<P>[Note: An expression is immediate-escalating if its type is
+observably consteval-only from the program point following the
+expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). --end note]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.7 [<A href="https://wg21.link/expr.const#21">expr.const</A>] paragraph 21 as follows:</P>
+
+<BLOCKQUOTE>
+
+A constant expression is either
+<UL>
+<LI>a glvalue core constant expression E for which
+<UL>
+<LI>E refers to a non-immediate function,</LI>
+<LI>E designates an object o, and if the complete object of o is
+of <INS>observably</INS> consteval-only type <INS>from the program
+point immediately following <I>E</I></INS> then so is E,</LI>
+</UL>
+[<I>Example 11:</I> ... &#8212;<I>end example</I>] or</LI>
+<LI>a prvalue core constant expression <I>E</I> whose result object
+(7.2.1 [<A href="https://wg21.link/basic.lval">basic.lval</A>]) satisfies the following constraints:
+<UL>
+<LI>each constituent reference refers to an object or a non-immediate
+function,</LI>
+<LI>no constituent value of scalar type is an indeterminate or
+erroneous value (6.8.5 [<A href="https://wg21.link/basic.indet">basic.indet</A>]),</LI>
+<LI>no constituent value of pointer type is a pointer to an immediate
+function or an invalid pointer value
+(6.9.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]),</LI>
+<LI>no constituent value pointer-to-member type designates an
+immediate function, and</LI>
+<LI>unless the value is of consteval-only type,
+<UL>
+<LI>no constituent value of pointer-to-member type points to a direct
+member of a <INS>class that is observably</INS>
+consteval-only <INS>from the program point immediately
+following <I>E</I></INS> <DEL>class type</DEL>,</LI>
+<LI>no constituent value of pointer type points to or past an object
+whose complete object is of <INS>observably</INS> consteval-only
+type <INS>from the program point immediately following <I>E</I></INS>,
+and</LI>
+<LI>no constituent reference refers to an object whose complete object
+is of <INS>observably</INS> consteval-only type <INS>from the program
+point immediately following <I>E</I></INS>.</LI>
+</UL>
+</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#24">expr.const</A>] paragraph 24 as follows:</P>
+
+<BLOCKQUOTE>
+
+A potentially-evaluated expression or conversion <INS><I>E</I></INS>
+is immediate-escalating if it is neither initially in an immediate
+function context nor a subexpression of an immediate invocation, and
+<UL>
+<LI>it is an <I>id-expression</I> or <I>splice-expression</I> that
+designates an immediate function,</LI>
+<LI>it is an immediate invocation that is not a constant expression,
+or</LI>
+<LI>it is of <INS>observably</INS> consteval-only type <INS>from the
+program point immediately following <I>E</I></INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#26">expr.const</A>] paragraph 26 as follows:</P>
+
+<BLOCKQUOTE>
+
+An immediate function is a function that is
+<UL>
+<LI>declared with the <TT>consteval</TT> specifier,</LI>
+<LI>an immediate-escalating function whose type
+is <INS>observably</INS> consteval-only <INS>from the program point
+immediately following its definition</INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]), or</LI>
+<LI>an immediate-escalating function <I>F</I> whose function body contains
+either
+<UL>
+<LI>an immediate-escalating expression or</LI>
+<LI>a definition of a non-constexpr variable <DEL>with</DEL>
+<INS>whose type is observably</INS>
+consteval-only <DEL>type</DEL> <INS>from the program point immediately
+following the definition</INS>
+</LI>
+</UL>
+whose innermost enclosing non-block scope is F's function parameter
+scope.
+</LI>
+</UL>
+[<I>Note 11:</I> Default member initializers used to initialize a base
+or member subobject (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) are considered to be
+part of the function body (9.6.1 [<A href="https://wg21.link/dcl.fct.def.general">dcl.fct.def.general</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.7.3 [<A href="https://wg21.link/class.virtual#18">class.virtual</A>] paragraph 18 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>A class with a consteval</DEL> <INS>An immediate</INS> virtual
+function that overrides a virtual function that is
+not <DEL>consteval</DEL> <INS>immediate</INS> shall <DEL>have
+consteval-only type</DEL> <INS>be a member of a class <TT>C</TT> that
+is observably consteval-only from the program point immediate
+following the definition of <TT>C</TT></INS>
+(6.9.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]). <DEL>A consteval</DEL> <INS>An
+immediate</INS> virtual function shall not be overridden by a virtual
+function that is not <DEL>consteval</DEL> <INS>an immediate
+function</INS>.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>EWG 2026-03-24</B></P>
+
+<P>Having seen P4135R0 and P4101R0, EWG decided not to take action for
+C++26.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

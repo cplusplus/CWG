@@ -1,0 +1,172 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3179</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3179"></A><H4>3179.
+  
+More edge cases for a <TT>void</TT> function parameter
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Matheus Izvekov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-04-21<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/889">#889</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;class T&gt;
+  struct S {
+    using U = decltype((void)(T*)0);
+    void f(U);   //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+  template&lt;class T&gt;
+  void S&lt;T&gt;::f() {}  //<SPAN CLASS="cmnt"> redeclaration of #1?</SPAN>
+</PRE>
+
+<P>Also consider:</P>
+<PRE>
+  template&lt;class T&gt;
+  struct S {
+    void f(std::void_t&lt;T*&gt;);  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+  S&lt;int&gt; x;  //<SPAN CLASS="cmnt"> #1 is a zero-parameter function or has an ill-formed parameter of type</SPAN> void
+</PRE>
+
+<P>The current phrasing in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#2">dcl.fct</A>] paragraph 2 is
+the result of core issues <A HREF="577.html">577</A> and
+<A HREF="2915.html">2915</A>.  The current rule, enabling typedefs
+for <TT>void</TT>, is primarily motivated by C compatibility.</P>
+
+<P><U>Possible resolution (2026-04-22) [SUPERSEDED]:</U></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3 as follows and
+split into two paragraphs:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>parameter-declaration-clause</I> determines the arguments
+that can be specified, and their processing, when the function is
+called.  [<I>Note 1:</I> The <I>parameter-declaration-clause</I> is
+used to convert the arguments specified on the function call; see
+7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>].  &#8212;<I>end note</I>] If
+the <I>parameter-declaration-clause</I> is empty, the function takes
+no arguments. A <INS><TT>parameter list (void)</TT> and, for a
+non-templated function, a</INS> parameter list consisting of a single
+unnamed non-object parameter of <DEL>non-dependent</DEL> type
+void <DEL>is</DEL> <INS>are</INS> equivalent to an empty parameter
+list.  Except for <DEL>this</DEL> <INS>these</INS>
+special <DEL>case</DEL> <INS>cases</INS>, a parameter shall not have
+type cv void. A parameter with volatile-qualified type is deprecated;
+see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].</P>
+
+<P>If the <I>parameter-declaration-clause</I> terminates with an
+ellipsis or a function parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]),
+the number of arguments shall be equal to or greater than the number
+of parameters that do not have a default argument and are not function
+parameter packs. Where syntactically correct and where
+&#8220;...&#8221; is not part of an <I>abstract-declarator</I> ,
+&#8220;...&#8221; is synonymous with &#8220;,
+...&#8221;. A <I>parameter-declaration-clause</I> of the
+form <I>parameter-declaration-list</I> ... is deprecated
+(D.5 [<A href="https://wg21.link/depr.ellipsis.comma">depr.ellipsis.comma</A>]). ...</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-04-28</B></P>
+
+<P>Despite the fact that "equivalent type" is not well-defined (see
+<A HREF="2584.html">issue 2584</A>), the most appropriate approach
+is to use "equivalent type".  Both examples above are ill-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-08):</B></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#3">dcl.fct</A>] paragraph 3 as follows and
+split into two paragraphs:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>parameter-declaration-clause</I> determines the arguments
+that can be specified, and their processing, when the function is
+called.  [<I>Note 1:</I> The <I>parameter-declaration-clause</I> is
+used to convert the arguments specified on the function call; see
+7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>].  &#8212;<I>end note</I>] If
+the <I>parameter-declaration-clause</I> is empty, the function takes
+no arguments. A parameter list consisting of a single unnamed
+non-object parameter of <DEL>non-dependent</DEL> <INS>some</INS>
+type <INS><TT>T</TT>, where <TT>T</TT> is equivalent to
+(13.7.7.2 [<A href="https://wg21.link/temp.over.link">temp.over.link</A>])</INS> <TT>void</TT><INS>,</INS> is
+equivalent to an empty parameter list.  Except for this special case,
+a parameter shall not have type cv void. A parameter with
+volatile-qualified type is deprecated; see
+D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].</P>
+<DIV class="ins">
+[ Example:
+<PRE>
+  template&lt;class T&gt;
+  struct S {
+    void f(std::void_t&lt;T*&gt;);  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+  S&lt;int&gt; x;  //<SPAN CLASS="cmnt"> error: #1 has a parameter of type </SPAN>void
+
+  template&lt;class T&gt;
+  struct S2 {
+    void f(std::void_t&lt;int*&gt;);  //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+  S2&lt;int&gt; y;  //<SPAN CLASS="cmnt"> OK, #2 is a zero-parameter function</SPAN>
+</PRE>
+-- end example ]
+</DIV>
+
+<P>If the <I>parameter-declaration-clause</I> terminates with an
+ellipsis or a function parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]),
+the number of arguments shall be equal to or greater than the number
+of parameters that do not have a default argument and are not function
+parameter packs. Where syntactically correct and where
+&#8220;...&#8221; is not part of an <I>abstract-declarator</I> ,
+&#8220;...&#8221; is synonymous with &#8220;,
+...&#8221;. A <I>parameter-declaration-clause</I> of the
+form <I>parameter-declaration-list</I> ... is deprecated
+(D.5 [<A href="https://wg21.link/depr.ellipsis.comma">depr.ellipsis.comma</A>]). ...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

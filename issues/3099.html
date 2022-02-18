@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3099</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3099"></A><H4>3099.
+  
+Instantiation of type aliases from alias templates is unspecified
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-10-23<BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/782">#782</A>.)</P>
+
+<P>P2996 added the idea that a type alias can result from
+instantiation of an alias template; however, the timing of the
+instantiation (and its relation to the immediate context) is
+unspecified.</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;meta&gt;
+
+  using namespace std::meta;
+
+  template &lt;typename T&gt; using A = T *;
+
+  template &lt;auto&gt; struct Sink;
+
+  template &lt;typename T&gt; void f(Sink&lt;^^A&lt;T&gt; &gt; * = 0); //<SPAN CLASS="cmnt"> immediately instantiated and considered as part of the immediate context?</SPAN>
+  template &lt;typename T&gt; void f(int = 0);
+  void g() { f&lt;int &amp;&gt;(); }
+
+  constexpr auto x = substitute(^^A, {^^int &amp;}); //<SPAN CLASS="cmnt"> valid until dealias?</SPAN>
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-04):</B></P>
+
+<P>Change in 13.7.8 [<A href="https://wg21.link/temp.alias#2">temp.alias</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A
+<UL>
+<LI>
+<I>template-id</I> that is not the operand of
+a <I>reflect-expression</I> or</LI>
+<LI><I>splice-specialization-specifier</I></LI>
+</UL>
+that designates the specialization of an alias template is equivalent
+to the associated type obtained by substitution of
+its <I>template-argument</I>s for the <I>template-parameter</I> s in
+the <I>defining-type-id</I> of the alias template.  Any
+other <I>template-id</I> that names a specialization of an alias
+template is a <I>typedef-name</I> for a type alias<INS>; such
+a <I>template-id</I> is ill-formed if forming the associated type
+results in substitution failure.</INS> ...
+
+</BLOCKQUOTE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3068</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3068"></A><H4>3068.
+  
+Access checking in friends involving <I>qualified-id</I>s
+</H4>
+<B>Section: </B>11.8.1&#160; [<A href="https://wg21.link/class.access.general">class.access.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-05-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/709">#709</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  class D {
+    class E {
+      class F {};
+      friend void foo1(D::E::F&amp; q);
+    };
+    friend void foo1(D::E::F&amp; q);
+  };
+  void foo1(D::E::F&amp; q) {}
+</PRE>
+
+<P>The specification in 11.8.1 [<A href="https://wg21.link/class.access.general#6">class.access.general</A>] paragraph 6 leads to
+the question whether we are "naming <TT>F</TT> from the declaration"
+of <TT>::D</TT> or of <TT>::foo1</TT>.  There is implementation
+divergence.</P>
+
+<P>Another example:</P>
+
+<PRE>
+  class G {
+    using T = int;
+    friend void foo(T);
+  };
+
+  class H {
+    friend void foo(G::T);
+  }
+</PRE>
+
+<P>It might be desirable to carve out a special rule for friend
+declarations, allowing both examples, because earlier friend
+declarations have already granted access.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

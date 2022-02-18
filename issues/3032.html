@@ -1,0 +1,200 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3032</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3032"></A><H4>3032.
+  
+Template argument disambiguation
+</H4>
+<B>Section: </B>13.4.1&#160; [<A href="https://wg21.link/temp.arg.general">temp.arg.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-03<BR><BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#CA092">N5028 comment
+  CA&#160;092<BR></A>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/669">#669</A>.)</P>
+
+<P>For the <I>template-argument</I> grammar in
+13.3 [<A href="https://wg21.link/temp.names">temp.names</A>], there is a parsing ambiguity introduced by
+P2841R7 between <I>nested-name-specifier<SUB>opt</SUB>
+template-name</I> and <I>type-id</I> (via
+<I>simple-type-specifier</I>) naming a placeholder for deduced
+class type (9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]).  For example:</P>
+
+<PRE>
+  void g();
+
+  template &lt;typename T&gt;
+  struct A {
+    static void f() {
+      g&lt;T::TT&gt;((A *)0);
+    }
+  };
+
+  template &lt;typename T&gt; void g(void *);
+  template &lt;auto&gt; void g(void *);
+  template &lt;template &lt;typename&gt; class&gt; void g(void *);
+
+  struct Expr { enum { TT = 0 }; };
+  struct Type { using TT = int; };
+  struct Tmpl { template &lt;typename&gt; struct TT; };
+  void h() {
+    A&lt;Expr&gt;::f(); //<SPAN CLASS="cmnt"> all accept</SPAN>
+    A&lt;Type&gt;::f(); //<SPAN CLASS="cmnt"> EDG, MSVC accept; GCC, Clang rejects</SPAN>
+    A&lt;Tmpl&gt;::f(); //<SPAN CLASS="cmnt"> EDG, MSVC accept; GCC, Clang rejects</SPAN>
+  }
+</PRE>
+
+<P>P1787R6 established the direction that the <TT>template</TT>
+disambiguator is needed only when introducing
+a <I>template-argument-list</I> (13.3 [<A href="https://wg21.link/temp.names#6">temp.names</A>] paragraph 6).
+(Reflection made this assumption false.)  All examples should be
+accepted.</P>
+
+<P>See 13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>] for the use of an
+injected-class-name as a template argument.</P>
+
+<P>Example:</P>
+
+<PRE>
+  void g();
+
+  template &lt;typename T&gt;
+  struct A {
+    static void f() {
+      g&lt;A&gt;((A *)0);     //<SPAN CLASS="cmnt"> all accept</SPAN>
+      g&lt;A&gt;((A *)0, 0);  //<SPAN CLASS="cmnt"> Clang, GCC, EDG accept; MSVC rejects</SPAN>
+    }
+  };
+
+  template &lt;typename T&gt; void g(void *);
+  template &lt;template &lt;typename&gt; class&gt; void g(void *, int);
+
+  void h() { A&lt;int&gt;::f(); }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-06):</B></P>
+
+<P>Strategy: Introduce a new grammar production
+akin <I>reflection-name</I>, as a preferred option
+for <I>template-argument</I>, and say what it means in the various
+cases.</P>
+
+<OL>
+<LI>
+<P>Change in 13.3 [<A href="https://wg21.link/temp.names#1">temp.names</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+<I>template-argument:
+   <INS>template-argument-name</INS>
+   constant-expression
+   type-id</I>
+   <DEL><I>nested-name-specifier<SUB>opt</SUB> template-name</I></DEL>
+   <DEL><I>nested-name-specifier</I> template <I>template-name</I></DEL>
+
+<INS><I>template-argument-name:
+   nested-name-specifier<SUB>opt</SUB> identifier
+   nested-name-specifier</I> template <I>identifier</I></INS>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert a new paragraph before 13.3 [<A href="https://wg21.link/temp.names#8">temp.names</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+The component names of a <I>template-argument-name</I> are those of
+its <I>nested-name-specifier</I> (if any) and its <I>identifier</I>.
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+<P>A <I>template-id</I> is valid if ...</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert a new paragraph before 13.4.1 [<A href="https://wg21.link/temp.arg.general#3">temp.arg.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>
+If a <I>template-argument</I> <I>A</I> matches the
+form <I>template-argument-name</I>, it is interpreted as such;
+the <I>identifier</I> is looked up and its meaning is
+determined as follows:
+<UL>
+<LI>If lookup finds an injected-class-name (13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]), then:
+<UL>
+<LI>When <I>A</I> is for a type template template parameter,
+<I>A</I> denotes the corresponding class template.</LI>
+<LI>Otherwise, it denotes a <I>type-name</I>.</LI>
+</UL>
+</LI>
+
+<LI>Otherwise, if lookup finds a template,
+<I>A</I> denotes that template.</LI>
+
+<LI>Otherwise, if lookup finds a type alias or a type, <I>A</I>
+denotes the underlying type and is interpreted as a <I>type-id</I>.
+</LI>
+
+<LI>Otherwise, <I>A</I> is interpreted as an expression.
+</LI>
+</UL>
+</P>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+In a <I>template-argument</I>, an ambiguity between a <I>type-id</I>
+and an expression is resolved to a <I>type-id</I>, regardless of the
+form of the corresponding <I>template-parameter</I>...
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

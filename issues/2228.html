@@ -1,0 +1,439 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2228</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2228"></A><H4>2228.
+  
+Ambiguity resolution for cast to function type
+</H4>
+<B>Section: </B>9.3.3&#160; [<A href="https://wg21.link/dcl.ambig.res">dcl.ambig.res</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-02-02
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  int x = (int()) + 5; 
+</PRE>
+
+<P>This is ill-formed, because 9.3.3 [<A href="https://wg21.link/dcl.ambig.res#2">dcl.ambig.res</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+An ambiguity can arise from the similarity between a function-style
+cast and a <I>type-id</I>. The resolution is that any construct that
+could possibly be a <I>type-id</I> in its syntactic context shall be
+considered a <I>type-id</I>.
+
+</BLOCKQUOTE>
+
+<P>and thus <TT>int()</TT> is interpreted as a <I>type-id</I> instead
+of as a function-style cast, so this is an ill-formed cast to a
+function type.</P>
+
+<P>This seems to be the wrong disambiguation for all cases where there
+is a choice between a C-style cast and a parenthesized expression: in
+all those cases, the C-style cast interpretation results in a cast to
+a function type, which is always ill-formed.</P>
+
+<P>Further, there is implementation divergence in the handling of this example:</P>
+
+<PRE>
+  struct T { int operator++(int); T operator[](int); };
+  int a = (T()[3])++; //<SPAN CLASS="cmnt"> not a cast</SPAN>
+</PRE>
+
+
+
+<P><B>EWG 2022-11-11</B></P>
+
+<P>This is tracked in github issue
+<A HREF="https://github.com/cplusplus/papers/issues/1376">cplusplus/papers#1376</A>.</P>
+
+<P><B>Additional notes (May, 2025)</B></P>
+
+
+
+<P>Also consider this example:</P>
+
+<PRE>
+  (S())[]-&gt;A&lt;int&gt;;              //<SPAN CLASS="cmnt"> OK, constructor call</SPAN>
+  (S())[]-&gt;A&lt;int&gt; {return {};}; //<SPAN CLASS="cmnt"> error: C-style cast of lambda</SPAN>
+</PRE>
+
+<P>Without the suggested simple rule that <TT>(T())</TT> is never a
+conversion to a function type (which is always semantically
+ill-formed), syntactic disambiguation would require analysis whether
+the thing after the arrow is a type (i.e. a trailing return type) or
+an expression (for <TT>operator-&gt;</TT>).</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-04-17):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2 [<A href="https://wg21.link/expr.unary#1">expr.unary</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+<I>unary-expression :
+  postfix-expression
+  unary-operator cast-expression
+  ++ cast-expression
+  -- cast-expression
+  await-expression
+  sizeof unary-expression
+  sizeof ( <INS>nofun-</INS>type-id )
+  sizeof ... ( identifier )
+  alignof ( <INS>nofun-</INS>type-id )
+  noexcept-expression
+  new-expression
+  delete-expression</I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.5 [<A href="https://wg21.link/expr.sizeof#1">expr.sizeof</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand is either an expression, which is an unevaluated operand
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]), or a
+parenthesized <I><INS>nofun-</INS>type-id</I>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.6 [<A href="https://wg21.link/expr.alignof#1">expr.alignof</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand shall be a <I><INS>nofun-</INS>type-id</I> representing a
+complete object type, or an array thereof, or a reference to one of
+those types.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Replace <I>type-id</I> with <I>nofun-type-id</I> throughout
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], for example in paragraph 1:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  <I>new-expression :
+    ::<SUB>opt</SUB> new new-placement<SUB>opt</SUB> new-type-id new-initializer<SUB>opt</SUB>
+    ::<SUB>opt</SUB> new new-placement<SUB>opt</SUB> ( <INS>nofun-</INS>type-id ) new-initializer<SUB>opt</SUB></I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.3 [<A href="https://wg21.link/expr.cast#2">expr.cast</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  <I>cast-expression :
+    unary-expression
+    ( <INS>nofun-</INS>type-id ) cast-expression</I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.2.9.7.1 [<A href="https://wg21.link/dcl.spec.auto.general#6">dcl.spec.auto.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A placeholder type can also be used in the <I>type-specifier-seq</I>
+of the <I>new-type-id</I> or in the <I><INS>nofun-</INS>type-id</I> of
+a <I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). In such a
+<I><INS>nofun-</INS>type-id</I>, the placeholder type shall appear as
+one of the <I>type-specifier</I>s in the <I>type-specifier-seq</I> or
+as one of the <I>type-specifier</I>s in a <I>trailing-return-type</I>
+that specifies the type that replaces such a <I>type-specifier</I> .
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct#2">dcl.type.auto.deduct</A>] paragraph 2 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+A placeholder for a deduced class type can also be used in
+the <I>type-specifier-seq</I> in the
+<I>new-type-id</I> or <INS>nofun-</INS><I>type-id</I> of
+a <I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), as
+the <I>simple-type-specifier</I> in an explicit type conversion
+(functional notation) (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]), or as
+the <I>type-specifier</I> in the <I>parameter-declaration</I> of
+a <I>template-parameter</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]). A placeholder
+for a deduced class type shall not appear in any other context.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.1 [<A href="https://wg21.link/dcl.decl.general#6">dcl.decl.general</A>] paragraph 6 as follows, to
+fix <TT> auto (*p)() -&gt; int(X());</TT> (now a function pointer
+initialized by <TT>X()</TT>):</P>
+
+<BLOCKQUOTE>
+<PRE>
+  <I>trailing-return-type :
+    -&gt; <INS>nofun-</INS>type-id</I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.2 [<A href="https://wg21.link/dcl.name#1">dcl.name</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE class="ins">
+  <I>nofun-type-id:
+    type-specifier-seq nofun-declarator<SUB>opt</SUB>
+
+  nofun-declarator:
+    ptr-nofun-declarator
+    noptr-nofun-declarator parameters-and-qualifiers trailing-return-type
+
+  ptr-nofun-declarator:
+    noptr-nofun-declarator
+    ptr-operator ptr-nofun-declarator<SUB>opt</SUB>
+
+  noptr-nofun-declarator:
+    noptr-nofun-declarator parameters-and-qualifiers
+    noptr-nofun-declarator<SUB>opt</SUB> [ constant-expression<SUB>opt</SUB> ] attribute-specifier-seq<SUB>opt</SUB>
+    ( ptr-nofun-declarator )</I>
+</PRE>
+
+<P>It is possible to identify uniquely the location in
+the <I>abstract-declarator</I> <INS>or <I>nofun-declarator</I></INS>
+where the identifier would appear if the construction were a
+declarator in a declaration. The named type is then the same as the
+type of the hypothetical identifier.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.3 [<A href="https://wg21.link/dcl.ambig.res#2">dcl.ambig.res</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+An ambiguity can arise from the similarity between
+a function-style cast and a <I>type-id</I>. The resolution is
+that any construct that could possibly be a <I>type-id</I> in its
+syntactic context shall be considered a <I>type-id</I>.
+
+<INS>[ Note: No such ambiguity can arise between an expression and
+a <I>nofun-type-id</I>. -- end note ]</INS>
+
+However, a construct that can syntactically be a <I>type-id</I> whose
+outermost <I>abstract-declarator</I> would match the grammar of
+an <I>abstract-declarator</I> with a <I>trailing-return-type</I> is
+considered a <I>type-id</I> only if it starts with auto.
+
+
+[Example 2 :
+<PRE>
+  template &lt;class T&gt; struct X {};
+  template &lt;int N&gt; struct Y {};
+  X&lt;int()&gt; a;   //<SPAN CLASS="cmnt"> type-id</SPAN>
+  X&lt;int(1)&gt; b;  //<SPAN CLASS="cmnt"> expression (ill-formed)</SPAN>
+  Y&lt;int()&gt; c;   //<SPAN CLASS="cmnt"> type-id (ill-formed)</SPAN>
+  Y&lt;int(1)&gt; d;  //<SPAN CLASS="cmnt"> expression</SPAN>
+  void foo(signed char a) {
+    sizeof(int());    //<SPAN CLASS="cmnt"> <DEL>type-id (ill-formed)</DEL> <INS>expression</INS></SPAN>
+    sizeof(int(a));   //<SPAN CLASS="cmnt"> expression</SPAN>
+    sizeof(int(unsigned(a)));    //<SPAN CLASS="cmnt"> <DEL>type-id (ill-formed)</DEL> <INS>expression</INS></SPAN>
+    (int())+1;              //<SPAN CLASS="cmnt"> <DEL>type-id (ill-formed)</DEL> <INS>expression</INS></SPAN>
+    (int(a))+1;             //<SPAN CLASS="cmnt"> expression</SPAN>
+    (int(unsigned(a)))+1;   //<SPAN CLASS="cmnt"> <DEL>type-id (ill-formed)</DEL> <INS>expression</INS></SPAN>
+  }
+  typedef struct BB { int C[2]; } *B, C;
+  void g() {
+  sizeof(B()-&gt;C[1]);     //<SPAN CLASS="cmnt"> OK, sizeof(expression)</SPAN>
+  sizeof(auto()-&gt;C[1]);  //<SPAN CLASS="cmnt"> error: <DEL>sizeof of a function returning an array</DEL> <INS>ill-formed expression</INS></SPAN>
+}
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.13.1 [<A href="https://wg21.link/dcl.attr.grammar#1">dcl.attr.grammar</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+<I>alignment-specifier :
+  alignas ( <INS>nofun-</INS>type-id ...<SUB>opt</SUB> )
+  alignas ( constant-expression ...<SUB>opt</SUB> )</I>
+</PRE>
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.13.2 [<A href="https://wg21.link/dcl.align#3">dcl.align</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>alignment-specifier</I> of the
+form <TT>alignas( <I><INS>nofun-</INS>type-id</I> )</TT> has the same
+effect as <TT>alignas(alignof( <I><INS>nofun-</INS>type-id</I> ))</TT>
+(7.6.2.6 [<A href="https://wg21.link/expr.alignof">expr.alignof</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Do not change 13.8.1 [<A href="https://wg21.link/temp.res.general#4">temp.res.general</A>] paragraph 4.</P>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#3">temp.dep.expr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Expressions of the following forms are type-dependent only if the type
+specified by the <I>type-id</I>, <INS><I>nofun-type-id</I>,</INS>
+<I>simple-type-specifier</I>, <I>typename-specifier</I>,
+or <I>new-type-id</I> is dependent, even if any subexpression is
+type-dependent:
+<PRE>
+  <I>simple-type-specifier ( expression-list<SUB>opt</SUB> )
+  simple-type-specifier braced-init-list
+  typename-specifier ( expression-list<SUB>opt</SUB> )
+  typename-specifier braced-init-list
+  ::opt new new-placement<SUB>opt</SUB> new-type-id new-initializeropt
+  ::opt new new-placement<SUB>opt</SUB> ( <INS>nofun-</INS>type-id ) new-initializer<SUB>opt</SUB>
+  dynamic_cast &lt; type-id &gt; ( expression )
+  static_cast &lt; type-id &gt; ( expression )
+  const_cast &lt; type-id &gt; ( expression )
+  reinterpret_cast &lt; type-id &gt; ( expression )
+  ( <INS>nofun-</INS>type-id ) cast-expression</I>
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#4">temp.dep.expr</A>] paragraph 4 as follows:</P>
+<BLOCKQUOTE>
+<PRE>
+  <I>literal
+  sizeof unary-expression
+  sizeof ( <INS>nofun-</INS>type-id )
+  sizeof ... ( identifier )
+  alignof ( <INS>nofun-</INS>type-id )
+  typeid ( expression )
+  typeid ( type-id )
+  ::opt delete cast-expression
+  ::opt delete [ ] cast-expression
+  throw assignment-expressionopt
+  noexcept ( expression )
+  requires-expression</I>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Expressions of the following form are value-dependent if
+the <I>unary-expression</I> or expression is type-dependent or
+the <I>type-id</I> <INS>or <I>nofun-type-id</I></INS> is dependent:
+<PRE>
+  <I>sizeof unary-expression
+  sizeof ( <INS>nofun-</INS>type-id )
+  typeid ( expression )
+  typeid ( type-id )
+  alignof ( <INS>nofun-</INS>type-id )</I>
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#3">temp.dep.constexpr</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Expressions of the following form are value-dependent if either
+the <I>type-id</I>, <INS><I>nofun-type-id</I>,</INS>
+<I>simple-type-specifier</I>, or <I>typename-specifier</I> is
+dependent or the <I>expression</I> or <I>cast-expression</I> is
+value-dependent or any expression in the <I>expression-list</I> is
+value-dependent or any <I>assignment-expression</I> in
+the <I>braced-init-list</I> is value-dependent:
+
+<PRE>
+  <I>simple-type-specifier ( expression-list<SUB>opt</SUB> )
+  typename-specifier ( expression-list<SUB>opt</SUB> )
+  simple-type-specifier braced-init-list
+  typename-specifier braced-init-list
+  static_cast &lt; type-id &gt; ( expression )
+  const_cast &lt; type-id &gt; ( expression )
+  reinterpret_cast &lt; type-id &gt; ( expression )
+  dynamic_cast &lt; type-id &gt; ( expression )
+  ( <INS>nofun-</INS>type-id ) cast-expression</I>
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>EWG 2025-06-16</B></P>
+
+<P>EWG agrees with the direction represented by the wording for the
+May, 2025 notes, above.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

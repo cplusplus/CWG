@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3141</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3141"></A><H4>3141.
+  
+Unique objects from <TT>define_static_array</TT>
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>A. Jiang
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-29<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>Subclause 6.8.2 [<A href="https://wg21.link/intro.object#9.3">intro.object</A>] bullet 9.3 specifies that
+any objects resulting from <TT>define_static_array</TT> are
+potentially overlapping (i.e. may have a non-unique address),
+include <TT>std::array&lt;T, 0&gt;</TT>.</P>
+
+<P>Subclause 13.2 [<A href="https://wg21.link/temp.param#13">temp.param</A>] paragraph 13 (after
+<A HREF="3111.html">issue 3111</A>) specifies that template
+parameter objects are distinct.</P>
+
+<P>Subclause 21.4.3 [<A href="https://wg21.link/meta.define.static">meta.define.static</A>] specifies that
+<TT>reflect_static_array</TT> results in a template parameter
+object.</P>
+
+<P>These requirements appear to be contradictory.  However, it was
+observed that "distinct object" is referring to the abstract machine
+notion of an object; objects can be distinct (resulting in different
+<TT>std::meta::info</TT> values when reflected upon) even if they have
+the same address.</P>
+
+<P>It was further observed that only reflection facilities produce
+array values as template parameter objects; template arguments do
+not. It is design-intended that such array values can share storage
+with string literals and backing arrays of initializer lists.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-01-09):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.8.2 [<A href="https://wg21.link/intro.object#9.3">intro.object</A>] bullet 9.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An object is a <I>potentially non-unique object</I> if it is
+<UL>
+<LI>a string literal object (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]),</LI>
+<LI>the backing array of an initializer list
+(9.5.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), or</LI>
+<LI>
+<DEL>the object introduced by a call to
+std::meta::reflect_constant_array or
+std::meta::reflect_constant_string</DEL> <INS>a template parameter
+object of array type</INS> (21.4.3 [<A href="https://wg21.link/meta.define.static">meta.define.static</A>]), or</LI>
+<LI>a subobject thereof.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.2 [<A href="https://wg21.link/temp.param#13">temp.param</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+[ Note: There can be template parameter objects of array type
+(21.4.3 [<A href="https://wg21.link/meta.define.static">meta.define.static</A>]), but such an object is never denoted by
+an <I>id-expression</I> that names a constant template parameter.
+<INS>Such an object can have an address that is not unique among all
+other in-lifetime objects (6.8.2 [<A href="https://wg21.link/intro.object">intro.object</A>]).</INS> -- end
+note ]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

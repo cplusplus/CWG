@@ -1,0 +1,138 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3070</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3070"></A><H4>3070.
+  
+Trivial assignment can skip member subobjects
+</H4>
+<B>Section: </B>11.4.6&#160; [<A href="https://wg21.link/class.copy.assign">class.copy.assign</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-09-05<BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/759">#759</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct B0 { int b0; };
+
+  struct B {
+    B &amp;operator=(const B &amp;) = default;
+    int x;
+  };
+
+  struct D : B0, B {
+    using B::operator=;
+  private:
+    D &amp;operator=(const D &amp;) &amp;&amp; = default;
+  };
+
+  struct Q {
+    Q &amp;operator=(const Q &amp;) = default;
+    D d;
+  };
+</PRE>
+
+<P>According to the rules, <TT>Q::operator=</TT> is trivial, but it
+does not copy the <TT>d.B0::b0</TT> member of <TT>Q</TT>.
+Implementations disagree and copy that member regardless.</P>
+
+<P>We can make <TT>Q::operator=</TT> non-trivial or deleted.  We can
+also make that assignment operator copy all subobjects, even though
+overload resolution on the base classes clearly is at odds with that
+outcome.</P>
+
+<P><B>Proposed resolution (approved 2025-11-05):</B></P>
+
+<OL>
+<LI>
+<P>Change in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor#11">class.copy.ctor</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+A copy/move constructor for class X is trivial if it is not
+user-provided and if
+<UL>
+<LI>class X has no virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes
+(11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]), and</LI>
+<LI>the constructor selected to copy/move each direct base class
+subobject <INS>is a direct member of that base class and</INS> is
+trivial, and</LI>
+<LI>for each non-static data member of X that is of class type (or
+array thereof), the constructor selected to copy/move that member is
+trivial;</LI>
+</UL>
+otherwise the copy/move constructor is non-trivial.
+
+</BLOCKQUOTE>
+
+</LI>
+<LI>
+<P>Change in 11.4.6 [<A href="https://wg21.link/class.copy.assign#9">class.copy.assign</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+A copy/move assignment operator for class X is trivial if it is not
+user-provided and if
+<UL>
+<LI>class X has no virtual functions
+(11.7.3 [<A href="https://wg21.link/class.virtual">class.virtual</A>]) and no virtual base classes
+(11.7.2 [<A href="https://wg21.link/class.mi">class.mi</A>]), and</LI>
+<LI>the assignment operator selected to copy/move each direct base
+class subobject <INS>is a direct member of that base class and</INS>
+is trivial, and
+</LI>
+<LI>for each non-static data member of X that is of class type (or
+array thereof), the assignment operator selected to copy/move that
+member is trivial;</LI>
+</UL>
+otherwise the copy/move assignment operator is
+non-trivial.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

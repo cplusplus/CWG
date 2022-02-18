@@ -1,0 +1,125 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3166</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3166"></A><H4>3166.
+  
+Protected access rule for a pointer-to-member from a <I>reflect-expression</I>
+</H4>
+<B>Section: </B>7.6.2.10&#160; [<A href="https://wg21.link/expr.reflect">expr.reflect</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-02-17<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/852">#852</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  class A {
+  protected:
+    void f();
+  };
+
+  struct B : A {
+    static constexpr auto r = ^^A::f;
+  };
+</PRE>
+
+<P>Do the restrictions in 11.8.5 [<A href="https://wg21.link/class.protected">class.protected</A>] on the use of
+expression <TT>&amp;A::f</TT> apply to the
+<I>reflect-expression</I>?</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#7.2">expr.reflect</A>] bullet 7.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>reflect-expression</I> R of the form
+<TT>^^</TT><I>id-expression</I> represents an entity determined as
+follows:
+<UL>
+<LI>...</LI>
+<LI>
+Otherwise, if the <I>id-expression</I> denotes an overload set S,
+<DEL>overload resolution for the expression &amp;S with no target
+shall select a unique function
+(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL> <INS>the expression
+<TT>&amp;</TT><I>id-expression</I> shall be well-formed when considered as an
+unevaluated operand</INS>; R represents
+<DEL>that</DEL> <INS>the</INS> function <INS>selected by overload
+resolution (12.3 [<A href="https://wg21.link/over.over">over.over</A>])</INS>.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-05-08</B></P>
+
+<P>Reflection supports deleted functions, but the phrasing above does not.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#7.2">expr.reflect</A>] bullet 7.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>reflect-expression</I> R of the form
+<TT>^^</TT><I>id-expression</I> represents an entity determined as
+follows:
+<UL>
+<LI>...</LI>
+<LI>
+Otherwise, if the <I>id-expression</I> denotes an overload set S,
+<DEL>overload resolution for the expression &amp;S with no target
+shall select a unique function
+(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL> <INS>the expression
+<TT>&amp;</TT><I>id-expression</I> shall be well-formed when
+considered as an unevaluated operand, except that the function <I>F</I>
+selected as described in 12.3 [<A href="https://wg21.link/over.over">over.over</A>] may be deleted
+(9.6.3 [<A href="https://wg21.link/dcl.fct.def.delete">dcl.fct.def.delete</A>])</INS>; R represents
+<DEL>that function</DEL> <INS><I>F</I></INS> .
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

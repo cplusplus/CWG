@@ -1,0 +1,96 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3050</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3050"></A><H4>3050.
+  
+[[deprecated]] for class template partial specializations
+</H4>
+<B>Section: </B>9.13.4&#160; [<A href="https://wg21.link/dcl.attr.deprecated">dcl.attr.deprecated</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Caves
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-08-12<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  struct S {
+    static constexpr bool value = false;
+  };
+
+  template&lt;typename T&gt;
+  struct [[deprecated]] S&lt;const T&gt; {
+    static constexpr bool value = true;
+  };
+
+  static_assert(S&lt;const int&gt;::value, "BOOM!");
+</PRE>
+
+<P>Should this trigger the deprecation warning for using the partial
+specialization?  There is implementation divergence.</P>
+
+<P>One consistent approach (used by clang) is to instantiate a
+declaration of the specialization from the primary template, but to
+instantiate the definition from the applicable partial specialization.
+Thus, <TT>[[deprecate]]</TT> on a partial specialization comes into
+effect when its definition is instantiated.  However, C++ has some
+situations where a definition is surprisingly required, e.g.:</P>
+
+<PRE>
+  void f(...);
+
+  template&lt;typename T&gt;
+  struct S {
+    static constexpr bool value = false;
+  };
+
+  template&lt;typename T&gt;
+  struct [[deprecated]] S&lt;const T&gt; {
+    static constexpr bool value = true;
+  };
+
+  S&lt;const int&gt; *p;
+  void g() { f(p); }
+</PRE>
+
+
+<BR><BR>
+</BODY>
+</HTML>

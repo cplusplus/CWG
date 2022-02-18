@@ -1,0 +1,104 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3040</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3040"></A><H4>3040.
+  
+Mishandling of lambda coroutines
+</H4>
+<B>Section: </B>9.6.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/721">#721</A>.)</P>
+
+<P>Subclause 9.6.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#3">dcl.fct.def.coroutine</A>] paragraph 3 and paragraph 4 do
+not properly handle function call operators of lambdas that are
+coroutines.  In particular, <TT>*this</TT> does not denote the
+lambda's closure object and a captureless lambda should be treated
+like a static member function, because the result of a captureless
+lambda's conversion function does not take a pointer to the closure
+object.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.6.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#3">dcl.fct.def.coroutine</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The promise type of a coroutine is <TT>std::coroutine_traits&lt;R, P1
+, . . . , Pn &gt;::promise_type</TT>, where R is the return type of
+the function, and P1 . . . Pn is the sequence of types of the
+non-object function parameters, preceded by the type of the object
+parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) if the coroutine is a
+non-static member function <INS>that is not a member of the closure
+type for a <I>lambda-expression</I> with no <I>lambda-capture</I> and
+no explicit object parameter (7.5.6.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>])</INS>. The
+promise type shall be a class type.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.6.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#4">dcl.fct.def.coroutine</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A <I>this-eligible function</I> is an implicit object member function
+that is not a member of the closure type for
+a <I>lambda-expression</I> with no <I>lambda-capture</I>.</INS> In the
+following, pi is an lvalue of type Pi , where p1 denotes the object
+parameter and pi+1 denotes the ith non-object function parameter for
+<DEL>an implicit object member</DEL> <INS>this-eligible</INS>
+function, and pi denotes the ith function parameter otherwise.
+For <DEL>an implicit object member</DEL> <INS>this-eligible</INS>
+function, q1 is an lvalue that denotes <TT>*this</TT> <INS>or, if the
+function is a member of a closure type, the closure object</INS>; any
+other qi is an lvalue that denotes the parameter copy corresponding to
+pi , as described below.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

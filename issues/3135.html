@@ -1,0 +1,97 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3135</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3135"></A><H4>3135.
+  
+constexpr structured bindings with prvalues from tuples
+</H4>
+<B>Section: </B>9.7&#160; [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-14<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/807">#807</A>.)</P>
+
+<P>In the tuple case, <TT>e.get&lt;i&gt;()</TT> or
+<TT>get&lt;i&gt;(e)</TT> is used, but the case that those function
+calls return a prvalue is not properly handled for constexpr.  For
+example, P1789R3 (Library Support for Expansion Statements)
+added <TT>constexpr T get(integer_sequence&lt;...&gt;)</TT>.</P>
+
+<P>Specific example:</P>
+
+<PRE>
+  constexpr auto [...Is] = std::make_index_sequence&lt;2&gt;();
+</PRE>
+
+<P>decomposes into:</P>
+
+<PRE>
+  constexpr auto e = std::integer_sequence&lt;size_t, 0, 1&gt;();
+  constexpr size_t&amp;&amp; Is#0 = 0;   //<SPAN CLASS="cmnt"> temporary is mutable</SPAN>
+  constexpr size_t&amp;&amp; Is#1 = 1;
+</PRE>
+
+<P>Structured bindings for prvalues should use a non-reference type.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-27):</B></P>
+
+<P>Change in 9.7 [<A href="https://wg21.link/dcl.struct.bind#7">dcl.struct.bind</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Given the type Ti designated by std::tuple_element&lt;i,
+E&gt;::type and the type Ui <DEL>designated by either <TT>Ti
+&amp;</TT> or Ti &amp;&amp; where Ui is an lvalue reference if the
+initializer is an lvalue and an rvalue reference
+otherwise,</DEL> <INS>defined as <TT>Ti</TT> if the initializer is a
+prvalue, as "lvalue reference to Ti" if the initializer is an lvalue,
+or as "rvalue reference to Ti" otherwise</INS>, variables are
+introduced with unique names ri as follows:
+<PRE>
+  S Ui ri = <I>initializer</I> ;
+</PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

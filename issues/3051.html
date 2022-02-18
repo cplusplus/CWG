@@ -1,0 +1,152 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3051</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3051"></A><H4>3051.
+  
+Missing specification for types of member subobjects
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-09<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/726">#726</A>.)</P>
+
+<P>The standard does not appear to specify the types of member
+subobjects. In particular, the manner in which the cv-qualifiers of
+the type of the enclosing class object combine with those of the
+member declaration is specified only for member access expressions
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), not for the type of the subobject
+itself.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#8.2">expr.ref</A>] bullet 8.2 and 8.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if E2 designates a non-static data member <DEL>and the
+type of E1 is &#8220;cq1 vq1 X&#8221;, and the type of E2 is
+&#8220;cq2 vq2 T&#8221;</DEL>, the expression designates the
+corresponding member subobject of the object designated by E1 <INS>and
+its type is the type that a member subobject corresponding to the
+member designated by <TT>E2</TT> would have in an object whose type is
+that of <TT>E1</TT> (11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>])</INS>. If E1 is an
+lvalue, then E1.E2 is an lvalue; otherwise E1.E2 is an xvalue. <DEL>Let the
+notation vq12 stand for the &#8220;union&#8221; of vq1 and vq2 ; that
+is, if vq1 or vq2 is volatile, then vq12 is volatile. Similarly, let
+the notation cq12 stand for the &#8220;union&#8221; of cq1 and cq2 ;
+that is, if cq1 or cq2 is const, then cq12 is const. If the entity
+designated by E2 is declared to be a mutable member, then the type of
+E1.E2 is &#8220;vq12 T&#8221;. If the entity designated by E2 is not
+declared to be a mutable member, then the type of E1.E2 is &#8220;cq12
+vq12 T&#8221;.</DEL>
+</LI>
+<LI>...</LI>
+<LI>Otherwise, if E2 designates a direct base class relationship (D,
+B) and the type of E1 is cv T, the expression designates the direct
+base class subobject of type <DEL>B</DEL>
+<INS>"<I>cv</I> <TT>B</TT>"</INS> of the object
+designated by E1. If E1 is an lvalue, then E1.E2 is an lvalue;
+otherwise, E1.E2 is an xvalue. The type of E1.E2 is &#8220;cv
+B&#8221;.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#6">class.mem.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Every object of class type has a unique member subobject corresponding
+to each of its direct non-static data members.
+<INS>For a non-static data member of non-reference type
+"<I>cq2</I> <I>vq2</I> <TT>T</TT>" that is a direct member of an
+object whose type is "<I>cq1</I> <I>vq1</I> <TT>C</TT>",
+let <I>vq12</I> be <TT>volatile</TT> if either <TT>vq1</TT>
+or <TT>vq2</TT> is volatile, and empty otherwise, and let <I>cq12</I>
+be <TT>const</TT> if either <I>cq1</I> or <I>cq2</I> is
+<TT>const</TT>, and empty otherwise. If the member is declared
+<TT>mutable</TT>, then the type of the corresponding subobject is
+"<I>vq12</I> <TT>T</TT>"; otherwise, the type of the corresponding
+subobject is "<I>cq12</I> <I>vq12</I> <TT>T</TT>".</INS> If any
+non-static data member of a class C is of reference type, then let D
+be an invented class that is identical to C except that each
+non-static member of D corresponding to a member of C of type
+&#8220;reference to T&#8221; instead has type &#8220;pointer to
+T&#8221;. Every member subobject of a complete object of type C has
+the same size, alignment, and offset as that of the
+corresponding subobject of a complete object of type D. The size and
+alignment of C are the same as the size and alignment of D.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.7.2 [<A href="https://wg21.link/class.mi#4">class.mi</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A base class specifier that does not contain the keyword virtual
+specifies a non-virtual base class. A base class specifier that
+contains the keyword virtual specifies a virtual base class. For each
+distinct occurrence of a non-virtual base class <INS><TT>A</TT></INS>
+in the class lattice of the most derived class <INS><TT>C</TT></INS>,
+<DEL>the</DEL> <INS>a</INS> most derived object
+(6.8.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) <INS>of type "<I>cv</I> <TT>C</TT>"</INS>
+shall contain a corresponding distinct base class subobject
+of <DEL>that</DEL> type <INS>"<I>cv</I> <TT>A</TT>"</INS>. For each
+distinct base class <INS><TT>B</TT></INS> that is specified virtual,
+the most derived object shall contain a single base class subobject of
+that type <INS>"<I>cv</I> <TT>B</TT>"</INS>.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3190</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3190"></A><H4>3190.
+  
+Ambiguous lookup for type aliases in reflection
+</H4>
+<B>Section: </B>7.6.2.10&#160; [<A href="https://wg21.link/expr.reflect">expr.reflect</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-05-06
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  T t;                // <SPAN CLASS="cmnt">#1, OK</SPAN>
+  auto r = ^^T;       // <SPAN CLASS="cmnt">#2, ???</SPAN>
+</PRE>
+
+<P>While 6.1 [<A href="https://wg21.link/basic.pre#8">basic.pre</A>] paragraph 8 clarifies that #1 is
+well-formed by considering the underlying type, the treatment of #2 is
+unclear.</P>
+
+<P><U>Possible resolution (option 2) [SUPERSEDED]:</U></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a namespace alias
+(9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]), R represents <DEL>that</DEL> <INS>an
+unspecified</INS> namespace alias <INS>among the lookup
+results</INS>.</LI>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a type alias A, R represents the
+underlying entity of A if A was introduced by the declaration of a
+template parameter; otherwise, R represents <DEL>A</DEL> <INS>an
+unspecified type alias among the lookup results</INS>.
+<DIV class="ins">
+[ Example:
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  auto r = ^^T;       // <SPAN CLASS="cmnt">OK, represents either </SPAN>A::T<SPAN CLASS="cmnt"> or </SPAN>B::T
+</PRE>
+-- end example ]
+</DIV>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a namespace alias (9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]),
+<INS>all declarations found by name lookup shall have the same target
+scope, and</INS> R represents
+<DEL>that</DEL> <INS>such a</INS> namespace alias.</LI>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a type alias <DEL>A,</DEL><INS>:</INS>
+<UL>
+<LI>
+<INS>If any declaration found by name lookup introduced a
+template parameter T,</INS> R represents the underlying entity
+of <INS><TT>T</TT>.</INS> <DEL>A if A was introduced by the
+declaration of a template parameter; otherwise,</DEL>
+</LI>
+<LI>
+<INS>Otherwise, all declarations found by name lookup shall have
+the same target scope, and</INS> R represents
+<DEL>A</DEL> <INS>such a type alias</INS>.</LI>
+</UL>
+<DIV class="ins">
+[ Example:
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  auto r = ^^T;       // <SPAN CLASS="cmnt">error: lookup finds type aliases with different target scopes</SPAN>
+</PRE>
+-- end example ]
+</DIV>
+
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-05-19</B></P>
+
+<P>Seeking EWG's approval via
+<A HREF="https://github.com/cplusplus/papers/issues/2795">paper issue #2795</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

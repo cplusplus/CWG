@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3023</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3023"></A><H4>3023.
+  
+Default arguments in list-initialization
+</H4>
+<B>Section: </B>9.5.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-04-24<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;iostream&gt;
+  struct I {
+    I(int x) { std::cout &lt;&lt; x; }
+  };
+  struct S {
+    S(I, I = 2) {}
+  };
+  int main() {
+    S(1, 2); std::cout &lt;&lt; '\n';  //<SPAN CLASS="cmnt"> unspecified order; prints 12 or 21</SPAN>
+    S{1, 2}; std::cout &lt;&lt; '\n';  //<SPAN CLASS="cmnt"> prints 12 (9.5.5 [<A href="https://wg21.link/dcl.init.list#4">dcl.init.list</A>] paragraph 4)</SPAN>
+    S{1};                        //<SPAN CLASS="cmnt"> ???</SPAN>
+  }
+</PRE>
+
+<P>Since no <I>initializer-clause</I> is present for the second argument,
+9.5.5 [<A href="https://wg21.link/dcl.init.list#4">dcl.init.list</A>] paragraph 4 does not, but should, prescribe
+lexical ordering of the argument evaluations.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-04-17):</B></P>
+
+<P>Change in 9.5.5 [<A href="https://wg21.link/dcl.init.list#4">dcl.init.list</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+Within the <I>initializer-list</I> of a <I>braced-init-list</I>,
+the <I>initializer-clause</I>s, including any that result from pack
+expansions (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), are evaluated in the order
+in which they appear. That is, every value computation and side effect
+associated with a given <I>initializer-clause</I> is sequenced before
+every value computation and side effect associated with
+any <I>initializer-clause</I> that follows it in the comma-separated
+list of the <I>initializer-list</I>.  <INS>If the <I>initializer-clause</I>s of
+the <I>initializer-list</I> are interpreted as arguments of a
+constructor call (12.2.2.8 [<A href="https://wg21.link/over.match.list">over.match.list</A>]), any default
+arguments used are evaluated in the order as-if
+an <I>initializer-clause</I> were present for the corresponding
+parameter.</INS>
+</P>
+<P>[<I>Note 4:</I> This evaluation
+ordering holds regardless of the semantics of the initialization; for
+example, it applies when the elements of the <I>initializer-list</I>
+are interpreted as arguments of a constructor call, even though
+ordinarily there are no sequencing constraints on the arguments of a
+call.
+<INS>[ Example:</INS>
+
+<PRE class="ins">
+  #include &lt;iostream&gt;
+  struct I {
+    I(int x) { std::cout &lt;&lt; x; }
+  };
+  struct S {
+    S(I, I = 2) {}
+  };
+  int main() {
+    S(1, 2); std::cout &lt;&lt; '\n';  //<SPAN CLASS="cmnt"> unspecified order; prints 12 or 21</SPAN>
+    S{1, 2}; std::cout &lt;&lt; '\n';  //<SPAN CLASS="cmnt"> prints 12</SPAN>
+    S{1};                        //<SPAN CLASS="cmnt"> prints 12</SPAN>
+  }
+</PRE>
+
+<INS>-- end example ]</INS>
+&#8212;<I>end note</I>]</P>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

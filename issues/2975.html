@@ -1,0 +1,135 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2975</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2975"></A><H4>2975.
+  
+Effect of concept <I>template-head</I> on parameter mappings
+</H4>
+<B>Section: </B>13.5.4&#160; [<A href="https://wg21.link/temp.constr.normal">temp.constr.normal</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-12-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/659">#659</A>.)
+</P>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;auto&gt; constexpr bool B = true;
+
+  template &lt;unsigned X0&gt; concept C = B&lt;X0&gt;;
+  template &lt;unsigned short X1&gt; concept C2 = C&lt;X1&gt;;
+
+  template &lt;unsigned X&gt; void f() requires C&lt;X&gt;; //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;unsigned X&gt; int f() requires C2&lt;X&gt; &amp;&amp; true; //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  void g() {
+    return f&lt;65536&gt;(); //<SPAN CLASS="cmnt"> should probably call #1</SPAN>
+  }
+  void h() {
+    f&lt;0&gt;(); //<SPAN CLASS="cmnt"> ambiguous?</SPAN>
+  }
+</PRE>
+
+<P>The rules in 13.5.4 [<A href="https://wg21.link/temp.constr.normal#1.4">temp.constr.normal</A>] bullet 1.4 do not
+specify how the type of the non-type template parameter <TT>X1</TT> in
+the definition of concept <TT>C2</TT> affects the parameter mapping.
+There is implementation divergence: gcc and MSVC reject the call
+in <TT>g</TT> and accept the call in <TT>h</TT>, resolving to #2 in
+both cases.  Clang and EDG accept the call in <TT>g</TT> (resolving to
+#1) and reject the call in <TT>h</TT> as ambiguous.</P>
+
+<P>As a suggested resolution, introduce a shadow constraint that
+checks the validity of the template argument for the concept's
+template parameter when normalizing the use of <TT>C2</TT> from #2.
+This would reject the call to #2 from <TT>g</TT> (choosing #1) and
+select #2 as more constrained for the call from <TT>h</TT>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.5.4 [<A href="https://wg21.link/temp.constr.normal#1.4">temp.constr.normal</A>] bullet 1.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>For a concept-id C&lt;A1 , A2 , . . . , An &gt; termed CI:
+<UL>
+<LI>If C names a dependent concept, the normal form of CI is a
+concept-dependent constraint whose concept-id is CI and whose
+parameter mapping is the identity mapping.</LI>
+<LI>Otherwise, to form CE, any non-dependent concept template argument
+Ai is substituted into the <I>constraint-expression</I> of C. If any
+such substitution results in an invalid concept-id, the program is
+ill-formed; no diagnostic is required. The normal form of CI is
+<INS>the conjunction of</INS>
+<UL>
+<LI>
+the result of substituting, in the normal form N of CE, appearances of C's
+template parameters in the parameter mappings of the atomic
+constraints in N with their respective arguments from C <INS>and</INS>
+</LI>
+<LI class="ins">for each constant template parameter of some
+type <TT>T</TT> of <TT>C</TT> corresponding to an
+argument <TT>A<SUB>i</SUB></TT> from <TT>CI</TT>, where the type
+of <TT>A<SUB>i</SUB></TT> is different from <TT>T</TT>, the normal
+form of <TT>b&lt;A<SUB>i</SUB>&gt;</TT>, where <TT>b</TT> is the
+invented variable template
+<PRE>
+template&lt;T&gt; constexpr bool b = true;
+</PRE>
+[ Note: This checks that conversion from <TT>A<SUB>i</SUB></TT>
+to <TT>T</TT> is non-narrowing. -- end note ]
+</LI>
+</UL>
+If any such substitution results in an invalid type or expression, the
+program is ill-formed; no diagnostic is required. ...</LI>
+</UL>
+</LI>
+<LI>...</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

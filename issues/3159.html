@@ -1,0 +1,132 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3159</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3159"></A><H4>3159.
+  
+Instantiation of variables with incomplete array types
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-04-01<BR>
+
+
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/843">#843</A>.)</P>
+
+<P>When a variable has an incomplete array type and a braceed
+initializer, the complete array type can be determined by
+instantiating a definition of the variable; see
+13.9.2 [<A href="https://wg21.link/temp.inst#4">temp.inst</A>] paragraph 4 and 13.9.2 [<A href="https://wg21.link/temp.inst#7">temp.inst</A>] paragraph 7.  The level of tracking differs between
+implementations.</P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> Case 1: Clang rejects because the type of `*p` changes</SPAN>
+  //<SPAN CLASS="cmnt"> between redeclarations; Clang seems to be incorrect:</SPAN>
+  //<SPAN CLASS="cmnt"> The array bound affects the semantics of the program.</SPAN>
+  template&lt;typename T&gt; struct X {
+    static inline int arr[] = {1, 2, 3};
+  };
+
+  //<SPAN CLASS="cmnt"> Clang does not instantiate a definition here.</SPAN>
+  extern decltype(X&lt;int&gt;::arr) *p;
+  //<SPAN CLASS="cmnt"> Clang does instantiate a definition here.</SPAN>
+  int n = sizeof(X&lt;int&gt;::arr);
+  decltype(X&lt;int&gt;::arr) *p;
+
+  //<SPAN CLASS="cmnt"> Case 2: GCC, EDG, MSVC reject because they instantiate a definition</SPAN>
+  //<SPAN CLASS="cmnt"> of `X&lt;int&gt;::arr` even though it's not odr-used and doesn't appear to</SPAN>
+  //<SPAN CLASS="cmnt"> affect the semantics of the program.</SPAN>
+  template&lt;typename T&gt; struct X {
+    static inline int arr[] = {1, 2, T::error};
+  };
+
+  //<SPAN CLASS="cmnt"> The array bound here doesn't matter; array-to-pointer decay doesn't</SPAN>
+  //<SPAN CLASS="cmnt"> care about it.</SPAN>
+  decltype(+X&lt;int&gt;::arr) r;
+
+  //<SPAN CLASS="cmnt"> Case 3: GCC and clang accept; MSVC rejects because it instantiates a definition</SPAN>
+  //<SPAN CLASS="cmnt"> of </SPAN>X&lt;int&gt;::arr<SPAN CLASS="cmnt"> even though it's not odr-used and its type is complete.</SPAN>
+  //<SPAN CLASS="cmnt"> EDG rejects because it instantiates the definition of arr while instantiating </SPAN>X&lt;int&gt;<SPAN CLASS="cmnt">.</SPAN>
+  template&lt;typename T&gt; struct X {
+    static inline int arr[3] = {1, 2, T::error};
+  };
+
+  //<SPAN CLASS="cmnt"> No definition needed, thus the initializer is not instantiated.</SPAN>
+  decltype(+X&lt;int&gt;::arr) r;
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-08):</B></P>
+
+<P>Add a new paragraph after 13.9.2 [<A href="https://wg21.link/temp.inst#8">temp.inst</A>] paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+The existence of a definition of a variable or function is considered
+to affect the semantics of the program if the variable or function is
+needed for constant evaluation by an expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), even if constant evaluation of the
+expression is not required or if constant expression evaluation does
+not use the definition. [ Example: ... ]
+
+<P class="ins">Similarly, the existence of a definition of a variable
+or function is considered to affect the semantics of the program if
+the instantiation is necessary to determine the type of an expression
+in the program, even if the variable or function is not odr-used
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]).  [ Example:</P>
+
+<PRE class="ins">
+  template&lt;typename T&gt; struct X {
+    static inline int arr[] = {1, 2, T::error};
+  };
+  decltype(+X&lt;int&gt;::arr) r;  //<SPAN CLASS="cmnt"> error: definition of </SPAN>X&lt;int&gt;::arr<SPAN CLASS="cmnt"> is instantiated to complete its type</SPAN>
+
+  template&lt;typename T&gt; struct X2 {
+    static inline int arr[3] = {1, 2, T::error};
+  };
+  decltype(+X2&lt;int&gt;::arr) r;  // <SPAN CLASS="cmnt">OK, type of </SPAN>arr<SPAN CLASS="cmnt"> is complete and </SPAN>arr<SPAN CLASS="cmnt"> is not odr-used</SPAN>
+</PRE>
+<P class="ins">-- end example ]</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

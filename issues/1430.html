@@ -1,0 +1,162 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1430</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="1430"></A><H4>1430.
+  
+Pack expansion into fixed alias template parameter list
+</H4>
+<B>Section: </B>13.7.8&#160; [<A href="https://wg21.link/temp.alias">temp.alias</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2011-12-13<BR>
+
+
+
+
+<P>Originally, a pack expansion could not expand into a
+fixed-length template parameter list, but this was changed in
+N2555.  This works fine for most templates, but causes issues
+with alias templates.</P>
+
+<P>In most cases, an alias template is transparent; when it's
+used in a template we can just substitute in the dependent
+template arguments.  But this doesn't work if the
+<I>template-id</I> uses a pack expansion for non-variadic
+parameters.  For example:</P>
+
+<PRE>
+    template&lt;class T, class U, class V&gt;
+    struct S {};
+
+    template&lt;class T, class V&gt;
+    using A = S&lt;T, int, V&gt;;
+
+    template&lt;class... Ts&gt;
+    void foo(A&lt;Ts...&gt;);
+</PRE>
+
+<P>There is no way to express <TT>A&lt;Ts...&gt;</TT> in terms of
+<TT>S</TT>, so we need to hold onto the <TT>A</TT> until we have
+the <TT>Ts</TT> to substitute in, and therefore it needs to be
+handled in mangling.</P>
+
+<P>Currently, EDG and Clang reject this testcase, complaining
+about too few template arguments for A.  G++ did as well, but I
+thought that was a bug.  However, on the ABI list John Spicer
+argued that it should be rejected.</P>
+
+<P>(See also <A HREF="1558.html">issue 1558</A>.)</P>
+
+<P><B>Notes from the October, 2012 meeting:</B></P>
+
+<P>The consensus of CWG was that this usage should be prohibited,
+disallowing use of an alias template when a dependent argument can't
+simply be substituted directly into the <I>type-id</I>.</P>
+
+<P><B>Additional note, April, 2013:</B></P>
+
+<P>For another example, consider:</P>
+
+<PRE>
+  template&lt;class... x&gt; class list{};
+  template&lt;class a, class... b&gt; using tail=list&lt;b...&gt;;
+  template &lt;class...T&gt; void f(tail&lt;T...&gt;);
+
+  int main() {
+    f&lt;int,int&gt;({});
+  }
+</PRE>
+
+<P>There is implementation variance in the handling of this
+example. </P>
+
+<P><B>CWG 2022-11-11</B></P>
+
+<P>There is no more implementation divergence; all known
+implementations reject the example.</P>
+
+<P><B>Additional notes (January, 2025)</B></P>
+
+<P>Using <I>pack-index-specifier</I>s allows to express
+some such substitutions, but not others.  In the below example, we
+cannot express <TT>X</TT>.  And while we can express <TT>Y</TT>, we
+cannot deduce through the replacement.</P>
+
+<PRE>
+  template&lt;typename A, typename...T&gt; using X = std::tuple&lt;T...&gt;;
+  template&lt;typename A, typename...T&gt; using Y = A;
+
+  template&lt;typename ...U&gt; void f(X&lt;U...&gt; x, Y&lt;U...&gt; y);
+</PRE>
+
+<P><B>Additional notes (March, 2025)</B></P>
+
+<P>There is still implementation divergence for the following example:</P>
+
+<PRE>
+   template &lt;template &lt;typename...&gt; class T&gt; struct Template {
+   template &lt;typename... Us&gt; using type = T&lt;Us...&gt;;
+   };
+
+   template &lt;class T&gt; struct X { static constexpr T value = T(); };
+   template &lt;class T&gt; using alias = X&lt;T&gt;;
+
+   int main() { return Template&lt;alias&gt;::type&lt;int&gt;::value; }
+</PRE>
+
+<P>GCC and EDG accept, clang rejects.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  template &lt;template &lt;int...&gt; class T&gt; struct Template {
+    template &lt;int... Us&gt; using type = T&lt;Us...&gt;; 
+  };
+  template &lt;T1 N&gt; struct X { static constexpr int value = 0; };
+  template &lt;T2 N&gt; using alias = X&lt;N&gt;;
+</PRE>
+
+<P>If T1 = T2 = int, GCC and EDG accept and MSVC and Clang reject.
+If T1 = int and T2 = short, GCC accepts and everyone else rejects.
+If T1 = short and T2 = int, EDG accepts and everyone else rejects.
+See also issues <A HREF="1979.html">1979</A> and
+<A HREF="1286.html">1286</A>; the alias template above would be
+considered "simple" only if T1 = T2.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

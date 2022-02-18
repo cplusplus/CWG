@@ -1,0 +1,119 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3147</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3147"></A><H4>3147.
+  
+Modules, exposures: odr-use determination too simple
+</H4>
+<B>Section: </B>6.7&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-18<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  export module M;
+
+  static int x;             //<SPAN CLASS="cmnt"> OK, TU-local</SPAN>
+  static int &amp;rx = x;       //<SPAN CLASS="cmnt"> OK, TU-local</SPAN>
+
+  export inline int &amp;f() {
+    return rx;              //<SPAN CLASS="cmnt"> OK(!), not an odr-use</SPAN>
+  }
+</PRE>
+
+<P>The declaration of <TT>f</TT> is not an exposure because the
+reference to <TT>rx</TT> is not an odr-use (6.7 [<A href="https://wg21.link/basic.link#14.4">basic.link</A>] bullet 14.4), but it is impossible with current implementation
+technology to simulate naming <TT>x</TT> in importing translation
+units.</P>
+
+<P>For a related example:</P>
+
+<PRE>
+  export module M;
+
+  static int x;               //<SPAN CLASS="cmnt"> OK, TU-local</SPAN>
+  extern "C++" int &amp;rx = x;   //<SPAN CLASS="cmnt"> OK, not an exposure (not constexpr)</SPAN>
+
+  export inline int &amp;f() {
+    return rx;                //<SPAN CLASS="cmnt"> OK(!), not an odr-use</SPAN>
+  }
+</PRE>
+
+<P>In importing translation units, <TT>rx</TT> is not usable in
+constant expressions.</P>
+
+<P>Finally:</P>
+
+<PRE>
+  export module M;
+
+  extern "C++" int x = 0;
+  static int &amp;rx = x;
+
+  export constexpr inline int &amp;f() {
+    return rx;                //<SPAN CLASS="cmnt"> OK, not an odr-use</SPAN>
+  }
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#5">basic.def.odr</A>] paragraph 5 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+A variable is named by an expression if the expression is
+an <I>id-expression</I> or <I>splice-expression</I>
+(7.5.9 [<A href="https://wg21.link/expr.prim.splice">expr.prim.splice</A>]) that designates it. A variable x that is
+named by a potentially-evaluated expression N that appears at a point
+P is odr-used by N unless
+<UL>
+<LI>x is a reference that is usable in constant expressions at P
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), or ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3127</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3127"></A><H4>3127.
+  
+Evaluation context is missing synthesized points
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dan Katz
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-15<BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/810">#810</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  struct TCls {
+    T mem;
+    static_assert(size_of(^^T) &gt; 0); //<SPAN CLASS="cmnt"> &lt;-- problem</SPAN>
+  };
+
+  struct S;
+  consteval {
+   constexpr auto ctx = std::meta::access_context::current();
+
+   if (nonstatic_data_members_of(substitute(^^TCls, {define_aggregate(^^S, {})}), ctx).size() &gt; 1)
+    throw "contrived, but whatever";
+  }
+</PRE>
+
+<P>Nothing in the definition of "evaluation context" takes the
+synthesized point associated with <TT>S</TT> from the instantiation
+context of <TT>TCls&lt;S&gt;</TT> into the evaluation context of the
+static assertion.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#32">expr.const</A>] paragraph 32 as follows:</P>
+
+<BLOCKQUOTE>
+
+... During the evaluation V of an expression E as a core constant
+expression, the evaluation context of an evaluation X
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) consists of the following points:
+<UL>
+<LI>The program point EVAL-PT(L) <INS>and any synthesized point in
+the instantiation context thereof</INS>, where L is the point at which
+E appears, and where EVAL-PT(P ), for a point P , is a point R
+determined as follows:
+<UL>
+<LI>...</LI>
+</UL>
+</LI>
+<LI>Each synthesized point corresponding to an injected declaration
+produced by any evaluation sequenced before X
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-03-06</B></P>
+
+<P>This issue is resolved by the resolution of
+<A HREF="3162.html">issue 3162</A>.</P>
+<BR><BR>
+</BODY>
+</HTML>

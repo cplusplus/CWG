@@ -1,0 +1,210 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3162</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3162"></A><H4>3162.
+  
+Evaluation context of manifestly constant-evaluated expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dan Katz
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-02-13<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/848">#848</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct S;
+  consteval size_t f() {
+    constexpr bool b = is_complete_type(^^S);
+    return b ? 1 : 2;
+  }
+
+  struct T;
+  consteval {
+    define_aggregate(^^S, {});
+    define_aggregate(^^T, {
+      data_member_spec(^^int, {.name="m", .bit_width=f()}),
+   });
+  }
+
+  int main() {
+    return bit_size_of(^^T::m);
+  }
+</PRE>
+
+<P>The Working Draft arguably says that this program should exit with
+status 1: During the evaluation of the expression corresponding to the
+consteval-block, the evaluation of <TT>is_complete_type(^^S)</TT>
+contains the synthesized point associated with the injected
+declaration of <TT>S</TT>; therefore, the type is complete.</P>
+
+<P>But this was never the intention of P2996; the intention was to
+evaluate manifestly constant-evaluated expressions at the point where
+they appear. The problem is that we didn't consider manifestly
+constant-evaluated expressions that might be executed (formally, per
+the abstract machine) during the evaluation of other manifestly
+constant-evaluated expressions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-25):</B></P>
+
+<P>This also resolves <A HREF="3127.html">issue 3127</A>.</P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#30">expr.const</A>] paragraph 30 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+During an evaluation V (6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of an expression,
+conversion, or initialization <I>E</I> as a core constant expression,
+the <I>point of evaluation of E during V</I> is the program
+point <I>P</I> determined as follows:
+<UL>
+<LI>If <I>E</I> is a potentially-evaluated subexpression of a default
+member initializer <I>I</I>, and <I>V</I> is the evaluation
+of <I>E</I> in the evaluation of <I>I</I> as an immediate
+subexpression of a (possibly aggregate) initialization, then <I>P</I>
+is the point of evaluation of that initialization.
+[ Note: For example, <I>E</I> can be an immediate invocation in a default
+member initializer used by an aggregate initialization appearing at
+<I>P</I>. -- end note ]
+</LI>
+<LI>Otherwise, if <I>E</I> is a potentially-evaluated subexpression of
+a default argument <I>A</I> (9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]),
+and <I>V</I> is the evaluation of <I>E</I> in the evaluation
+of <I>A</I> as an immediate subexpression of a function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), then <I>P</I> is the point of
+evaluation of that function call.</LI>
+<LI>
+Otherwise, <I>P</I> is the point at which <I>E</I> appears.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+
+<DEL>The <I>evaluation context</I> is a set of program points that
+determines the behavior of certain functions used for reflection
+(21.4 [<A href="https://wg21.link/meta.reflection">meta.reflection</A>]).</DEL> During the evaluation V of an
+expression E as a core constant expression, the
+<DEL>evaluation context</DEL> <INS><I>evaluation context</I></INS> of
+an evaluation X <DEL>(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) consists of the
+following points</DEL> <INS>during <I>V</I> is the set <I>C</I> of
+program points determined as follows:</INS>
+<UL>
+<LI class="del">The program point <I>EVAL-PT</I>(L), where L is the point at which
+E appears, and where <I>EVAL-PT</I>(P), for a point P, is a point R
+determined as follows:
+<UL>
+<LI>If a potentially-evaluated
+subexpression (6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) of a default member
+initializer I appears at P , and a (possibly aggregate) initialization
+during V is using I, then R is <I>EVAL-PT</I>(Q) where Q is the point
+at which that initialization appears.</LI>
+<LI>Otherwise, if a
+potentially-evaluated subexpression of a default argument
+(9.3.4.7 [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]) appears at P, and an invocation of a
+function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]) during V is using that default
+argument, then R is <I>EVAL-PT</I>(Q) where Q is the point at which
+that invocation appears.</LI>
+<LI>Otherwise, R is P.</LI>
+</UL>
+</LI>
+<LI class="ins">
+If <I>X</I> occurs during the evaluation <I>Y</I> of a manifestly
+constant-evaluated expression, where <I>Y</I> occurs during <I>V</I>,
+then <I>C</I> is the evaluation context of <I>X</I>
+during <I>Y</I>.</LI>
+<LI>
+<INS>Otherwise, <I>C</I> contains</INS>
+<UL>
+<LI class="ins">the point of evaluation of <I>E</I> during <I>V</I>
+and each synthesized point in the instantiation context thereof
+and</LI>
+<LI>
+<DEL>Each</DEL> <INS>each</INS> synthesized point corresponding to
+an injected declaration produced by any evaluation <INS>executed
+during <I>V</I> that is</INS> sequenced before X
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]).</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+
+<P>[ Note: The evaluation context determines the behavior of
+certain functions used for reflection (21.4 [<A href="https://wg21.link/meta.reflection">meta.reflection</A>]). --
+end note ]</P>
+
+<P>[ Example:</P>
+
+<PRE>
+  struct S;
+  consteval std::size_t f(int p) {
+    constexpr std::size_t r = /* Q */ std::meta::is_complete_type(^^S) ? 1 : 2; //<SPAN CLASS="cmnt"> #1</SPAN>
+    if (!std::meta::is_complete_type(^^S)) {  //<SPAN CLASS="cmnt"> #2</SPAN>
+      std::meta::define_aggregate(^^S, {});
+    }
+    return (p &gt; 0) ? f(p - 1) : r;
+  }
+
+  consteval {
+    if (f(1) != 2) {
+      throw;  //<SPAN CLASS="cmnt"> OK, not evaluated</SPAN>
+    }
+  }
+</PRE>
+
+During each evaluation of <TT>std::meta::is_complete_type(^^S)</TT> at
+#1 (21.4.7 [<A href="https://wg21.link/meta.reflection.queries">meta.reflection.queries</A>]) that is executed during the
+evaluation of <TT>f(1) != 2</TT>, the evaluation context
+contains <TT>Q</TT>, but does not contain the synthesized point
+associated with the injected declaration of <TT>S</TT>. However, the
+synthesized point is in the evaluation context of
+<TT>std::meta::is_complete_type(^^S)</TT> at #2 during the
+evaluation of <TT>f(0)</TT>.  -- end example ]
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

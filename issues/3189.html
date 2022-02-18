@@ -1,0 +1,179 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3189</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3189"></A><H4>3189.
+  
+Implicitly deleted destructors for union-like classes
+</H4>
+<B>Section: </B>11.4.7&#160; [<A href="https://wg21.link/class.dtor">class.dtor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-05-04<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  union U1 {
+    int a = 42;
+    long b;
+  } u1;
+
+  union U2 {
+    U2(int i): i(i) { }
+    int i;
+  } u2(5);
+</PRE>
+
+<P>Both declarations ought to be well-formed, but the current rules (as
+amended by paper P3726R2) make both ill-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<OL>
+<LI>
+<P>Change in 11.4.4 [<A href="https://wg21.link/special#7">special</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+For a class, its direct non-static data members, <INS>excluding
+anonymous union members (but including variant members thereof)</INS>,
+its non-virtual direct base classes, and, if the class is not abstract
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), its virtual base classes are called its
+potentially constructed subobjects.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.7 [<A href="https://wg21.link/class.dtor#4">class.dtor</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A defaulted destructor for a class X is defined as deleted if
+<UL>
+<LI class="ins">for
+a virtual destructor, lookup of the non-array deallocation function
+results in an ambiguity or in a function that is deleted or
+inaccessible from the defaulted destructor; or</LI>
+<LI>X <DEL>is</DEL> <INS>has</INS> a <DEL>non-union class and any
+non-variant</DEL> potentially constructed
+subobject <DEL>has</DEL> <INS><I>S</I> of</INS> class type M (or
+possibly multidimensional array thereof) where <INS>either</INS>
+<UL>
+<LI>
+<INS><I>S</I> is not a variant member and</INS> M has a destructor that
+is deleted or is inaccessible from the defaulted
+destructor, <INS>or</INS>
+</LI>
+</UL>
+</LI>
+<LI>
+<DEL>X is a union and</DEL>
+<UL>
+<LI class="del">overload resolution to select a constructor to
+default-initialize an object of type X either fails or selects a
+constructor that is either deleted or not trivial, or
+</LI>
+<LI class="del">X has a variant member V of class type M (or possibly
+multi-dimensional array thereof) where</LI>
+
+<LI>
+<INS><I>S</I> is a variant member, <TT>M</TT> has a destructor
+that is deleted, inaccessible from the defaulted destructor, or
+non-trivial, and either</INS>
+<UL>
+<LI>
+<DEL>V</DEL> <INS><I>S</I></INS> has a default member
+initializer <INS>or</INS>
+</LI>
+<LI class="ins">
+<TT>X</TT> has a user-provided constructor.</LI>
+</UL>
+<DEL>and M has a destructor that is non-trivial, or,</DEL>
+</LI>
+</UL>
+</LI>
+<LI class="del">for
+a virtual destructor, lookup of the non-array deallocation function
+results in an ambiguity or in a function that is deleted or
+inaccessible from the defaulted destructor.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.9.3 [<A href="https://wg21.link/class.base.init#9.2">class.base.init</A>] bullet 9.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a non-delegating constructor other than an implicitly-defined
+copy/move constructor (11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]), if a given
+potentially constructed subobject is not designated by
+a <I>mem-initializer-id</I> (including the case where there is
+no <I>mem-initializer-list</I> because the constructor has
+no <I>ctor-initializer</I>), then
+<UL>
+<LI>if the entity is a non-static data member that has a default
+member initializer (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]) and either
+<UL>
+<LI>the constructor's class is a union (11.5 [<A href="https://wg21.link/class.union">class.union</A>]),
+and no other variant member of that union is designated by
+a <I>mem-initializer-id</I> or</LI>
+<LI>the constructor's class is not a union, and, if the entity is a
+member of an anonymous union, no other member of that union is
+designated by a <I>mem-initializer-id</I>,</LI>
+</UL>
+the entity is initialized from its default member initializer as
+specified in 9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>];</LI>
+<LI>otherwise, if the entity is <DEL>an anonymous union or</DEL> a
+variant member (11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]), no initialization is
+performed;</LI>
+<LI>otherwise, the entity is default-initialized
+(9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

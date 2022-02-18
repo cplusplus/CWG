@@ -1,0 +1,195 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3003</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3003"></A><H4>3003.
+  
+Naming a deducible template for class template argument deduction
+</H4>
+<B>Section: </B>9.2.9.3&#160; [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-02
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG, LEWG)<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/670">#670</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;template &lt;typename&gt; class TT&gt;
+  void f() { TT x(42); }  //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template &lt;typename T&gt; struct A { A(T); };
+
+  void g() { f&lt;A&gt;(); }
+</PRE>
+
+<P>Using a template template parameter should not enable class
+template argument deduction at #1.  However, while the normative rules
+are clear, all implementations accept the code above, but fail
+(sometimes spectacularly) when parsing situations involving alias
+templates:</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A { A(T); };
+
+  template &lt;typename T, template &lt;typename&gt; class TT = A&gt;
+  using Alias = TT&lt;T&gt;;
+
+  template &lt;typename T&gt;
+  using Alias2 = Alias&lt;T&gt;;
+
+  void h() { Alias2 a(42); }
+  void h2() { Alias a(42); }
+</PRE>
+
+<P><U>Possible resolution (March, 2025) [SUPERSEDED]:</U></P>
+
+<P>Change in 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#3">dcl.type.simple</A>] paragraph 3 and split into
+numbered paragraphs as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>(3) A <I>placeholder-type-specifier</I> is a placeholder for a type to be
+deduced (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]).</P>
+
+<P>(4) A <I>type-specifier</I> of the
+form
+<PRE>typename/opt <I>nested-name-specifier</I>/opt <I>template-name</I>
+</PRE>
+is a placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]). The <I>nested-name-specifier</I>, if
+any, shall be non-dependent and the <I>template-name</I> shall name a
+deducible template.  A deducible template is either a class template
+or is an alias template whose <I>defining-type-id</I> is of the form
+typenameopt <I>nested-name-specifieropt</I>
+templateopt <I>simple-template-id</I> where
+the <I>nested-name-specifier</I> (if any) is non-dependent and
+the <I>template-name</I> of the <I>simple-template-id</I> names a
+deducible template.  <INS>[Note: A template template parameter
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) does not name a deducible template. -- end
+note]</INS> [<I>Note:</I> An <I>injected-class-name</I> is never
+interpreted as a <I>template-name</I> in contexts where class template
+argument deduction would be performed
+(13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]). &#8212;<I>end note</I>]</P>
+
+<P>(5) The other <I>simple-type-specifier</I>s specify either a
+previously-declared type, a type determined from an expression, or one
+of the fundamental types (6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).</P>
+
+<P>(6) Table 17 summarizes the valid combinations
+of <I>simple-type-specifier</I> s and the types they specify.</P>
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution (September, 2025) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#3">dcl.type.simple</A>] paragraph 3 and split into
+numbered paragraphs as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>(3) A <I>placeholder-type-specifier</I> is a placeholder for a type to be
+deduced (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]).</P>
+
+<P>(4) A <I>type-specifier</I> is a placeholder for a deduced class
+type (9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]) if either
+<UL>
+<LI>it is of the form typenameopt <I>nested-name-specifier</I>
+opt <I>template-name</I> or</LI>
+<LI>it is of the form typenameopt <I>splice-specifier</I> and
+the <I>splice-specifier</I> designates a class template or alias
+template.</LI>
+</UL>
+The <I>nested-name-specifier</I> or <I>splice-specifier</I>, if any, shall be non-dependent and the <I>template-name</I>
+or <I>splice-specifier</I> shall designate a deducible template. A
+<I>deducible template</I> is either a class template or is an alias template
+whose <I>defining-type-id</I> is of the form
+<PRE>
+  typename<SUB>opt</SUB> <I>nested-name-specifier<SUB>opt</SUB></I> template<SUB>opt</SUB> <I>simple-template-id</I>
+</PRE>
+where the <I>nested-name-specifier</I> (if any) is non-dependent and
+the <I>template-name</I> of the <I>simple-template-id</I> names a
+deducible template.  <INS>[Note: A template template parameter
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) does not name a deducible template. -- end
+note]</INS> [<I>Note 1:</I> An injected-class-name is never
+interpreted as a <I>template-name</I> in contexts where class template
+argument deduction would be performed (13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]).
+&#8212;<I>end note</I>]</P>
+
+<P>(5) The other <I>simple-type-specifier</I>s specify either a
+previously-declared type, a type determined from an expression, or one
+of the fundamental types (6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).</P>
+
+<P>(6) Table 17 summarizes the valid combinations
+of <I>simple-type-specifier</I>s and the types they specify.</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (September, 2025)</B></P>
+
+<P>The library specification in 25.5.7.2 [<A href="https://wg21.link/range.utility.conv.to#4">range.utility.conv.to</A>] paragraph 4
+is based on class template argument deduction from a template template
+parameter.</P>
+
+<P>
+<A HREF="https://cplusplus.github.io/LWG/issue4381">LWG issue
+4381</A> suggests to remove that library facility as unimplementable
+with the current semantics of the core language.</P>
+
+<P><B>CWG 2025-09-26</B></P>
+
+<P>
+<A HREF="3080.html">Issue 3080</A> was split off to deal with
+arguments for template template parameters (13.4.4 [<A href="https://wg21.link/temp.arg.template#1">temp.arg.template</A>] paragraph 1).</P>
+
+<P>Forwarded to EWG and LEWG via
+<A HREF="https://github.com/cplusplus/papers/issues/2443">paper issue 2443</A>.</P>
+
+<P><B>CWG 2025-03-25</B></P>
+
+<P>Resolved by paper P3865.</P>
+<BR><BR>
+</BODY>
+</HTML>

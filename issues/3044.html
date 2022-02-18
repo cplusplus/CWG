@@ -1,0 +1,189 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3044</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3044"></A><H4>3044.
+  
+Iterating expansion statements woes
+</H4>
+<B>Section: </B>8.7&#160; [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-08<BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/725">#725</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/730">#730</A>.)</P>
+
+<P>The rewrite of iterating expansion statements contains:
+
+<PRE>
+  static constexpr auto <I>iter</I> = <I>begin</I> + i;
+</PRE>
+
+where the type of <TT>i</TT> is unspecified, but overload resolution
+of <TT>+</TT> depends on the type of <TT>i</TT>.</P>
+
+<P>Furthermore, the rewrite contains
+
+<PRE>
+  for (auto i = begin ; i != end ; ++i, ++result);
+</PRE>
+
+which might invoke an overloaded comma operator, which is
+undesirable.</P>
+
+<P>Furthermore, because of the use of <TT>static</TT> in the rewrite,
+the example in 8.7 [<A href="https://wg21.link/stmt.expand#7">stmt.expand</A>] paragraph 7 is ill-formed.</P>
+
+<P><U>Possible resolution (July 2025) [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 8.7 [<A href="https://wg21.link/stmt.expand#5.2">stmt.expand</A>] bullet 5.2 as follows:</P>
+
+<BLOCKQUOTE>
+Otherwise, if S is an iterating expansion statement, S is equivalent to:
+<PRE>
+  {
+    init-statement
+    <DEL>static</DEL> constexpr auto&amp;&amp; range = expansion-initializer ;
+    <DEL>static</DEL> constexpr auto begin = begin-expr;    //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    <DEL>static</DEL> constexpr auto end = end-expr;        //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    S0
+    .
+    .
+    .
+    SN-1
+  }
+</PRE>
+where N is the result of evaluating the expression
+<PRE>
+  [] consteval {
+    std::ptrdiff_t result = 0;
+    for (auto i = begin ; i != end ; ++i<DEL>, ++result</DEL>) <INS>++result</INS>;
+    return result;    //<SPAN CLASS="cmnt"> distance from begin to end</SPAN>
+  }()
+</PRE>
+and Si is
+<PRE>
+  {
+    <DEL>static</DEL> constexpr auto iter = begin + <DEL>i</DEL> <INS><I>i</I></INS>;
+    for-range-declaration = *iter ;
+    compound-statement
+  }
+</PRE>
+The variables range , begin , end , and iter are defined for
+exposition only.  <INS>The <I>identifier</I> <I><TT>i</TT></I> is
+considered to be a prvalue of type <TT>decltype(<I>begin</I> - <I>begin</I>)</TT>; the
+program is ill-formed if <I>i</I> is not representable as such a
+value.</INS> [Note 1 : The instantiation is ill-formed if <I>range</I>
+is not a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). -- end note]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>No change in 8.7 [<A href="https://wg21.link/stmt.expand#7">stmt.expand</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+[ Example 2:
+
+<PRE>
+  consteval int f() {
+    constexpr std::array&lt;int, 3&gt; arr {1, 2, 3};
+    int result = 0;
+    template for (constexpr int s : arr) {      //<SPAN CLASS="cmnt"> OK, iterating expansion statement</SPAN>
+      result += sizeof(char[s]);
+    }
+    return result;
+  }
+  static_assert(f() == 6);
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-06):</B></P>
+
+<P>Change in 8.7 [<A href="https://wg21.link/stmt.expand#5.2">stmt.expand</A>] bullet 5.2 as follows:</P>
+
+<BLOCKQUOTE>
+Otherwise, if S is an iterating expansion statement, S is equivalent to:
+<PRE>
+  {
+    init-statement
+    <DEL>static</DEL> constexpr auto&amp;&amp; range = expansion-initializer ;
+    <DEL>static</DEL> constexpr auto begin = begin-expr;    //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    <DEL>static</DEL> constexpr auto end = end-expr;        //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    S0
+    .
+    .
+    .
+    SN-1
+  }
+</PRE>
+where N is the result of evaluating the expression
+<PRE>
+  [] consteval {
+    std::ptrdiff_t result = 0;
+    for (auto i = begin ; i != end ; ++i<DEL>, ++result</DEL>) <INS>++result</INS>;
+    return result;    //<SPAN CLASS="cmnt"> distance from begin to end</SPAN>
+  }()
+</PRE>
+and Si is
+<PRE>
+  {
+    <DEL>static</DEL> constexpr auto iter = begin + <DEL>i</DEL> <INS>decltype(begin - begin){<I>i</I>}</INS>;
+    for-range-declaration = *iter ;
+    compound-statement
+  }
+</PRE>
+The variables range , begin , end , and iter are defined for
+exposition only.  <INS>The <I>identifier</I> <I><TT>i</TT></I> is
+considered to be a prvalue of type <TT>std::ptrdiff_t</TT>; the
+program is ill-formed if <I>i</I> is not representable as such a
+value.</INS> [Note 1 : The instantiation is ill-formed if <I>range</I>
+is not a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). -- end note]
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

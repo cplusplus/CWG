@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3175</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3175"></A><H4>3175.
+  
+Instantiation of unused default member initializer
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop S. Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-12<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/830">#830</A>.)</P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Wrapper {
+    Wrapper(int) {}
+  };
+
+  template &lt;int N&gt;
+  struct Test {
+    Test() : w(0) {}
+    Wrapper w{};    //<SPAN CLASS="cmnt">MSVC, GCC, EDG accept, but Clang rejects</SPAN>
+  };
+
+  Test&lt;0&gt; t;
+</PRE>
+
+<P>Is the default member initializer instantiated together with the
+rest of the class template specialization, or only when actually
+needed?</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  template &lt;int N&gt;
+  struct Wrapper2 {
+    Wrapper2(int) {}
+  };
+
+  template &lt;int N&gt;
+  struct Test2 {
+    Test2() : w(0) {}
+    Wrapper2&lt;N&gt; w{};    //<SPAN CLASS="cmnt">everybody accepts</SPAN>
+  };
+
+  Test2&lt;0&gt; t;
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.9.2 [<A href="https://wg21.link/temp.inst#11">temp.inst</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>An implementation shall not implicitly instantiate a function
+template, a variable template, a member template, a non-virtual member
+function, a member class or static data member of a templated class,
+or a substatement of a constexpr if statement
+(8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]), unless such instantiation is
+required.</P>
+<P>[<I>Note 4:</I> The instantiation of a generic lambda does not
+require instantiation of substatements of a constexpr if statement
+within its <I>compound-statement</I> unless the call operator template
+is instantiated. &#8212;<I>end note</I>]</P>
+
+It is unspecified whether
+or not an implementation implicitly instantiates a virtual member
+function of a class template if the virtual member function would not
+otherwise be instantiated. <DEL>The use of a template specialization in a
+default argument or default member initializer shall not cause the
+template to be implicitly instantiated except where needed to
+determine the correctness of the default argument or default member
+initializer. The use of a default argument in a function call causes
+specializations in the default argument to be implicitly
+instantiated. Similarly, the use of a default member initializer in a
+constructor definition or an aggregate initialization causes
+specializations in the default member initializer to be instantiated.</DEL>
+
+<P class="ins">
+Let <I>I</I> be a default argument or default member initializer for a
+parameter or member, respectively, of type <TT>T</TT>, considering <I>I</I>
+to include the initialization of the parameter or member from the
+<I>initializer-clause</I> or <I>brace-or-equal-initializer</I>,
+respectively. Each templated entity <I>X</I> referenced by <I>I</I> is
+instantiated if needed to determine the correctness of
+<I>I</I>. Additionally, for the purposes of determining whether a definition
+of <I>X</I> is required to exist or whether the existence of a definition for
+<I>X</I> affects the semantics of the program, <I>I</I> is considered
+to be a templated function <I>F</I> having the form <TT>T F() {
+return <I>I</I>; }</TT>, and a function call, constructor definition
+or aggregate initialization that uses <I>I</I> is considered to
+call <I>F</I>.  [Note: Whether <I>X</I> is instantiated can therefore
+depend on whether the definition of <I>F</I> is instantiated, which in
+turn can depend on whether a function call or aggregate initialization
+that uses <I>I</I> is potentially-evaluated. This rule applies even
+if <I>I</I> is not itself templated.]
+</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-04-17</B></P>
+
+<P>CWG agreed with the intent to make the <TT>Wrapper2</TT> case
+well-formed.  The end result should be consistent with unused default
+member initializers (not) causing odr-use.</P>
+<BR><BR>
+</BODY>
+</HTML>

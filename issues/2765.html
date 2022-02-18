@@ -1,0 +1,421 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2765</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2765"></A><H4>2765.
+  
+Address comparisons between potentially non-unique objects during constant evaluation
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-14<BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<P>
+The (arguably) expanded treatment of backing arrays and string
+literals as potentially non-unique objects in
+<A HREF="2753.html">issue 2753</A> lead to the question how
+the resulting address comparisons are treated during constant evaluation.
+</P>
+
+<P>Subclause 7.7 [<A href="https://wg21.link/expr.const#5.24">expr.const</A>] bullet 5.24 specifies:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a <I>core constant expression</I> unless the
+evaluation of E, following the rules of the abstract machine
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This phrasing is understood to refer to explicitly unspecified
+outcomes only.  The treatment of an example such as</P>
+
+<PRE>
+  constexpr bool b = "abc" == "abc";
+</PRE>
+
+<P>is unclear, given that identical string literals may or may not
+yield distinct string literal objects.</P>
+
+<P>The assumption that equality comparison of
+<TT>std::string_view</TT> would compare addresses as a short-cut
+before comparing the character sequence could not be confirmed
+(27.2.2 [<A href="https://wg21.link/char.traits.require">char.traits.require</A>], 27.3.3.8 [<A href="https://wg21.link/string.view.ops#12">string.view.ops</A>] paragraph 12).</P>
+
+<P><B>CWG in Tokyo 2024-03-22</B></P>
+
+<P>Different approaches are feasible:</P>
+<UL>
+<LI>Require merging of string literals (and backing arrays of
+character types?) at compile-time: Comparing addresses of string
+literals is equivalent to comparing their contents.</LI>
+<LI>Being able to guarantee that addresses of string literals with
+different contents are unequal also at compile time seems useful. In
+particular, this idea would allow comparisons during constant
+evaluation if (and only if) the runtime result is reliable.</LI>
+<LI>At compile time, tag each evaluation of a string literal with a
+globally-unique counter value.  Comparing two such pointers with
+different tags makes the evaluation not a constant expressions.
+</LI>
+<LI>At compile time, each string literal (as written in the source
+code) yields a different address.  Repeated evaluations of the same
+string literal yield pointers that compare equal.  This can be
+achieved by tagging the pointer to the string literal obtained upon
+evaluation with the source location of the string literal.</LI>
+</UL>
+
+<P>In the latter cases, tag values can be preserved when performing
+pointer arithmetic.</P>
+
+<P><U>Possible resolution (January, 2025) [SUPERSEDED]</U></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 6.9.4 [<A href="https://wg21.link/basic.compound#4">basic.compound</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+A pointer value pointing to a potentially non-unique object <I>O</I>
+(6.8.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) is <I>associated with</I> the evaluation
+of the <I>string-literal</I> (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) or
+initializer list (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) that resulted in the
+string literal object or backing array, respectively, that is <I>O</I>
+or of which <I>O</I> is a subobject.  [ Note: A pointer value obtained
+by pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) from a pointer
+value associated with an evaluation <I>E</I> is also associated
+with <I>E</I>. -- end note ]</P>
+
+<P>A pointer value P is valid in the context of an evaluation E if ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a bullet after 7.7 [<A href="https://wg21.link/expr.const#10.25">expr.const</A>] bullet 10.25 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+
+<LI class="ins">an equality operator comparing pointers to potentially
+non-unique objects, if the pointer values of both operands are
+associated with different evaluations (6.9.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) and
+they can both point to the same offset within the same potentially
+non-unique object;
+
+[ Example:
+<PRE>
+  constexpr const char *f() { return "foo"; }
+
+  constexpr bool b1 = "foo" == "foo";   //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr bool b2 = f() == f();       //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr const char *p = f();
+  constexpr bool b3 = p == p;           //<SPAN CLASS="cmnt"> OK, value of </SPAN>b3<SPAN CLASS="cmnt"> is </SPAN>true
+  constexpr bool b4 = "xfoo" + 1 == "foo\0y"; //<SPAN CLASS="cmnt"> error: non-constant; string literal object could contain </SPAN>"xfoo\0y"
+  constexpr bool b5 = "foo" == "bar";   //<SPAN CLASS="cmnt"> OK, value of </SPAN>b5<SPAN CLASS="cmnt"> is </SPAN>false
+  constexpr bool b6 = "foo" == "oo";    //<SPAN CLASS="cmnt"> OK, value of </SPAN>b6<SPAN CLASS="cmnt"> is </SPAN>false<SPAN CLASS="cmnt">; offsets would be different in a merged string literal object</SPAN>
+</PRE>
+-- end example ]
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+
+
+<P><B>Proposed resolution (February 2026) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 6.9.4 [<A href="https://wg21.link/basic.compound#4">basic.compound</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+A pointer value pointing to a potentially non-unique object <I>O</I>
+(6.8.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) is <I>associated with</I> the evaluation
+of the <I>string-literal</I> (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) or
+initializer list (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) that resulted in the
+string literal object or backing array, respectively, that is <I>O</I>
+or of which <I>O</I> is a subobject.  [ Note: A pointer value obtained
+by pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) from a pointer
+value associated with an evaluation <I>E</I> is also associated
+with <I>E</I>. -- end note ]</P>
+
+<P>A pointer value P is valid in the context of an evaluation E if ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph before 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+A type has <I>constexpr-unknown representation</I> if it
+<UL>
+<LI>is a union,</LI>
+<LI>is a pointer or pointer-to-member type,</LI>
+<LI>is volatile-qualified,</LI>
+<LI>is a class type with a non-static data member of reference type, or</LI>
+<LI>has a base class or a non-static member whose type has
+constexpr-unknown representation.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a bullet after 7.7 [<A href="https://wg21.link/expr.const#9.25">expr.const</A>] bullet 9.25 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+
+<LI class="ins">an equality operator comparing pointers to potentially
+non-unique objects, if the pointer values of both operands are
+associated with different evaluations (6.9.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) and
+either they can both point to the same offset within the same
+potentially non-unique object or one of them points to an object whose
+type has constexpr-unknown representation;
+
+[ Example:
+<PRE>
+  constexpr const char *f() { return "foo"; }
+
+  constexpr bool b1 = "foo" == "foo";   //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr bool b2 = f() == f();       //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr const char *p = f();
+  constexpr bool b3 = p == p;           //<SPAN CLASS="cmnt"> OK, value of </SPAN>b3<SPAN CLASS="cmnt"> is </SPAN>true
+  constexpr bool b4 = "xfoo" + 1 == "foo\0y"; //<SPAN CLASS="cmnt"> error: non-constant; string literal object could contain </SPAN>"xfoo\0y"
+  constexpr bool b5 = "foo" == "bar";   //<SPAN CLASS="cmnt"> OK, value of </SPAN>b5<SPAN CLASS="cmnt"> is </SPAN>false
+  constexpr bool b6 = "foo" == "oo";    //<SPAN CLASS="cmnt"> OK, value of </SPAN>b6<SPAN CLASS="cmnt"> is </SPAN>false<SPAN CLASS="cmnt">; offsets would be different in a merged string literal object</SPAN>
+</PRE>
+-- end example ]
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 22.11.3 [<A href="https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Constant When:</I> To <DEL>,</DEL> <INS>and</INS> From <INS>do not
+have constexpr-unknown representation</INS> <DEL>, and the types of
+all subobjects of To and From are types T such that:</DEL>
+<UL class="del">
+<LI>is_union_v&lt;T&gt; is false;</LI>
+<LI>is_pointer_v&lt;T&gt; is false;</LI>
+<LI>is_member_pointer_v&lt;T&gt; is false;</LI>
+<LI>is_volatile_v&lt;T&gt; is false; and</LI>
+<LI>T has no non-static data members of reference type.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2026-02-20</B></P>
+
+<P>A template parameter object of array type is also a potentially
+non-unique object (see <A HREF="3141.html">issue 3141</A>) and
+needs to be handled by the wording.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-24; approved by LWG 2026-03-23):</B></P>
+
+<OL>
+<LI>
+<P>Add a new paragraph before 6.9.4 [<A href="https://wg21.link/basic.compound#4">basic.compound</A>] paragraph 4:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P class="ins">
+A pointer value pointing to a potentially non-unique object <I>O</I>
+(6.8.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) is <I>associated with</I> the evaluation
+of
+<UL>
+<LI>the <I>string-literal</I> (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) that
+resulted in the string literal object,</LI>
+<LI>the initializer list (9.5.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) that resulted in
+the backing array, or</LI>
+<LI>the initialization of the template parameter object
+(13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>], 21.4.3 [<A href="https://wg21.link/meta.define.static">meta.define.static</A>])</LI>
+</UL>
+that is <I>O</I> or of which <I>O</I> is a subobject.
+[ Note: A pointer value obtained by pointer arithmetic
+(7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) from a pointer value associated with an
+evaluation <I>E</I> is also associated with <I>E</I>. -- end note
+]</P>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE>
+
+<P>A pointer value P is valid in the context of an evaluation E if ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph before 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+A type has <I>constexpr-unknown representation</I> if it
+<UL>
+<LI>is a union,</LI>
+<LI>is a pointer or pointer-to-member type,</LI>
+<LI>is volatile-qualified,</LI>
+<LI>is a class type with a non-static data member of reference type, or</LI>
+<LI>has a base class or a non-static member whose type has
+constexpr-unknown representation.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a bullet after 7.7 [<A href="https://wg21.link/expr.const#9.25">expr.const</A>] bullet 9.25 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+
+<LI class="ins">an equality operator comparing pointers to potentially
+non-unique objects, if the pointer values of the two operands are
+associated with different evaluations (6.9.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) and
+either they can both point to the same offset within the same
+potentially non-unique object or one of them points to an object whose
+type has constexpr-unknown representation;
+
+[ Example:
+<PRE>
+  constexpr const char *f() { return "foo"; }
+
+  constexpr bool b1 = +"foo" == "foo";   //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr bool b2 = f() == f();       //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr const char *p = f();
+  constexpr bool b3 = p == p;           //<SPAN CLASS="cmnt"> OK, value of </SPAN>b3<SPAN CLASS="cmnt"> is </SPAN>true
+  constexpr bool b4 = "xfoo" + 1 == "foo\0y"; //<SPAN CLASS="cmnt"> error: non-constant; string literal object could contain </SPAN>"xfoo\0y"
+  constexpr bool b5 = "foo" == "bar" + 0;   //<SPAN CLASS="cmnt"> OK, value of </SPAN>b5<SPAN CLASS="cmnt"> is </SPAN>false
+  constexpr bool b6 = (const char*)"foo" == "oo";    //<SPAN CLASS="cmnt"> OK, value of </SPAN>b6<SPAN CLASS="cmnt"> is </SPAN>false<SPAN CLASS="cmnt">; offsets would be different in a merged string literal object</SPAN>
+
+  constexpr std::initializer_list&lt;int *&gt; il1 = { (int *)nullptr };
+  constexpr std::initializer_list&lt;unsigned long&gt; il2 = { 0 };
+  constexpr bool b7 = il1.begin() == (void *)il2.begin();   //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+</PRE>
+-- end example ]
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 22.11.3 [<A href="https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Constant When:</I> <INS>Neither</INS> To <DEL>,</DEL> <INS>nor</INS> From
+<INS>has constexpr-unknown representation
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).</INS> <DEL>, and the types of all
+subobjects of To and From are types T such that:</DEL>
+<UL class="del">
+<LI>is_union_v&lt;T&gt; is false;</LI>
+<LI>is_pointer_v&lt;T&gt; is false;</LI>
+<LI>is_member_pointer_v&lt;T&gt; is false;</LI>
+<LI>is_volatile_v&lt;T&gt; is false; and</LI>
+<LI>T has no non-static data members of reference type.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,204 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2701</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2701"></A><H4>2701.
+  
+Default arguments in multiple scopes / inheritance of array bounds in the same scope
+</H4>
+<B>Section: </B>9.3.4.7&#160; [<A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD7
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2020-11-20<BR>
+
+
+<P>[ Resolved by paper P2996R13 (Reflection for C++26 (core language wording)),
+adopted in June, 2025. ]</P>
+
+
+
+<P>It appears that P1787R6 has inadvertently changed the rules for
+where default arguments can be (re-)declared for a
+parameter. Consider:</P>
+
+<PRE>
+namespace N {
+  void f(int a, int b = 1);
+}
+void N::f(int a = 1, int b) {} //<SPAN CLASS="cmnt"> valid before P1787R6, invalid afterwards</SPAN>
+void N::f(int a, int b = 2) {} //<SPAN CLASS="cmnt"> invalid before P1787R6, valid afterwards,</SPAN>
+  // <SPAN CLASS="cmnt">but this default argument will either never be used or will make any call using it ill-formed (unclear which)</SPAN>
+</PRE>
+
+<P>Subclause 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#4">dcl.fct.default</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+For non-template functions, default arguments can be added in later
+declarations of a function that inhabit the same scope. Declarations
+that inhabit different scopes have completely distinct sets of default
+arguments. ...
+
+</BLOCKQUOTE>
+
+<P>The problem is that the out-of-line declaration of <TT>N::f</TT>
+inhabits the global namespace scope, not the scope of
+namespace <TT>N</TT>.</P>
+
+<P>A similar problem exists for inheriting array bounds per 9.3.4.5 [<A href="https://wg21.link/dcl.array#8">dcl.array</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+Furthermore, if there is a reachable declaration of the entity that
+inhabits the same scope in which the bound was specified, an omitted
+array bound is taken to be the same as in that earlier declaration,
+and similarly for the definition of a static data member of a class.
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.4.1 [<A href="https://wg21.link/basic.scope.scope#2">basic.scope.scope</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+...
+<INS>The <I>host scope</I> of a declaration is the inhabited scope if
+that scope is a block scope and the target scope otherwise.</INS> An
+entity <I>belongs</I> to a scope S if S is the target scope of a
+declaration of the entity.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.5 [<A href="https://wg21.link/dcl.array#8">dcl.array</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+Furthermore, if there is a reachable declaration of the entity that
+<DEL>inhabits</DEL> <INS>has</INS> the same <INS>host</INS> scope in
+which the bound was specified, an omitted array bound is taken to be
+the same as in that earlier declaration, and similarly for the
+definition of a static data member of a class.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#4">dcl.fct.default</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+For non-template functions, default arguments can be added in later
+declarations of a function that <DEL>inhabit</DEL> <INS>have</INS> the
+same <INS>host</INS> scope. Declarations
+that <DEL>inhabit</DEL> <INS>have</INS> different <INS>host</INS>
+scopes have completely distinct sets of default arguments. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.7 [<A href="https://wg21.link/dcl.fct.default#9">dcl.fct.default</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an overload set contains a declaration of a function <DEL>that
+inhabits a</DEL> <INS>whose host</INS> scope <INS>is</INS> S, any
+default argument associated with any reachable declaration <DEL>that
+inhabits</DEL> <INS>whose host scope is</INS> S is available to the
+call.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#4">over.match.best.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the best viable function resolves to a function for which multiple
+declarations were found, and if any two of these
+declarations <DEL>inhabit</DEL> <INS>have</INS>
+different <INS>host</INS> scopes and specify a default argument that
+made the function viable, the program is ill-formed. [ Example: ...
+
+<PRE>
+  void use() {
+   f(3);       //<SPAN CLASS="cmnt"> OK, default argument was not used for viability</SPAN>
+   f();        //<SPAN CLASS="cmnt"> error: found default argument twice</SPAN>
+  }
+</PRE>
+<PRE class="ins">
+  int g(int, int = 0, int = 0);
+  void h() {
+    using ::g;
+    int g(int, int, int = 1);
+    int a = g(0); //<SPAN CLASS="cmnt"> OK, block scope declaration does not make the function viable;</SPAN>
+           //<SPAN CLASS="cmnt">uses default arguments of declaration whose host scope is the global namespace</SPAN>
+  }
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (March, 2025)</B></P>
+
+<P>Reflector discussion pointed out that 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#4">over.match.best.general</A>] paragraph 4 confuses "overload candidates" (at most one per function)
+with "function declarations" (possibly several per function).</P>
+
+<P>Option 1: Delete 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#4">over.match.best.general</A>] paragraph 4 and move
+its example to the end of 12.2.3 [<A href="https://wg21.link/over.match.viable#2">over.match.viable</A>] paragraph 2.
+Change in 12.2.3 [<A href="https://wg21.link/over.match.viable#2.3">over.match.viable</A>] bullet 2.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A candidate function having more than m parameters is viable only if all parameters following the mth have default arguments ([dcl.fct.default]) <INS>introduced by a declaration of the function considered by overload resolution</INS>. <INS>If the candidate function is selected as the best viable function, there shall be a unique host scope in which such a function declaration declares a default argument for the (m+1)st parameter; the default arguments used in a call to the selected function are the default arguments introduced in that host scope.</INS> For the purposes of overload resolution, the parameter list is truncated on the right, so that there are exactly m parameters.
+</BLOCKQUOTE>
+
+<P>Option 2: Treat function declarations in distinct host scopes as
+different overload candidates if any default arguments would be
+used.</P>
+
+<P>Option 3 (EWG): Disallow default arguments in extern "C" and
+block-scope declarations.</P>
+<BR><BR>
+</BODY>
+</HTML>

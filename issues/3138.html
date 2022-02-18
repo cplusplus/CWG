@@ -1,0 +1,187 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3138</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3138"></A><H4>3138.
+  
+Meaning of unqualified-ids vs. coroutine parameters
+</H4>
+<B>Section: </B>7.5.5.2&#160; [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Berne
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-25<BR>
+
+
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/674">#674</A>.)</P>
+
+<P>Subclause 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#5">expr.prim.id.unqual</A>] paragraph 5 indiscriminately
+refers to a "coroutine parameter", even though a coroutine is only
+identified as such within its body and not, for example, in
+the <I>exception-specification</I>.</P>
+
+<P>Subclause 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#7">expr.prim.id.unqual</A>] paragraph 7 (constification in
+predicates of contract assertions) ought to apply even in the case of
+coroutine parameters, but currently does not.</P>
+
+<P>For the constification of lambda captures
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#4">expr.prim.id.unqual</A>] paragraph 4), the result ought to still
+refer to the coroutine parameter copy.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 and paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<DEL>The</DEL>
+<INS>If the <I>unqualified-id</I> appears in the function body of a
+coroutine and denotes (6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) a coroutine
+parameter of that coroutine, the result is the copy of that parameter
+(9.6.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]); otherwise the</INS> result is the entity
+denoted by the <I>unqualified-id</I>
+<DEL>(6.5.3 [<A href="https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>])</DEL>.</P>
+
+<P>If
+<UL>
+<LI>the <I>unqualified-id</I> appears in a <I>lambda-expression</I> at
+program point P,</LI>
+<LI>...</LI>
+</UL>
+then the <INS>initial</INS> type of the expression is the type of a
+class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) naming
+the non-static data member that would be declared for such a capture
+in the object parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the function
+call operator of E.  [<I>Note 3:</I> If E is not declared mutable, the
+type of such an identifier will typically be const
+qualified. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#5">expr.prim.id.unqual</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+Otherwise, if the <I>unqualified-id</I> names a coroutine parameter,
+the type of the expression is that of the copy of the parameter
+(9.6.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]), and the result is that copy.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Move 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#9">expr.prim.id.unqual</A>] paragraph 9 and paragraph 10 and to
+immediately after paragraph 4 and change as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>Otherwise, if the entity is a template parameter object for a
+template parameter of type T (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]),
+the <INS>initial</INS> type of the expression is const T.</P>
+
+<P>In all other cases, the <INS>initial</INS> type of
+the expression is the type of the
+<DEL>entity</DEL> <INS>result</INS>.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#6">expr.prim.id.unqual</A>] paragraph 6 and paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DIV class="del">
+<P>Otherwise, if the <I>unqualified-id</I> names a result binding
+(9.4.2 [<A href="https://wg21.link/dcl.contract.res">dcl.contract.res</A>]) attached to a function f with return type
+U,
+<UL>
+<LI>if U is &#8220;reference to T&#8221;, then the type of the
+expression is const T;</LI>
+<LI>otherwise, the type of the expression is const U.</LI>
+</UL>
+</P>
+</DIV>
+
+<P class="ins">If the initial type of the expression is "reference
+to <TT>T</TT>" for some type <TT>T</TT>, it is adjusted to
+be <TT>T</TT>.</P>
+
+<P>
+<DEL>Otherwise, if</DEL> <INS>If</INS> the <I>unqualified-id</I>
+appears in the predicate of a contract assertion C
+(6.11 [<A href="https://wg21.link/basic.contract">basic.contract</A>]) <DEL>and</DEL> <INS>,</INS> the entity is
+<UL>
+<LI>a variable declared outside of C <DEL>of object type T</DEL>,</LI>
+<LI>a <DEL>variable or</DEL> template parameter declared outside of
+C <DEL>of type &#8220;reference to T&#8221;</DEL>, <DEL>or</DEL>
+</LI>
+<LI>a structured binding <DEL>of type T</DEL> whose corresponding variable is
+declared outside of C, <INS>or</INS>
+</LI>
+<LI class="ins">a result binding (9.4.2 [<A href="https://wg21.link/dcl.contract.res">dcl.contract.res</A>]),</LI>
+</UL>
+<INS>and the (possibly adjusted) initial type of the expression
+is <TT>T</TT>,</INS> then the type of the expression is const T<INS>;
+otherwise the type of the expression is <TT>T</TT></INS>.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual#11">expr.prim.id.unqual</A>] paragraph 11 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+[Note 4: The type will be adjusted as described in
+7.2.2 [<A href="https://wg21.link/expr.type">expr.type</A>] if it is cv-qualified <DEL>or is a
+reference type</DEL>.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

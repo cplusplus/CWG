@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 188</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="188"></A><H4>188.
+  
+Comma operator and rvalue conversion
+</H4>
+<B>Section: </B>7.6.20&#160; [<A href="https://wg21.link/expr.comma">expr.comma</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>TC1
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>20 Dec 1999<BR>
+
+
+
+
+
+<P>Given</P>
+
+<PRE>
+    char arr[100];
+    sizeof(0,arr);
+</PRE>
+
+<P>What does the <TT>sizeof</TT> expression return?  According to
+7.6.20 [<A href="https://wg21.link/expr.comma#1">expr.comma</A>] paragraph 1,
+
+the comma operator yields
+an lvalue if the second argument is an lvalue.  Since
+7.3.3 [<A href="https://wg21.link/conv.array#1">conv.array</A>] paragraph 1
+says that the
+array-to-pointer conversion yields an rvalue, it seems that
+<TT>sizeof</TT> should see an array type and give the answer <TT>100</TT>.
+If so, the value of the <TT>sizeof</TT> expression would be
+different from that of the corresponding expression in C, but there
+is nothing in Annex
+Clause Annex C [<A href="https://wg21.link/diff">diff</A>]
+to indicate that an incompatible change was intended.</P>
+
+<P><B>Proposed resolution (10/00):</B></P>
+
+<P>Add the following as paragraph 3 of C.7.4 [<A href="https://wg21.link/diff.expr">diff.expr</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P><B>5.16, 5.17, 5.18</B></P>
+
+<P>
+<B>Change:</B> The result of a conditional expression, an
+assignment expression, or a comma expression may be an lvalue.<BR>
+<B>Rationale:</B> C++ is an object-oriented language, placing
+relatively more emphasis on lvalues. For example, functions may return
+lvalues.<BR>
+<B>Effect on original feature:</B> Change to semantics of well-defined
+feature.  Some C expressions that implicitly rely on lvalue-to-rvalue
+conversions will yield different results.  For example,
+
+<PRE>
+    char arr[100];
+    sizeof(0, arr)
+</PRE>
+
+yields <TT>100</TT> in C++ and <TT>sizeof(char*)</TT> in C.<BR>
+<B>Difficulty of converting:</B> Programs must add explicit casts to
+the appropriate rvalue.<BR>
+<B>How widely used:</B> Rare.
+</P>
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

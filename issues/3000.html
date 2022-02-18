@@ -1,0 +1,426 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3000</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3000"></A><H4>3000.
+  
+Handling of cv-qualified class types in conditional operator
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-02<BR>
+
+
+
+
+<P>With <A HREF="2321.html">issue 2321</A>, the following example
+was supposed to be made valid:</P>
+
+<PRE>
+   struct A {};
+   struct B : A {};
+   using T = const B;
+   A a = true ? A() : T();
+</PRE>
+
+<P>When reaching 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6, the two
+operands have type <TT>A</TT> and <TT>const A</TT>, thus their types
+differ.  However, the built-in candidates for the overload resolution
+specified in paragraph 6 do not handle class types.</P>
+
+<P>Subclause 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6 handles the
+following case, but should not handle differences in
+const-qualification.</P>
+
+<PRE>
+  struct A { operator int(); };
+  struct B { operator int(); };
+  int n = true ? A() : B();
+</PRE>
+
+<P>Furthermore, the current wording does not handle this case:</P>
+
+<PRE>
+  int const **p;
+  int *const *q;
+  int const * const * const &amp;r = cond ? p : q; //<SPAN CLASS="cmnt"> Could bind directly, but currently creates a temporary.</SPAN>
+</PRE>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.16 [<A href="https://wg21.link/expr.cond#4">expr.cond</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the second and third operand have different types and
+<DEL>either</DEL> <INS>at least one</INS> has (possibly cv-qualified)
+class type, or if both are glvalues <INS>of similar types
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) and</INS> of the same value
+category <DEL>and the same type except for cv-qualification</DEL>, an
+attempt is made to form an implicit conversion sequence
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]) from each of those operands
+to <DEL>the</DEL> <INS>a</INS> type <DEL>of</DEL>
+<INS>related to</INS> the other<INS>, as determined below</INS>.
+
+<P>[<I>Note 2:</I> Properties such as access, whether an operand is a
+bit-field, or whether a conversion function is deleted are ignored for
+that determination. &#8212;<I>end note</I>]</P>
+
+Attempts are made to form an implicit conversion sequence from an
+operand expression E1 of type T1 to a target type related to the type
+T2 of the operand expression E2 as follows:
+<UL>
+<LI>If E2 is an lvalue, the target type is &#8220;lvalue reference to
+<DEL>T2</DEL> <INS><TT>T3</TT></INS>&#8221;, <INS>where <TT>T3</TT> is
+the qualification-combined type of <TT>T2</TT>
+and <TT>T1</TT>;</INS> <DEL>but</DEL> an implicit conversion sequence
+can <DEL>only</DEL> be formed <INS>only</INS> if the reference would
+bind directly (9.5.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to a glvalue.</LI>
+<LI>If E2 is an xvalue, the target type is &#8220;rvalue reference to
+<DEL>T2</DEL> <INS><TT>T3</TT></INS>&#8221;, <INS>where <TT>T3</TT> is
+the qualification-combined type of <TT>T2</TT>
+and <TT>T1</TT>;</INS> <DEL>but</DEL> an implicit conversion sequence
+can <DEL>only</DEL> be formed <INS>only</INS> if the reference would
+bind directly.</LI>
+<LI>If E2 is a prvalue or if
+neither of the conversion sequences above can be formed and at least
+one of the operands has (possibly cv-qualified) class type:
+<UL>
+<LI>if T1 and T2 are <DEL>the same class type (ignoring
+cv-qualification)</DEL> <INS>of similar class types</INS>:
+<UL>
+<LI>if T2 is at least as cv-qualified as T1, the target type is
+T2,</LI>
+<LI>otherwise, no conversion sequence is formed for this operand;</LI>
+</UL>
+</LI>
+<LI>otherwise, if T2 is a base class of T1, the target type
+is <DEL>cv1 T2, where cv1 denotes the cv-qualifiers of
+T1</DEL> <INS>the qualification-combined type of <TT>T2</TT>
+and <TT>T1</TT></INS>;
+</LI>
+<LI>otherwise, the target type is the
+type that E2 would have after applying the lvalue-to-rvalue
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
+(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions.</LI>
+</UL>
+</LI>
+</UL>
+
+Using this process, it is determined whether an implicit conversion
+sequence can be formed from the second operand to the target type
+determined for the third operand, and vice versa, with the following
+outcome:
+<UL>
+<LI class="del">If both sequences can be formed, or one can be formed
+but it is the ambiguous conversion sequence, the program is
+ill-formed.
+</LI>
+<LI>If no conversion sequence can be formed, the operands are left
+unchanged and further checking is performed as described below.</LI>
+<LI>Otherwise, if exactly one conversion sequence can be formed,
+<DEL>that conversion is applied to the chosen operand</DEL>
+<INS>the combined target type is defined as the target type of that
+conversion.</INS>
+</LI>
+<LI class="ins">
+Otherwise, if both conversion sequences can be formed and the
+respective target types are similar, the combined target type is
+defined as the qualification-combined type of the target types.
+</LI>
+<LI class="ins">
+Otherwise, the program is ill-formed.
+</LI>
+</UL>
+
+<INS>If a combined target type is defined above, each operand is
+converted to the combined target type</INS> and the
+converted <DEL>operand is</DEL> <INS>operands are</INS> is used in
+place of the original
+<DEL>operand</DEL> <INS>operands</INS> for the remainder of this
+subclause.  [<I>Note 3:</I> The
+conversion <DEL>might</DEL> <INS>can</INS> be ill-formed even if an
+implicit conversion sequence <DEL>could</DEL> <INS>can</INS> be
+formed. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, the result is a prvalue. If the second and third operands
+do not have the same type and <DEL>either</DEL> <INS>at least
+one</INS> has (possibly cv-qualified) class type, overload resolution
+is used to determine the conversions (if any) to be applied to the
+operands (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>],
+12.5 [<A href="https://wg21.link/over.built">over.built</A>]). If the overload resolution fails, the
+program is ill-formed. Otherwise, the conversions thus determined are
+applied, and the converted operands are used in place of the original
+operands for the remainder of this subclause.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Append a row to the table in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#2">over.match.oper</A>] paragraph 2 as follows:</P>
+
+<TABLE BORDER="1">
+<TR>
+<TD>Subclause</TD>
+<TD>Expression</TD>
+<TD>As member function</TD>
+<TD>As non-member function</TD>
+</TR>
+
+<TR>
+<TD>12.5 [<A href="https://wg21.link/over.built">over.built</A>]</TD>
+<TD><TT>a ? b : c</TT></TD>
+<TD></TD>
+<TD><TT>operator?:(true, b, c)</TT></TD>
+</TR>
+
+</TABLE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#3">over.match.oper</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For a unary operator @ with an operand of type cv1 T1, <DEL>and</DEL> for a
+binary operator @ with a left operand of type cv1 T1 and a right
+operand of type cv2 T2, <INS>and for the conditional operator,</INS>
+four sets of candidate functions, designated member candidates,
+non-member candidates, built-in candidates, and rewritten candidates,
+are constructed as follows:
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Proposed resolution (reviewed by CWG 2025-09-12):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.16 [<A href="https://wg21.link/expr.cond#4">expr.cond</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, if the second and third operand have different types and
+<DEL>either</DEL> <INS>at least one</INS> has (possibly cv-qualified)
+class type, or if both are glvalues <INS>of similar types
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) and</INS> of the same value
+category <DEL>and the same type except for cv-qualification</DEL>, an
+attempt is made to form an implicit conversion sequence
+(12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]) from each of those operands
+to <DEL>the</DEL> <INS>a</INS> type <DEL>of</DEL>
+<INS>related to</INS> the other.
+
+<P>[<I>Note 2:</I> Properties such as access, whether an operand is a
+bit-field, or whether a conversion function is deleted are ignored for
+that determination. &#8212;<I>end note</I>]</P>
+
+Attempts are made to form an implicit conversion sequence from an
+operand expression E1 of type T1 to a target type related to the type
+T2 of the operand expression E2 as follows:
+<UL>
+<LI>If E2 is <DEL>an lvalue</DEL> <INS>a glvalue</INS>, the target
+type is &#8220;<DEL>lvalue</DEL> reference to <DEL>T2</DEL>
+<INS><TT>T3</TT></INS>&#8221;, <INS>where</INS>
+<UL class="ins">
+<LI>the reference is an lvalue reference if <TT>E2</TT> is an lvalue and
+an rvalue reference otherwise and</LI>
+<LI>if <TT>T2</TT> is reference-related to <TT>T1</TT>
+(9.5.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), <TT>T3</TT> is such that "pointer
+to <TT>T3</TT>" is the qualification-combined type of "pointer
+to <TT>T2</TT>" and "pointer to <TT>T1</TT>", otherwise <TT>T3</TT>
+is <TT>T2</TT>;
+</LI>
+</UL>
+<DEL>but</DEL> an implicit conversion sequence
+can <DEL>only</DEL> be formed <INS>only</INS> if the reference would
+bind directly to a glvalue.</LI>
+<LI class="del">If E2 is an xvalue, the target type is &#8220;rvalue
+reference to T2&#8221;, but an implicit conversion sequence can only
+be formed if the reference would bind directly.</LI>
+<LI>If E2 is a prvalue or if
+<DEL>neither of</DEL> the conversion <DEL>sequences</DEL>
+<INS>sequence</INS> above <DEL>can</DEL> <INS>cannot</INS> be formed
+<DEL>and at least one of the operands has (possibly cv-qualified) class
+type</DEL>:
+<UL>
+<LI>if <DEL>T1 and T2 are the same class type (ignoring
+cv-qualification):</DEL> <INS><TT>T2</TT> is reference-related
+to <TT>T1</TT>, the target type <TT>T3</TT> is such that "pointer to <TT>T3</TT>" is the qualification-combined type of "pointer to <TT>T2</TT>" and "pointer to <TT>T1</TT>";</INS>
+<UL class="del">
+<LI>if T2 is at least as cv-qualified as T1, the target type is
+T2,</LI>
+<LI>otherwise, no conversion sequence is formed for this operand;</LI>
+</UL>
+</LI>
+<LI class="del">otherwise, if T2 is a base class of T1, the target
+type is cv1 T2, where cv1 denotes the cv-qualifiers of T1;
+</LI>
+<LI>otherwise, the target type is the type that E2 would have after
+applying the <DEL>lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),</DEL>
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>])<DEL>,</DEL> and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard
+conversions.</LI>
+</UL>
+</LI>
+</UL>
+
+Using this process, it is determined whether an implicit conversion
+sequence can be formed from the second operand to the target type
+determined for the third operand, and vice versa, with the following
+outcome:
+<UL>
+<LI class="del">If both sequences can be formed, or one can be formed
+but it is the ambiguous conversion sequence, the program is
+ill-formed.
+</LI>
+<LI>If no conversion sequence can be formed, the operands are left
+unchanged and further checking is performed as described below.</LI>
+<LI>Otherwise, if exactly one conversion sequence can be formed,
+<DEL>that conversion is applied to the chosen operand</DEL>
+<INS>the common target type is defined as the target type of that
+conversion.</INS>
+</LI>
+<LI class="ins">
+Otherwise, if both conversion sequences can be formed and the target
+types are the same, the common target type is defined as that
+type.</LI>
+<LI class="ins">
+Otherwise, if both conversion sequences can be formed and one of the
+target types is "reference to <TT>T</TT>" and the other is <TT>T</TT>
+for some type <TT>T</TT>, the common target type is defined
+as <TT>T</TT>.</LI>
+<LI class="ins">
+Otherwise, the program is ill-formed.
+</LI>
+</UL>
+
+<INS>If a common target type is defined above, each operand is
+converted to the common target type</INS> and the
+converted <DEL>operand is</DEL> <INS>operands are</INS> is used in
+place of the original
+<DEL>operand</DEL> <INS>operands</INS> for the remainder of this
+subclause.  [<I>Note 3:</I> The
+conversion <DEL>might</DEL> <INS>can</INS> be ill-formed even if an
+implicit conversion sequence <DEL>could</DEL> <INS>can</INS> be
+formed. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, the result is a prvalue. If the second and third operands
+do not have the same type and <DEL>either</DEL> <INS>at least
+one</INS> has (possibly cv-qualified) class type, overload resolution
+is used to determine the conversions (if any) to be applied to the
+operands (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>],
+12.5 [<A href="https://wg21.link/over.built">over.built</A>]). If the overload resolution fails, the
+program is ill-formed. Otherwise, the conversions thus determined are
+applied, and the converted operands are used in place of the original
+operands for the remainder of this subclause.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add an example at the end of 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+<PRE>
+template&lt;class T&gt;
+T f();
+
+using X0 = decltype(true ? f&lt;int const **&amp;&gt;() : f&lt;int *const *&amp;&gt;());  // X0<SPAN CLASS="cmnt"> is "reference to const pointer to const pointer to const </SPAN>int"
+
+struct B {};
+using X1 = decltype(true ? f&lt;const B&amp;&gt;() : f&lt;volatile B&amp;&gt;());  // X1<SPAN CLASS="cmnt"> is "lvalue reference to</SPAN> const volatile B"
+using X2 = decltype(true ? f&lt;const B&amp;&gt;() : f&lt;B&gt;());      // X2<SPAN CLASS="cmnt"> is </SPAN>const B
+
+struct C {
+  operator B&amp;() const;
+};
+using X3 = decltype(true ? f&lt;const C&gt;() : f&lt;B&amp;&gt;());      // X3<SPAN CLASS="cmnt"> is "lvalue reference to </SPAN>B"
+
+struct D : B {};
+using X4 = decltype(true ? f&lt;const D&amp;&gt;() : f&lt;B&amp;&gt;());       // X4<SPAN CLASS="cmnt"> is </SPAN>const B&amp;
+using X5 = decltype(true ? f&lt;const D&gt;() : f&lt;B&gt;());       // X5<SPAN CLASS="cmnt"> is </SPAN>const B
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 12.2.2.3 [<A href="https://wg21.link/over.match.oper#5">over.match.oper</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">For the conditional operator, overload resolution is
+performed only as specified in 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]; the
+candidate functions for the expression <TT>a ? b : c</TT> are the
+built-in candidates for the hypothetical function
+call <TT>operator?:(true, b, c)</TT> (12.5 [<A href="https://wg21.link/over.built">over.built</A>]).</P>
+
+<P>For the first parameter of the built-in assignment operators, only
+standard conversion sequences (12.2.4.2.2 [<A href="https://wg21.link/over.ics.scs">over.ics.scs</A>]) are
+considered.</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P>The resolution above also adresses issues <A HREF="2023.html">2023</A> and <A HREF="2865.html">2865</A>; the resolution
+applied for the latter yields a const lvalue, not a prvalue.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

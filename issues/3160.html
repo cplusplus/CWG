@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3160</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3160"></A><H4>3160.
+  
+Grammar ambiguity with class member declarations
+</H4>
+<B>Section: </B>11.4&#160; [<A href="https://wg21.link/class.mem">class.mem</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tam S. B.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-08-08<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/741">#741</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  typedef int t1, t2, t3, t4;
+
+  struct A {
+    static A(*t1)(); //<SPAN CLASS="cmnt"> #1, function pointer</SPAN>
+    static A(t2)();  //<SPAN CLASS="cmnt"> #2, invalid constructor declaration</SPAN>
+    static A(t3);    //<SPAN CLASS="cmnt"> #3, invalid constructor declaration</SPAN>
+    A(t4);           //<SPAN CLASS="cmnt"> #4, constructor</SPAN>
+  };
+</PRE>
+
+<P>A disambiguation rule is missing that would cause the indicated
+(desired) outcomes.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Add a new subclause at the end of 11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+<P><B>Ambiguity resolution [class.mem.ambig]</B></P>
+
+<P>An ambiguity can arise in a <I>member-declaration</I> when
+a <I>type-name</I> is enclosed in parentheses. In this case, the
+choice is between the declaration of a function with an unnamed
+parameter and the declaration of a member with redundant parentheses
+around the <I>declarator-id</I>. The resolution is to consider
+the <I>type-name</I> as a <I>simple-type-specifier</I> rather than
+a <I>declarator-id</I>. As in 8.11 [<A href="https://wg21.link/stmt.ambig">stmt.ambig</A>], the
+disambiguation is purely syntactic and can result in an ill-formed
+interpretation.</P>
+
+<PRE>
+  typedef int t1, t2, t3;
+  template&lt;class&gt; struct u1;
+  struct A {
+    A(t1);            //<SPAN CLASS="cmnt"> OK, declares constructor having unnamed parameter of type </SPAN>int
+    typedef A(t2);    //<SPAN CLASS="cmnt"> error: constructor declaration with </SPAN>typedef
+    friend A(t3)();   //<SPAN CLASS="cmnt"> error: declares function named </SPAN>A<SPAN CLASS="cmnt"> that returns a function with no return type</SPAN>
+    A(u1);            //<SPAN CLASS="cmnt"> error: placeholder for deduced class type cannot appear in this context (9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>])</SPAN>
+  };
+
+</PRE>
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-04-28</B></P>
+
+<P>The disambiguation rule should probably be limited to constructors
+(which would use an injected-class-name).  See also
+<A HREF="3163.html">issue 3163</A>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

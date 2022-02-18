@@ -1,0 +1,88 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3004</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3004"></A><H4>3004.
+  
+Pointer arithmetic on array of unknown bound
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>A. Jiang
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-07<BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/680">#680</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  extern const int arr[];
+  constexpr const int *p = arr + N;  //<SPAN CLASS="cmnt"> #1</SPAN>
+  constexpr int arr[2] = {0, 1};     //<SPAN CLASS="cmnt"> #2</SPAN>
+  constexpr int k = *p;              //<SPAN CLASS="cmnt"> #3</SPAN>
+</PRE>
+
+<P>What is the outcome here?  Accept for N == 0 and otherwise #1 is
+non-constant (clang)?  Always accept #1, but reject #3 for
+out-of-bounds accesses (gcc)?  Always accept #1, but always reject #3,
+even for in-bound accesses (EDG)?  Reject #2 (MSVC)?</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-09-12):</B></P>
+
+<P>CWG chose "Accept for N == 0 and otherwise #1 is non-constant".</P>
+
+<P>Add a bullet after 7.7 [<A href="https://wg21.link/expr.const#10.15">expr.const</A>] bullet 10.15 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>a reinterpret_cast (7.6.1.10 [<A href="https://wg21.link/expr.reinterpret.cast">expr.reinterpret.cast</A>]);</LI>
+<LI class="ins">pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) where
+one (possibly converted) operand points to the first element of an
+array of unknown bound and the other (possibly converted) operand is
+of integral type with non-zero value;</LI>
+<LI>...</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

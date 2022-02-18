@@ -1,0 +1,79 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3154</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3154"></A><H4>3154.
+  
+Clarify partial ordering involving variadic templates
+</H4>
+<B>Section: </B>13.10.3.5&#160; [<A href="https://wg21.link/temp.deduct.partial">temp.deduct.partial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-30<BR>
+
+
+
+
+<P>Consider:</P>
+<PRE>
+  template&lt;typename ...T&gt; void f(T*...);
+  template&lt;typename U&gt; void f(U, U);
+</PRE>
+
+This ought to be ambiguous, because the analoguous non-variadic case
+is ambiguous:
+
+<PRE>
+  template&lt;typename T1, typename T2&gt; void f(T1*, T2*);
+  template&lt;typename U&gt; void f(U, U);
+</PRE>
+
+<P>Furthermore, the wording in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#8">temp.deduct.partial</A>] paragraph 8
+should use the canonical ordering "P is compared with A" when
+presenting P vs. A matching.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 13.10.3.5 [<A href="https://wg21.link/temp.deduct.partial#8">temp.deduct.partial</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+Using the resulting types P and A, the deduction is then done as described in [temp.deduct.type]. If P is a function parameter pack, <DEL>the type A of each remaining parameter type of the argument template is compared with</DEL> the type P of the declarator-id of the function parameter pack <INS>is compared with the type A of each remaining parameter type of the argument template</INS>. Each comparison deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack. Similarly, if A was transformed from a function parameter pack, <DEL>it is compared with</DEL> each remaining parameter type of the parameter template <INS>is compared with the corresponding expansion of A</INS>. If deduction succeeds for a given type, the type from the argument template is considered to be at least as specialized as the type from the parameter template.
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

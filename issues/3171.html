@@ -1,0 +1,129 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3171</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3171"></A><H4>3171.
+  
+Codify the strong ownership for modules
+</H4>
+<B>Section: </B>6.7&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DR
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>FR
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-25<BR><BR>
+
+
+<P>[Accepted as a DR at the March, 2026 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#US17-030">N5028 comment
+  US&#160;17-030<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#FR003-031">N5028 comment
+  FR&#160;003-031<BR></A>
+
+<P>All C++ implementations have converged on "strong ownership" of
+modules, with none planning to implement "weak ownership". This
+disposition no longer serves any purpose other than removing
+certainty.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-26):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7 [<A href="https://wg21.link/basic.link#8">basic.link</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+Two declarations of entities declare the same entity if, considering
+declarations of unnamed types to introduce their names for linkage
+purposes, if any (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>],
+9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), they correspond
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]), have the same target scope that is not a
+function or template parameter scope, neither is a name-independent
+declaration, and either
+<UL>
+<LI>they appear in the same translation unit, or</LI>
+<LI>they both declare type aliases or namespace aliases that have the
+same underlying entity, or</LI>
+<LI>they both declare names with module <INS>or external</INS> linkage
+and are attached to the same module<DEL>, or</DEL><INS>.</INS>
+</LI>
+<LI class="del">they both declare names with external linkage.</LI>
+</UL>
+[<I>Note 3:</I> There are other circumstances in which
+declarations declare the same entity (9.12 [<A href="https://wg21.link/dcl.link">dcl.link</A>],
+13.6 [<A href="https://wg21.link/temp.type">temp.type</A>], 13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7 [<A href="https://wg21.link/basic.link#10">basic.link</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>[ Note:</INS> If two declarations <DEL>of an
+entity</DEL> <INS>correspond but</INS> are attached to different
+modules, the program is ill-formed<DEL>; no diagnostic is required</DEL> if
+<DEL>neither is reachable from</DEL> <INS>one precedes</INS> the
+other <INS>(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) -- end note ] </INS>.  [<I>Example 2:</I>
+<PRE>
+  "decls.h":
+    int f();  //<SPAN CLASS="cmnt"> #1, attached to the global module</SPAN>
+    int g();  //<SPAN CLASS="cmnt"> #2, attached to the global module</SPAN>
+  
+  Module interface of M:
+  
+  module;
+  #include "decls.h"
+  export module M;
+  export using ::f;  //<SPAN CLASS="cmnt"> OK, does not declare an entity, exports #1</SPAN>
+  int g();           //<SPAN CLASS="cmnt"> error: <DEL>matches</DEL> <INS>corresponds to</INS> #2, but attached to M</SPAN>
+  export int h();    //<SPAN CLASS="cmnt"> #3</SPAN>
+  export int k();    //<SPAN CLASS="cmnt"> #4</SPAN>
+    
+  Other translation unit:
+
+  import M;
+  static int h();    //<SPAN CLASS="cmnt"> error: <DEL>matches</DEL> <INS>conflicts with</INS> #3</SPAN>
+  int k();           //<SPAN CLASS="cmnt"> error: <DEL>matches</DEL> <INS>conflicts with</INS> #4</SPAN> 
+</PRE>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,141 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3039</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3039"></A><H4>3039.
+  
+Undefined behavior from implicit object creation ignores observable checkpoints
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-06-23<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/719">#719</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  int main() {
+    unsigned char buffer[1];   //<SPAN CLASS="cmnt"> #1, undefined behavior</SPAN>
+    std::println("...");       //<SPAN CLASS="cmnt"> #2, intended to be observable checkpoint, but also UB</SPAN>
+    std::unreachable();        //<SPAN CLASS="cmnt"> #3, also undefined behavior</SPAN>
+  }
+</PRE>
+
+<P>According to 6.8.2 [<A href="https://wg21.link/intro.object#11">intro.object</A>] paragraph 11, the implicit
+object creation at #1 only takes place "if doing so would result in
+the program having defined behavior", and otherwise the entire program
+has undefined behavior.  However, since #3 arranges for no possible
+execution to have defined behavior, implicit object creation does not
+take place, and #1 has undefined behavior, ignoring the observable
+checkpoint at #2.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Add after 4.1.2 [<A href="https://wg21.link/intro.abstract#7">intro.abstract</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+<I>Recommended practice:</I> An implementation should issue a diagnostic
+when such an operation is executed.  [<I>Note 3:</I> ... &#8212;<I>end
+note</I>]</P>
+
+<P class="ins">Certain operations are specified as making a choice to
+maximize the defined prefix of the execution. The behavior of all such
+operations in that execution is such that the defined prefix P of the
+execution is not a proper subset of the defined prefix that would
+result from any other choices, but the choices are otherwise
+unspecified.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.2 [<A href="https://wg21.link/intro.object#11">intro.object</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+Some operations are described as implicitly creating objects within a
+specified region of storage. For each operation <INS><I>O</I></INS>
+that is specified as implicitly creating objects, that
+operation <INS><I>O</I></INS> implicitly creates and starts the
+lifetime of zero or more objects of implicit-lifetime types
+(6.10.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) in its specified region of storage
+<DEL>if doing so would result in the program having defined
+behavior</DEL> <INS>chosen to maximize the defined prefix of the
+execution (4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>])</INS>.  <DEL>If no such set of
+objects would give the program defined behavior, the behavior of the
+program is undefined.</DEL>
+<INS>[Note:</INS> If multiple such sets of objects would
+<DEL>give the program defined behavior</DEL> <INS>result in a maximal
+defined prefix for the execution</INS>, it is unspecified which such
+set of objects is created. <INS>-- end note]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.2 [<A href="https://wg21.link/intro.object#12">intro.object</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+Further, after implicitly creating objects within a specified region
+of storage, some operations are described as producing a pointer to a
+suitable created object. These operations select one of the
+implicitly-created objects whose address is the address of the start
+of the region of storage, and produce a pointer value that points to
+that object <DEL>, if that value would result in the program having
+defined behavior. If no such pointer value would give the program
+defined behavior, the behavior of the program is
+undefined</DEL> <INS>such as to maximize the defined prefix of the
+execution</INS>. <INS>[ Note:</INS> If multiple such pointer
+values <DEL>would give the program defined behavior</DEL> <INS>result in a
+maximal prefix</INS>, it is unspecified which such pointer value is
+produced. <INS>-- end note]</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

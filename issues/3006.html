@@ -1,0 +1,145 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3006</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3006"></A><H4>3006.
+  
+Vague restrictions for explicit instantiations of class templates
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2021-02-11<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt; struct X { };
+
+  extern template struct X&lt;int&gt;;       //<SPAN CLASS="cmnt"> OK</SPAN>
+  extern template struct X&lt;int&gt;::X;    //<SPAN CLASS="cmnt"> well-formed explicit instantiation of </SPAN>X&lt;int&gt;<SPAN CLASS="cmnt"> ?</SPAN>
+</PRE>
+
+<P>At issue is the phrasing "shall include" in
+13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+If the explicit instantiation is for a class or member class,
+the <I>elaborated-type-specifier</I> in the declaration shall include
+a <I>simple-template-id</I>; otherwise, the declaration shall be
+a <I>simple-declaration</I> whose <I>init-declarator-list</I>
+comprises a single <I>init-declarator</I> that does not have an
+<I>initializer</I>. ...
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution (March, 2025) [SUPERSEDED]:</U></P>
+
+<P>Change in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <INS><I>declaration</I> in an</INS> explicit instantiation
+is <INS>an <I>elaborated-type-specifier</I>, it shall be of the
+form</INS>
+<PRE class="ins">
+<I>class-key</I> <I>nested-name-specifier</I><SUB>opt</SUB> template<SUB>opt</SUB> <I>simple-template-id</I>
+</PRE>
+<INS>and the explicit instantiation is</INS> for a class
+<INS>template</INS> <DEL>or member class, the
+<I>elaborated-type-specifier</I> in the declaration shall include
+a <I>simple-template-id</I></DEL>; otherwise, the declaration shall be
+a <I>simple-declaration</I> whose <I>init-declarator-list</I>
+comprises a single <I>init-declarator</I> that does not have an
+<I>initializer</I>. ...
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2025-09-12</B></P>
+
+<P>Instantiating a nested class is not supported with the syntax
+restriction in the resolution above.  Instead, restrict on the naming
+of the injected-class-name.</P>
+
+<P><U>Possible resolution (reviewed by CWG 2025-09-26) [SUPERSEDED]:</U></P>
+
+<P>Change in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <INS><I>declaration</I> in an</INS> explicit instantiation
+is <INS>an <I>elaborated-type-specifier</I>, the</INS> explicit
+instantiation is for a class <DEL>or member class,</DEL>
+<INS>(possibly a nested class) and</INS>
+the <I>elaborated-type-specifier</I> <DEL>in the declaration</DEL>
+shall <DEL>include a <I>simple-template-id</I></DEL> <INS>not name an
+injected-class-name</INS>; otherwise, the <I>declaration</I> shall be
+a <I>simple-declaration</I> whose <I>init-declarator-list</I>
+comprises a single <I>init-declarator</I> that does not have an
+initializer . If the explicit instantiation is for a variable template
+specialization, the <I>unqualified-id</I> in the declarator shall be
+a <I>simple-template-id</I>. ...
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (September, 2025):</B></P>
+
+<P>Change in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+If <INS>the <I>declaration</I> in an explicit instantiation is
+an <I>elaborated-type-specifier</I>,</INS> the explicit instantiation
+is for a <INS>(possibly nested)</INS> class <DEL>or member
+class,</DEL> <INS>and</INS> the <I>elaborated-type-specifier</I>
+<DEL>in the declaration</DEL> shall <DEL>include
+a <I>simple-template-id</I></DEL> <INS>not name an injected-class-name
+or a type alias</INS>; otherwise, the <I>declaration</I> shall be
+a <I>simple-declaration</I> whose <I>init-declarator-list</I>
+comprises a single <I>init-declarator</I> that does not have an
+initializer . If the explicit instantiation is for a variable template
+specialization, the <I>unqualified-id</I> in the declarator shall be
+a <I>simple-template-id</I>. ...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

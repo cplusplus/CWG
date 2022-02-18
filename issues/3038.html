@@ -1,0 +1,116 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3038</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3038"></A><H4>3038.
+  
+Ignorability of attributes, again
+</H4>
+<B>Section: </B>9.13.1&#160; [<A href="https://wg21.link/dcl.attr.grammar">dcl.attr.grammar</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-06-17
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/716">#716</A>.)</P>
+
+<P>The following note added to 9.13.1 [<A href="https://wg21.link/dcl.attr.grammar">dcl.attr.grammar</A>] by
+<A HREF="2695.html">issue 2695</A> embodies the design intent that
+attributes can be ignored by implementations:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 5</I>: The attributes specified in 9.13 [<A href="https://wg21.link/dcl.attr">dcl.attr</A>] have
+optional semantics: given a well-formed program, removing all
+instances of any one of those attributes results in a program whose
+set of possible executions (4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>]) for a given
+input is a subset of those of the original program for the same input,
+absent implementation-defined guarantees with respect to that
+attribute. -- <I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>However, the note is incorrect for attributes that contain a
+potentially-evaluated expression such as <TT>[[assume]]</TT>
+(9.13.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]).  For example,</P>
+
+<PRE>
+  template&lt;int N&gt;
+  struct reader {
+    friend auto flag(reader);
+  };
+
+  template&lt;int N&gt;
+  struct setter {
+    friend auto flag(reader&lt;N&gt;) {}
+  };
+
+  template&lt;int N = 0, auto DifferenceMaker = [] {}&gt;
+  consteval int next() {
+    if constexpr (requires { flag(reader&lt;N&gt;{}); }) {
+     return next&lt;N + 1&gt;();
+   } else {
+     (void) setter&lt;N&gt;{};
+     return N;
+   }
+  }
+
+  int main() {
+    static_assert(next() == 0);
+    [[assume(true || next())]];
+    static_assert(next() == 2);
+  }
+</PRE>
+
+<P>While this particular example using stateful friend injection is
+addressed by <A HREF="2118.html">issue 2118</A>, similar examples
+can be constructed using mainstream facilities introduced by P2996R13
+(Reflection); see the compile-time ticket counter example therein.</P>
+
+<P>There are also counterexamples for
+<TT>[[no_unique_address]]</TT>; see <A HREF="2866.html">issue 2866</A>.</P>
+
+<P>Forwarded to EWG with
+<A HREF="https://github.com/cplusplus/papers/issues/2407">paper issue 2407</A>,
+by decision of the CWG chair.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

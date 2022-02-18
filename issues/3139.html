@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3139</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3139"></A><H4>3139.
+  
+Temporaries for bit-fields in reference initialization
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ell
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-10-08<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    int i : 5;
+  };
+  const int&amp; x = i;
+</PRE>
+
+<P>Prior to applying the resolution of <A HREF="2801.html">issue 2801</A>, this was valid; the reference was bound to a temporary.
+Now, this is ill-formed.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.init.ref#5.4">dcl.init.ref</A>] bullet 5.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise<INS>:</INS><DEL>, T1 shall not be reference-related to T2.</DEL>
+<UL>
+<LI>If T1 or T2 is a class type <INS>and <TT>T1</TT> is not reference-related
+to <TT>T2</TT></INS>, user-defined conversions are considered using the rules
+for copy-initialization of an object of type &#8220;cv1 T1&#8221; by
+user-defined conversion (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>], 12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]); the
+program is ill-formed if the corresponding non-reference
+copy-initialization would be ill-formed. The result E of the call to
+the conversion function, as described for the non-reference
+copy-initialization, is then used to direct-initialize the reference
+using the form (E). For this direct-initialization, user-defined
+conversions are not considered.</LI>
+<LI>Otherwise, the initializer
+expression is implicitly converted to a prvalue of type
+&#8220;T1&#8221;. The temporary materialization conversion is applied,
+considering the type of the prvalue to be &#8220;cv1 T1&#8221;, and
+the reference is bound to the result.
+</LI>
+</UL>
+
+<DIV class="ins">If <TT>T1</TT> is reference-related to <TT>T2</TT>:
+<UL>
+<LI>
+<I>cv1</I> <TT>T1</TT> shall be reference-compatible
+with <I>cv2</I> <TT>T2</TT>; and</LI>
+<LI>if the reference is an rvalue reference, the initializer
+expression shall not be an lvalue. [ Note: This can be affected by
+whether the initializer expression is move-eligible
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]). -- end note]</LI>
+</UL>
+</DIV>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

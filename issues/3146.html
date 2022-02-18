@@ -1,0 +1,98 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3146</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3146"></A><H4>3146.
+  
+Usual arithmetic conversions for enumerations are different in C
+</H4>
+<B>Section: </B>C.7.4&#160; [<A href="https://wg21.link/diff.expr">diff.expr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-09<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/829">#829</A>.)</P>
+
+<P>C23 converts values of an enumeration type to the underlying type
+of the enumeration type (which might be different from <TT>int</TT>),
+but enumerators always have type <TT>int</TT>.  In contrast, in C++
+enumerators have the type of their enumeration and integral promotions
+are performed, which are independent of the implementation's choice of
+underlying type.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-29):</B></P>
+
+<P>Add a new entry in C.7.4 [<A href="https://wg21.link/diff.expr">diff.expr</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause</B>: 7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]<BR>
+<B>Change</B>: The usual arithmetic conversions differ, between C and C++, in
+the treatment of enumeration types with no fixed underlying type. In
+C++, values of such types are not specified as converting to the
+underlying type of the enumeration as part of the usual arithmetic
+conversions. Instead, integral promotions (7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>])
+based on the values of the enumeration (9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>])
+are applied.<BR>
+<B>Rationale</B>: Avoids the difference that can arise in C when replacing an
+enumeration constant in an expression with a cast of the same
+enumeration constant to the enumeration type. Allows C++ to treat an
+enumerator with behavior like that of <TT>int</TT> even while giving
+the enumerator the type of its enumeration.<BR>
+<B>Effect on original feature</B>: Changes to semantics of well-defined
+feature. Some C expressions that have a dependence upon the
+implementation-defined underlying type of affected enumeration types
+will yield different results (as they would if a different underlying
+type is chosen by the C implementation).<BR>
+
+[Example:
+
+<PRE>
+  typedef enum { E0 } E;
+  static_assert(((E)E0 - 1 &lt; 0) == (E0 - 1 &lt; 0), "Must pass for C++");
+</PRE>
+
+The <TT>static_assert</TT> may fail in C. -- end example]<BR>
+<B>Difficulty of converting</B>: Programs must add explicit casts to the underlying type.<BR>
+<B>How widely used</B>: Rare.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

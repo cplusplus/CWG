@@ -1,0 +1,144 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2984</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2984"></A><H4>2984.
+  
+Value-dependent structured bindings
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Park
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-14<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S { int x; };
+
+  template &lt;S s&gt;
+  void f() {
+   constexpr auto [x] = s;
+   constexpr bool b = (x == 0); // x<SPAN CLASS="cmnt"> ought to be value-dependent</SPAN>
+  }
+</PRE>
+
+<P>The rules in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>] do not seem to cover the
+case of structured bindings.</P>
+
+<P><U>Possible resolution (January, 2025) [SUPERSEDED]:</U></P>
+
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> is value-dependent if
+<UL>
+<LI>it is a <I>concept-id</I> and any of its arguments are
+dependent,</LI>
+<LI>it is type-dependent,</LI>
+<LI>it is the name of a non-type template parameter,</LI>
+<LI>it names a static data member that is a dependent member of the
+current instantiation and is not initialized in a
+<I>member-declarator</I>,</LI>
+<LI>it names a static member function that is a dependent member of
+the current instantiation, <DEL>or</DEL>
+</LI>
+<LI>it names a potentially-constant variable
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is initialized with an expression that
+is value-dependent<DEL>.</DEL> <INS>, or</INS>
+</LI>
+<LI class="ins">it names a structured binding whose associated
+variable (9.7 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]) is value-dependent.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution (February, 2025):</U></P>
+
+<OL>
+<LI>
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> is value-dependent if
+<UL>
+<LI>it is a <I>concept-id</I> and any of its arguments are
+dependent,</LI>
+<LI>it is type-dependent,</LI>
+<LI>it is the name of a non-type template parameter,</LI>
+<LI>it names a static data member that is a dependent member of the
+current instantiation and is not initialized in a
+<I>member-declarator</I>,</LI>
+<LI>it names a static member function that is a dependent member of
+the current instantiation, <DEL>or</DEL>
+</LI>
+<LI>it names a potentially-constant variable
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is initialized with an expression that
+is value-dependent<DEL>.</DEL> <INS>, or</INS>
+</LI>
+<LI class="ins">it names a structured binding whose structured binding
+declaration (9.7 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]) has a
+<I>brace-or-equal-initializer</I> that is value-dependent.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add after 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#6">temp.dep.constexpr</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>... An expression of the form &amp;<I>cast-expression</I> is also
+value-dependent if evaluating <I>cast-expression</I> as a core
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) succeeds and the result
+of the evaluation refers to a templated entity that is an object with
+static or thread storage duration or a member function.</P>
+
+<P class="ins">A <I>braced-init-list</I> is value-dependent if any element is
+value-dependent or is a pack expansion.</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

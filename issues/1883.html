@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 1883</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="1883"></A><H4>1883.
+  
+Protected access to constructors in <I>mem-initializer</I>s
+</H4>
+<B>Section: </B>11.8.5&#160; [<A href="https://wg21.link/class.protected">class.protected</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Daveed Vandevoorde
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-02-26<BR>
+
+
+<P>According to 11.8.5 [<A href="https://wg21.link/class.protected#1">class.protected</A>] paragraph 1, except when
+forming a pointer to member,</P>
+
+<BLOCKQUOTE>
+
+All other accesses involve a (possibly implicit) object expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).
+
+</BLOCKQUOTE>
+
+<P>It is not clear that this is strictly true for the invocation of
+a base class constructor from a <I>mem-initializer</I>.  A wording
+tweak may be advisable.</P>
+
+<P><B>Proposed resolution (March, 2025):</B></P>
+
+<P>Change in 11.8.5 [<A href="https://wg21.link/class.protected#1">class.protected</A>] paragraph 1 as follows and move
+the example to a separate numbered paragraph:</P>
+
+<BLOCKQUOTE>
+
+<P>An additional access check beyond those described earlier in
+11.8 [<A href="https://wg21.link/class.access">class.access</A>] is applied when a non-static data member or
+non-static member function is a protected member of its naming class
+(11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>]). [ Footnote: ... ] As described earlier,
+access to a protected member is granted because the reference occurs
+in a friend or direct member of some class C. If the access is to form
+a pointer to member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),
+the <I>nested-name-specifier</I> shall denote C or a class derived
+from C.
+<INS>Otherwise, if the member is a constructor, either C shall be the
+naming class or the access shall be the constructor call for a base
+class subobject of C performed by a constructor of C as described in
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>].</INS> All other accesses involve a
+(possibly implicit) object expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]).  <DEL>In this case</DEL>
+<INS>Unless the access is an implicit destructor call for a base class
+subobject by a destructor of C (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS>,
+the class of the object expression shall be C or a class derived from
+C.</P>
+
+<P>
+[Example 1 :
+
+<PRE>
+  class B {
+  protected:
+    int i;
+    static int j;
+<INS>    B(int = 0);
+    ~B();</INS>
+  };
+  class D1 : public B {
+<INS>    D1() : B(1) {                 //<SPAN CLASS="cmnt"> OK</SPAN>
+      B b(*this);                 //<SPAN CLASS="cmnt"> error: destructor of </SPAN>B<SPAN CLASS="cmnt"> is protected</SPAN>
+    }
+    ~D1() = default;              //<SPAN CLASS="cmnt"> OK</SPAN></INS>
+  };
+</PRE>
+... -- end example ]
+</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2025-09-26</B></P>
+
+<P>Review results: "naming class" was renamed to "designating
+class". The situation when dealing with the injected-class-name is
+unclear.  In the example, the treatment of <TT>B b(1);</TT> (in lieu
+of <TT>B b(*this);</TT>) is unclear.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

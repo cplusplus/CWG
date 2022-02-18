@@ -1,0 +1,147 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3140</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3140"></A><H4>3140.
+  
+Allowing expansion over non-constant <TT>std::array</TT>
+</H4>
+<B>Section: </B>8.7&#160; [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-04<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/805">#805</A>.)</P>
+
+<P>(Split off from <A HREF="3131.html">issue 3131</A>.)</P>
+
+<P>In order to allow expansion over non-constant <TT>std::array</TT>
+(which does have a compile-time size), the <TT>constexpr</TT> in
+the <TT>range</TT> declaration in 8.7 [<A href="https://wg21.link/stmt.expand#5.2">stmt.expand</A>] bullet 5.2 should be optional, similar to the destructuring
+case.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-27):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.8.7 [<A href="https://wg21.link/class.temporary#9">class.temporary</A>] paragraph 9 (as modified by
+<A HREF="3043.html">issue 3043</A>) as follows:</P>
+
+<BLOCKQUOTE>
+
+The sixth context is when a temporary object is created in
+the <I>expansion-initializer</I> of <INS>an iterating
+or</INS> <DEL>a</DEL> destructuring expansion statement. If such a
+temporary object would otherwise be destroyed at the end of that
+<I>expansion-initializer</I>, the object persists for the lifetime of
+the reference initialized by the <I>expansion-initializer</I>, if any.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.7 [<A href="https://wg21.link/stmt.expand#5.2">stmt.expand</A>] bullet 5.2 as follows:</P>
+
+<PRE>
+</PRE>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if S is an iterating expansion statement, S is equivalent
+to:
+
+<PRE>
+  {
+    init-statement
+    constexpr<INS><SUB>opt</SUB></INS> auto&amp;&amp; range = <I>expansion-initializer</I> ;
+    constexpr<INS><SUB>opt</SUB></INS> auto begin = begin-expr;  //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    <DEL>constexpr auto end = end-expr;      //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN></DEL>
+    S0
+    .
+    .
+    .
+    SN-1
+  }
+</PRE>
+
+where N is the result of evaluating the expression
+
+<PRE>
+  [<INS>&amp;</INS>] consteval {
+    std::ptrdiff_t result = 0;
+<DEL>    for (auto i = begin ; i != end ; ++i, ++result);</DEL>
+<INS>    auto b = <I>begin-expr</I> ;
+    auto e = <I>end-expr</I> ;
+    for (; b != e; ++b) ++result;</INS>
+    return result;  //<SPAN CLASS="cmnt"> distance from begin to end</SPAN>
+  }()
+</PRE>
+
+and Si is
+
+<PRE>
+  {
+    constexpr<INS><SUB>opt</SUB></INS> auto iter = begin + i;
+    for-range-declaration = *iter ;
+    compound-statement
+  }
+</PRE>
+
+The variables range, begin, <DEL>end,</DEL> and iter are defined for
+exposition only.  <INS>The keyword <TT>constexpr</TT> is present in
+the declarations of <TT><I>range</I></TT>, <TT><I>begin</I></TT>,
+and <TT><I>iter</I></TT> if and only if <TT>constexpr</TT> is one of
+the <I>decl-specifier</I>s of the <I>decl-specifier-seq</I> of
+the <I>for-range-declaration</I>.</INS>
+<DEL>[<I>Note 1:</I> The instantiation is ill-formed if range
+is not a constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). &#8212;<I>end
+note</I>]</DEL>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+<BR><BR>
+</BODY>
+</HTML>

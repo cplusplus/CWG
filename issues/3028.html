@@ -1,0 +1,165 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3028</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3028"></A><H4>3028.
+  
+A <I>using-declarator</I> should bind a name
+</H4>
+<B>Section: </B>9.10&#160; [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/692">#692</A>.)</P>
+
+<P>There is no normative rule that would cause
+a <I>using-declarator</I> not naming a constructor to bind
+its <I>unqualified-id</I> in the scope it inhabits.</P>
+
+<P>Also, a normative prohibition for something like <TT>using
+X::~X;</TT> seems to be missing.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change the grammar before 9.10 [<A href="https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P>
+
+<PRE>
+  <I>using-declarator</I>:
+    typename<SUB>opt</SUB> <I>nested-name-specifier</I> <DEL><I>unqualified-id</I></DEL> <INS><I>using-declarator-id</I></INS>
+
+<INS>  <I>using-declarator-id</I>:
+    <I>identifier</I>
+    <I>operator-function-id</I>
+    <I>conversion-function-id</I>
+    <I>literal-operator-id</I></INS>
+</PRE>
+</LI>
+
+<LI>
+<P>Change in 9.10 [<A href="https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+The component names of a <I>using-declarator</I> are those of
+its <I>nested-name-specifier</I> and
+<DEL><I>unqualified-id</I></DEL> <INS><I>using-declarator-id</I></INS>.
+<INS>The component name of a <I>using-declarator-id</I> is itself.</INS>
+Each <I>using-declarator</I> in a <I>using-declaration</I> [ Footnote:
+... ] names the set of declarations found by lookup
+(6.5.5 [<A href="https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]) for the <I>using-declarator</I>, except
+that class and enumeration declarations that would be discarded are
+merely ignored when checking for ambiguity (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]),
+conversion function templates with a dependent return type are
+ignored, and certain functions are hidden as described below. If the
+terminal name of the <I>using-declarator</I> is dependent
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]), the <I>using-declarator</I> is
+considered to name a constructor if and only if
+<INS>the <I>using-declarator-id</I> is an <I>identifier</I> and</INS>
+the <I>nested-name-specifier</I> has a terminal name that is the same
+as the <DEL><I>unqualified-id</I></DEL> <INS><I>identifier</I></INS>. If the
+lookup in any instantiation finds that a <I>using-declarator</I> that
+is not considered to name a constructor does do so, or that
+a <I>using-declarator</I> that is considered to name a constructor
+does not, the program is ill-formed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.10 [<A href="https://wg21.link/namespace.udecl#2">namespace.udecl</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <I>using-declarator</I> names a constructor, it declares that
+the class inherits the named set of constructor declarations from the
+nominated base class.  <INS>Otherwise, the <I>using-declarator</I>
+introduces its <I>using-declarator-id</I>.</INS> [<I>Note
+1:</I> <DEL>Otherwise, the <I>unqualified-id</I> in
+the <I>using-declarator</I> is bound to</DEL>
+<INS>During name lookup,</INS> the <I>using-declarator</I><DEL>,
+which</DEL> is replaced <DEL>during name lookup</DEL> with the
+declarations it names (6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]). If such a
+declaration is of an enumeration, the names of its enumerators are not
+bound. For the keyword typename, see
+13.8 [<A href="https://wg21.link/temp.res">temp.res</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.10 [<A href="https://wg21.link/namespace.udecl#4">namespace.udecl</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 2:</I> Since destructors do not have names,
+a <I>using-declaration</I> cannot refer to a destructor for a base
+class. &#8212;<I>end note</I>]</DEL> If a constructor or assignment
+operator brought from a base class into a derived class ...
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Remove 9.10 [<A href="https://wg21.link/namespace.udecl#5">namespace.udecl</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+A <I>using-declaration</I> shall not name a <I>template-id</I>.
+
+<PRE>
+  struct A {
+    template &lt;class T&gt; void f(T);
+    template &lt;class T&gt; struct X { };
+  };
+  struct B : A {
+    using A::f&lt;double&gt;; //<SPAN CLASS="cmnt"> error</SPAN>
+    using A::X&lt;int&gt;;    //<SPAN CLASS="cmnt"> error</SPAN>
+  };
+</PRE>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

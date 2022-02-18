@@ -1,0 +1,206 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3093</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3093"></A><H4>3093.
+  
+Missing integration of direct base class relationships
+</H4>
+<B>Section: </B>7.5.9&#160; [<A href="https://wg21.link/expr.prim.splice">expr.prim.splice</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-10-01<BR><BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#US27-059">N5028 comment
+  US&#160;27-059<BR></A>
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/777">#777</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/778">#778</A>.)</P>
+
+<P>Subclause 7.5.9 [<A href="https://wg21.link/expr.prim.splice#2">expr.prim.splice</A>] paragraph 2 makes no provision
+for splicing a reflection representing a direct base class
+relationship, yet 7.6.1.5 [<A href="https://wg21.link/expr.ref#8.6">expr.ref</A>] bullet 8.6
+presupposes that this is possible.</P>
+
+<P>Furthermore, 6.3 [<A href="https://wg21.link/basic.def.odr#3">basic.def.odr</A>] paragraph 3 does not consider
+direct base class relationships, nor does 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#5">temp.dep.expr</A>] paragraph 5.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-05):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#3.3">basic.def.odr</A>] bullet 3.3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If E is a class member access expression
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) of the form E1 . template<SUB>opt</SUB>
+E2 <DEL>naming</DEL> <INS>, where E2 designates</INS> a non-static
+data member <INS>or a direct base class relationship</INS>, the set
+contains the potential results of E1.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.2.1 [<A href="https://wg21.link/basic.lval#1.1">basic.lval</A>] bullet 1.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>A glvalue is an expression whose evaluation determines the identity of
+an object, function, <DEL>or</DEL> non-static data member<INS>, or
+direct base class relationship</INS>.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert a paragraph before 7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general#5">expr.prim.id.general</A>] paragraph 5 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">A <I>splice-expression</I> that designates a direct
+base class relationship shall appear only as the second operand of a
+class member access.</P>
+
+<P>For an <I>id-expression</I> that denotes an overload set, overload
+resolution is performed ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Insert before 7.5.9 [<A href="https://wg21.link/expr.prim.splice#2.4">expr.prim.splice</A>] bullet 2.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI class="ins">Otherwise, if <I>S</I> is a direct base class
+relationship (<I>D</I>, <I>B</I>), the expression is an lvalue
+designating <I>S</I>.  The expression has the type <I>B</I>.</LI>
+
+<LI>Otherwise, if S is a variable or a structured binding, ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#10">expr.ref</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+If E2 designates a non-static member (possibly after overload
+resolution) <INS>or direct base class relationship </INS> and the
+result of E1 is an object whose type is not similar
+(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]) to the type of E1, the behavior is
+undefined. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.4.6 [<A href="https://wg21.link/over.ref#1">over.ref</A>] paragraph 1 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+A <I>class member access operator function</I> is a function named
+operator-&gt; that is a non-static member function taking no
+non-object parameters. For an expression of the
+form
+<PRE>
+  <I>postfix-expression</I> -&gt; template<SUB>opt</SUB> <I>id-expression</I>
+</PRE>
+the operator function is selected by overload resolution
+(12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>]), and the expression is interpreted as
+<PRE>
+  ( <I>postfix-expression</I> . operator -&gt; () ) -&gt; template<SUB>opt</SUB> <I>id-expression</I>
+</PRE>
+
+<DIV class="ins">
+Analogously, for an expression of the form
+<PRE class="ins">
+  <I>postfix-expression</I> -&gt; <I>splice-expression</I>
+</PRE>
+the operator function is selected by overload resolution, and the
+expression is interpreted as
+<PRE class="ins">
+  ( <I>postfix-expression</I> . operator -&gt; () ) -&gt; <I>splice-expression</I>
+</PRE>
+</DIV>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.3 [<A href="https://wg21.link/temp.dep.expr#5">temp.dep.expr</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) is
+type-dependent if
+<UL>
+<LI>the terminal name of its <I>id-expression</I>, if any, is
+dependent<INS>,</INS>
+</LI>
+<LI>
+<INS>its <I>splice-expression</I>, if any, is type-dependent,</INS>
+or </LI>
+<LI>the expression refers to a member of the current instantiation and
+the type of the referenced member is dependent.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

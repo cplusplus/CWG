@@ -1,0 +1,102 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3026</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3026"></A><H4>3026.
+  
+Class for pointer-to-member formation
+</H4>
+<B>Section: </B>7.6.2.2&#160; [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD7
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-05-11<BR>
+
+
+<P>[ Resolved by paper P2996R13 (Reflection for C++26 (core language wording)),
+adopted in June, 2025. ]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/705">#705</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+   union { int x; };
+   int y;
+  };
+  struct B : A {};
+
+  template &lt;typename&gt; struct Q;
+  template &lt;&gt; struct Q&lt;A&gt; {};
+  template &lt;typename T&gt; Q&lt;T&gt; f(int T::*);
+
+  Q&lt;A&gt; g() { return f(&amp;B::x); }  // OK
+  Q&lt;A&gt; h() { return f(&amp;B::y); }  // OK
+</PRE>
+
+<P>For both cases, the pointer to member is of type "pointer to member
+of class <TT>A</TT>", but the wording is not clear.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3.1">expr.unary.op</A>] bullet 3.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operand of the unary &amp; operator shall be an lvalue of some
+type T.
+<UL>
+<LI>If the operand is a <I>qualified-id</I> naming a
+non-static <DEL>or variant</DEL> <INS>class</INS> member <TT>m</TT> <DEL>of some class C</DEL>, other than an explicit
+object member function, <INS>then let <TT>C</TT> be
+the class, that is not an anonymous union, of which <TT>m</TT> is
+a direct member.</INS>
+<DEL>the</DEL> <INS>The</INS> result has type &#8220;pointer to member
+of class C of type T&#8221; and designates C::m.
+<INS>[Note: A <I>qualified-id</I> that names a member of a
+namespace-scope anonymous union is considered to be a class member
+access expression (7.5.5.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]) and thus cannot be
+used to form a pointer to member.-- end note]</INS>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

@@ -1,0 +1,172 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3124</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3124"></A><H4>3124.
+  
+Disallow annotations on block-scope externs and non-unique friend declarations
+</H4>
+<B>Section: </B>9.13.12&#160; [<A href="https://wg21.link/dcl.attr.annotation">dcl.attr.annotation</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Dan Katz
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-15<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/809">#809</A>.)</P>
+
+<P>Be conservative and disallow annotations on block-scope
+externs.</P>
+
+<P><U>Suggested resolution (option 1, 2025-11): [SUPERSEDED]</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.13.1 [<A href="https://wg21.link/dcl.attr.grammar#6">dcl.attr.grammar</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each <I>attribute-specifier-seq</I> is said to appertain to some
+entity or statement, identified by the syntactic context where it
+appears (Clause Clause 8 [<A href="https://wg21.link/stmt">stmt</A>], Clause Clause 9 [<A href="https://wg21.link/dcl">dcl</A>],
+9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]). If an <I>attribute-specifier-seq</I> that
+appertains to some entity or statement contains an attribute
+or <I>alignment-specifier</I> that is not allowed to apply to that
+entity or statement, the program is ill-formed. If
+an <I>attribute-specifier-seq</I> appertains to a friend declaration
+(11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]), that declaration shall be a definition.
+<INS>Furthermore, if an annotation applies to a friend
+declaration <I>D</I>, or to a function parameter declaration in
+the <I>function-declarator</I> (if any) of <I>D</I>, then for any
+other declaration <I>D'</I> of the entity declared by <I>D</I>,
+neither <I>D</I> nor <I>D'</I> shall be reachable from the
+other.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.13.12 [<A href="https://wg21.link/dcl.attr.annotation#1">dcl.attr.annotation</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+An annotation may be applied to <DEL>any</DEL> <INS>a</INS>
+declaration <INS>D</INS> of a type, type alias, variable, function,
+namespace, enumerator, <I>base-specifier</I>, or non-static data
+member.
+<INS>If an annotation applies to a declaration D, or to a function
+parameter declaration in the <I>function-declarator</I> (if any) of D, then
+the host scope of D (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) shall be the target
+scope of D.</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><U>Possible resolution (option 2, 2025-11): [SUPERSEDED]</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.13.12 [<A href="https://wg21.link/dcl.attr.annotation#1">dcl.attr.annotation</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DIV class="ins">The <I>surrounding declaration</I> of a
+declaration <I>D</I> is
+<UL>
+<LI>
+<I>D'</I> if <I>D</I> is a function parameter declaration in
+a <I>function-declarator</I> of a function declaration <I>D'</I> and</LI>
+<LI>
+<I>D</I> otherwise.</LI>
+</UL>
+</DIV>
+An annotation may be applied to <DEL>any</DEL> <INS>a</INS>
+declaration <INS><I>D</I></INS> of a type, type alias, variable,
+function, namespace, enumerator, <I>base-specifier</I>, or non-static
+data member<INS>, unless</INS>
+<UL class="ins">
+<LI>the host scope of the surrounding declaration of <I>D</I> differs
+from its target scope or</LI>
+<LI>the surrounding declaration <I>D'</I> of <I>D</I> is a friend
+declaration and another declaration for the entity declared
+by <I>D'</I> is reachable from <I>D'</I> or vice versa.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2026-02-06</B></P>
+
+<P>CWG preferred the wording of option 2.  Instead of the condition
+involving mutual reachability, CWG preferred the more traditional "is
+a definition" restriction.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-26)</B></P>
+
+<P>Change in 9.13.12 [<A href="https://wg21.link/dcl.attr.annotation#1">dcl.attr.annotation</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+An annotation may be applied to <DEL>any</DEL> <INS>a</INS>
+declaration <INS><I>D</I></INS> of a type, type alias, variable,
+function, namespace, enumerator, <I>base-specifier</I>, or non-static
+data member<INS>, unless</INS>
+<UL class="ins">
+<LI>the host scope of <I>X</I> differs
+from its target scope or</LI>
+<LI>
+<I>X</I> is a non-defining friend declaration,</LI>
+</UL>
+<P class="ins">where <I>X</I> is</P>
+<UL class="ins">
+<LI>
+<I>D'</I> if <I>D</I> is a function parameter declaration in
+a <I>function-declarator</I> of a function declaration <I>D'</I>
+and</LI>
+<LI>
+<I>D</I> otherwise.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

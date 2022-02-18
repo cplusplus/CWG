@@ -1,0 +1,194 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3187</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3187"></A><H4>3187.
+  
+Treatment of <I>universal-character-name</I>s outside of <I>string-literal</I>s
+</H4>
+<B>Section: </B>5.2&#160; [<A href="https://wg21.link/lex.phases">lex.phases</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-04-27<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/893">#893</A>.)</P>
+
+<P>According to 5.2 [<A href="https://wg21.link/lex.phases#1.3">lex.phases</A>] bullet 1.3,
+<I>universal-character-name</I>s (outside of <I>string-literal</I>s)
+are replaced in phase 3 with their corresponding (single)
+character:</P>
+
+<BLOCKQUOTE>
+
+... As characters from the source file are consumed to form the next
+preprocessing token (i.e., not being consumed as part of a comment or
+other forms of whitespace), except when matching
+a <I>c-char-sequence</I>, <I>s-char-sequence</I>, <I>r-char-sequence</I>,
+<I>h-char-sequence</I>, or <I>q-char-sequence</I>,
+<I>universal-character-name</I>s are recognized
+(5.3.2 [<A href="https://wg21.link/lex.universal.char">lex.universal.char</A>]) and replaced by the designated element of
+the translation character set (5.3.1 [<A href="https://wg21.link/lex.charset">lex.charset</A>]). ...
+
+</BLOCKQUOTE>
+
+<P>This rule (and the surrounding change in treatment of UCNs) was
+introduced by paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2021/p2314r4.html">P2314R4</A>
+(adopted in October, 2021).</P>
+
+<P>
+<A HREF="https://godbolt.org/z/oE3v3KWEK">Consider</A>:</P>
+
+<PRE>
+  #define X &#960;
+  #define X \u03C0   //<SPAN CLASS="cmnt"> clang and MSVC (old preprocessor) accept; gcc, EDG, and MSVC (new preprocessor) warn about incompatible macro redefinition</SPAN>
+</PRE>
+
+<P>Also <A HREF="https://godbolt.org/z/GvGKzYMn4">consider</A>:</P>
+
+<PRE>
+   #include &lt;stdio.h&gt;
+
+   #define S1(...) # __VA_ARGS__
+   #define S2(...) # __VA_OPT__(__VA_ARGS__)
+
+   int main(){
+     #define X \u03C0
+     printf("%s %s\n", S1(X), S1(S1(X)));    //<SPAN CLASS="cmnt"> output on all implementations: </SPAN>X S1(X)
+     printf("%s %s\n", S2(X), S2(S2(X)));    //<SPAN CLASS="cmnt"> output on all implementations: </SPAN>&#960; "\u03C0"
+
+     #define Y &#960;
+     printf("%s %s\n", S2(Y), S2(S2(Y)));    //<SPAN CLASS="cmnt"> output on all implementations: </SPAN>&#960; "&#960;"
+   }
+</PRE>
+
+<P>Note that 15.7.3 [<A href="https://wg21.link/cpp.stringize#2">cpp.stringize</A>] paragraph 2 talks about
+"original spelling", which might be interpreted as retaining UCNs:</P>
+
+<BLOCKQUOTE>
+
+... Otherwise, the original spelling of each preprocessing token in the
+stringizing argument is retained in the character string literal,
+except for special handling for producing the spelling
+of <I>header-name</I>s, <I>character-literal</I>s,
+and <I>string-literal</I>s ...
+
+</BLOCKQUOTE>
+
+<P>Furthermore, there is the question whether
+<I>universal-character-name</I>s can be formed using <TT>##</TT>
+concatenation
+(<A HREF="https://godbolt.org/z/e1z7MGsfo">godbolt</A>):</P>
+
+<PRE>
+  #define CAT(X,Y) X ## Y
+  #define Y CAT(\,u03C0)
+  int Y;                  //<SPAN CLASS="cmnt"> clang, gcc, EDG accept; MSVC (new preprocessor) rejects, because no valid preprocessing token is formed</SPAN>
+</PRE>
+
+<P>Paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2621r3.pdf">P2621R3</A>
+(adopted in June, 2023) added the following note to
+15.7.4 [<A href="https://wg21.link/cpp.concat#3">cpp.concat</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 1:</I> Concatenation can form
+a <I>universal-character-name</I>
+(5.3.1 [<A href="https://wg21.link/lex.charset">lex.charset</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>It is unclear what the normative basis for that note is, given that
+concatenation does not branch back to phase 3 where UCN recognition
+would happen. The implementation survey in P2621R3 indicated
+widespread implementation support for forming UCNs via
+concatenation.</P>
+
+<P><B>CWG 2026-05-29</B></P>
+
+<P>CWG agreed that the specification of concatenation should be
+adjusted to recognize UCNs.</P>
+
+<P><U>Partial possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 15.7.4 [<A href="https://wg21.link/cpp.concat#3">cpp.concat</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+For both object-like and function-like macro invocations, before the
+replacement list is reexamined for more macro names to replace, each
+instance of a ## preprocessing token in the replacement list (not from
+an argument)<INS>, together with its immediately preceding and
+immediately following preprocessing token,</INS> is deleted
+and <DEL>the preceding preprocessing token is concatenated with the
+following preprocessing token</DEL> <INS>replaced by a single
+preprocessing token formed by concatenating the spellings of the
+preceding and following preprocessing tokens and replacing
+any <I>universal-character-name</I>s with the characters they
+designate (5.3.1 [<A href="https://wg21.link/lex.charset">lex.charset</A>]).  If no single valid
+preprocessing token can be formed (5.5 [<A href="https://wg21.link/lex.pptoken">lex.pptoken</A>]), the
+program is ill-formed.</INS> Placemarker preprocessing tokens are
+handled specially: concatenation of two placemarkers results in a
+single placemarker preprocessing token, and concatenation of a
+placemarker with a non-placemarker preprocessing token results in the
+non-placemarker preprocessing token.  <DEL>[<I>Note 1:</I>
+Concatenation can form a <I>universal-character-name</I>
+(5.3.1 [<A href="https://wg21.link/lex.charset">lex.charset</A>]). &#8212;<I>end note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add an example after 15.7.4 [<A href="https://wg21.link/cpp.concat#4">cpp.concat</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+<PRE>
+#define CAT(X,Y)  X ## Y
+CAT(*,*)                    //<SPAN CLASS="cmnt"> error: </SPAN>**<SPAN CLASS="cmnt"> is not a single preprocessing token</SPAN>
+</PRE>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

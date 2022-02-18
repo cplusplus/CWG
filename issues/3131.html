@@ -1,0 +1,115 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3131</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3131"></A><H4>3131.
+  
+Value categories and types for the range in iterable expansion statements
+</H4>
+<B>Section: </B>8.7&#160; [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>accepted
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-13<BR>
+
+
+<P>[Accepted at the March, 2026 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/805">#805</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #include &lt;span&gt;
+
+  constexpr int arr[3] = { 1, 2, 3 };
+  consteval std::span&lt;const int&gt; foo() {
+    return std::span&lt;const int&gt;(arr);
+  }
+
+  int main() {
+    int r = 0;
+    template for (constexpr auto m : foo())
+      r += m;
+  }
+</PRE>
+
+<P>The expansion of this iterable expansion statement contains:</P>
+
+<PRE>
+   constexpr auto &amp;&amp;range = foo();
+</PRE>
+
+<P>The deduction yields <TT>std::span&lt;const int&gt;&amp;&amp;</TT> for the
+type of <TT>range</TT>, and the non-const lifetime-extended temporary
+causes later constant evaluation in the expansion to fail.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-03-26):</B></P>
+
+<P>Change in 8.7 [<A href="https://wg21.link/stmt.expand#5.2">stmt.expand</A>] bullet 5.2 as follows:</P>
+
+<PRE>
+</PRE>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if S is an iterating expansion statement, S is equivalent
+to:
+
+<PRE>
+  {
+    init-statement
+    constexpr <DEL>auto&amp;&amp;</DEL> <INS>decltype(auto)</INS> range = <INS>(</INS><I>expansion-initializer</I><INS>)</INS> ;
+    constexpr auto begin = begin-expr;  //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    constexpr auto end = end-expr;      //<SPAN CLASS="cmnt"> see 8.6.5 [<A href="https://wg21.link/stmt.ranged">stmt.ranged</A>]</SPAN>
+    S0
+    .
+    .
+    .
+    SN-1
+  }
+</PRE>
+
+where N is ...
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>

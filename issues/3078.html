@@ -1,0 +1,158 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3078</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3078"></A><H4>3078.
+  
+Different treatment of <TT>#include</TT> <I>pp-tokens</I> and <I>header-name-tokens</I>
+</H4>
+<B>Section: </B>15.3&#160; [<A href="https://wg21.link/cpp.include">cpp.include</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>DRWP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-09-22<BR>
+
+
+<P>[Accepted as a DR at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/770">#770</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #define X &gt;
+  #include &lt;&lt;X
+</PRE>
+
+<P>As further clarified by <A HREF="3015.html">issue 3015</A>,
+this performs the same inclusion as</P>
+<PRE>
+  #include &lt;&lt;&gt;
+</PRE>
+
+<P>There is implementation divergence; clang accepts; GCC, EDG, and
+MSVC reject.</P>
+
+<P>There are related concerns when the character sequence of a digraph
+appers in prospective <I>header-name</I>.  The following is ill-formed because <TT>&lt;%</TT> is a digraph:</P>
+
+<PRE>
+  #define X &gt;
+  #if __has_include(&lt;%X)
+  #endif
+</PRE>
+
+<P>However, the same character sequence is valid in <TT>#include</TT>:</P>
+
+<PRE>
+  #define X &gt;
+  #include &lt;%X    //<SPAN CLASS="cmnt"> valid, includes </SPAN>%
+</PRE>
+
+<P>Thus the footnote in 5.9 [<A href="https://wg21.link/lex.digraph#2">lex.digraph</A>] paragraph 2 is overly broad.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-04):</B></P>
+
+<OL>
+<LI>
+<P>Change in 5.9 [<A href="https://wg21.link/lex.digraph#2">lex.digraph</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+In all respects of the language, each alternative token behaves the
+same, respectively, as its primary token, except for its
+spelling. [ <DEL>Footnote: Thus the</DEL> <INS>Note: The</INS>
+&#8220;stringized&#8221; values (15.7.3 [<A href="https://wg21.link/cpp.stringize">cpp.stringize</A>]) of [ and
+&lt;: <DEL>will be</DEL> <INS>are</INS> different, maintaining the
+source spelling<DEL>, but the tokens can otherwise be freely
+interchanged</DEL>. ] The set of alternative tokens is defined in
+Table 3.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.2 [<A href="https://wg21.link/cpp.cond#1">cpp.cond</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  <I>header-name-tokens</I>:
+      <DEL><I>string-literal</I></DEL> <INS><I>plain-string-literal</I></INS>
+      &lt; <I>h-pp-tokens</I> &gt;
+</PRE>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.3 [<A href="https://wg21.link/cpp.include#7">cpp.include</A>] paragraph 7 (supersedes the change to that paragraph from <A HREF="3076.html">issue 3076</A>):</P>
+
+<BLOCKQUOTE>
+
+A preprocessing directive of the form
+<PRE>
+  # include <I>pp-tokens</I> <I>new-line</I>
+</PRE>
+(that does not match the
+previous form) is permitted. The preprocessing tokens after <TT>include</TT> in
+the directive are processed just as in normal text (i.e., each
+identifier currently defined as a macro name is replaced by its
+replacement list of preprocessing tokens).
+<INS>The resulting sequence of preprocessing tokens shall be of the form</INS>
+<PRE class="ins">
+  <I>header-name-tokens</I>
+</PRE>
+<DEL>Then, an</DEL> <INS>An</INS> attempt is <INS>then</INS> made to
+form a <I>header-name</I> preprocessing token
+(5.6 [<A href="https://wg21.link/lex.header">lex.header</A>]) from the whitespace and the characters of
+the spellings of the <DEL>resulting sequence of preprocessing
+tokens</DEL> <INS><I>header-name-tokens</I></INS>; the treatment of
+whitespace is implementation-defined. If the attempt succeeds, the
+directive with the so-formed <I>header-name</I> is processed as
+specified for the previous form. Otherwise, the program is ill-formed,
+no diagnostic required.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P>
+<I>Note:</I> The third change of the resolution supersedes the second
+change in the resolution of <A HREF="3076.html">issue 3076</A>.
+</P>
+
+<BR><BR>
+</BODY>
+</HTML>

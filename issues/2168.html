@@ -1,0 +1,131 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2168</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2168"></A><H4>2168.
+  
+Narrowing conversions and +/- infinity
+</H4>
+<B>Section: </B>9.5.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2015-08-19<BR>
+
+
+
+
+<P>The intended treatment of a floating point infinity with
+respect to narrowing conversions is not clear.  Is
+<TT>std::numeric_limits&lt;double&gt;::infinity()</TT> usable
+in a constant expression, for example, and should that be
+different from a calculation that results in an infinity?</P>
+
+<P><B>Notes from the October, 2015 meeting:</B></P>
+
+<P>CWG requests the assistance of SG6 in resolving this issue.</P>
+
+<P>
+<B>Notes from the November, 2016 meeting:</B>
+</P>
+
+<P>SG6 said that arithmetic operations (not conversions) that
+produce infinity are not allowed in a constant expression.
+However, using <TT>std::numeric_limits&lt;T&gt;::infinity()</TT>
+is okay, but it can't be used as a subexpression. Conversions that
+produce infinity from non-infinity values are considered to be
+narrowing conversions.</P>
+
+<P><U>Possible resolution (October, 2025):</U></P>
+<OL>
+<LI>
+<P>Change in 6.9.2 [<A href="https://wg21.link/basic.fundamental#13">basic.fundamental</A>] paragraph 13:</P>
+
+<BLOCKQUOTE>
+
+The <DEL>minimum</DEL> range of representable values for a
+floating-point type is the most negative finite floating-point number
+representable in that type through the most positive finite
+floating-point number representable in that type. <DEL>In addition, if
+negative infinity is representable in a type, the range of that type
+is extended to all negative real numbers; likewise, if positive
+infinity is representable in a type, the range of that type is
+extended to all positive real numbers.  [<I>Note 10:</I> Since
+negative and positive infinity are representable in ISO/IEC 60559
+formats, all real numbers lie within the range of representable values
+of a floating-point type adhering to ISO/IEC 60559. &#8212;<I>end
+note</I>]</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.1 [<A href="https://wg21.link/expr.pre#4">expr.pre</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>An <I>arithmetic expression</I> is a unary plus or minus
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]), binary plus or minus
+(7.6 [<A href="https://wg21.link/expr.compound">expr.compound</A>]), or binary multiplication, division, or
+remainder (7.6.5 [<A href="https://wg21.link/expr.mul">expr.mul</A>]) expression where every operand
+is of arithmetic type.</INS>
+If <DEL>during the evaluation of an expression,</DEL> the
+result <INS>of evaluating an arithmetic expression</INS> is not
+mathematically defined or not in the range of representable values for
+its type, the behavior is undefined.  [<I>Note 3:</I> Treatment of
+division by zero, forming a remainder using a zero divisor, and all
+floating-point exceptions varies among machines, and is sometimes
+adjustable by a library function. &#8212;<I>end note</I>]
+
+<P class="ins">[ Example:</P>
+<PRE class="ins">
+  constexpr std::float32_t inf = std::numeric_limits&lt;std::float32_t&gt;::infinity(); //<SPAN CLASS="cmnt"> OK, infinity not produced by arithmetic expression</SPAN>
+  constexpr std::float32_t max = std::numeric_limits&lt;std::float32_t&gt;::max(); //<SPAN CLASS="cmnt"> OK</SPAN>
+  constexpr std::float32_t min = std::numeric_limits&lt;std::float32_t&gt;::min(); //<SPAN CLASS="cmnt"> OK</SPAN>
+  constexpr std::float32_t d0 = max / 0;   //<SPAN CLASS="cmnt"> error: division by zero (7.6.5 [<A href="https://wg21.link/expr.mul">expr.mul</A>])</SPAN>
+  constexpr std::float32_t inf2 = max + max; //<SPAN CLASS="cmnt"> error: infinity produced</SPAN>
+  constexpr std::float32_t nan = inf - inf; //<SPAN CLASS="cmnt"> error: NaN produced</SPAN>
+  constexpr std::float32_t zero = min / max; //<SPAN CLASS="cmnt"> OK, result is too small to be represented, but is within the range of representable values</SPAN>
+</PRE>
+<P class="ins">-- end example ]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

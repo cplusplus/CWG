@@ -1,0 +1,108 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3186</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3186"></A><H4>3186.
+  
+Argument-dependent lookup is for a name
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-04-25<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/891">#891</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  namespace N {
+    struct C {
+      friend void f(C);
+      friend void g(C);
+    };
+  }
+
+  void h() {
+    f(N::C{});
+  }
+</PRE>
+
+<P>According to 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#4">basic.lookup.argdep</A>] paragraph 4,
+argument-dependent lookup finds functions without considering their
+names (such as <TT>g</TT> in the example above).  This is
+misguided.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<P>Change in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#4">basic.lookup.argdep</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The associated namespaces for a call are the innermost enclosing
+non-inline namespaces for its associated entities as well as every
+element of the inline namespace set (9.9.2 [<A href="https://wg21.link/namespace.def">namespace.def</A>]) of
+those namespaces. Argument-dependent lookup <INS>for a
+name <I>N</I></INS> finds all declarations of functions and function
+templates <INS>named <I>N</I></INS> that
+<UL>
+<LI>are found by a search <DEL>of</DEL> <INS>for <I>N</I> in</INS> any
+associated namespace, or</LI>
+<LI>are declared as a friend (11.8.4 [<A href="https://wg21.link/class.friend">class.friend</A>]) of any
+class with a reachable definition in the set of associated entities,
+or</LI>
+<LI>are exported, are attached to a named module M
+(10.2 [<A href="https://wg21.link/module.interface">module.interface</A>]), do not appear in the translation unit
+containing the point of the lookup, and have the same innermost
+enclosing non-inline namespace scope as a declaration of an associated
+entity attached to M (6.7 [<A href="https://wg21.link/basic.link">basic.link</A>]).</LI>
+</UL>
+If <DEL>the lookup is for a</DEL> <INS><I>N</I> is a</INS>
+dependent name (13.8.3 [<A href="https://wg21.link/temp.dep">temp.dep</A>],
+13.8.4.2 [<A href="https://wg21.link/temp.dep.candidate">temp.dep.candidate</A>]), the above lookup is also performed
+from each point in the instantiation context
+(10.6 [<A href="https://wg21.link/module.context">module.context</A>]) of the lookup, additionally ignoring any
+declaration that appears in another translation unit, is attached to
+the global module, and is either discarded (10.4 [<A href="https://wg21.link/module.global.frag">module.global.frag</A>])
+or has internal linkage.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

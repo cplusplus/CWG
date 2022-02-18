@@ -1,0 +1,559 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3065</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3065"></A><H4>3065.
+  
+Reachability and completeness of types
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-09
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/680">#680</A>.)</P>
+
+<P>A specification is missing when both a declaration of type "array
+of unknown bound of T" as well as one of the type "array of N T" is
+reachable.  We should take the latter as the type.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2025-10-10) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#5">basic.types.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A class <DEL>that has been declared but not defined</DEL> <INS>type in
+certain contexts (11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>])</INS>, an enumeration
+type in certain contexts (9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an array of
+unknown bound or of incomplete element
+type <INS>(9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>])</INS>, is an
+incompletely-defined object type. [ Footnote: ... ]
+Incompletely-defined object types and cv void are incomplete types
+(6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).  [<I>Note 2:</I> Objects cannot be
+defined to have an incomplete type
+(6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 6.9.1 [<A href="https://wg21.link/basic.types.general#6">basic.types.general</A>] paragraph 6:</P>
+
+<BLOCKQUOTE class="del">
+
+A class type (such as &#8220;class X&#8221;) can be incomplete at one
+point in a translation unit and complete later on; the type
+&#8220;class X&#8221; is the same type at both points. The declared
+type of an array object can be an array of incomplete class type and
+therefore incomplete; if the class type is completed later on in the
+translation unit, the array type becomes complete; the array type at
+those two points is the same type. The declared type of an array
+object can be an array of unknown bound and therefore be incomplete at
+one point in a translation unit and complete later on; the array types
+at those two points (&#8220;array of unknown bound of T&#8221; and
+&#8220;array of N T&#8221;) are different types.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.5 [<A href="https://wg21.link/dcl.array#7">dcl.array</A>] paragraph 7 and 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">An array type "array of N <TT>U</TT>" is complete at a
+program point <I>P</I> if <TT>U</TT> is complete at <I>P</I>,
+otherwise the array type is incomplete at <I>P</I>.
+A type "array of unknown bound of <TT>U</TT>" is incomplete.
+</P>
+
+<P>In addition to declarations in which an incomplete object type is
+allowed, an array bound may be omitted in some cases in the
+declaration of a function parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]). An
+array bound may also be omitted when an object (but not a non-static
+data member) of array type is initialized and the declarator is
+followed by an initializer (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], 7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). In these cases, the array bound is
+calculated from the number of initial elements (say, N) supplied
+(9.5.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), and the type of the array is
+&#8220;array of N U&#8221;.
+</P>
+
+<P class="del">Furthermore, if there is a reachable declaration of the
+entity that specifies a bound and has the same host scope
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]), an omitted array bound is taken to be
+the same as in that earlier declaration, and similarly for the
+definition of a static data member of a class.
+</P>
+
+<P class="ins">If the declared type of a variable <TT>v</TT> in a declaration <I>D2</I> is "array
+of unknown bound of <TT>U</TT>", its type is considered to be "array
+of N <TT>U</TT>" at any program point from which a
+declaration <I>D</I> of <TT>v</TT> is reachable
+(10.7 [<A href="https://wg21.link/module.reach">module.reach</A>]), where <I>D</I> specifies a bound N and
+has the same host scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) as <I>D2</I>.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2025-10-10</B></P>
+
+<P>The last green paragraph is subsumed by 10.7 [<A href="https://wg21.link/module.reach#5">module.reach</A>] paragraph 5 (and thus should be turned into a suitably abstract note).
+However, that subclause does not specify the "same host scope"
+restriction, which prevents leaking information from block-scope
+redeclarations.  To address that, it might be worthwhile to change the
+definition of "reachable" to ignore block-scope declarations in
+non-enclosing scopes. Further investigation shows that implementations
+surprisingly ignore global-scope declarations entirely when a
+block-scope declaration is in view:</P>
+
+<PRE>
+int a[3];
+void f() {
+  extern int a[];
+  // "a"<SPAN CLASS="cmnt"> has type "array of unknown bound" in all implementations</SPAN>
+}
+</PRE>
+
+<P><B>CWG 2025-11-05</B></P>
+
+<P>After extensive discussion, CWG believes a satisfactory approach
+entails the following parts:</P>
+<UL>
+<LI>reflection on block-scope extern declarations is to be made ill-formed</LI>
+<LI>properties (such as array bounds and attributes) made available
+for an entity by a block-scope extern declaration are to be forgotten
+once that block-scope extern declaration goes out-of-scope (supported
+for array bounds by all known implementations; compatible with
+token-stream-pasting implementation of templates)</LI>
+<LI>EWG should express an opinion whether a block-scope extern
+declarations observes the merged properties of an entity (consistent with
+other non-block-scope redeclarations), or hides the effects of
+earlier declarations entirely (consistent with widespread current
+behavior of implementations; see previous note)</LI>
+</UL>
+
+<P><B>Proposed resolution (2025-11-06) [SUPERSEDED]:</B></P>
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#5">basic.types.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A class <DEL>that has been declared but not defined</DEL> <INS>type in
+certain contexts (11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>])</INS>, an enumeration
+type in certain contexts (9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an array of
+unknown bound or of incomplete element
+type <INS>(9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>])</INS>, is an
+incompletely-defined object type. [ Footnote: ... ]
+Incompletely-defined object types and cv void are incomplete types
+(6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).  [<I>Note 2:</I> Objects cannot be
+defined to have an incomplete type
+(6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 6.9.1 [<A href="https://wg21.link/basic.types.general#6">basic.types.general</A>] paragraph 6:</P>
+
+<BLOCKQUOTE class="del">
+
+A class type (such as &#8220;class X&#8221;) can be incomplete at one
+point in a translation unit and complete later on; the type
+&#8220;class X&#8221; is the same type at both points. The declared
+type of an array object can be an array of incomplete class type and
+therefore incomplete; if the class type is completed later on in the
+translation unit, the array type becomes complete; the array type at
+those two points is the same type. The declared type of an array
+object can be an array of unknown bound and therefore be incomplete at
+one point in a translation unit and complete later on; the array types
+at those two points (&#8220;array of unknown bound of T&#8221; and
+&#8220;array of N T&#8221;) are different types.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#7.1">expr.reflect</A>] bullet 7.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>reflect-expression</I> R of the form ^^<I>id-expression</I>
+represents an entity determined as follows:
+<UL>
+<LI>
+If the <I>id-expression</I> denotes
+<UL>
+<LI>a variable declared by an <I>init-capture</I>
+(7.5.6.3 [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]),</LI>
+<LI>a function-local predefined variable
+(9.6.1 [<A href="https://wg21.link/dcl.fct.def.general">dcl.fct.def.general</A>]),</LI>
+<LI class="ins">a function or variable that was introduced by a
+declaration that inhabits a block scope and declares a function
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) or uses the <TT>extern</TT>
+specifier,</LI>
+<LI>a local parameter introduced by a <I>requires-expression</I>
+(7.5.8 [<A href="https://wg21.link/expr.prim.req">expr.prim.req</A>]), or</LI>
+<LI>a local entity E (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) for which a lambda
+scope intervenes between the point at which E was introduced and
+R,</LI>
+</UL>
+then R is ill-formed.
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.5 [<A href="https://wg21.link/dcl.array#7">dcl.array</A>] paragraph 7 and 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">An array type "array of N <TT>U</TT>" is complete at a
+program point <I>P</I> if <TT>U</TT> is complete at <I>P</I>,
+otherwise the array type is incomplete at <I>P</I>.
+A type "array of unknown bound of <TT>U</TT>" is incomplete.
+</P>
+
+<P>In addition to declarations in which an incomplete object type is
+allowed, an array bound may be omitted in some cases in the
+declaration of a function parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]). An
+array bound may also be omitted when an object (but not a non-static
+data member) of array type is initialized and the declarator is
+followed by an initializer (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], 7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). In these cases, the array bound is
+calculated from the number of initial elements (say, N) supplied
+(9.5.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), and the type of the array is
+&#8220;array of N U&#8221;.
+</P>
+
+<P class="del">Furthermore, if there is a reachable declaration of the
+entity that specifies a bound and has the same host scope
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]), an omitted array bound is taken to be
+the same as in that earlier declaration, and similarly for the
+definition of a static data member of a class.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.13.2 [<A href="https://wg21.link/dcl.align#6">dcl.align</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the defining declaration of an entity has
+an <I>alignment-specifier</I>, any non-defining declaration of that
+entity shall either specify equivalent alignment or have
+no <I>alignment-specifier</I>. Conversely, if any declaration of an
+entity has an <I>alignment-specifier</I> , every defining declaration
+of that entity shall specify an equivalent alignment. No diagnostic is
+required if <INS>two</INS> declarations of an entity have
+different <I>alignment-specifier</I>s <DEL>in different translation
+units</DEL> <INS>and neither is reachable from the other</INS>.
+[<I>Example 2:</I> ... -- end example ]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 10.7 [<A href="https://wg21.link/module.reach#3">module.reach</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration D is reachable from a point P if
+<UL>
+<LI>P is a
+non-synthesized point and
+<UL>
+<LI>D appears prior to P in the same translation unit
+<INS>and, if <I>D</I> inhabits a block scope <I>S</I> and declares a
+function or uses the <TT>extern</TT> specifier, <I>S</I>
+encloses <I>P</I></INS>, or</LI>
+<LI>D is not discarded (10.4 [<A href="https://wg21.link/module.global.frag">module.global.frag</A>]), appears in a
+translation unit that is reachable from P , and does not appear within
+a <I>private-module-fragment</I>; or</LI>
+</UL>
+</LI>
+<LI>D is the injected declaration for which P is the corresponding
+synthesized point.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2025-11-06</B></P>
+
+<P>CWG seeks consent from EWG for the following changes:</P>
+
+<UL>
+<LI>Reflection on a block-scope extern declaration is ill-formed (see
+change 3, above).</LI>
+<LI>Properties made available by a block-scope extern declaration are not
+visible outside the block (see change 5, above).  Example:
+<PRE>
+extern int a[];
+int g();
+
+void f() {
+  extern int a[3];
+  [[nodiscard]] int g();
+}
+// "a"<SPAN CLASS="cmnt"> has type "array of unknown bound" here</SPAN>
+
+void h()
+{
+  g();  //<SPAN CLASS="cmnt"> no warning about discarding the return value</SPAN>
+}
+</PRE>
+</LI>
+</UL>
+
+<P>Furthermore, CWG seeks advice fron EWG on whether a block-scope
+extern declarations observes the merged properties of an entity
+(consistent with other non-block-scope redeclarations and, for arrays
+of unknown bound, with widespread current behavior of implementations
+in C mode), or hides the effects of earlier declarations entirely (for
+arrays of unknown bound, consistent with widespread current behavior
+of implementations in C++ mode; see previous note).  Example:</P>
+<PRE>
+int a[3];
+[[nodiscard]] int g();
+
+void f() {
+  extern int a[];
+  // "::a"<SPAN CLASS="cmnt"> should (still) complete here, but</SPAN>
+  //<SPAN CLASS="cmnt"> is</SPAN> "a"<SPAN CLASS="cmnt"> complete here?</SPAN>
+  int g();
+  g();  //<SPAN CLASS="cmnt"> warning about discarding the return value?</SPAN>
+}
+</PRE>
+
+<P>Sent to EWG via
+<A HREF="https://github.com/cplusplus/papers/issues/2538">paper issue #2538</A>.</P>
+
+<P><B>EWG 2025-11-07</B></P>
+
+<P>EWG agrees with the proposed direction that reflection on
+block-scope externs is ill-formed and that properties made available
+via block-scope externs are not visible outside the block.  EWG also
+decided that block-scope externs observe the merged properties of an
+entity (no hiding), as does naming a namespace-scope declaration of
+that entity.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-01-09):</B></P>
+<OL>
+<LI>
+<P>Change in 6.9.1 [<A href="https://wg21.link/basic.types.general#5">basic.types.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A class <DEL>that has been declared but not defined</DEL> <INS>type in
+certain contexts (11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>])</INS>, an enumeration
+type in certain contexts (9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an array of
+unknown bound or of incomplete element
+type <INS>(9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>])</INS>, is an
+incompletely-defined object type. [ Footnote: ... ]
+Incompletely-defined object types and cv void are incomplete types
+(6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).  [<I>Note 2:</I> Objects cannot be
+defined to have an incomplete type
+(6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]). &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 6.9.1 [<A href="https://wg21.link/basic.types.general#6">basic.types.general</A>] paragraph 6:</P>
+
+<BLOCKQUOTE class="del">
+
+A class type (such as &#8220;class X&#8221;) can be incomplete at one
+point in a translation unit and complete later on; the type
+&#8220;class X&#8221; is the same type at both points. The declared
+type of an array object can be an array of incomplete class type and
+therefore incomplete; if the class type is completed later on in the
+translation unit, the array type becomes complete; the array type at
+those two points is the same type. The declared type of an array
+object can be an array of unknown bound and therefore be incomplete at
+one point in a translation unit and complete later on; the array types
+at those two points (&#8220;array of unknown bound of T&#8221; and
+&#8220;array of N T&#8221;) are different types.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a bullet after 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5.7">expr.reflect</A>] bullet 5.7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a class or an enumeration, R represents
+the denoted type.</LI>
+<LI class="ins">Otherwise, if lookup finds a declaration whose host
+scope is different from its target scope, R is ill-formed.</LI>
+<LI>Otherwise, if lookup finds a class member of an anonymous union
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]), R represents that class member.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.3.4.5 [<A href="https://wg21.link/dcl.array#7">dcl.array</A>] paragraph 7 and 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">An array type "array of N <TT>U</TT>" is complete at a
+program point <I>P</I> if <TT>U</TT> is complete at <I>P</I>,
+otherwise the array type is incomplete at <I>P</I>.
+A type "array of unknown bound of <TT>U</TT>" is incomplete.
+</P>
+
+<P>In addition to declarations in which an incomplete object type is
+allowed, an array bound may be omitted in some cases in the
+declaration of a function parameter (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]). An
+array bound may also be omitted when an object (but not a non-static
+data member) of array type is initialized and the declarator is
+followed by an initializer (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>],
+11.4 [<A href="https://wg21.link/class.mem">class.mem</A>], 7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]). In these cases, the array bound is
+calculated from the number of initial elements (say, N) supplied
+(9.5.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>]), and the type of the array is
+&#8220;array of N U&#8221;.
+</P>
+
+<P class="del">Furthermore, if there is a reachable declaration of the
+entity that specifies a bound and has the same host scope
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]), an omitted array bound is taken to be
+the same as in that earlier declaration, and similarly for the
+definition of a static data member of a class.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.13.2 [<A href="https://wg21.link/dcl.align#6">dcl.align</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the defining declaration of an entity has
+an <I>alignment-specifier</I>, any non-defining declaration of that
+entity shall either specify equivalent alignment or have
+no <I>alignment-specifier</I>. Conversely, if any declaration of an
+entity has an <I>alignment-specifier</I> , every defining declaration
+of that entity shall specify an equivalent alignment. No diagnostic is
+required if declarations of an entity have different
+<I>alignment-specifier</I>s in different translation units
+<INS>and, for every pair of such declarations, neither declaration is
+reachable from the other</INS>.  [<I>Example 2:</I> ... -- end example
+]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 10.7 [<A href="https://wg21.link/module.reach#3">module.reach</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration D is reachable from a point P if
+<UL>
+<LI>P is a
+non-synthesized point and
+<UL>
+<LI>D appears prior to P in the same translation unit
+<INS>and, if the host scope <I>S</I> of <I>D</I> is different from the
+target scope of <I>D</I>, <I>S</I> encloses <I>P</I></INS>, or</LI>
+<LI>D is not discarded (10.4 [<A href="https://wg21.link/module.global.frag">module.global.frag</A>]), appears in a
+translation unit <INS><I>U</I></INS> that is reachable from P,
+and <DEL>does not appear within a <I>private-module-fragment</I></DEL>
+<INS>is reachable from the beginning of the
+<I>private-module-fragment</I> of <I>U</I>, if any, or else the end
+of <I>U</I></INS>; or</LI>
+</UL>
+</LI>
+<LI>D is the injected declaration for which P is the corresponding
+synthesized point.</LI>
+</UL>
+
+<INS>[ Example:</INS>
+<PRE class="ins">
+  extern int arr[];
+
+  consteval auto f(std::meta::info i) {
+    extern int arr[5];
+    static_assert(std::meta::is_complete_type(^^::arr)); //<SPAN CLASS="cmnt"> OK, </SPAN>arr<SPAN CLASS="cmnt"> is complete given the evaluation context of this </SPAN>static_assert
+    return is_complete_type(i);
+  }
+
+  static_assert(!f(^^::arr));                 //<SPAN CLASS="cmnt"> OK, </SPAN>arr<SPAN CLASS="cmnt"> is not complete given the evaluation context of this </SPAN>static_assert
+
+</PRE>
+<INS>-- end example ]</INS>
+
+<P>[ Example: ... ]</P>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2026-03-06</B></P>
+
+<P>The change to the definition of "reachable" has consequences for
+the wording and consistency of <A HREF="3150.html">issue 3150</A>
+that should be carefully considered.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

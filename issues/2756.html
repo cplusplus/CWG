@@ -1,0 +1,202 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2756</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="2756"></A><H4>2756.
+  
+Completion of initialization by delegating constructor
+</H4>
+<B>Section: </B>11.9&#160; [<A href="https://wg21.link/class.init">class.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-20<BR>
+
+
+
+
+<P>Subclause 6.8.4 [<A href="https://wg21.link/basic.life#1">basic.life</A>] paragraph 1 specifies:</P>
+
+<BLOCKQUOTE>
+
+... The lifetime of an object of type T begins when:
+<UL>
+<LI>storage with the proper alignment and size for type T is obtained,
+and</LI>
+<LI>its initialization (if any) is complete (including vacuous
+initialization) (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>]),</LI>
+</UL>
+
+except that ...
+
+</BLOCKQUOTE>
+
+<P>It is unclear whether initialization is considered complete when
+the (ultimate) target constructor completes, or when the outermost
+delegating constructor completes.  Subclause 14.3 [<A href="https://wg21.link/except.ctor#4">except.ctor</A>] paragraph 4 suggests it is the former:</P>
+
+<BLOCKQUOTE>
+
+If the <I>compound-statement</I> of the <I>function-body</I> of a
+delegating constructor for an object exits via an exception, the
+object's destructor is invoked. ...
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2023-07-14) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Split and change 11.9.3 [<A href="https://wg21.link/class.base.init#9">class.base.init</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>[Note 3: An abstract class ... -- end note ]
+<DEL>An attempt to initialize more than one non-static data member of a
+union renders the program ill-formed.</DEL>
+[Note 4: After the call to a constructor for class X ... -- end note ]
+[Example 6: ... -- end example ]</P>
+
+<P class="ins">
+An attempt to initialize more than one non-static data
+member of a union renders the program ill-formed.</P>
+
+<P class="ins">
+An object's initialization is considered complete when a
+non-delegating constructor for that object returns. [Note: Therefore,
+an object's lifetime can begin (6.8.4 [<A href="https://wg21.link/basic.life">basic.life</A>]) before all
+delegating constructors have completed. -- end note]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.4 [<A href="https://wg21.link/basic.life#1.2">basic.life</A>] bullet 1.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The lifetime of an object of type T begins when:
+<UL>
+<LI>storage with the proper alignment and size for type T is obtained,
+and</LI>
+<LI>its initialization (if any) is complete (including vacuous
+initialization) (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>]<INS>,
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]</INS>),</LI>
+</UL>
+
+except that ...
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<P><B>CWG 2023-10-20</B></P>
+
+<P>Utterances about "during construction or destruction" in
+11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>] need to be adjusted.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<OL>
+<LI>
+<P>Split and change 11.9.3 [<A href="https://wg21.link/class.base.init#9">class.base.init</A>] paragraph 9 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>[Note 3: An abstract class ... -- end note ]
+<DEL>An attempt to initialize more than one non-static data member of a
+union renders the program ill-formed.</DEL>
+[Note 4: After the call to a constructor for class X ... -- end note ]
+[Example 6: ... -- end example ]</P>
+
+<P class="ins">
+An attempt to initialize more than one non-static data
+member of a union renders the program ill-formed.</P>
+
+<P class="ins">
+An object's initialization is considered complete when a
+non-delegating constructor for that object returns. [Note: Therefore,
+an object's lifetime can begin (6.8.4 [<A href="https://wg21.link/basic.life">basic.life</A>]) before all
+delegating constructors have completed. -- end note]</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.4 [<A href="https://wg21.link/basic.life#1.2">basic.life</A>] bullet 1.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The lifetime of an object of type T begins when:
+<UL>
+<LI>storage with the proper alignment and size for type T is obtained,
+and</LI>
+<LI>its initialization (if any) is complete (including vacuous
+initialization) (9.5 [<A href="https://wg21.link/dcl.init">dcl.init</A>]<INS>,
+11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]</INS>),</LI>
+</UL>
+
+except that ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.9.5 [<A href="https://wg21.link/class.cdtor#2">class.cdtor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+During the <DEL>construction</DEL> <INS>initialization</INS> of an
+object, if the value of the object or any of its subobjects is
+accessed through a glvalue that is not obtained, directly or
+indirectly, from the constructor's this pointer, the value of the
+object or subobject thus obtained is unspecified.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2026-05-19</B></P>
+
+<P>For e.g. a virtual base class <TT>VB</TT> that inherits
+constructors, the vtable will not be in its final state while
+executing inheriting constructors of <TT>VB</TT>, therefore
+11.9.5 [<A href="https://wg21.link/class.cdtor#4">class.cdtor</A>] paragraph 4 through 6 are correct as
+written.</P>
+
+<BR><BR>
+</BODY>
+</HTML>

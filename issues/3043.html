@@ -1,0 +1,133 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3043</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3043"></A><H4>3043.
+  
+Lifetime extension for temporaries in expansion statements
+</H4>
+<B>Section: </B>6.8.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-07<BR><BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#US21-038">N5028 comment
+  US&#160;21-038<BR></A>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/724">#724</A>.)</P>
+
+<P>Subclause 6.8.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 and paragraph 8 specify:</P>
+
+<BLOCKQUOTE>
+
+<P>The fourth context is when a temporary object is created in
+the <I>for-range-initializer</I> of either a range-based for statement
+or an enumerating expansion statement (8.7 [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]). If
+such a temporary object would otherwise be destroyed at the end of
+the <I>for-range-initializer</I> full-expression, the object persists
+for the lifetime of the reference initialized by
+the <I>for-range-initializer</I>.</P>
+
+<P>The fifth context is when a temporary object is created in
+the <I>expansion-initializer</I> of an iterating or destructuring
+expansion statement. If such a temporary object would otherwise be
+destroyed at the end of that <I>expansion-initializer</I> , the object
+persists for the lifetime of the reference initialized by
+the <I>expansion-initializer</I>, if any.
+</P>
+
+</BLOCKQUOTE>
+
+<P>There are a number of problems with this phrasing:</P>
+<UL>
+<LI>The original idea of lifetime extension in a
+<I>for-range-initializer</I> was to ensure that temporaries defining a
+range would survive across all iterations.  For an enumerating
+expansion statement, there is no overarching range expression; each
+element of the <I>expression-list</I> is considered separately.
+Furthermore, there is no <I>for-range-initializer</I> in the
+corresponding grammar to start with.
+</LI>
+<LI>
+For an iterating expansion statement, the involved variables
+are <TT>constexpr</TT>, so no dangling pointers or similar could
+escape from the constant evaluation to start with.  The necessity for
+temporary lifetime extension is thus unclear.
+</LI>
+</UL>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-04):</B></P>
+
+<P>Change in 6.8.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 and paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The fourth context is when a temporary object is created in
+the <I>for-range-initializer</I> of <DEL>either</DEL> a range-based
+for statement <DEL>or an enumerating expansion statement
+(8.7 [<A href="https://wg21.link/stmt.expand">stmt.expand</A>])</DEL>. If such a temporary object would
+otherwise be destroyed at the end of the <I>for-range-initializer</I>
+full-expression, the object persists for the lifetime of the reference
+initialized by the <I>for-range-initializer</I>.</P>
+
+<P class="ins">The fifth context is when a temporary object is created
+in an element <I>E</I> of the <I>expansion-init-list</I> of an
+enumerating expansion statement (8.7 [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]).  If such a
+temporary object would otherwise be destroyed at the end of the
+full-expression of <I>E</I>, the object persists for the lifetime of
+the <I>for-range-declaration</I> initialized from <I>E</I>.</P>
+
+<P>The <DEL>fifth</DEL> <INS>sixth</INS> context is when a temporary
+object is created in the <I>expansion-initializer</I> of <DEL>an
+iterating or</DEL> <INS>a</INS> destructuring expansion statement. If
+such a temporary object would otherwise be destroyed at the end of
+that <I>expansion-initializer</I>, the object persists for the
+lifetime of the reference initialized by
+the <I>expansion-initializer</I>, if any.
+</P>
+
+<P>The <DEL>sixth</DEL> <INS>seventh</INS> context is when ...</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>

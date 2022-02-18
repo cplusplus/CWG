@@ -1,0 +1,482 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3015</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3015"></A><H4>3015.
+  
+Handling of <I>header-name</I>s for <TT>#include</TT> and <TT>#embed</TT>
+</H4>
+<B>Section: </B>15.3&#160; [<A href="https://wg21.link/cpp.include">cpp.include</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>CD7
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jens Maurer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-03-23<BR>
+
+
+<P>[Accepted as a DR at the June, 2025 meeting.]</P>
+
+
+
+<P>There is non-parallel treatment for the <I>header-name</I>
+in <TT>include</TT> vs. <TT>#embed</TT> directives.</P>
+
+<P>First, subclause 5.5 [<A href="https://wg21.link/lex.pptoken#4.3">lex.pptoken</A>] paragraph 4.3 is missing a
+special-case treatment for <TT>#embed</TT>.</P>
+
+<P>Second, 15.3 [<A href="https://wg21.link/cpp.include">cpp.include</A>] (and thus
+15.4.1 [<A href="https://wg21.link/cpp.embed.gen">cpp.embed.gen</A>]) should ackowledge that lexing has
+completed at that point, and thus talk about <I>header-name</I>
+preprocessing tokens, not about sequences of characters.</P>
+
+<P>Third, 15.4.1 [<A href="https://wg21.link/cpp.embed.gen#11">cpp.embed.gen</A>] paragraph 11 talks about "resource
+name preprocessing tokens", which do not exist (see
+5.5 [<A href="https://wg21.link/lex.pptoken">lex.pptoken</A>]).  Also, it should be clarified this rule
+applies to the general <I>pp-tokens</I> form of <TT>#embed</TT>
+only.</P>
+
+<P>Fourth, <TT>__has_embed</TT> has this aberration:</P>
+
+<PRE>
+  #define stdio nosuch
+  #if __has_embed(&lt;stdio.h&gt;)    // looks for nosuch.h
+  #embed &lt;stdio.h&gt;              // looks for stdio.h
+  #endif
+</PRE>
+
+<P>For <TT>__has_include</TT>, this is avoided by using two grammar
+productions, where the preferred one uses <I>header-name</I>
+(15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>]).</P>
+
+<P>Fifth, for <TT>__has_include</TT>, it is unclear whether only the
+first (non-macro-expanded) preprocessing token should be eligible for
+special <TT>header-name</TT> treatment.  There is implementation
+divergence.</P>
+
+<P>Sixth, for the following example:</P>
+
+<PRE>
+  #embed "foo\" vendor_specific_arg("something else") ...
+</PRE>
+<P>the rule in 5.5 [<A href="https://wg21.link/lex.pptoken#4.3">lex.pptoken</A>] bullet 4.3 would form
+a <I>string-literal</I> (because it consists of a longer sequence of
+characters), not the <I>header-name</I> <TT>"foo\"</TT>.</P>
+
+<P>Seventh, it is unclear how a <I>q-char-sequence</I> is supposed to
+be turned into a <I>h-char-sequence</I> when falling back to header
+search in 15.3 [<A href="https://wg21.link/cpp.include#3">cpp.include</A>] paragraph 3, given that
+a <I>q-char-sequence</I> might contain a <TT>&gt;</TT> character,
+making it not match the production <I>h-char-sequence</I>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-06-20):</B></P>
+
+<OL>
+<LI>
+<P>Change in 5.5 [<A href="https://wg21.link/lex.pptoken#4.3">lex.pptoken</A>] bullet 4.3 and add bullets as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, the next preprocessing token is the longest sequence of
+characters that could constitute a preprocessing token, even if that
+would cause further lexical analysis to fail, except that
+<UL>
+<LI>
+a <I>header-name</I> (5.6 [<A href="https://wg21.link/lex.header">lex.header</A>]) is only formed
+<UL>
+<LI>
+<INS>immediately</INS> after the
+<TT>include</TT><INS>, <TT>embed,</TT></INS> or <TT>import</TT>
+preprocessing token in a <TT>#include</TT>
+(15.3 [<A href="https://wg21.link/cpp.include">cpp.include</A>])<INS>,
+<TT>#embed</TT> (15.4 [<A href="https://wg21.link/cpp.embed">cpp.embed</A>]),</INS> or import
+(15.6 [<A href="https://wg21.link/cpp.import">cpp.import</A>]) directive, <INS>respectively,</INS>
+or</LI>
+<LI>
+<DEL>within a <I>has-include-expression</I></DEL>
+<INS>immediately after a preprocessing token sequence of
+<TT>__has_include</TT> <INS>or <TT>__has_embed</TT></INS> immediately
+followed by <TT>(</TT> in a <TT>#if</TT>, <TT>#elif</TT>,
+or <TT>#embed</TT> directive (15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>],
+15.4 [<A href="https://wg21.link/cpp.embed">cpp.embed</A>]) and</INS>
+</LI>
+</UL>
+</LI>
+<LI>
+<INS>a <I>string-literal</I> token is never formed
+when a <I>header-name</I> token can be formed</INS>.</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.2 [<A href="https://wg21.link/cpp.cond">cpp.cond</A>] before paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+<PRE>
+  <I>has-embed-expression</I>:
+         <INS>__has_embed ( <I>header-name</I> <I>pp-balanced-token-seq</I><SUB>opt</SUB> )</INS>
+         __has_embed ( <INS><I>header-name-tokens</I></INS> <I>pp-balanced-token-seq</I><INS><SUB>opt</SUB></INS> )
+</PRE>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.2 [<A href="https://wg21.link/cpp.cond#3">cpp.cond</A>] paragraph 3 and paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="del">
+The second form of <I>has-include-expression</I> is considered only if
+the first form does not match, in which case the preprocessing tokens
+are processed just as in normal text.
+</P>
+
+<P>The header or source file identified by the parenthesized
+preprocessing token sequence in each
+contained <I>has-include-expression</I> is searched for as if that
+preprocessing token sequence were the <I>pp-tokens</I> <DEL>in</DEL>
+<INS>of</INS> a <TT>#include</TT> directive, except that no further
+macro expansion is performed. If such a directive would not satisfy
+the syntactic requirements of a #include directive, the program is
+ill-formed.  The <I>has-include-expression</I> evaluates to 1 if the
+search for the source file succeeds, and to 0 if the search fails.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.2 [<A href="https://wg21.link/cpp.cond#5">cpp.cond</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+The parenthesized <DEL><I>pp-balanced-token-seq</I> in</DEL>
+<INS>preprocessing token sequence of</INS> each contained
+<I>has-embed-expression</I> is processed as if that
+<DEL><I>pp-balanced-token-seq</I></DEL> <INS>preprocessing token
+sequence</INS> were the <I>pp-tokens</I> <DEL>in the third form</DEL>
+of a <TT>#embed</TT> directive (15.4 [<A href="https://wg21.link/cpp.embed">cpp.embed</A>])<INS>,
+except that no further macro expansion is performed.</INS> If such a
+directive would not satisfy the syntactic requirements of a #embed
+directive, the program is ill-formed. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.3 [<A href="https://wg21.link/cpp.include#1">cpp.include</A>] paragraph 1 through paragraph 4 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="del">A #include directive shall identify a header or source
+file that can be processed by the implementation.</P>
+
+<P class="ins">
+A <I>header search</I> for a sequence of characters searches a
+sequence of places for a header identified
+uniquely by that sequence of characters. How the places are determined
+or the header identified is implementation-defined.</P>
+
+<P class="ins">
+A <I>source file search</I> for a sequence of characters attempts to
+identify a source file that is named by the sequence of characters.
+The named source file is searched for in an implementation-defined
+manner. If the implementation does not support a source file search
+for that sequence of characters, or if the search fails, the result of
+the source file search is the result of a header search for the same
+sequence of characters.</P>
+
+<P>A preprocessing directive of the form
+<PRE>
+  # include <DEL>&lt; <I>h-char-sequence</I> &gt;</DEL> <INS><I>header-name</I></INS> <I>new-line</I>
+</PRE>
+<INS>causes the replacement of that directive by the entire contents
+of the header or source file identified by <I>header-name</I>.</INS>
+</P>
+
+<P>
+<INS>If the <I>header-name</I> is of the form</INS>
+<PRE class="ins">
+  &lt; <I>h-char-sequence</I> &gt;
+</PRE>
+<DEL>searches a sequence of implementation-defined places for a header
+identified uniquely by the specified sequence between the &lt; and
+&gt; delimiters, and causes the replacement of that directive by the
+entire contents of the header. How the places are specified or the
+header identified is implementation-defined</DEL> <INS>a header is
+identified by a header search for the sequence of characters of
+the <I>h-char-sequence</I></INS>.</P>
+
+<P>
+<DEL>A preprocessing directive</DEL>
+<INS>If the <I>header-name</I> is</INS> of the form
+<PRE>
+  <DEL># include</DEL> " <I>q-char-sequence</I> " <DEL><I>new-line</I></DEL>
+</PRE>
+<DEL>causes the replacement of that directive by the entire contents
+of the source file identified by the specified sequence between the "
+delimiters. The named source file is searched for in an
+implementation-defined manner. If this search is not supported, or if
+the search fails, the directive is reprocessed as if it read</DEL>
+<PRE class="del">
+  # include &lt; <I>h-char-sequence</I> &gt; <I>new-line</I>
+</PRE>
+<DEL>with the identical contained sequence (including &gt; characters,
+if any) from the original directive</DEL>
+<INS>the source file or header is identified by a source file search
+for the sequence of characters of the <I>q-char-sequence</I></INS>.
+</P>
+
+<P class="ins">
+If a header search fails, or if a source file search or header search
+identifies a header or source file that cannot be processed by the
+implementation, the program is ill-formed.
+
+[ Note: If the header or source file cannot be processed, the program
+is ill-formed even when evaluating <TT>__has_include</TT>.  -- end
+note ]</P>
+
+<P>
+A preprocessing directive of the form
+<PRE>
+  # include <I>pp-tokens</I> <I>new-line</I>
+</PRE>
+(that does not match <DEL>one of</DEL> the <DEL>two</DEL>
+previous <DEL>forms</DEL> <INS>form</INS>) is permitted. The
+preprocessing tokens after <TT>include</TT> in the directive are
+processed just as in normal text (i.e., each identifier currently
+defined as a macro name is replaced by its replacement list of
+preprocessing tokens). <INS>Then, an attempt is made to form
+a <I>header-name</I> preprocessing token (5.6 [<A href="https://wg21.link/lex.header">lex.header</A>])
+from the whitespace and the characters of the spellings of the resulting sequence of
+preprocessing tokens; the treatment of whitespace is
+implementation-defined.</INS> If the <INS>attempt succeeds, the
+directive with the so-formed <I>header-name</I> is processed as
+specified for the previous form.  Otherwise</INS>
+<DEL>directive resulting after all replacements does not match one of
+the two previous forms</DEL>, the behavior is undefined.
+</P>
+<P>[<I>Note 1:</I> Adjacent <I>string-literal</I>s are not concatenated
+into a single <I>string-literal</I> (see the translation phases in
+5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]); thus, an expansion that results in
+two <I>string-literal</I>s is an invalid directive. &#8212;<I>end
+note</I>]
+</P>
+<P class="del">The method by which a sequence of preprocessing tokens
+between a &lt; and a &gt; preprocessing token pair or a pair of "
+characters is combined into a single header name preprocessing token
+is implementation-defined.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.4.1 [<A href="https://wg21.link/cpp.embed.gen#1">cpp.embed.gen</A>] paragraph 1 and paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+A <I>bracket resource search</I> for a sequence of characters searches a
+sequence of places for a resource identified
+uniquely by that sequence of characters. How the places are determined
+or the resource identified is implementation-defined.</P>
+
+<P class="ins">
+A <I>quote resource search</I> for a sequence of characters attempts
+to identify a resource that is named by the sequence of
+characters. The named resource is searched for in an
+implementation-defined manner. If the implementation does not support
+a quote resource search for that sequence of characters, or if the search
+fails, the result of the quote resource search is the result of a
+bracket resource search for the same sequence of characters.</P>
+
+<P>
+A preprocessing directive of the form
+<PRE>
+  # embed <DEL>&lt; <I>h-char-sequence</I> &gt;</DEL> <INS><I>header-name</I></INS> <I>pp-tokens</I><SUB>opt</SUB> <I>new-line</I>
+</PRE>
+<INS>causes the replacement of that directive by preprocessing tokens
+derived from data in the resource identified by <I>header-name</I>, as
+specified below.</INS>
+</P>
+
+<P>
+<INS>If the <I>header-name</I> is of the form</INS>
+<PRE class="ins">
+  &lt; <I>h-char-sequence</I> &gt;
+</PRE>
+<DEL>searches a sequence of implementation-defined places for a
+resource identified uniquely by the specified sequence between the
+&lt; and &gt; delimiters. How the places are specified or the resource
+identified is implementation-defined</DEL>
+<INS>the resource is identified by a bracket resource search for the
+sequence of characters of the <I>h-char-sequence</I></INS>.
+</P>
+
+<P>
+<DEL>A preprocessing directive</DEL>
+<INS>If the <I>header-name is</I></INS> of the form
+<PRE>
+  <DEL># embed</DEL> " <I>q-char-sequence</I> " <DEL><I>pp-tokens</I><SUB>opt</SUB> <I>new-line</I></DEL>
+</PRE>
+<DEL>searches for a resource identified by the specified sequence between
+the " delimiters. The named resource is searched for in an
+implementation-defined manner. If this search is not supported, or if
+the search fails, the directive is reprocessed as if it read</DEL>
+<PRE class="del">
+  # embed &lt; <I>h-char-sequence</I> &gt; <I>pp-tokens</I><SUB>opt</SUB> <I>new-line</I>
+</PRE>
+<DEL>with the identical contained sequence (including &gt; characters,
+if any) from the original directive</DEL>.
+<INS>the resource is identified by a quote resource search for the
+sequence of characters of the <I>q-char-sequence</I></INS>.
+</P>
+
+<P class="ins">
+If a bracket resource search fails, or if a quote or bracket resource
+search identifies a resource that cannot be processed by the
+implementation, the program is ill-formed.
+
+[ Note: If the resource cannot be processed, the program is ill-formed
+even when processing <TT>#embed</TT> with <TT>limit(0)</TT>
+(15.4.2.1 [<A href="https://wg21.link/cpp.embed.param.limit">cpp.embed.param.limit</A>]) or evaluating <TT>__has_embed</TT>.
+-- end note ]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.4.1 [<A href="https://wg21.link/cpp.embed.gen#10">cpp.embed.gen</A>] paragraph 10 and paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+(10) A preprocessing directive of the form
+<PRE>
+  # embed <I>pp-tokens</I> <I>new-line</I>
+</PRE>
+(that does not match <DEL>one of</DEL> the
+<DEL>two</DEL> previous <DEL>forms</DEL> <INS>form</INS>) is
+permitted. The preprocessing tokens after <TT>embed</TT> in the
+directive are processed just as in normal text (i.e., each identifier
+currently defined as a macro name is replaced by its replacement list
+of preprocessing tokens).
+<DEL>The directive resulting after all replacements of the third form
+shall match one of the two previous forms</DEL>
+<INS>Then, an attempt is made to form a <I>header-name</I>
+preprocessing token (5.6 [<A href="https://wg21.link/lex.header">lex.header</A>]) from the whitespace and the characters of
+the spellings of the resulting sequence of preprocessing tokens
+immediately after <TT>embed</TT>; the treatment of whitespace is
+implementation-defined.  If the attempt succeeds, the directive with
+the so-formed <I>header-name</I> is processed as specified for the
+previous form.  Otherwise, the program is ill-formed</INS>.
+<P>[<I>Note 1:</I> Adjacent <I>string-literal</I>s are not
+concatenated into a single <I>string-literal</I> (see the translation
+phases in (5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>])); thus, an expansion that results
+in two <I>string-literal</I>s is an invalid directive. &#8212;<I>end
+note</I>]</P> Any further processing as in normal text described for
+the <DEL>two</DEL> previous <DEL>forms</DEL>
+<INS>form</INS> is not performed.  [<I>Note 2:</I> That is, processing
+as in normal text happens once and only once for the entire
+directive. &#8212;<I>end note</I>]
+
+<P>(11) [<I>Example 4:</I> If the directive matches
+the <DEL>third</DEL> <INS>second</INS> form, the whole directive is
+replaced. If the directive matches the first <DEL>two
+forms</DEL> <INS>form</INS>, everything after the name is replaced.
+<PRE class="del">
+  #define prefix(ARG) suffix(ARG)
+  #define THE_ADDITION "teehee"
+  #define THE_RESOURCE ":3c"
+  #embed ":3c"        prefix(THE_ADDITION)
+  #embed THE_RESOURCE prefix(THE_ADDITION)
+</PRE>
+<PRE class="ins">
+  #define EMPTY
+  #define X myfile
+  #define Y rsc
+  #define Z 42
+  #embed &lt;myfile.rsc&gt; prefix(Z)
+  #embed EMPTY &lt;X.Y&gt;  prefix(Z)
+</PRE>
+is equivalent to:
+<PRE class="del">
+  #embed ":3c" suffix("teehee")
+  #embed ":3c" suffix("teehee")
+</PRE>
+<PRE class="ins">
+  #embed &lt;myfile.rsc&gt; prefix(42)
+  #embed &lt;myfile.rsc&gt; prefix(42)
+</PRE>
+&#8212;<I>end example</I>]</P>
+
+<P class="del">The method by which a sequence of preprocessing tokens
+between a &lt; and a &gt; preprocessing token pair or a pair of "
+characters is combined into a single resource name preprocessing token
+is implementation-defined.</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 15.7.3 [<A href="https://wg21.link/cpp.stringize#2">cpp.stringize</A>] paragraph 2 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+... Otherwise, the original spelling of each preprocessing token in
+the stringizing argument is retained in the character string literal,
+except for special handling for producing the spelling
+of <INS><I>header-name</I>s,</INS> <I>string-literal</I>s<INS>,</INS>
+and <I>character-literal</I>s: a \ character is inserted before each "
+and \ character of a <INS><I>header-name</I>,</INS>
+<I>character-literal</I><INS>,</INS> or <I>string-literal</I>
+(including the delimiting " characters). If the replacement that
+results is not a valid character string literal, the behavior is
+undefined. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

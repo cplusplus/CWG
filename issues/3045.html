@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3045</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3045"></A><H4>3045.
+  
+Regularizing environment interactions of expansion statement
+</H4>
+<B>Section: </B>6.4.3&#160; [<A href="https://wg21.link/basic.scope.block">basic.scope.block</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jakub Jelinek
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-18<BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/729">#729</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template for (auto x : whatever) {
+    int x = 42;
+  }
+</PRE>
+
+<P>This is valid, but the parallel <I>for-range-statement</I> is not:</P>
+
+<PRE>
+  for (auto g : whatever) {
+    int g = 42;
+  }
+</PRE>
+
+<P>Furthermore, due to the possibly surprising rewriting nature of
+expansion statements, 9.13.5 [<A href="https://wg21.link/dcl.attr.fallthrough">dcl.attr.fallthrough</A>] should
+prohibit <TT>[[fallthrough]]</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-09-12):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.4.3 [<A href="https://wg21.link/basic.scope.block#2">basic.scope.block</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a declaration that is not a name-independent declaration and that
+binds a name in the block scope S of a
+<UL>
+<LI>
+<I>compound-statement</I> of a <I>lambda-expression</I>,
+<I>function-body</I>, or <I>function-try-block</I>,
+</LI>
+<LI>substatement of a selection <DEL>or</DEL> <INS>,</INS>
+iteration<INS>, or expansion</INS> statement that is not itself a
+selection <DEL>or</DEL> <INS>,</INS> iteration<INS>, or
+expansion</INS> statement, or</LI>
+<LI>handler of a <I>function-try-block</I>
+</LI>
+</UL>
+potentially conflicts with a declaration whose target scope is the
+parent scope of S, the program is ill-formed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.13.5 [<A href="https://wg21.link/dcl.attr.fallthrough#1">dcl.attr.fallthrough</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>attribute-token</I> fallthrough may be applied to a null
+statement (8.3 [<A href="https://wg21.link/stmt.expr">stmt.expr</A>]); such a statement is a
+fallthrough statement. No <I>attribute-argument-clause</I> shall be
+present. A fallthrough statement may only appear within an enclosing
+switch statement (8.5.3 [<A href="https://wg21.link/stmt.switch">stmt.switch</A>]). The next statement that
+would be executed after a fallthrough statement shall be a labeled
+statement whose label is a case label or default label for the same
+switch statement and, if the fallthrough statement is contained in an
+iteration statement, the next statement shall be part of the same
+execution of the substatement of the innermost enclosing iteration
+statement. The program is ill-formed if there is no such
+statement. <INS>The innermost enclosing switch statement of a
+fallthrough statement S shall be contained in the innermost enclosing
+expansion statement (8.7 [<A href="https://wg21.link/stmt.expand">stmt.expand</A>]) of S, if any.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>

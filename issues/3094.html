@@ -1,0 +1,193 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3094</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-05-31</P>
+<HR>
+<A NAME="3094"></A><H4>3094.
+  
+Rework phases for string literal concatenation and token formation
+</H4>
+<B>Section: </B>5.2&#160; [<A href="https://wg21.link/lex.phases">lex.phases</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>WP
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>US
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-10-01<BR><BR>
+
+
+<P>[Accepted at the November, 2025 meeting.]</P>
+
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#US6-020">N5028 comment
+  US&#160;6-020<BR></A>
+<A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5028.pdf#US7-019">N5028 comment
+  US&#160;7-019<BR></A>
+
+<P>Merge phases 5 and 6, because both deal with the same contiguous
+sequences of string literals.  Then, move the conversion
+of <I>pp-tokens</I> to tokens into a new phase 6.</P>
+
+<P><B>Proposed resolution (approved by CWG 2025-11-04):</B></P>
+
+<OL>
+<LI>
+<P>Change in 5.2 [<A href="https://wg21.link/lex.phases#5">lex.phases</A>] paragraph 5 through 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>5. For a sequence of two or more adjacent <I>string-literal</I>
+preprocessing tokens, a common <I>encoding-prefix</I> is determined as
+specified in 5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]. Each
+such <I>string-literal</I> preprocessing token is then considered to
+have that common <I>encoding-prefix</I>.
+<DEL>6. Adjacent</DEL> <INS>Then, adjacent</INS> <I>string-literal</I>
+preprocessing tokens are concatenated
+(5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]).</P>
+
+<P>
+<DEL>7.</DEL> <INS>6.</INS> Each preprocessing token is converted into a token
+(5.10 [<A href="https://wg21.link/lex.token">lex.token</A>]).
+</P>
+
+<P>
+<INS>7.</INS> The <DEL>resulting</DEL> tokens constitute a
+translation unit and are syntactically and semantically analyzed as a
+<I>translation-unit</I> (6.7 [<A href="https://wg21.link/basic.link">basic.link</A>]) and translated. ...
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 5.5 [<A href="https://wg21.link/lex.pptoken#1">lex.pptoken</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A preprocessing token is the minimal lexical element of the language
+in translation phases 3 through <DEL>6</DEL> <INS>5</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 5.8 [<A href="https://wg21.link/lex.operators#1">lex.operators</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... Each <I>operator-or-punctuator</I> is converted to a single token in
+translation phase <DEL>7</DEL> <INS>6</INS> (5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 5.13.5 [<A href="https://wg21.link/lex.string#8">lex.string</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+In translation phase <DEL>6</DEL> <INS>5</INS>
+(5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]), adjacent <I>string-literal</I>s are
+concatenated. The lexical structure and grouping of the contents of
+the individual <I>string-literal</I>s is retained.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 5.13.9 [<A href="https://wg21.link/lex.ext#8">lex.ext</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+In translation phase <DEL>6</DEL> <INS>5</INS>
+(5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]), adjacent <I>string-literal</I>s are
+concatenated and <I>user-defined-string-literal</I>s are
+considered <I>string-literal</I>s for that purpose. During
+concatenation, <I>ud-suffix</I> es are removed and ignored and the
+concatenation process occurs as described in
+5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]. At the end of
+phase <DEL>6</DEL> <INS>5</INS>, if a <I>string-literal</I> is the
+result of a concatenation involving at least
+one <I>user-defined-string-literal</I>, all the
+participating <I>user-defined-string-literal</I>s shall have the
+same <I>ud-suffix</I> and that suffix is applied to the result of the
+concatenation.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 21.4.17 [<A href="https://wg21.link/meta.reflection.define.aggregate#5.2">meta.reflection.define.aggregate</A>] bullet 5.2 as follows
+(addresses alternative tokens (e.g. <TT>xor</TT>) and exceptions
+instead of evaluation failure):</P>
+
+<BLOCKQUOTE>
+
+Throws: meta::exception unless the following conditions are met:
+<UL>
+<LI>...</LI>
+<LI>if options.name contains a value, then:
+<UL>
+<LI>
+holds_alternative&lt;u8string&gt;(options.name-&gt;contents ) is true
+and get&lt;u8string&gt;( options.name-&gt;contents ) contains
+<INS>the spelling of</INS> a valid <INS><I>token</I> that is
+an <I>identifier</I></INS> <DEL>identifier</DEL>
+(5.11 [<A href="https://wg21.link/lex.name">lex.name</A>]) <DEL>that is not a keyword
+(5.12 [<A href="https://wg21.link/lex.key">lex.key</A>])</DEL> when interpreted with UTF-8, or
+</LI>
+<LI>
+holds_alternative&lt;string&gt;(options.name-&gt;contents ) is true
+and get&lt;string&gt;(options.name-&gt;contents ) contains <INS>the
+spelling of</INS> a valid <INS><I>token</I> that is
+an <I>identifier</I></INS> <DEL>identifier</DEL>
+(5.11 [<A href="https://wg21.link/lex.name">lex.name</A>]) <DEL>that is not a keyword
+(5.12 [<A href="https://wg21.link/lex.key">lex.key</A>])</DEL> when interpreted with the ordinary
+literal encoding;
+</LI>
+</UL>
+[<I>Note 3:</I> <DEL>The name corresponds to the spelling of an
+identifier token after phase 6 of translation
+(5.2 [<A href="https://wg21.link/lex.phases">lex.phases</A>]).</DEL> Lexical constructs
+like <I>universal-character-name</I>s (5.3.2 [<A href="https://wg21.link/lex.universal.char">lex.universal.char</A>]) are
+not processed <DEL>and will cause evaluation to fail</DEL>.  For example,
+R"(\u03B1)" is an invalid identifier and is not interpreted as
+"a". &#8212;<I>end note</I>]</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+<BR><BR>
+</BODY>
+</HTML>
