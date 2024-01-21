@@ -13,10 +13,10 @@
 </HEAD>
 <BODY>
 <P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
-  Core Issues List revision 113.
+  Core Issues List revision 113a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2023-12-19</P>
+<P>2024-01-21</P>
 <HR>
 <A NAME="2813"></A><H4>2813.
   
@@ -106,14 +106,42 @@ class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</
 
 <BLOCKQUOTE>
 
-... If the function is an implicit object member function,
-the <TT>this</TT> parameter of the function
-(7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized with a pointer to the
-<INS>possibly materialized (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>])</INS> object
-of the call, converted as if by an explicit type conversion
-(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]). ...
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>]
+<INS>If the function is a static member function invoked using class
+member access syntax, the object expression is a discarded-value
+expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
+implicit object member function, <INS>the object expression of the
+class member access shall be a glvalue</INS> and the <TT>this</TT>
+parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
+with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
+5:</I> There is no access or ambiguity checking on this conversion;
+the access checking and disambiguation are done as part of the
+(possibly implicit) class member access operator. See
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
 
 </BLOCKQUOTE>
+
 </LI>
 
 <LI>
