@@ -4616,7 +4616,7 @@ Missing requirements for fundamental alignments
   <A href="https://wg21.link/class.temporary">class.temporary</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2434">2434</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Mandatory copy elision vs non-class objects
@@ -13317,6 +13317,92 @@ The lifetime of an object o of type T ends when:  ...
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2434"></A><H4>2434.
+  
+Mandatory copy elision vs non-class objects
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2019-09-30<BR>
+
+
+<P>In the following example,</P>
+
+<PRE>
+  int f() {
+    X x;
+    return 4;
+  }
+  int a = f();
+</PRE>
+
+<P>
+<TT>a</TT> must be directly initialized in the return statement
+of <TT>f()</TT> because the exception permitting temporaries for
+function arguments and return types in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3
+applies only to certain class types:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type <TT>X</TT> is passed to or
+returned from a function, if <TT>X</TT> has at least one
+eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is
+trivial, and the destructor of <TT>X</TT> is either trivial
+or deleted, implementations are permitted to create a
+temporary object to hold the function parameter or result
+object. The temporary object is constructed from the
+function argument or return value, respectively, and the
+function's parameter or return object is initialized as if
+by using the eligible trivial constructor to copy the
+temporary (even if that constructor is inaccessible or would
+not be selected by overload resolution to perform a copy or
+move of the object). [<I>Note:</I> This latitude is granted
+to allow objects of class type to be passed to or returned
+from functions in registers. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>This requirement is observable, since the destructor of
+<TT>X</TT> in the example could inspect the value
+of <TT>a</TT>.</P>
+
+<P>The permissions in this paragraph should also apply to all
+non-class types.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When an object of class type X is passed to or returned from a
+function, if X has at least one eligible copy or move constructor
+(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is trivial, and
+the destructor of X is either trivial or deleted, implementations are
+permitted to create a temporary object to hold the function parameter
+or result object. The temporary object is constructed from the
+function argument or return value, respectively, and the function's
+parameter or return object is initialized as if by using the eligible
+trivial constructor to copy the temporary (even if that constructor is
+inaccessible or would not be selected by overload resolution to
+perform a copy or move of the object). <INS>Similarly, implementations
+are permitted to create a temporary object of scalar type to hold a
+function parameter or result object.</INS> [<I>Note 4:</I> This
+latitude is granted to allow objects of <INS>scalar or</INS> class
+type to be passed to or returned from functions in registers.
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2827"></A><H4>2827.
   
 Representation of unsigned integral types
@@ -13558,7 +13644,7 @@ void f() {
 <P>Yet, some parts of the standard talk about an odr-use participating
 in the happens-before relation, which is a category error.</P>
 
-<P><B>Proposed resolution:</B></P>
+<P><B>Proposed resolution [SUPERSEDED]:</B></P>
 
 <OL>
 <LI>
@@ -13604,6 +13690,95 @@ is <INS>the evaluation of an expression that odr-uses</INS>
 <INS>the entity where the evaluation is</INS> not caused directly or
 indirectly by the initialization of a non-block static or thread
 storage duration variable.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-01-19</B></P>
+
+<P>Since "odr-use" is a category error here, use the term
+"non-initialization use" instead.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#6">basic.def.odr</A>] paragraph 6 through 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A structured binding is odr-used <DEL>if it appears as</DEL>
+<INS>by</INS> a potentially-evaluated expression <INS><I>E</I> if it
+is named by <I>E</I></INS>.
+</P>
+
+<P>*this is odr-used if this appears
+as a potentially-evaluated expression (including as the result of the
+implicit transformation in the body of a non-static member function
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])).
+</P>
+
+<P>
+A virtual member function is odr-used if it is not pure. A function is
+odr-used <INS>by</INS> <DEL>if it is named by</DEL> a
+potentially-evaluated expression or conversion <INS><I>E</I> if it is
+named by <I>E</I></INS>. A non-placement allocation or deallocation
+function for a class is odr-used by the definition of a constructor of
+that class. A non-placement deallocation function for a class is
+odr-used by the definition of the destructor of that class, or by
+being selected by the lookup at the point of definition of a virtual
+destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]). [ Footnote: ... ]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#4">basic.start.dynamic</A>] paragraph 4 through 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A <I>non-initialization <DEL>odr-use</DEL> <INS>use</INS></I> <INS>of an entity</INS>
+is <INS>the evaluation of an expression that odr-uses</INS>
+<DEL>an odr-use</DEL> (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>])
+<INS>the entity where the evaluation is</INS> not caused directly or
+indirectly by the initialization of a non-block static or thread
+storage duration variable.
+</P>
+
+<P>...If it is deferred, it strongly happens before any
+non-initialization <DEL>odr-use</DEL> <INS>use</INS> of any non-inline
+function or non-inline variable defined in the same translation unit
+as the variable to be initialized. [ Footnote: ... ] ...  [ Example:
+...  It is implementation-defined whether either a or b is initialized
+before main is entered or whether the initializations are delayed
+until a is first <DEL>odr-used</DEL> <INS>used</INS> in main. In
+particular, if a is initialized before main is entered, it is not
+guaranteed that b will be initialized before it
+is <DEL>odr-used</DEL> <INS>used</INS> by the initialization of a,
+that is, before A::A is called. If, however, a is initialized at some
+point after the first statement of main, b will be initialized prior
+to its use in A::A. -- end example ]
+</P>
+
+<P>
+... If it is deferred, it strongly happens before any non-initialization
+<DEL>odr-use</DEL> <INS>use</INS> of that variable. ...
+</P>
+
+<P>
+... If it is deferred, the initialization associated with the entity for
+thread t is sequenced before the first
+non-initialization <DEL>odr-use</DEL> <INS>use</INS> by t of any
+non-inline variable with thread storage duration ...
+</P>
+
+<P>
+
+</P>
 
 </BLOCKQUOTE>
 </LI>
@@ -14191,14 +14366,42 @@ class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</
 
 <BLOCKQUOTE>
 
-... If the function is an implicit object member function,
-the <TT>this</TT> parameter of the function
-(7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized with a pointer to the
-<INS>possibly materialized (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>])</INS> object
-of the call, converted as if by an explicit type conversion
-(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]). ...
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>]
+<INS>If the function is a static member function invoked using class
+member access syntax, the object expression is a discarded-value
+expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
+implicit object member function, <INS>the object expression of the
+class member access shall be a glvalue</INS> and the <TT>this</TT>
+parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
+with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
+5:</I> There is no access or ambiguity checking on this conversion;
+the access checking and disambiguation are done as part of the
+(possibly implicit) class member access operator. See
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
 
 </BLOCKQUOTE>
+
 </LI>
 
 <LI>
@@ -29981,67 +30184,6 @@ ill-formed.</LI>
 </BLOCKQUOTE>
 </LI>
 </OL>
-
-<BR><BR><HR>
-<A NAME="2434"></A><H4>2434.
-  
-Mandatory copy elision vs non-class objects
-</H4>
-<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2019-09-30<BR>
-
-
-<P>In the following example,</P>
-
-<PRE>
-  int f() {
-    X x;
-    return 4;
-  }
-  int a = f();
-</PRE>
-
-<P>
-<TT>a</TT> must be directly initialized in the return statement
-of <TT>f()</TT> because the exception permitting temporaries for
-function arguments and return types in 6.7.7 [<A href="https://wg21.link/class.temporary#3">class.temporary</A>] paragraph 3
-applies only to certain class types:</P>
-
-<BLOCKQUOTE>
-
-When an object of class type <TT>X</TT> is passed to or
-returned from a function, if <TT>X</TT> has at least one
-eligible copy or move constructor
-(11.4.4 [<A href="https://wg21.link/special">special</A>]), each such constructor is
-trivial, and the destructor of <TT>X</TT> is either trivial
-or deleted, implementations are permitted to create a
-temporary object to hold the function parameter or result
-object. The temporary object is constructed from the
-function argument or return value, respectively, and the
-function's parameter or return object is initialized as if
-by using the eligible trivial constructor to copy the
-temporary (even if that constructor is inaccessible or would
-not be selected by overload resolution to perform a copy or
-move of the object). [<I>Note:</I> This latitude is granted
-to allow objects of class type to be passed to or returned
-from functions in registers. &#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-
-<P>This requirement is observable, since the destructor of
-<TT>X</TT> in the example could inspect the value
-of <TT>a</TT>.</P>
-
-<P>The permissions in this paragraph should also apply to all
-non-class types.</P>
 
 <BR><BR><HR>
 <A NAME="2666"></A><H4>2666.
