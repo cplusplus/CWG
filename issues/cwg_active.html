@@ -151,6 +151,8 @@ USA.</P>
 <A HREF="cwg_active.html#2843">2843</A>,
 <A HREF="cwg_active.html#2844">2844</A>,
 <A HREF="cwg_active.html#2845">2845</A>,
+<A HREF="cwg_active.html#2846">2846</A>,
+<A HREF="cwg_active.html#2847">2847</A>,
 </P>
 
 <P><B>Revision 113, 2023-12-19:</B></P>
@@ -6019,6 +6021,17 @@ Constrained <TT>auto</TT> and redeclaration with non-abbreviated syntax
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">9.3.4.6&#160;
+  <A href="https://wg21.link/dcl.fct">dcl.fct</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2846">2846</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Out-of-class definitions of explicit object member functions
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">9.3.4.7&#160;
   <A href="https://wg21.link/dcl.fct.default">dcl.fct.default</A>
 </TD>
@@ -8458,6 +8471,17 @@ Use of <TT>template&lt;&gt;</TT> defining member of explicit specialization
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Explicit specializations of constexpr static data members
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">13.9.4&#160;
+  <A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2847">2847</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Constrained explicit specializations of function templates at class scope
 </TD>
 </TR>
 <TR>
@@ -34351,6 +34375,83 @@ inventing a constrained template parameter.</LI>
 </UL>
 
 <BR><BR><HR>
+<A NAME="2846"></A><H4>2846.
+  
+Out-of-class definitions of explicit object member functions
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-28<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/493">#493</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    void f(this A&amp;);
+  };
+  void A::f(this A&amp;) { }    // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>This is accepted by all major implementations.  However,
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+An <I>explicit-object-parameter-declaration</I> is
+a <I>parameter-declaration</I> with a this specifier. An
+explicit-object-parameter-declaration shall appear only as the
+first <I>parameter-declaration</I> of
+a <I>parameter-declaration-list</I> of either:
+<UL>
+<LI>a <I>member-declarator</I> that declares a member function
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
+<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
+</UL>
+A <I>member-declarator</I> with an
+explicit-object-parameter-declaration shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared static or virtual.
+
+</BLOCKQUOTE>
+
+<P>The <I>function-definition</I> at #1 is neither of the two allowed
+options.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>explicit-object-parameter-declaration</I> is
+a <I>parameter-declaration</I> with a this specifier. An
+explicit-object-parameter-declaration shall appear only as the
+first <I>parameter-declaration</I> of a
+<I>parameter-declaration-list</I> of either:
+<UL>
+<LI>a <I>member-declarator</I> <INS>or <I>function-definition</I></INS>
+that declares a member function (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
+<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
+</UL>
+A <I>member-declarator</I> with an
+explicit-object-parameter-declaration shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared static or virtual.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="361"></A><H4>361.
   
 Forward reference to default argument
@@ -40848,6 +40949,93 @@ In particular, &#8220;use&#8221; of a class template specialization as
 an incomplete type &#8212; to form a pointer, for instance &#8212;
 should not require the presence of an explicit instantiation definition
 elsewhere in the program.</P>
+
+<BR><BR><HR>
+<A NAME="2847"></A><H4>2847.
+  
+Constrained explicit specializations of function templates at class scope
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/482">#482</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &gt; sizeof(char);
+  template&lt;typename T&gt;
+  concept D = sizeof(T) &gt; sizeof(int) ;
+
+  template&lt;typename T&gt;
+  struct A 
+  {
+    template&lt;typename U&gt;
+    constexpr int f(U) requires C&lt;U&gt; { return 0; }
+
+    template&lt;&gt;
+    constexpr int f(int) requires D&lt;T&gt; { return 1; }
+  };
+
+  static_assert(A&lt;int&gt;().f(0) == 0);   // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>There is substantial implementation variance: GCC does not allow
+explicit specializations of function templates at class scope
+(contrary to the rule change introduced by <A HREF="cwg_defects.html#727">issue 727</A>), clang rejects them if a <I>trailing-requires-clause</I>
+is present, and EDG accepts, but ignores the constraint, causing #1 to
+fail.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An explicit specialization shall not have a
+trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]) unless it
+declares a function template.  [ Example:</P>
+
+<PRE class="ins">
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &lt;= sizeof(int);
+
+  template&lt;typename T&gt;
+  struct A {
+    template&lt;typename U&gt;
+    void f(U) requires C&lt;U&gt;;
+
+    template&lt;&gt;
+    void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;&gt;
+    void f(short) requires true; //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
+  };
+
+  template&lt;&gt;
+  template&lt;typename U&gt;
+  void A&lt;int&gt;::f(U) requires C&lt;U&gt;; //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
+</PRE>
+<P class="ins">-- end example ]
+</P>
+
+<P>The placement of explicit specialization declarations for function
+templates ...</P>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="264"></A><H4>264.
