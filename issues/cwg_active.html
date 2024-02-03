@@ -155,6 +155,7 @@ USA.</P>
 <A HREF="cwg_active.html#2847">2847</A>,
 <A HREF="cwg_active.html#2848">2848</A>,
 <A HREF="cwg_active.html#2849">2849</A>,
+<A HREF="cwg_active.html#2850">2850</A>,
 </P>
 
 <P><B>Revision 113, 2023-12-19:</B></P>
@@ -4528,6 +4529,17 @@ Storage duration of implicitly created objects
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.7.5&#160;
+  <A href="https://wg21.link/basic.stc">basic.stc</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2850">2850</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Unclear storage duration for function parameter objects
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">6.7.5.1&#160;
   <A href="https://wg21.link/basic.stc.general">basic.stc.general</A>
 </TD>
@@ -4664,7 +4676,7 @@ Invented temporary variables and temporary objects
   <A href="https://wg21.link/class.temporary">class.temporary</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2849">2849</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Parameter objects are not temporary objects
@@ -4994,7 +5006,7 @@ Conversion to function pointer for lambda with explicit object parameter
   <A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2845">2845</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Make the closure type of a captureless lambda a structural type
@@ -8447,7 +8459,7 @@ Explicit instantiation and trailing <I>requires-clause</I>s
   <A href="https://wg21.link/temp.explicit">temp.explicit</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2848">2848</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Omitting an empty template argument list for explicit instantiation
@@ -8502,7 +8514,7 @@ Explicit specializations of constexpr static data members
   <A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2847">2847</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Constrained explicit specializations of function templates at class scope
@@ -9776,6 +9788,46 @@ expression</INS> from a default member initializer is ill-formed.
 </OL>
 
 <BR><BR><HR>
+<A NAME="2849"></A><H4>2849.
+  
+Parameter objects are not temporary objects
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
+
+<P>Parameter objects are not temporary objects, according to
+6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1.  An exception hinting at this in
+6.7.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 should be removed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-02):</B></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+The fourth context is when a temporary object <DEL>other than a
+function parameter object</DEL> is created in
+the <I>for-range-initializer</I> of a range-based for statement. If
+such a temporary object would otherwise be destroyed at the end of
+the <I>for-range-initializer</I> full-expression, the object persists
+for the lifetime of the reference initialized by
+the <I>for-range-initializer</I>.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2689"></A><H4>2689.
   
 Are cv-qualified <TT>std::nullptr_t</TT> fundamental types?
@@ -9864,6 +9916,79 @@ program</DEL> <INS>named by an expression</INS>. ...
 
 </BLOCKQUOTE>
 
+<BR><BR><HR>
+<A NAME="2845"></A><H4>2845.
+  
+Make the closure type of a captureless lambda a structural type
+</H4>
+<B>Section: </B>7.5.5.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-29<BR>
+
+
+
+
+<P>
+<A HREF="cwg_defects.html#2542">Issue 2542</A> (approved in June, 2023) made
+all closure types not be structural types, i.e. unsuitable for use as
+non-type template parameters.  This causes an inconsistency with the
+treatment of the pointer-to-function conversion for closure types with
+no captures:</P>
+
+<PRE>
+  template &lt;auto V&gt;
+  void foo() {}
+
+  void bar() {
+    foo&lt;[i = 3] { return i; }&gt;();   //<SPAN CLASS="cmnt"> #1: error</SPAN>
+    foo&lt;[]{}&gt;();                    //<SPAN CLASS="cmnt"> #2: error</SPAN>
+    foo&lt;+[]{}&gt;();                   //<SPAN CLASS="cmnt"> #3: OK, a function pointer is a structural type</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-02):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.lambda.closure#3">expr.prim.lambda.closure</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+The closure type is not an aggregate type (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>])
+<DEL>and not</DEL> <INS>; it is</INS> a structural type
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>])
+<INS>if and only if the lambda has no <I>lambda-capture</I></INS>. An
+implementation may define the closure type differently from ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.6 [<A href="https://wg21.link/temp.type#2">temp.type</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Two values are <I>template-argument-equivalent</I> if they are of the
+same type and
+<UL>
+<LI>...</LI>
+<LI class="ins">they are of a closure type
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]), or</LI>
+<LI>they are of class type and their corresponding direct subobjects
+and reference members are template-argument-equivalent.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
 <BR><BR><HR>
 <A NAME="2560"></A><H4>2560.
   
@@ -14253,79 +14378,6 @@ function. ...
 reasonable semantics for the function pointer conversions.</P>
 
 <BR><BR><HR>
-<A NAME="2845"></A><H4>2845.
-  
-Make the closure type of a captureless lambda a structural type
-</H4>
-<B>Section: </B>7.5.5.2&#160; [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Barry Revzin
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-12-29<BR>
-
-
-
-
-<P>
-<A HREF="cwg_defects.html#2542">Issue 2542</A> (approved in June, 2023) made
-all closure types not be structural types, i.e. unsuitable for use as
-non-type template parameters.  This causes an inconsistency with the
-treatment of the pointer-to-function conversion for closure types with
-no captures:</P>
-
-<PRE>
-  template &lt;auto V&gt;
-  void foo() {}
-
-  void bar() {
-    foo&lt;[i = 3] { return i; }&gt;();   //<SPAN CLASS="cmnt"> #1: error</SPAN>
-    foo&lt;[]{}&gt;();                    //<SPAN CLASS="cmnt"> #2: error</SPAN>
-    foo&lt;+[]{}&gt;();                   //<SPAN CLASS="cmnt"> #3: OK, a function pointer is a structural type</SPAN>
-  }
-</PRE>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 7.5.5.2 [<A href="https://wg21.link/expr.prim.lambda.closure#3">expr.prim.lambda.closure</A>] paragraph 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-The closure type is not an aggregate type (9.4.2 [<A href="https://wg21.link/dcl.init.aggr">dcl.init.aggr</A>])
-<DEL>and not</DEL> <INS>; it is</INS> a structural type
-(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>])
-<INS>if and only if the lambda has no <I>lambda-capture</I></INS>. An
-implementation may define the closure type differently from ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.6 [<A href="https://wg21.link/temp.type#2">temp.type</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-Two values are <I>template-argument-equivalent</I> if they are of the
-same type and
-<UL>
-<LI>...</LI>
-<LI class="ins">they are of a closure type
-(7.5.5.2 [<A href="https://wg21.link/expr.prim.lambda.closure">expr.prim.lambda.closure</A>]), or</LI>
-<LI>they are of class type and their corresponding direct subobjects
-and reference members are template-argument-equivalent.</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-</LI>
-</OL>
-<BR><BR><HR>
 <A NAME="2813"></A><H4>2813.
   
 Class member access with prvalues
@@ -16385,6 +16437,247 @@ result of the implicit instantiation of the class
 </BLOCKQUOTE>
 </LI>
 </OL>
+
+<BR><BR><HR>
+<A NAME="2848"></A><H4>2848.
+  
+Omitting an empty template argument list for explicit instantiation
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/489">#489</A>.)</P>
+
+<P>Subclause 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P>This paragraph is redundant with a more general provision on
+explicitly specifying template arguments in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#4">temp.arg.explicit</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+Trailing template arguments that can be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from
+default <I>template-argument</I>s may be omitted from the list of
+explicit <I>template-argument</I>s.  [<I>Note 1:</I> A trailing
+template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) not otherwise
+deduced will be deduced as an empty sequence of template
+arguments. &#8212;<I>end note</I>] If all of the template arguments
+can be deduced or obtained from default <I>template-argument</I>s,
+they may all be omitted; in this case, the empty template argument
+list &lt;&gt; itself may also be omitted. ...
+
+</BLOCKQUOTE>
+
+<P>A similar duplication is in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<OL>
+<LI>
+<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<PRE>
+  ...
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+  template void sort(Array&lt;char&gt;&amp;);  //<SPAN CLASS="cmnt"> argument is deduced here <INS>(13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</INS></SPAN>
+  ...
+</PRE>
+</LI>
+
+<LI>
+<P>Remove 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#1">temp.expl.spec</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+... [ Example:
+<PRE>
+  template&lt;class T&gt; class stream;
+  template&lt;&gt; class stream&lt;char&gt; { /* ... */ };<INS> // <SPAN CLASS="cmnt">#1</SPAN></INS>
+
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  <INS>template&lt;&gt; void sort&lt;int&gt;(Array&lt;int&gt;&amp;);   // <SPAN CLASS="cmnt">#2</SPAN></INS>
+  template&lt;&gt; void sort<DEL>&lt;char*&gt;</DEL>(Array&lt;char*&gt;&amp;);   <INS>// <SPAN CLASS="cmnt">#3 template argument is deduced (13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</SPAN></INS>
+  ...
+</PRE>
+
+Given these declarations, <DEL>stream&lt;char&gt;</DEL> <INS>#1</INS>
+will be used as the definition of streams of chars; other streams will
+be handled by class template specializations instantiated from the
+class template. Similarly, <INS>#2 will be used as the sort function
+for arguments of type <TT>Array&lt;int&gt;</TT> and
+#3</INS> <DEL>sort&lt;char*&gt;</DEL> will be used <DEL>as the sort
+function</DEL> for arguments of type <TT>Array&lt;char*&gt;</TT>; other Array
+types will be sorted by functions generated from
+the <INS>function</INS> template. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in
+the <I>template-id</I> naming an explicit function template
+specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]).  [<I>Example 6:</I>
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v);
+
+  //<SPAN CLASS="cmnt"> explicit specialization for sort(Array&lt;int&gt;&amp;)</SPAN>
+  //<SPAN CLASS="cmnt"> with deduced template-argument of type int</SPAN>
+  template&lt;&gt; void sort(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2847"></A><H4>2847.
+  
+Constrained explicit specializations of function templates at class scope
+</H4>
+<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/482">#482</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &gt; sizeof(char);
+  template&lt;typename T&gt;
+  concept D = sizeof(T) &gt; sizeof(int) ;
+
+  template&lt;typename T&gt;
+  struct A 
+  {
+    template&lt;typename U&gt;
+    constexpr int f(U) requires C&lt;U&gt; { return 0; }
+
+    template&lt;&gt;
+    constexpr int f(int) requires D&lt;T&gt; { return 1; }
+  };
+
+  static_assert(A&lt;int&gt;().f(0) == 0);   // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>There is substantial implementation variance: GCC does not allow
+explicit specializations of function templates at class scope
+(contrary to the rule change introduced by <A HREF="cwg_defects.html#727">issue 727</A>), clang rejects them if a <I>trailing-requires-clause</I>
+is present, and EDG accepts, but ignores the constraint, causing #1 to
+fail.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-02):</B></P>
+
+<P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+An explicit specialization shall not have a
+trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]) unless it
+declares a function template.  [ Example:</P>
+
+<PRE class="ins">
+  template&lt;typename T&gt;
+  concept C = sizeof(T) &lt;= sizeof(int);
+
+  template&lt;typename T&gt;
+  struct A {
+    template&lt;typename U&gt;
+    void f(U) requires C&lt;U&gt;;
+
+    template&lt;&gt;
+    void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
+
+    template&lt;&gt;
+    void f(short) requires true; //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
+  };
+
+  template&lt;&gt;
+  template&lt;typename U&gt;
+  void A&lt;int&gt;::f(U) requires C&lt;U&gt; {} //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
+</PRE>
+<P class="ins">-- end example ]
+</P>
+
+<P>The placement of explicit specialization declarations for function
+templates ...</P>
+
+</BLOCKQUOTE>
 
 <BR><BR><BR><BR><HR>
 <A NAME="Drafting%20Status"></A><H3>Issues with "Drafting" Status</H3>
@@ -18940,6 +19233,25 @@ directly (i.e., using the adjusted types) or regenerated from the
 individual parameter types? </P>
 
 <P>(See also <A HREF="cwg_active.html#1322">issue 1322</A>.)</P>
+
+<P><B>Additional notes (February, 2024)</B></P>
+
+<P>There is implementation divergence for the following example (clang
+and EDG accept, gcc and MSVC reject):</P>
+
+<PRE>
+  template&lt;typename U&gt;
+  int f(const U t);
+
+  int v;
+  auto test = f(v);
+
+  template&lt;typename U&gt;
+  int f(U t) {
+   static_assert(std::is_const&lt;decltype(t)&gt;::value, "t should be non-const");
+   return 0;
+  }
+</PRE>
 
 <BR><BR><HR>
 <A NAME="1668"></A><H4>1668.
@@ -30028,6 +30340,130 @@ and proposing specific changes.</P>
 <P>See also <A HREF="cwg_active.html#1634">issue 1634</A>.</P>
 
 <BR><BR><HR>
+<A NAME="2850"></A><H4>2850.
+  
+Unclear storage duration for function parameter objects
+</H4>
+<B>Section: </B>6.7.5&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
+
+<P>Function parameter objects have automatic storage duration and are
+not temporary objects (see also <A HREF="cwg_active.html#2849">issue 2849</A>).  However, it is unclear how long the storage for
+function parameter objects lasts.</P>
+
+<P>Furthermore, for temporary objects that are destroyed at the end of
+the full-expression, it is unclear how the destruction is ordered with
+respect to temporary objects destroyed at the end of the
+full-expression.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in and combine 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto#1">basic.stc.auto</A>] paragraph 1 and 2
+as follows:</P>
+
+<BLOCKQUOTE>
+
+Variables that belong to a block or parameter scope and are not
+explicitly declared static, thread_local, or extern have automatic
+storage duration. The storage for <DEL>these entities</DEL> <INS>such
+block variables</INS> lasts until the block in which they are created
+exits.  [<I>Note 1:</I> These <INS>block</INS> variables
+are initialized and destroyed as described in
+8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]. &#8212;<I>end note</I>] <INS>The storage for a
+function parameter lasts until immediately after its destruction
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#8">class.temporary</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The destruction of a temporary whose lifetime is not extended beyond
+the full-expression in which it was created is sequenced before the
+destruction of every temporary which is constructed earlier in the
+same full-expression.</DEL>
+<INS>Let <TT>x</TT> and <TT>y</TT> each be either a temporary object
+whose lifetime is not extended, or a function parameter. If the
+lifetimes of <TT>x</TT> and <TT>y</TT> end at the end of the same
+full-expression, and the initialization of <TT>x</TT> is sequenced
+before that of <TT>y</TT>, then the destruction of <TT>y</TT> is
+sequenced before that of <TT>x</TT>.</INS>
+If the lifetime of two or more temporaries with
+lifetimes extending beyond the full-expressions in which they were
+created ends at the same point, these temporaries are destroyed at
+that point in the reverse order of the completion of their
+construction. In addition, the destruction of such temporaries shall
+take into account the ordering of destruction of objects with static,
+thread, or automatic storage duration (6.7.5.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>],
+6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>], 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]); that is,
+if obj1 is an object with the same storage duration as the temporary
+and created before the temporary is created the temporary shall be
+destroyed before obj1 is destroyed; if obj2 is an object with the same
+storage duration as the temporary and created after the temporary is
+created the temporary shall be destroyed after obj2 is destroyed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+... It is implementation-defined whether <DEL>the lifetime of</DEL> a parameter
+<DEL>ends</DEL> <INS>is destroyed</INS> when the function in which it
+is defined returns or at the end of the enclosing
+full-expression<INS>; parameters are always destroyed in the reverse
+order of their construction.</INS> The initialization and destruction
+of each parameter occurs within the context of the full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) where the function call appears.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.8 [<A href="https://wg21.link/stmt.dcl#2">stmt.dcl</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <INS>block</INS> variable with automatic storage duration
+(6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) is active everywhere in the scope to
+which it belongs after its <I>init-declarator</I> . Upon each transfer
+of control (including sequential execution of statements) within a
+function from point P to point Q, all <INS>block</INS> variables with
+automatic storage duration that are active at P and not at Q are
+destroyed in the reverse order of their construction. Then, all
+<INS>block</INS> variables with automatic storage duration that are
+active at Q but not at P are initialized in declaration order; unless
+all such variables have vacuous initialization
+(6.7.3 [<A href="https://wg21.link/basic.life">basic.life</A>]), the transfer of control shall not be a
+jump. [ Footnote: ... ] When a <I>declaration-statement</I> is
+executed, P and Q are the points immediately before and after it; when
+a function returns, Q is after its body.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR><HR>
 <A NAME="1682"></A><H4>1682.
   
 Overly-restrictive rules on function templates as allocation functions
@@ -30381,65 +30817,6 @@ declaration and initialization
 for some invented temporary variable <TT>t</TT>
 (<INS>6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>],</INS> 9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) and
 then using the temporary variable as the result of the conversion. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="2849"></A><H4>2849.
-  
-Parameter objects are not temporary objects
-</H4>
-<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-20<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
-
-<P>Parameter objects are not temporary objects, according to
-6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1.  An exception hinting at this in
-6.7.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 should be removed.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#7">class.temporary</A>] paragraph 7 as follows:</P>
-
-<BLOCKQUOTE>
-
-The fourth context is when a temporary object <DEL>other than a
-function parameter object</DEL> is created in
-the <I>for-range-initializer</I> of a range-based for statement. If
-such a temporary object would otherwise be destroyed at the end of
-the <I>for-range-initializer</I> full-expression, the object persists
-for the lifetime of the reference initialized by
-the <I>for-range-initializer</I>.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 8.6.5 [<A href="https://wg21.link/stmt.ranged#1">stmt.ranged</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-...  [<I>Note 2:</I> The lifetime of some temporaries in
-the <I>for-range-initializer</I> is extended to cover the entire loop
-(6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]).  <INS>A function parameter object is not
-a temporary object, even if its lifetime ends at the end of the
-full-expression containing the call
-(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</INS> &#8212;<I>end note</I>] ...
 
 </BLOCKQUOTE>
 </LI>
@@ -41039,230 +41416,6 @@ In particular, &#8220;use&#8221; of a class template specialization as
 an incomplete type &#8212; to form a pointer, for instance &#8212;
 should not require the presence of an explicit instantiation definition
 elsewhere in the program.</P>
-
-<BR><BR><HR>
-<A NAME="2848"></A><H4>2848.
-  
-Omitting an empty template argument list for explicit instantiation
-</H4>
-<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Anoop Rana
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-15<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/489">#489</A>.)</P>
-
-<P>Subclause 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 specifies:</P>
-
-<BLOCKQUOTE>
-
-A trailing <I>template-argument</I> can be left unspecified in an
-explicit instantiation of a function template specialization or of a
-member function template specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
-deduced, the empty template argument list &lt;&gt; may be omitted.
-[<I>Example 3:</I>
-
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
-  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-
-<P>This paragraph is redundant with a more general provision on
-explicitly specifying template arguments in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#4">temp.arg.explicit</A>] paragraph 4:</P>
-
-<BLOCKQUOTE>
-
-Trailing template arguments that can be deduced
-(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from
-default <I>template-argument</I>s may be omitted from the list of
-explicit <I>template-argument</I>s.  [<I>Note 1:</I> A trailing
-template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) not otherwise
-deduced will be deduced as an empty sequence of template
-arguments. &#8212;<I>end note</I>] If all of the template arguments
-can be deduced or obtained from default <I>template-argument</I>s,
-they may all be omitted; in this case, the empty template argument
-list &lt;&gt; itself may also be omitted. ...
-
-</BLOCKQUOTE>
-
-<P>A similar duplication is in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
-
-<PRE>
-  ...
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-  template void sort(Array&lt;char&gt;&amp;);  //<SPAN CLASS="cmnt"> argument is deduced here <INS>(13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</INS></SPAN>
-  ...
-</PRE>
-</LI>
-
-<LI>
-<P>Remove 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8:</P>
-
-<BLOCKQUOTE class="del">
-
-A trailing <I>template-argument</I> can be left unspecified in an
-explicit instantiation of a function template specialization or of a
-member function template specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
-deduced, the empty template argument list &lt;&gt; may be omitted.
-[<I>Example 3:</I>
-
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
-  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#1">temp.expl.spec</A>] paragraph 1 as follows:</P>
-
-<PRE>
-  ...
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  template&lt;&gt; void sort<DEL>&lt;char*&gt;</DEL>(Array&lt;char*&gt;&amp;);   <INS>// <SPAN CLASS="cmnt">template argument is deduced (13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</SPAN></INS>
-  ...
-</PRE>
-</LI>
-
-<LI>
-<P>Remove 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10:</P>
-
-<BLOCKQUOTE class="del">
-
-A trailing <I>template-argument</I> can be left unspecified in
-the <I>template-id</I> naming an explicit function template
-specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]).  [<I>Example 6:</I>
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v);
-
-  //<SPAN CLASS="cmnt"> explicit specialization for sort(Array&lt;int&gt;&amp;)</SPAN>
-  //<SPAN CLASS="cmnt"> with deduced template-argument of type int</SPAN>
-  template&lt;&gt; void sort(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="2847"></A><H4>2847.
-  
-Constrained explicit specializations of function templates at class scope
-</H4>
-<B>Section: </B>13.9.4&#160; [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Krystian Stasiowski
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-12-15<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/482">#482</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  template&lt;typename T&gt;
-  concept C = sizeof(T) &gt; sizeof(char);
-  template&lt;typename T&gt;
-  concept D = sizeof(T) &gt; sizeof(int) ;
-
-  template&lt;typename T&gt;
-  struct A 
-  {
-    template&lt;typename U&gt;
-    constexpr int f(U) requires C&lt;U&gt; { return 0; }
-
-    template&lt;&gt;
-    constexpr int f(int) requires D&lt;T&gt; { return 1; }
-  };
-
-  static_assert(A&lt;int&gt;().f(0) == 0);   // <SPAN CLASS="cmnt">#1</SPAN>
-</PRE>
-
-<P>There is substantial implementation variance: GCC does not allow
-explicit specializations of function templates at class scope
-(contrary to the rule change introduced by <A HREF="cwg_defects.html#727">issue 727</A>), clang rejects them if a <I>trailing-requires-clause</I>
-is present, and EDG accepts, but ignores the constraint, causing #1 to
-fail.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
-follows:</P>
-
-<BLOCKQUOTE>
-
-<P class="ins">
-An explicit specialization shall not have a
-trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]) unless it
-declares a function template.  [ Example:</P>
-
-<PRE class="ins">
-  template&lt;typename T&gt;
-  concept C = sizeof(T) &lt;= sizeof(int);
-
-  template&lt;typename T&gt;
-  struct A {
-    template&lt;typename U&gt;
-    void f(U) requires C&lt;U&gt;;
-
-    template&lt;&gt;
-    void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
-
-    template&lt;&gt;
-    void f(short) requires true; //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
-  };
-
-  template&lt;&gt;
-  template&lt;typename U&gt;
-  void A&lt;int&gt;::f(U) requires C&lt;U&gt;; //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
-</PRE>
-<P class="ins">-- end example ]
-</P>
-
-<P>The placement of explicit specialization declarations for function
-templates ...</P>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="264"></A><H4>264.
