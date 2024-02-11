@@ -22,7 +22,7 @@
       Date:
      </TD>
 <TD>
-      &#160;2023-12-21</TD>
+      &#160;2024-02-11</TD>
 </TR>
 <TR>
 <TD ALIGN="RIGHT">
@@ -63,7 +63,7 @@
       
 
      Revision
-     113a</H2></CENTER>
+     113b</H2></CENTER>
 <BR><P>
       This document contains the C++ core language issues on which the
       Committee (INCITS PL22.16 + WG21) has not yet acted, that is, issues
@@ -160,6 +160,9 @@ USA.</P>
 <A HREF="cwg_active.html#2852">2852</A>,
 <A HREF="cwg_active.html#2853">2853</A>,
 <A HREF="cwg_active.html#2854">2854</A>,
+<A HREF="cwg_active.html#2855">2855</A>,
+<A HREF="cwg_active.html#2856">2856</A>,
+<A HREF="cwg_active.html#2857">2857</A>,
 </P>
 
 <P><B>Revision 113, 2023-12-19:</B></P>
@@ -4280,6 +4283,17 @@ Definition of "ambiguous base class" missing
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.5.4&#160;
+  <A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2857">2857</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Argument-dependent lookup with incomplete class types
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">6.5.5.1&#160;
   <A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>
 </TD>
@@ -5201,6 +5215,17 @@ Class member access with prvalues
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Postfix increment/decrement with long bit-field operands
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">7.6.1.6&#160;
+  <A href="https://wg21.link/expr.post.incr">expr.post.incr</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2855">2855</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Undefined behavior in postfix increment
 </TD>
 </TR>
 <TR>
@@ -7304,6 +7329,17 @@ Missed case for guaranteed copy elision
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">12.2.2.8&#160;
+  <A href="https://wg21.link/over.match.list">over.match.list</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2856">2856</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Initialization with empty braces
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">12.2.2.9&#160;
   <A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>
 </TD>
@@ -7352,7 +7388,7 @@ Class template argument deduction for aggregates with designated initializers
   <A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2714">2714</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Implicit deduction guides omit properties from the parameter-declaration-clause of a constructor
@@ -9132,7 +9168,98 @@ Updating Annex C to C99
 </TABLE>
 <BR><BR><HR>
 <A NAME="Ready%20Status"></A><H3>Issues with "Ready" Status</H3>
-<BR><BR><HR>
+<HR>
+<A NAME="2714"></A><H4>2714.
+  
+Implicit deduction guides omit properties from the parameter-declaration-clause of a constructor
+</H4>
+<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2017-02-13<BR>
+
+
+
+
+<P>Subclause 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.1.2">over.match.class.deduct</A>] bullet 1.1.2 specifies:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>The types of the function parameters are those of the constructor.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, this does not consider default arguments or variadic
+constructors.</P>
+
+<P><B>Proposed resolution (approved by CWG 2023-04-28):</B></P>
+
+<P>(This also resolves <A HREF="cwg_defects.html#2628">issue 2628</A>.)</P>
+
+<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1">over.match.class.deduct</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>If C is defined, for each constructor of C, a function template with
+the following properties:
+<UL>
+<LI>The template parameters are the
+template parameters of C followed by the template parameters
+(including default template arguments) of the constructor, if any.
+</LI>
+<LI>
+<INS>The associated constraints (13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are
+the conjunction of the associated constraints of <TT>C</TT> and the associated
+constraints of the constructor, if any. [ Note: A
+<I>constraint-expression</I> in the <I>template-head</I> of <TT>C</TT>
+is checked for satisfaction before any constraints from the
+<I>template-head</I> or <I>trailing-requires-clause</I> of the
+constructor. -- end note ]</INS>
+</LI>
+<LI>The <DEL>types of the function parameters are those</DEL>
+<INS><I>parameter-declaration-clause</I> is that</INS> of the
+constructor.
+</LI>
+<LI>The return type is the class template
+specialization designated by C and template arguments corresponding to
+the template parameters of C.
+</LI>
+</UL>
+</LI>
+<LI>If C is not defined or does not
+declare any constructors, an additional function template derived as
+above from a hypothetical constructor C().</LI>
+<LI>An additional
+function template derived as above from a hypothetical constructor
+C(C), called the copy deduction candidate.</LI>
+<LI>For each <I>deduction-guide</I>, a function or function template
+with the following properties:
+<UL>
+<LI>The <DEL>template
+parameters</DEL> <INS><I>template-head</I></INS>, if any, and
+<DEL>function parameters</DEL>
+<INS><I>parameter-declaration-clause</I></INS> are those of
+the <I>deduction-guide</I>.
+</LI>
+<LI>The return type is the <I>simple-template-id</I> of
+the <I>deduction-guide</I>.
+</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR><BR><BR><HR>
 <A NAME="Tentatively%20Ready%20Status"></A><H3>Issues with "Tentatively Ready" Status</H3>
 <HR>
 <A NAME="2700"></A><H4>2700.
@@ -22227,7 +22354,7 @@ Diagnosing ODR violations for static data members
 
 
 <P>Describing the handling of static data members with
-<I>brace-or-equal-initializer</I>s, 11.4.9.3 [<A href="https://wg21.link/class.static.data#3">class.static.data</A>] paragraph 3
+<I>brace-or-equal-initializer</I>s, 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4
 says,</P>
 
 <BLOCKQUOTE>
@@ -29690,6 +29817,61 @@ anywhere.  6.5.2 [<A href="https://wg21.link/class.member.lookup#7">class.member
 to do it.</P>
 
 <BR><BR><HR>
+<A NAME="2857"></A><H4>2857.
+  
+Argument-dependent lookup with incomplete class types
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lewis Baker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-08<BR>
+
+
+
+
+<P>Subclause 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 specifies:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If T is a class type (including unions), its associated entities are:
+the class itself; the class of which it is a member, if any; and its
+direct and indirect base classes. ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>It is unclear what happens if <TT>T</TT> is incomplete, for example
+because it was instantiated from a template whose definition was not
+(yet) available.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If T is a class type (including unions), its associated entities
+are: the class itself; the class of which it is a member, if any;
+and<INS>, if it is a complete type,</INS> its direct and indirect base
+classes. ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+
+<BR><BR><HR>
 <A NAME="1089"></A><H4>1089.
   
 Template parameters in member selections
@@ -32557,6 +32739,115 @@ operands of <TT>&lt;</TT> have the same rank, so <TT>s.sll</TT> is
 converted to <TT>unsigned int</TT> to match the type of <TT>0u</TT>
 and the result is <TT>false</TT>.  This disparity seems
 undesirable.</P>
+
+<BR><BR><HR>
+<A NAME="2855"></A><H4>2855.
+  
+Undefined behavior in postfix increment
+</H4>
+<B>Section: </B>7.6.1.6&#160; [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>L&#233;n&#225;rd Szolnoki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-12<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/479">#479</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  int8_t x = 127;
+  x++;
+</PRE>
+
+<P>This has undefined behavior, because the resulting value is not
+representable as an <TT>int8_t</TT>.  In contrast,</P>
+
+<PRE>
+  int8_t x = 127;
+  ++x;
+</PRE>
+
+<P>is well-defined, because it is equivalent to <TT>x += 1</TT>, which
+is equivalent to <TT>x = (int)x + 1</TT> after the usual arithmetic
+conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]).  No arithmetic overflow
+occurs.  The presence or absence of undefined behavior is detectable
+in constant evaluation.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value of its operand.
+[<I>Note 1:</I> The value obtained is a copy of the original
+value. &#8212;<I>end note</I>] <DEL>The operand shall be a modifiable
+lvalue. The type of the operand shall be an arithmetic type other than
+cv bool, or a pointer to a complete object type. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].</DEL>
+The value of the operand object is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])
+<DEL>by adding 1 to it</DEL> <INS>as if it were the operand of the
+prefix <TT>++</TT> operator (7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>]).</INS> The
+value computation of the ++ expression is sequenced before the
+modification of the operand object. With respect to an
+indeterminately-sequenced function call, the operation of postfix ++
+is a single evaluation.  [<I>Note 2:</I> Therefore, a function call
+cannot intervene between the lvalue-to-rvalue conversion and the side
+effect associated with any single postfix ++ operator. &#8212;<I>end
+note</I>] The result is a prvalue. The type of the result is the
+cv-unqualified version of the type of the operand. <DEL>If the operand
+is a bit-field that cannot represent the incremented value, the
+resulting value of the bit-field is implementation-defined. See also
+7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] and 7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>].</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The operand of prefix <TT>++</TT> <INS>or <TT>--</TT></INS> <DEL>is
+modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by adding 1. The operand shall be
+a modifiable lvalue. The type of the operand</DEL>
+shall <INS>not</INS> be <DEL>an arithmetic type other
+than</DEL> <INS>of type</INS> <I>cv</I> <TT>bool</TT><DEL>, or a
+pointer to a completely-defined object type</DEL>. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
+<DEL>The result is the updated operand; it is an lvalue, and it is a
+bit-field if the operand is a bit-field.</DEL> The
+expression <TT>++x</TT> is <INS>otherwise</INS> equivalent to
+x+=1 <INS>and the expression <TT>--x</TT> is otherwise equivalent
+to <TT>x-=1</TT></INS> <DEL>. [<I>Note 1:</I> See the discussions of
+addition (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and assignment operators</DEL>
+(7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]) <DEL>for information on conversions</DEL>.
+<DEL>&#8212;<I>end note</I>]</DEL>
+</P>
+
+<P>
+<DEL>The operand of prefix -- is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by subtracting 1. The requirements on the
+operand of prefix -- and the properties of its result are otherwise
+the same as those of prefix ++.</DEL> [<I>Note 2:</I> For postfix
+increment and decrement, see
+7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]. &#8212;<I>end note</I>]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
 
 <BR><BR><HR>
 <A NAME="282"></A><H4>282.
@@ -36800,6 +37091,39 @@ end note ]</INS>
 
 </BLOCKQUOTE>
 
+<P><B>CWG 2024-02-02</B></P>
+
+<P>There are various properties that come to be for an object during
+its initialization.  For example, the vtable is fully set up and the
+destructor will be invoked once the non-delegating constructor
+completes (<A HREF="cwg_active.html#2756">issue 2756</A>).  The main property
+of a const object is its immutability from an optimizer perspective.
+With NRVO (11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]), it is possible to have
+multiple defining declarations for the same object, for example:</P>
+<PRE>
+  struct A {
+    int x;
+  };
+  int foo(const A* p)
+  {
+    A a{10};            // #1
+    a.x = 1 + p-&gt;x;     // <SPAN CLASS="cmnt">what's the value of</SPAN> a.x<SPAN CLASS="cmnt">?</SPAN>
+    return a;
+  }
+  const A g = foo(&amp;g);  // #2
+</PRE>
+
+<P>Given NRVO, both #1 and #2 are declarations of the same object.
+Those declarations may differ in their cv-qualification for the
+object.  CWG tentatively agreed on the direction that the innermost
+declaration defines the object's properties, in particular whether it
+has been initialized and whether it is const.</P>
+
+<P>While NRVO is disallowed in constant evaluation, it was noted that
+user code can determine whether NRVO occurs at runtime by comparing a
+pointer to the local object with a pointer to the object in the
+surrounding context.</P>
+
 <BR><BR><HR>
 <A NAME="2743"></A><H4>2743.
   
@@ -38758,6 +39082,111 @@ direct-list-initialization).
 <A HREF="cwg_active.html#2327">2327</A>.</P>
 
 <BR><BR><HR>
+<A NAME="2856"></A><H4>2856.
+  
+Initialization with empty braces
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-09<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/486">#486</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+     explicit A(int = 10);
+     A() = default;   // <SPAN CLASS="cmnt">converting constructor (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1)</SPAN>
+  };
+
+  A a = {};       // <SPAN CLASS="cmnt">#1, copy-initialization</SPAN>
+  
+  int f(A);
+  int x = f({});  // <SPAN CLASS="cmnt">#2</SPAN>
+
+  A b;            // <SPAN CLASS="cmnt">#3</SPAN>
+</PRE>
+
+<P>#1 and #2 are accepted by MSVC and EDG, but considered ambiguous by
+gcc and clang.  #3 is accepted by MSVC only.</P>
+
+<P>#1 is copy-list-initialization (9.4.5 [<A href="https://wg21.link/dcl.init.list#1">dcl.init.list</A>] paragraph 1), and <TT>A</TT> has a default constructor, thus <TT>a</TT>
+is value-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list#3.4">dcl.init.list</A>] bullet 3.4).  The
+default constructors are user-provided, thus <TT>a</TT> is
+default-initialized (9.4.1 [<A href="https://wg21.link/dcl.init.general#8.1">dcl.init.general</A>] bullet 8.1,
+9.4.1 [<A href="https://wg21.link/dcl.init.general#7.1">dcl.init.general</A>] bullet 7.1).  Overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For copy-initialization (including default initialization in the
+context of copy-initialization), the candidate functions are all the
+converting constructors (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, the explicit constructor is not a candidate; #1 chooses the
+converting constructor.</P>
+
+<P>In contrast, #2 uses the special rules for forming a
+list-initialization sequence (12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7), which perform overload resolution according to
+12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1, which considers all
+constructors for overload resolution (and makes the program ill-formed
+if an explicit constructor is chosen).  For the example, overload
+resolution is ambiguous.</P>
+
+<P>#3 performs default-initialization, and overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For direct-initialization or default-initialization that is not in the
+context of copy-initialization, the candidate functions are all the
+constructors of the class of the object being initialized. ...
+
+</BLOCKQUOTE>
+
+<P>In this case, the overload resolution is ambiguous.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), copy-initialized from an expression of the
+same or a derived class type (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or
+default-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload resolution
+selects the constructor. For direct-initialization or
+default-initialization <DEL>that is not in the context of
+copy-initialization</DEL> <INS>(including default-initialization in
+the context of copy-list-initialization)</INS>, the candidate
+functions are all the constructors of the class of the object being
+initialized. <DEL>For copy-initialization (including default
+initialization in the context of
+copy-initialization)</DEL> <INS>Otherwise</INS>, the candidate
+functions are all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument list is
+the <I>expression-list</I> or <I>assignment-expression</I> of the
+initializer. <INS>For default-initialization in the context of
+copy-list-initialization, if an explicit constructor is chosen, the
+initialization is ill-formed.</INS>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2425"></A><H4>2425.
   
 Confusing wording for deduction from a type
@@ -38903,97 +39332,6 @@ considered to be so as well.</INS></LI>
 </LI>
 
 </OL>
-
-<BR><BR><HR>
-<A NAME="2714"></A><H4>2714.
-  
-Implicit deduction guides omit properties from the parameter-declaration-clause of a constructor
-</H4>
-<B>Section: </B>12.2.2.9&#160; [<A href="https://wg21.link/over.match.class.deduct">over.match.class.deduct</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2017-02-13<BR>
-
-
-
-
-<P>Subclause 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1.1.2">over.match.class.deduct</A>] bullet 1.1.2 specifies:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>The types of the function parameters are those of the constructor.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>However, this does not consider default arguments or variadic
-constructors.</P>
-
-<P><B>Proposed resolution (approved by CWG 2023-04-28):</B></P>
-
-<P>(This also resolves <A HREF="cwg_defects.html#2628">issue 2628</A>.)</P>
-
-<P>Change in 12.2.2.9 [<A href="https://wg21.link/over.match.class.deduct#1">over.match.class.deduct</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>If C is defined, for each constructor of C, a function template with
-the following properties:
-<UL>
-<LI>The template parameters are the
-template parameters of C followed by the template parameters
-(including default template arguments) of the constructor, if any.
-</LI>
-<LI>
-<INS>The associated constraints (13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are
-the conjunction of the associated constraints of <TT>C</TT> and the associated
-constraints of the constructor, if any. [ Note: A
-<I>constraint-expression</I> in the <I>template-head</I> of <TT>C</TT>
-is checked for satisfaction before any constraints from the
-<I>template-head</I> or <I>trailing-requires-clause</I> of the
-constructor. -- end note ]</INS>
-</LI>
-<LI>The <DEL>types of the function parameters are those</DEL>
-<INS><I>parameter-declaration-clause</I> is that</INS> of the
-constructor.
-</LI>
-<LI>The return type is the class template
-specialization designated by C and template arguments corresponding to
-the template parameters of C.
-</LI>
-</UL>
-</LI>
-<LI>If C is not defined or does not
-declare any constructors, an additional function template derived as
-above from a hypothetical constructor C().</LI>
-<LI>An additional
-function template derived as above from a hypothetical constructor
-C(C), called the copy deduction candidate.</LI>
-<LI>For each <I>deduction-guide</I>, a function or function template
-with the following properties:
-<UL>
-<LI>The <DEL>template
-parameters</DEL> <INS><I>template-head</I></INS>, if any, and
-<DEL>function parameters</DEL>
-<INS><I>parameter-declaration-clause</I></INS> are those of
-the <I>deduction-guide</I>.
-</LI>
-<LI>The return type is the <I>simple-template-id</I> of
-the <I>deduction-guide</I>.
-</LI>
-</UL>
-</LI>
-</UL>
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2735"></A><H4>2735.
@@ -42236,9 +42574,32 @@ objects.</P>
 
 <P><U>Possible resolution:</U></P>
 
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+Temporary objects are created
+<UL>
+<LI>when a prvalue is converted to an xvalue (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>])<DEL>,</DEL> <INS>and</INS>
+</LI>
+<LI>when needed by the implementation to pass or return an object of
+trivially copyable type (see below)<DEL>, and</DEL><INS>.</INS>
+</LI>
+<LI class="del">when throwing an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]).  [<I>Note 1:</I> The lifetime of
+exception objects is described in
+14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]. &#8212;<I>end note</I>]</LI>
+</UL>
+...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Change in 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 as follows:</P>
-
-
 
 <BLOCKQUOTE>
 
@@ -42251,6 +42612,8 @@ other than cv void (6.8.4 [<A href="https://wg21.link/basic.compound">basic.comp
 ill-formed.
 
 </BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="2417"></A><H4>2417.
