@@ -4553,7 +4553,7 @@ Storage duration of implicitly created objects
   <A href="https://wg21.link/basic.stc">basic.stc</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2850">2850</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear storage duration for function parameter objects
@@ -5213,7 +5213,7 @@ Accessing static data members via null pointer
   <A href="https://wg21.link/expr.ref">expr.ref</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2813">2813</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Class member access with prvalues
@@ -5235,7 +5235,7 @@ Postfix increment/decrement with long bit-field operands
   <A href="https://wg21.link/expr.post.incr">expr.post.incr</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2855">2855</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Undefined behavior in postfix increment
@@ -5520,7 +5520,7 @@ Pointer arithmetic in array-like containers
   <A href="https://wg21.link/expr.add">expr.add</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2853">2853</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Pointer arithmetic with pointer to hypothetical element
@@ -5784,7 +5784,7 @@ Cast from null pointer value in a constant expression
   <A href="https://wg21.link/expr.const">expr.const</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2851">2851</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Allow floating-point conversions in converted constant expressions
@@ -6114,7 +6114,7 @@ Constrained <TT>auto</TT> and redeclaration with non-abbreviated syntax
   <A href="https://wg21.link/dcl.fct">dcl.fct</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2846">2846</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Out-of-class definitions of explicit object member functions
@@ -6664,7 +6664,7 @@ Member type depending on definition of member function
   <A href="https://wg21.link/class.mem.general">class.mem.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2661">2661</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Missing disambiguation rule for <I>pure-specifier</I> vs. <I>brace-or-equal-initializer</I>
@@ -7357,7 +7357,7 @@ Missed case for guaranteed copy elision
   <A href="https://wg21.link/over.match.list">over.match.list</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2856">2856</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Initialization with empty braces
@@ -8556,7 +8556,7 @@ Explicit instantiation and trailing <I>requires-clause</I>s
   <A href="https://wg21.link/temp.explicit">temp.explicit</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2848">2848</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Omitting an empty template argument list for explicit instantiation
@@ -8853,7 +8853,7 @@ Unclear argument type for copy of exception object
   <A href="https://wg21.link/except.throw">except.throw</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2854">2854</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Storage duration of exception objects
@@ -9749,6 +9749,131 @@ implicitly created objects (6.7.2 [<A href="https://wg21.link/intro.object">intr
 </OL>
 
 <BR><BR><HR>
+<A NAME="2850"></A><H4>2850.
+  
+Unclear storage duration for function parameter objects
+</H4>
+<B>Section: </B>6.7.5&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
+
+<P>Function parameter objects have automatic storage duration and are
+not temporary objects (see also <A HREF="cwg_active.html#2849">issue 2849</A>).  However, it is unclear how long the storage for
+function parameter objects lasts.</P>
+
+<P>Furthermore, for temporary objects that are destroyed at the end of
+the full-expression, it is unclear how the destruction is ordered with
+respect to temporary objects destroyed at the end of the
+full-expression.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in and combine 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto#1">basic.stc.auto</A>] paragraph 1 and 2
+as follows:</P>
+
+<BLOCKQUOTE>
+
+Variables that belong to a block or parameter scope and are not
+explicitly declared static, thread_local, or extern have automatic
+storage duration. The storage for <DEL>these entities</DEL> <INS>such
+block variables</INS> lasts until the block in which they are created
+exits.  [<I>Note 1:</I> These <INS>block</INS> variables
+are initialized and destroyed as described in
+8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]. &#8212;<I>end note</I>] <INS>The storage for a
+function parameter lasts until immediately after its destruction
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#8">class.temporary</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The destruction of a temporary whose lifetime is not extended beyond
+the full-expression in which it was created is sequenced before the
+destruction of every temporary which is constructed earlier in the
+same full-expression.</DEL>
+<INS>Let <TT>x</TT> and <TT>y</TT> each be either a temporary object
+whose lifetime is not extended, or a function parameter. If the
+lifetimes of <TT>x</TT> and <TT>y</TT> end at the end of the same
+full-expression, and <TT>x</TT> is initialized
+before <TT>y</TT>, then the destruction of <TT>y</TT> is
+sequenced before that of <TT>x</TT>.</INS>
+If the lifetime of two or more temporaries with
+lifetimes extending beyond the full-expressions in which they were
+created ends at the same point, these temporaries are destroyed at
+that point in the reverse order of the completion of their
+construction. In addition, the destruction of such temporaries shall
+take into account the ordering of destruction of objects with static,
+thread, or automatic storage duration (6.7.5.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>],
+6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>], 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]); that is,
+if obj1 is an object with the same storage duration as the temporary
+and created before the temporary is created the temporary shall be
+destroyed before obj1 is destroyed; if obj2 is an object with the same
+storage duration as the temporary and created after the temporary is
+created the temporary shall be destroyed after obj2 is destroyed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+... It is implementation-defined whether <DEL>the lifetime of</DEL> a parameter
+<DEL>ends</DEL> <INS>is destroyed</INS> when the function in which it
+is defined <DEL>returns</DEL> <INS>exits (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>],
+14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>])</INS> or at the end of the enclosing
+full-expression<INS>; parameters are always destroyed in the reverse
+order of their construction.</INS> The initialization and destruction
+of each parameter occurs within the context of the full-expression
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) where the function call appears.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.8 [<A href="https://wg21.link/stmt.dcl#2">stmt.dcl</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <INS>block</INS> variable with automatic storage duration
+(6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) is active everywhere in the scope to
+which it belongs after its <I>init-declarator</I> . Upon each transfer
+of control (including sequential execution of statements) within a
+function from point P to point Q, all <INS>block</INS> variables with
+automatic storage duration that are active at P and not at Q are
+destroyed in the reverse order of their construction. Then, all
+<INS>block</INS> variables with automatic storage duration that are
+active at Q but not at P are initialized in declaration order; unless
+all such variables have vacuous initialization
+(6.7.3 [<A href="https://wg21.link/basic.life">basic.life</A>]), the transfer of control shall not be a
+jump. [ Footnote: ... ] When a <I>declaration-statement</I> is
+executed, P and Q are the points immediately before and after it; when
+a function returns, Q is after its body.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR><HR>
 <A NAME="2822"></A><H4>2822.
   
 Side-effect-free pointer zap
@@ -10342,6 +10467,256 @@ determines the result of the entire postfix expression.
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2813"></A><H4>2813.
+  
+Class member access with prvalues
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-28<BR>
+
+
+<P>Subclause 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot) the first expression shall be a glvalue. ...
+
+</BLOCKQUOTE>
+
+<P>This provision forces a temporary materialization conversion
+(i.e. a copy) per 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+Whenever a prvalue appears as an operand of an operator that expects a
+glvalue for that operand, the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied to convert the expression to
+an xvalue.
+
+</BLOCKQUOTE>
+
+<P>However, this is limiting in the case that an explicit object
+member function with a by-value object parameter is invoked for a
+non-copyable class object, for example:</P>
+
+<PRE>
+  struct X {
+    X() = default;
+
+    X(const X&amp;) = delete;
+    X&amp; operator=(const X&amp;) = delete;
+
+    void f(this X self) { }
+  };
+
+  void f() {
+    X{}.f();   // OK?
+  }
+</PRE>
+
+<P>The example ought to be well-formed.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> Temporary objects are materialized:
+<UL>
+<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
+<LI>when performing <INS>certain</INS>
+member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
+<LI class="ins">when invoking an implicit object member function on a
+class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>...</LI>
+</UL>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>]
+<INS>If the function is a static member function invoked using class
+member access syntax, the object expression is a discarded-value
+expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
+implicit object member function, <INS>the object expression of the
+class member access shall be a glvalue</INS> and the <TT>this</TT>
+parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
+with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
+5:</I> There is no access or ambiguity checking on this conversion;
+the access checking and disambiguation are done as part of the
+(possibly implicit) class member access operator. See
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot)<INS>, if the <I>id-expression</I> is a data
+member,</INS> the first expression shall be a glvalue. For the second
+option (arrow)<INS>,</INS> the first expression shall be a prvalue
+having pointer type. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2855"></A><H4>2855.
+  
+Undefined behavior in postfix increment
+</H4>
+<B>Section: </B>7.6.1.6&#160; [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>L&#233;n&#225;rd Szolnoki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-12-12<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/479">#479</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  int8_t x = 127;
+  x++;
+</PRE>
+
+<P>This has undefined behavior, because the resulting value is not
+representable as an <TT>int8_t</TT>.  In contrast,</P>
+
+<PRE>
+  int8_t x = 127;
+  ++x;
+</PRE>
+
+<P>is well-defined, because it is equivalent to <TT>x += 1</TT>, which
+is equivalent to <TT>x = (int)x + 1</TT> after the usual arithmetic
+conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]).  No arithmetic overflow
+occurs.  The presence or absence of undefined behavior is detectable
+in constant evaluation.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value of its operand.
+[<I>Note 1:</I> The value obtained is a copy of the original
+value. &#8212;<I>end note</I>]  The operand shall be a modifiable
+lvalue. The type of the operand shall be an arithmetic type other than
+cv bool, or a pointer to a complete object type. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
+The value of the operand object is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])
+<DEL>by adding 1 to it</DEL> <INS>as if it were the operand of the
+prefix <TT>++</TT> operator (7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>]).</INS> The
+value computation of the ++ expression is sequenced before the
+modification of the operand object. With respect to an
+indeterminately-sequenced function call, the operation of postfix ++
+is a single evaluation.  [<I>Note 2:</I> Therefore, a function call
+cannot intervene between the lvalue-to-rvalue conversion and the side
+effect associated with any single postfix ++ operator. &#8212;<I>end
+note</I>] The result is a prvalue. The type of the result is the
+cv-unqualified version of the type of the operand. <DEL>If the operand
+is a bit-field that cannot represent the incremented value, the
+resulting value of the bit-field is implementation-defined. See also
+7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] and 7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>].</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The operand of prefix <TT>++</TT> <INS>or <TT>--</TT></INS> <DEL>is
+modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by adding 1. The operand shall be
+a modifiable lvalue. The type of the operand</DEL>
+shall <INS>not</INS> be <DEL>an arithmetic type other
+than</DEL> <INS>of type</INS> <I>cv</I> <TT>bool</TT><DEL>, or a
+pointer to a completely-defined object type</DEL>. An operand with
+volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
+<DEL>The result is the updated operand; it is an lvalue, and it is a
+bit-field if the operand is a bit-field.</DEL> The
+expression <TT>++x</TT> is <INS>otherwise</INS> equivalent to
+x+=1 <INS>and the expression <TT>--x</TT> is otherwise equivalent
+to <TT>x-=1</TT></INS> <DEL>. [<I>Note 1:</I> See the discussions of
+addition (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and assignment operators</DEL>
+(7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]) <DEL>for information on conversions</DEL>.
+<DEL>&#8212;<I>end note</I>]</DEL>
+</P>
+
+<P>
+<DEL>The operand of prefix -- is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by subtracting 1. The requirements on the
+operand of prefix -- and the properties of its result are otherwise
+the same as those of prefix ++.</DEL> [<I>Note 2:</I> For postfix
+increment and decrement, see
+7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]. &#8212;<I>end note</I>]
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<BR><BR><HR>
 <A NAME="1954"></A><H4>1954.
   
 <TT>typeid</TT> null dereference check in subexpressions
@@ -10537,6 +10912,113 @@ such</INS>, the conversion is ill-formed.
   int *p = (int*)S();  //<SPAN CLASS="cmnt"> error: two possible interpretations using </SPAN>static_cast<SPAN CLASS="cmnt"> followed by </SPAN>const_cast</INS>
 </PRE>
 -- end example ]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2853"></A><H4>2853.
+  
+Pointer arithmetic with pointer to hypothetical element
+</H4>
+<B>Section: </B>7.6.6&#160; [<A href="https://wg21.link/expr.add">expr.add</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/495">#495</A>.)</P>
+
+<P>The phrasing in 7.6.6 [<A href="https://wg21.link/expr.add#4.2">expr.add</A>] bullet 4.2 excludes
+pointer arithmetic on a pointer pointing to the hypothetical
+(past-the-end) array element.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#4.2">expr.add</A>] bullet 4.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+Otherwise, if P points to <DEL>an</DEL> <INS>a
+(possibly-hypothetical)</INS> array element i of an array object x
+with n elements (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]), [ Footnote: ... ] the
+expressions P + J and J + P (where J has the value j) point to the
+(possibly-hypothetical) array element i + j of x if 0 &lt;= i + j
+&lt;= n and the expression P - J points to the (possibly-hypothetical)
+array element i - j of x if 0 &lt;= i - j &lt;= n.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2851"></A><H4>2851.
+  
+Allow floating-point conversions in converted constant expressions
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-11-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/456">#456</A>.)</P>
+
+<P>With the adoption of P1907R1, non-type template parameters of
+floating-point types have been introduced.  It is surprising that
+a <TT>double</TT> value cannot be passed as a template argument for a
+template parameter of type <TT>long double</TT>, because
+floating-point conversions are not allowed in converted constant
+expressions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#12">expr.const</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>converted constant expression</I> of type T is an expression,
+implicitly converted to type T, where the converted expression is a
+constant expression and the implicit conversion sequence contains only
+<UL>
+<LI>user-defined conversions,</LI>
+<LI>lvalue-to-rvalue conversions (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),</LI>
+<LI>array-to-pointer conversions (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),</LI>
+<LI>function-to-pointer conversions (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]),</LI>
+<LI>qualification conversions (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]),</LI>
+<LI>integral promotions (7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]),</LI>
+<LI>integral
+conversions (7.3.9 [<A href="https://wg21.link/conv.integral">conv.integral</A>]) other than narrowing
+conversions (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
+<LI class="ins">floating-point promotions (7.3.8 [<A href="https://wg21.link/conv.fpprom">conv.fpprom</A>]),</LI>
+<LI class="ins">floating-point conversions
+(7.3.10 [<A href="https://wg21.link/conv.double">conv.double</A>]) where the source value can be
+represented exactly in the destination type,</LI>
+<LI>null pointer
+conversions (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) from std::nullptr_t,</LI>
+<LI>
+null member pointer conversions (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) from
+std::nullptr_t, and</LI>
+<LI>function pointer conversions
+(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]),</LI>
+</UL>
+and where the reference binding (if any) binds directly.
 
 </BLOCKQUOTE>
 
@@ -11828,6 +12310,90 @@ int &amp;ir4 = f(ir4); //<SPAN CLASS="cmnt"> undefined behavior: </SPAN>ir4<SPAN
 </OL>
 
 <BR><BR><HR>
+<A NAME="2846"></A><H4>2846.
+  
+Out-of-class definitions of explicit object member functions
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Krystian Stasiowski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-28<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/493">#493</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    void f(this A&amp;);
+  };
+  void A::f(this A&amp;) { }    // <SPAN CLASS="cmnt">#1</SPAN>
+</PRE>
+
+<P>This is accepted by all major implementations.  However,
+9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+An <I>explicit-object-parameter-declaration</I> is
+a <I>parameter-declaration</I> with a this specifier. An
+explicit-object-parameter-declaration shall appear only as the
+first <I>parameter-declaration</I> of
+a <I>parameter-declaration-list</I> of either:
+<UL>
+<LI>a <I>member-declarator</I> that declares a member function
+(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
+<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
+</UL>
+A <I>member-declarator</I> with an
+explicit-object-parameter-declaration shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared static or virtual.
+
+</BLOCKQUOTE>
+
+<P>The <I>function-definition</I> at #1 is neither of the two allowed
+options.</P>
+
+<P>Similar concerns arise for explicit instantiations and explicit
+specializations.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>explicit-object-parameter-declaration</I> is
+a <I>parameter-declaration</I> with a this specifier. An
+explicit-object-parameter-declaration shall appear only as the
+first <I>parameter-declaration</I> of a
+<I>parameter-declaration-list</I> of <DEL>either</DEL> <INS>one of</INS>:
+<UL>
+<LI>a <DEL><I>member-declarator</I> that declares</DEL>
+<INS>declaration of</INS> a member function <INS>or member function
+template</INS> (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
+<LI class="ins">an explicit instantiation
+(13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicit specialization
+(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]) of a templated member function, or</LI>
+<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
+</UL>
+A <I>member-declarator</I> with an
+explicit-object-parameter-declaration shall not include
+a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
+declared static or virtual.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2820"></A><H4>2820.
   
 Value-initialization and default constructors
@@ -12458,6 +13024,62 @@ the <I>injected-class-name</I>. ...
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2661"></A><H4>2661.
+  
+Missing disambiguation rule for <I>pure-specifier</I> vs. <I>brace-or-equal-initializer</I>
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-10-07<BR>
+
+
+<P>Subclause 11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>] has this grammar:</P>
+
+<PRE>
+    <I>member-declarator:
+        declarator virt-specifier-seq[opt] pure-specifier[opt]
+        declarator brace-or-equal-initializer[opt]
+
+    pure-specifier:</I>
+        = 0
+</PRE>
+
+<P>The primary issue is that <TT>foo = 0</TT> matches
+both <I>member-declarator</I> productions. Secondarily,
+a <I>declarator</I> by itself is also ambiguous.</P>
+
+<P>Code such as <TT>virtual FunctionType f = 0;</TT> can be valid, so
+disambiguation on the syntactic form of the <I>declarator</I> is not
+possible.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change and add before 11.4.1 [<A href="https://wg21.link/class.mem.general#1">class.mem.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+    <I>member-declarator:
+        declarator virt-specifier-seq<SUB>opt</SUB> pure-specifier<SUB>opt</SUB>
+        declarator brace-or-equal-initializer<DEL><SUB>opt</SUB></DEL></I>
+</PRE>
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+In the absence of a <I>virt-specifier-seq</I>, the token sequence <TT>= 0</TT> is treated as a <I>pure-specifier</I> if the type of
+the <I>declarator-id</I> (9.3.4.1 [<A href="https://wg21.link/dcl.meaning.general">dcl.meaning.general</A>]) is a function type, and is
+otherwise treated as a <I>brace-or-equal-initializer</I>. [ <I>Note:</I> If the
+member declaration acquires a function type through template
+instantiation, the program is ill-formed; see 13.9.1 [<A href="https://wg21.link/temp.spec.general">temp.spec.general</A>]. <I>--end note</I> ]
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2588"></A><H4>2588.
   
 friend declarations and module linkage
@@ -12875,6 +13497,119 @@ overload resolution for the <TT>@</TT> operator.</DEL>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2856"></A><H4>2856.
+  
+Initialization with empty braces
+</H4>
+<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-09<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/486">#486</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+     explicit A(int = 10);
+     A() = default;   // <SPAN CLASS="cmnt">converting constructor (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1)</SPAN>
+  };
+
+  A a = {};       // <SPAN CLASS="cmnt">#1, copy-initialization</SPAN>
+  
+  int f(A);
+  int x = f({});  // <SPAN CLASS="cmnt">#2</SPAN>
+
+  A b;            // <SPAN CLASS="cmnt">#3</SPAN>
+</PRE>
+
+<P>#1 and #2 are accepted by MSVC and EDG, but considered ambiguous by
+gcc and clang.  #3 is rejected as ambiguous by all major
+implementations.</P>
+
+<P>#1 is copy-list-initialization (9.4.5 [<A href="https://wg21.link/dcl.init.list#1">dcl.init.list</A>] paragraph 1), and <TT>A</TT> has a default constructor, thus <TT>a</TT>
+is value-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list#3.4">dcl.init.list</A>] bullet 3.4).  The
+default constructors are user-provided, thus <TT>a</TT> is
+default-initialized (9.4.1 [<A href="https://wg21.link/dcl.init.general#8.1">dcl.init.general</A>] bullet 8.1,
+9.4.1 [<A href="https://wg21.link/dcl.init.general#7.1">dcl.init.general</A>] bullet 7.1).  Overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For copy-initialization (including default initialization in the
+context of copy-initialization), the candidate functions are all the
+converting constructors (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, the explicit constructor is not a candidate; #1 chooses the
+converting constructor.</P>
+
+<P>In contrast, #2 uses the special rules for forming a
+list-initialization sequence (12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7), which perform overload resolution according to
+12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1, which considers all
+constructors for overload resolution (and makes the program ill-formed
+if an explicit constructor is chosen).  For the example, overload
+resolution is ambiguous.</P>
+
+<P>#3 performs default-initialization, and overload resolution then
+chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+... For direct-initialization or default-initialization that is not in the
+context of copy-initialization, the candidate functions are all the
+constructors of the class of the object being initialized. ...
+
+</BLOCKQUOTE>
+
+<P>In this case, the overload resolution is ambiguous.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<P>Change in 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When objects of class type are direct-initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), copy-initialized from an expression of the
+same or a derived class type (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or
+default-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload resolution
+selects the constructor. For direct-initialization or
+default-initialization <DEL>that is not in the context of
+copy-initialization</DEL> <INS>(including default-initialization in
+the context of copy-list-initialization)</INS>, the candidate
+functions are all the constructors of the class of the object being
+initialized. <DEL>For copy-initialization (including default
+initialization in the context of
+copy-initialization)</DEL> <INS>Otherwise</INS>, the candidate
+functions are all the converting constructors
+(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument list is
+the <I>expression-list</I> or <I>assignment-expression</I> of the
+initializer. <INS>For default-initialization in the context of
+copy-list-initialization, if an explicit constructor is chosen, the
+initialization is ill-formed.</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-02-16</B></P>
+
+<P>The fact that #2 considers all constructors was discussed (and
+established) in the C++11 timeframe when brace-initialization was
+first introduced.  #1 should be consistent with that, even though
+the <TT>=</TT> is usually a clear sign that explicit constructors are
+not considered.</P>
+
+<BR><BR><HR>
 <A NAME="2803"></A><H4>2803.
   
 Overload resolution for reference binding of similar types
@@ -13116,6 +13851,160 @@ valid specialization can be generated.</DEL>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2848"></A><H4>2848.
+  
+Omitting an empty template argument list for explicit instantiation
+</H4>
+<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-15<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/489">#489</A>.)</P>
+
+<P>Subclause 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+<P>This paragraph is redundant with a more general provision on
+explicitly specifying template arguments in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#4">temp.arg.explicit</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+Trailing template arguments that can be deduced
+(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from
+default <I>template-argument</I>s may be omitted from the list of
+explicit <I>template-argument</I>s.  [<I>Note 1:</I> A trailing
+template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) not otherwise
+deduced will be deduced as an empty sequence of template
+arguments. &#8212;<I>end note</I>] If all of the template arguments
+can be deduced or obtained from default <I>template-argument</I>s,
+they may all be omitted; in this case, the empty template argument
+list &lt;&gt; itself may also be omitted. ...
+
+</BLOCKQUOTE>
+
+<P>A similar duplication is in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
+
+<PRE>
+  ...
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+  template void sort(Array&lt;char&gt;&amp;);  //<SPAN CLASS="cmnt"> argument is deduced here <INS>(13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</INS></SPAN>
+  ...
+</PRE>
+</LI>
+
+<LI>
+<P>Remove 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in an
+explicit instantiation of a function template specialization or of a
+member function template specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
+deduced, the empty template argument list &lt;&gt; may be omitted.
+[<I>Example 3:</I>
+
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
+  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#1">temp.expl.spec</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+... [ Example:
+<PRE>
+  template&lt;class T&gt; class stream;
+  template&lt;&gt; class stream&lt;char&gt; { /* ... */ };<INS> // <SPAN CLASS="cmnt">#1</SPAN></INS>
+
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
+
+  <INS>template&lt;&gt; void sort&lt;int&gt;(Array&lt;int&gt;&amp;);   // <SPAN CLASS="cmnt">#2</SPAN></INS>
+  template&lt;&gt; void sort<DEL>&lt;char*&gt;</DEL>(Array&lt;char*&gt;&amp;);   <INS>// <SPAN CLASS="cmnt">#3 template argument is deduced (13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</SPAN></INS>
+  ...
+</PRE>
+
+Given these declarations, <DEL>stream&lt;char&gt;</DEL> <INS>#1</INS>
+will be used as the definition of streams of chars; other streams will
+be handled by class template specializations instantiated from the
+class template. Similarly, <INS>#2 will be used as the sort function
+for arguments of type <TT>Array&lt;int&gt;</TT> and
+#3</INS> <DEL>sort&lt;char*&gt;</DEL> will be used <DEL>as the sort
+function</DEL> for arguments of type <TT>Array&lt;char*&gt;</TT>; other Array
+types will be sorted by functions generated from
+the <INS>function</INS> template. &#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10:</P>
+
+<BLOCKQUOTE class="del">
+
+A trailing <I>template-argument</I> can be left unspecified in
+the <I>template-id</I> naming an explicit function template
+specialization provided it can be deduced
+(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]).  [<I>Example 6:</I>
+<PRE>
+  template&lt;class T&gt; class Array { /* ... */ };
+  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v);
+
+  //<SPAN CLASS="cmnt"> explicit specialization for sort(Array&lt;int&gt;&amp;)</SPAN>
+  //<SPAN CLASS="cmnt"> with deduced template-argument of type int</SPAN>
+  template&lt;&gt; void sort(Array&lt;int&gt;&amp;);
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2775"></A><H4>2775.
   
 Unclear argument type for copy of exception object
@@ -13214,6 +14103,73 @@ lvalue of type <TT>const T</TT> in a context unrelated to <TT>T</TT>
 shall be well-formed.  If <TT>T</TT> is a class type,</INS>
 <DEL>The</DEL> <INS>the</INS> destructor <INS>of <TT>T</TT></INS> is
 potentially invoked (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2854"></A><H4>2854.
+  
+Storage duration of exception objects
+</H4>
+<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-01-22<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/492">#492</A>.)</P>
+
+<P>According to 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3, the exception
+object is a temporary object.  But none of the possible storage
+durations of temporary objects matches the behavior of exception
+objects.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-02-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Temporary objects are created
+<UL>
+<LI>when a prvalue is converted to an xvalue (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>])<DEL>,</DEL> <INS>and</INS>
+</LI>
+<LI>when needed by the implementation to pass or return an object of
+trivially copyable type (see below)<DEL>, and</DEL><INS>.</INS>
+</LI>
+<LI class="del">when throwing an exception
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]).  [<I>Note 1:</I> The lifetime of
+exception objects is described in
+14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]. &#8212;<I>end note</I>]</LI>
+</UL>
+...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+Throwing an exception initializes <DEL>a temporary</DEL> <INS>an</INS>
+object <INS>with dynamic storage duration</INS>, called the exception
+object. If the type of the exception object would be an incomplete
+type (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]), an abstract class type
+(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), or a pointer to an incomplete type
+other than cv void (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) the program is
+ill-formed.
 
 </BLOCKQUOTE>
 </LI>
@@ -13888,130 +14844,6 @@ The lifetime of an object o of type T ends when:  ...
 </P>
 
 </BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="2850"></A><H4>2850.
-  
-Unclear storage duration for function parameter objects
-</H4>
-<B>Section: </B>6.7.5&#160; [<A href="https://wg21.link/basic.stc">basic.stc</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-02-03<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/490">#490</A>.)</P>
-
-<P>Function parameter objects have automatic storage duration and are
-not temporary objects (see also <A HREF="cwg_active.html#2849">issue 2849</A>).  However, it is unclear how long the storage for
-function parameter objects lasts.</P>
-
-<P>Furthermore, for temporary objects that are destroyed at the end of
-the full-expression, it is unclear how the destruction is ordered with
-respect to temporary objects destroyed at the end of the
-full-expression.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in and combine 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto#1">basic.stc.auto</A>] paragraph 1 and 2
-as follows:</P>
-
-<BLOCKQUOTE>
-
-Variables that belong to a block or parameter scope and are not
-explicitly declared static, thread_local, or extern have automatic
-storage duration. The storage for <DEL>these entities</DEL> <INS>such
-block variables</INS> lasts until the block in which they are created
-exits.  [<I>Note 1:</I> These <INS>block</INS> variables
-are initialized and destroyed as described in
-8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]. &#8212;<I>end note</I>] <INS>The storage for a
-function parameter lasts until immediately after its destruction
-(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).</INS>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#8">class.temporary</A>] paragraph 8 as follows:</P>
-
-<BLOCKQUOTE>
-
-<DEL>The destruction of a temporary whose lifetime is not extended beyond
-the full-expression in which it was created is sequenced before the
-destruction of every temporary which is constructed earlier in the
-same full-expression.</DEL>
-<INS>Let <TT>x</TT> and <TT>y</TT> each be either a temporary object
-whose lifetime is not extended, or a function parameter. If the
-lifetimes of <TT>x</TT> and <TT>y</TT> end at the end of the same
-full-expression, and the initialization of <TT>x</TT> is sequenced
-before that of <TT>y</TT>, then the destruction of <TT>y</TT> is
-sequenced before that of <TT>x</TT>.</INS>
-If the lifetime of two or more temporaries with
-lifetimes extending beyond the full-expressions in which they were
-created ends at the same point, these temporaries are destroyed at
-that point in the reverse order of the completion of their
-construction. In addition, the destruction of such temporaries shall
-take into account the ordering of destruction of objects with static,
-thread, or automatic storage duration (6.7.5.2 [<A href="https://wg21.link/basic.stc.static">basic.stc.static</A>],
-6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>], 6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]); that is,
-if obj1 is an object with the same storage duration as the temporary
-and created before the temporary is created the temporary shall be
-destroyed before obj1 is destroyed; if obj2 is an object with the same
-storage duration as the temporary and created after the temporary is
-created the temporary shall be destroyed after obj2 is destroyed.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-... It is implementation-defined whether <DEL>the lifetime of</DEL> a parameter
-<DEL>ends</DEL> <INS>is destroyed</INS> when the function in which it
-is defined returns or at the end of the enclosing
-full-expression<INS>; parameters are always destroyed in the reverse
-order of their construction.</INS> The initialization and destruction
-of each parameter occurs within the context of the full-expression
-(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]) where the function call appears.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 8.8 [<A href="https://wg21.link/stmt.dcl#2">stmt.dcl</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-A <INS>block</INS> variable with automatic storage duration
-(6.7.5.4 [<A href="https://wg21.link/basic.stc.auto">basic.stc.auto</A>]) is active everywhere in the scope to
-which it belongs after its <I>init-declarator</I> . Upon each transfer
-of control (including sequential execution of statements) within a
-function from point P to point Q, all <INS>block</INS> variables with
-automatic storage duration that are active at P and not at Q are
-destroyed in the reverse order of their construction. Then, all
-<INS>block</INS> variables with automatic storage duration that are
-active at Q but not at P are initialized in declaration order; unless
-all such variables have vacuous initialization
-(6.7.3 [<A href="https://wg21.link/basic.life">basic.life</A>]), the transfer of control shall not be a
-jump. [ Footnote: ... ] When a <I>declaration-statement</I> is
-executed, P and Q are the points immediately before and after it; when
-a function returns, Q is after its body.
-
-</BLOCKQUOTE>
-</LI>
-
-</OL>
 
 <BR><BR><HR>
 <A NAME="2434"></A><H4>2434.
@@ -14900,147 +15732,6 @@ function. ...
 
 <P>Keeping in review status in anticipation of a paper proposing
 reasonable semantics for the function pointer conversions.</P>
-
-<BR><BR><HR>
-<A NAME="2813"></A><H4>2813.
-  
-Class member access with prvalues
-</H4>
-<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Barry Revzin
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-08-28<BR>
-
-
-<P>Subclause 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 specifies:</P>
-
-<BLOCKQUOTE>
-
-For the first option (dot) the first expression shall be a glvalue. ...
-
-</BLOCKQUOTE>
-
-<P>This provision forces a temporary materialization conversion
-(i.e. a copy) per 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7:</P>
-
-<BLOCKQUOTE>
-
-Whenever a prvalue appears as an operand of an operator that expects a
-glvalue for that operand, the temporary materialization conversion
-(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied to convert the expression to
-an xvalue.
-
-</BLOCKQUOTE>
-
-<P>However, this is limiting in the case that an explicit object
-member function with a by-value object parameter is invoked for a
-non-copyable class object, for example:</P>
-
-<PRE>
-  struct X {
-    X() = default;
-
-    X(const X&amp;) = delete;
-    X&amp; operator=(const X&amp;) = delete;
-
-    void f(this X self) { }
-  };
-
-  void f() {
-    X{}.f();   // OK?
-  }
-</PRE>
-
-<P>The example ought to be well-formed.</P>
-
-<P><B>Proposed resolution:</B></P>
-
-<OL>
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-... [<I>Note 3:</I> Temporary objects are materialized:
-<UL>
-<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
-7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
-<LI>when performing <INS>certain</INS>
-member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
-(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
-<LI class="ins">when invoking an implicit object member function on a
-class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>...</LI>
-</UL>
-&#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-When a function is called, each parameter
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
-corresponding argument.  If the function is an explicit object member
-function and there is an implied object argument
-(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
-preceded by the implied object argument for the purposes of this
-correspondence.  If there is no corresponding argument, the default
-argument for the parameter is used.  [<I>Example 1:</I>
-<PRE>
-template&lt;typename ...T&gt; int f(int n = 0, T ...t);
-int x = f&lt;int&gt;(); // error: no argument for second function parameter
-</PRE>
-&#8212;<I>end example</I>]
-<INS>If the function is a static member function invoked using class
-member access syntax, the object expression is a discarded-value
-expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
-implicit object member function, <INS>the object expression of the
-class member access shall be a glvalue</INS> and the <TT>this</TT>
-parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
-with a pointer to the object of the call, converted as if by an
-explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
-5:</I> There is no access or ambiguity checking on this conversion;
-the access checking and disambiguation are done as part of the
-(possibly implicit) class member access operator. See
-6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
-7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
-is called, the type of any parameter shall not be a class type that is
-either incomplete or abstract.  [<I>Note 6:</I> This still allows a
-parameter to be a pointer or reference to such a type. However, it
-prevents a passed-by-value parameter to have an incomplete or abstract
-class type. &#8212;<I>end note</I>] It is implementation-defined
-whether ...
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-For the first option (dot)<INS>, if the <I>id-expression</I> is a data
-member,</INS> the first expression shall be a glvalue. For the second
-option (arrow)<INS>,</INS> the first expression shall be a prvalue
-having pointer type. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
 
 <BR><BR><HR>
 <A NAME="2814"></A><H4>2814.
@@ -16957,160 +17648,6 @@ diagnostic is required <INS>unless the specialization is for a member
 of a templated class whose definition is implicitly instantiated as a
 result of the implicit instantiation of the class
 (13.9.2 [<A href="https://wg21.link/temp.inst">temp.inst</A>])</INS>. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="2848"></A><H4>2848.
-  
-Omitting an empty template argument list for explicit instantiation
-</H4>
-<B>Section: </B>13.9.3&#160; [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Anoop Rana
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-15<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/489">#489</A>.)</P>
-
-<P>Subclause 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8 specifies:</P>
-
-<BLOCKQUOTE>
-
-A trailing <I>template-argument</I> can be left unspecified in an
-explicit instantiation of a function template specialization or of a
-member function template specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
-deduced, the empty template argument list &lt;&gt; may be omitted.
-[<I>Example 3:</I>
-
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
-  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-
-<P>This paragraph is redundant with a more general provision on
-explicitly specifying template arguments in 13.10.2 [<A href="https://wg21.link/temp.arg.explicit#4">temp.arg.explicit</A>] paragraph 4:</P>
-
-<BLOCKQUOTE>
-
-Trailing template arguments that can be deduced
-(13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>]) or obtained from
-default <I>template-argument</I>s may be omitted from the list of
-explicit <I>template-argument</I>s.  [<I>Note 1:</I> A trailing
-template parameter pack (13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]) not otherwise
-deduced will be deduced as an empty sequence of template
-arguments. &#8212;<I>end note</I>] If all of the template arguments
-can be deduced or obtained from default <I>template-argument</I>s,
-they may all be omitted; in this case, the empty template argument
-list &lt;&gt; itself may also be omitted. ...
-
-</BLOCKQUOTE>
-
-<P>A similar duplication is in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10.</P>
-
-<P><B>Proposed resolution:</B></P>
-
-<OL>
-<LI>
-<P>Change the example in 13.9.3 [<A href="https://wg21.link/temp.explicit#4">temp.explicit</A>] paragraph 4 as follows:</P>
-
-<PRE>
-  ...
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-  template void sort(Array&lt;char&gt;&amp;);  //<SPAN CLASS="cmnt"> argument is deduced here <INS>(13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</INS></SPAN>
-  ...
-</PRE>
-</LI>
-
-<LI>
-<P>Remove 13.9.3 [<A href="https://wg21.link/temp.explicit#8">temp.explicit</A>] paragraph 8:</P>
-
-<BLOCKQUOTE class="del">
-
-A trailing <I>template-argument</I> can be left unspecified in an
-explicit instantiation of a function template specialization or of a
-member function template specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]). If all template arguments can be
-deduced, the empty template argument list &lt;&gt; may be omitted.
-[<I>Example 3:</I>
-
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  //<SPAN CLASS="cmnt"> instantiate sort(Array&lt;int&gt;&amp;) -- template-argument deduced</SPAN>
-  template void sort&lt;&gt;(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change the example in 13.9.4 [<A href="https://wg21.link/temp.expl.spec#1">temp.expl.spec</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-... [ Example:
-<PRE>
-  template&lt;class T&gt; class stream;
-  template&lt;&gt; class stream&lt;char&gt; { /* ... */ };<INS> // <SPAN CLASS="cmnt">#1</SPAN></INS>
-
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v) { /* ... */ }
-
-  <INS>template&lt;&gt; void sort&lt;int&gt;(Array&lt;int&gt;&amp;);   // <SPAN CLASS="cmnt">#2</SPAN></INS>
-  template&lt;&gt; void sort<DEL>&lt;char*&gt;</DEL>(Array&lt;char*&gt;&amp;);   <INS>// <SPAN CLASS="cmnt">#3 template argument is deduced (13.10.2 [<A href="https://wg21.link/temp.arg.explicit">temp.arg.explicit</A>])</SPAN></INS>
-  ...
-</PRE>
-
-Given these declarations, <DEL>stream&lt;char&gt;</DEL> <INS>#1</INS>
-will be used as the definition of streams of chars; other streams will
-be handled by class template specializations instantiated from the
-class template. Similarly, <INS>#2 will be used as the sort function
-for arguments of type <TT>Array&lt;int&gt;</TT> and
-#3</INS> <DEL>sort&lt;char*&gt;</DEL> will be used <DEL>as the sort
-function</DEL> for arguments of type <TT>Array&lt;char*&gt;</TT>; other Array
-types will be sorted by functions generated from
-the <INS>function</INS> template. &#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Remove 13.9.4 [<A href="https://wg21.link/temp.expl.spec#10">temp.expl.spec</A>] paragraph 10:</P>
-
-<BLOCKQUOTE class="del">
-
-A trailing <I>template-argument</I> can be left unspecified in
-the <I>template-id</I> naming an explicit function template
-specialization provided it can be deduced
-(13.10.3.7 [<A href="https://wg21.link/temp.deduct.decl">temp.deduct.decl</A>]).  [<I>Example 6:</I>
-<PRE>
-  template&lt;class T&gt; class Array { /* ... */ };
-  template&lt;class T&gt; void sort(Array&lt;T&gt;&amp; v);
-
-  //<SPAN CLASS="cmnt"> explicit specialization for sort(Array&lt;int&gt;&amp;)</SPAN>
-  //<SPAN CLASS="cmnt"> with deduced template-argument of type int</SPAN>
-  template&lt;&gt; void sort(Array&lt;int&gt;&amp;);
-</PRE>
-&#8212;<I>end example</I>]
 
 </BLOCKQUOTE>
 </LI>
@@ -32809,115 +33346,6 @@ and the result is <TT>false</TT>.  This disparity seems
 undesirable.</P>
 
 <BR><BR><HR>
-<A NAME="2855"></A><H4>2855.
-  
-Undefined behavior in postfix increment
-</H4>
-<B>Section: </B>7.6.1.6&#160; [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>L&#233;n&#225;rd Szolnoki
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-12-12<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/479">#479</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  int8_t x = 127;
-  x++;
-</PRE>
-
-<P>This has undefined behavior, because the resulting value is not
-representable as an <TT>int8_t</TT>.  In contrast,</P>
-
-<PRE>
-  int8_t x = 127;
-  ++x;
-</PRE>
-
-<P>is well-defined, because it is equivalent to <TT>x += 1</TT>, which
-is equivalent to <TT>x = (int)x + 1</TT> after the usual arithmetic
-conversions (7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]).  No arithmetic overflow
-occurs.  The presence or absence of undefined behavior is detectable
-in constant evaluation.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The value of a postfix ++ expression is the value of its operand.
-[<I>Note 1:</I> The value obtained is a copy of the original
-value. &#8212;<I>end note</I>] <DEL>The operand shall be a modifiable
-lvalue. The type of the operand shall be an arithmetic type other than
-cv bool, or a pointer to a complete object type. An operand with
-volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].</DEL>
-The value of the operand object is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])
-<DEL>by adding 1 to it</DEL> <INS>as if it were the operand of the
-prefix <TT>++</TT> operator (7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>]).</INS> The
-value computation of the ++ expression is sequenced before the
-modification of the operand object. With respect to an
-indeterminately-sequenced function call, the operation of postfix ++
-is a single evaluation.  [<I>Note 2:</I> Therefore, a function call
-cannot intervene between the lvalue-to-rvalue conversion and the side
-effect associated with any single postfix ++ operator. &#8212;<I>end
-note</I>] The result is a prvalue. The type of the result is the
-cv-unqualified version of the type of the operand. <DEL>If the operand
-is a bit-field that cannot represent the incremented value, the
-resulting value of the bit-field is implementation-defined. See also
-7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>] and 7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>].</DEL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.2.3 [<A href="https://wg21.link/expr.pre.incr">expr.pre.incr</A>] as follows:</P>
-
-<BLOCKQUOTE>
-
-<P>The operand of prefix <TT>++</TT> <INS>or <TT>--</TT></INS> <DEL>is
-modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by adding 1. The operand shall be
-a modifiable lvalue. The type of the operand</DEL>
-shall <INS>not</INS> be <DEL>an arithmetic type other
-than</DEL> <INS>of type</INS> <I>cv</I> <TT>bool</TT><DEL>, or a
-pointer to a completely-defined object type</DEL>. An operand with
-volatile-qualified type is deprecated; see D.4 [<A href="https://wg21.link/depr.volatile.type">depr.volatile.type</A>].
-<DEL>The result is the updated operand; it is an lvalue, and it is a
-bit-field if the operand is a bit-field.</DEL> The
-expression <TT>++x</TT> is <INS>otherwise</INS> equivalent to
-x+=1 <INS>and the expression <TT>--x</TT> is otherwise equivalent
-to <TT>x-=1</TT></INS> <DEL>. [<I>Note 1:</I> See the discussions of
-addition (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) and assignment operators</DEL>
-(7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]) <DEL>for information on conversions</DEL>.
-<DEL>&#8212;<I>end note</I>]</DEL>
-</P>
-
-<P>
-<DEL>The operand of prefix -- is modified
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by subtracting 1. The requirements on the
-operand of prefix -- and the properties of its result are otherwise
-the same as those of prefix ++.</DEL> [<I>Note 2:</I> For postfix
-increment and decrement, see
-7.6.1.6 [<A href="https://wg21.link/expr.post.incr">expr.post.incr</A>]. &#8212;<I>end note</I>]
-</P>
-
-</BLOCKQUOTE>
-</LI>
-
-</OL>
-
-<BR><BR><HR>
 <A NAME="282"></A><H4>282.
   
 Namespace for <TT>extended_type_info</TT>
@@ -33624,51 +34052,6 @@ not disambiguate this case. There is implementation divergence.</P>
 disambiguation should be via overload resolution, but it is unclear
 how to deal with the unspecified choice between overloads with and
 without a <TT>std::size_t</TT> parameter.</P>
-
-<BR><BR><HR>
-<A NAME="2853"></A><H4>2853.
-  
-Pointer arithmetic with pointer to hypothetical element
-</H4>
-<B>Section: </B>7.6.6&#160; [<A href="https://wg21.link/expr.add">expr.add</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jim X
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-02-03<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/495">#495</A>.)</P>
-
-<P>The phrasing in 7.6.6 [<A href="https://wg21.link/expr.add#4.2">expr.add</A>] bullet 4.2 excludes
-pointer arithmetic on a pointer pointing to the hypothetical
-(past-the-end) array element.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 7.6.6 [<A href="https://wg21.link/expr.add#4.2">expr.add</A>] bullet 4.2 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>
-Otherwise, if P points to <DEL>an</DEL> <INS>a
-(possibly-hypothetical)</INS> array element i of an array object x
-with n elements (9.3.4.5 [<A href="https://wg21.link/dcl.array">dcl.array</A>]), [ Footnote: ... ] the
-expressions P + J and J + P (where J has the value j) point to the
-(possibly-hypothetical) array element i + j of x if 0 &lt;= i + j
-&lt;= n and the expression P - J points to the (possibly-hypothetical)
-array element i - j of x if 0 &lt;= i - j &lt;= n.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2786"></A><H4>2786.
@@ -34633,68 +35016,6 @@ considered to start within E.
 </BLOCKQUOTE>
 
 <BR><BR><HR>
-<A NAME="2851"></A><H4>2851.
-  
-Allow floating-point conversions in converted constant expressions
-</H4>
-<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-11-03<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/456">#456</A>.)</P>
-
-<P>With the adoption of P1907R1, non-type template parameters of
-floating-point types have been introduced.  It is surprising that
-a <TT>double</TT> value cannot be passed as a template argument for a
-template parameter of type <TT>long double</TT>, because
-floating-point conversions are not allowed in converted constant
-expressions.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 7.7 [<A href="https://wg21.link/expr.const#12">expr.const</A>] paragraph 12 as follows:</P>
-
-<BLOCKQUOTE>
-
-A <I>converted constant expression</I> of type T is an expression,
-implicitly converted to type T, where the converted expression is a
-constant expression and the implicit conversion sequence contains only
-<UL>
-<LI>user-defined conversions,</LI>
-<LI>lvalue-to-rvalue conversions (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),</LI>
-<LI>array-to-pointer conversions (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]),</LI>
-<LI>function-to-pointer conversions (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]),</LI>
-<LI>qualification conversions (7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>]),</LI>
-<LI>integral promotions (7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]),</LI>
-<LI>integral
-conversions (7.3.9 [<A href="https://wg21.link/conv.integral">conv.integral</A>]) other than narrowing
-conversions (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
-<LI class="ins">floating-point promotions (7.3.8 [<A href="https://wg21.link/conv.fpprom">conv.fpprom</A>]),</LI>
-<LI class="ins">floating-point conversions
-(7.3.10 [<A href="https://wg21.link/conv.double">conv.double</A>]) where the source value can be
-represented exactly in the destination type,</LI>
-<LI>null pointer
-conversions (7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]) from std::nullptr_t,</LI>
-<LI>
-null member pointer conversions (7.3.13 [<A href="https://wg21.link/conv.mem">conv.mem</A>]) from
-std::nullptr_t, and</LI>
-<LI>function pointer conversions
-(7.3.14 [<A href="https://wg21.link/conv.fctptr">conv.fctptr</A>]),</LI>
-</UL>
-and where the reference binding (if any) binds directly.
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2495"></A><H4>2495.
   
 Glvalue result of a function call
@@ -35347,90 +35668,6 @@ parameters.
 the <I>requires-clause</I> in the <I>template-head</I> instead of
 inventing a constrained template parameter.</LI>
 </UL>
-
-<BR><BR><HR>
-<A NAME="2846"></A><H4>2846.
-  
-Out-of-class definitions of explicit object member functions
-</H4>
-<B>Section: </B>9.3.4.6&#160; [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Krystian Stasiowski
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-28<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/493">#493</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  struct A {
-    void f(this A&amp;);
-  };
-  void A::f(this A&amp;) { }    // <SPAN CLASS="cmnt">#1</SPAN>
-</PRE>
-
-<P>This is accepted by all major implementations.  However,
-9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 specifies:</P>
-
-<BLOCKQUOTE>
-
-An <I>explicit-object-parameter-declaration</I> is
-a <I>parameter-declaration</I> with a this specifier. An
-explicit-object-parameter-declaration shall appear only as the
-first <I>parameter-declaration</I> of
-a <I>parameter-declaration-list</I> of either:
-<UL>
-<LI>a <I>member-declarator</I> that declares a member function
-(11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
-<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
-</UL>
-A <I>member-declarator</I> with an
-explicit-object-parameter-declaration shall not include
-a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
-declared static or virtual.
-
-</BLOCKQUOTE>
-
-<P>The <I>function-definition</I> at #1 is neither of the two allowed
-options.</P>
-
-<P>Similar concerns arise for explicit instantiations and explicit
-specializations.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-An <I>explicit-object-parameter-declaration</I> is
-a <I>parameter-declaration</I> with a this specifier. An
-explicit-object-parameter-declaration shall appear only as the
-first <I>parameter-declaration</I> of a
-<I>parameter-declaration-list</I> of <DEL>either</DEL> <INS>one of</INS>:
-<UL>
-<LI>a <DEL><I>member-declarator</I> that declares</DEL>
-<INS>declaration of</INS> a member function <INS>or member function
-template</INS> (11.4 [<A href="https://wg21.link/class.mem">class.mem</A>]), or</LI>
-<LI class="ins">an explicit instantiation
-(13.9.3 [<A href="https://wg21.link/temp.explicit">temp.explicit</A>]) or explicit specialization
-(13.9.4 [<A href="https://wg21.link/temp.expl.spec">temp.expl.spec</A>]) of a templated member function, or</LI>
-<LI>a <I>lambda-declarator</I> (7.5.5 [<A href="https://wg21.link/expr.prim.lambda">expr.prim.lambda</A>]).</LI>
-</UL>
-A <I>member-declarator</I> with an
-explicit-object-parameter-declaration shall not include
-a <I>ref-qualifier</I> or a <I>cv-qualifier-seq</I> and shall not be
-declared static or virtual.
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="361"></A><H4>361.
@@ -36828,62 +37065,6 @@ of</DEL> M(Xe).</LI>
       ...
       <I>empty-declaration</I>
 </PRE>
-
-<BR><BR><HR>
-<A NAME="2661"></A><H4>2661.
-  
-Missing disambiguation rule for <I>pure-specifier</I> vs. <I>brace-or-equal-initializer</I>
-</H4>
-<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2022-10-07<BR>
-
-
-<P>Subclause 11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>] has this grammar:</P>
-
-<PRE>
-    <I>member-declarator:
-        declarator virt-specifier-seq[opt] pure-specifier[opt]
-        declarator brace-or-equal-initializer[opt]
-
-    pure-specifier:</I>
-        = 0
-</PRE>
-
-<P>The primary issue is that <TT>foo = 0</TT> matches
-both <I>member-declarator</I> productions. Secondarily,
-a <I>declarator</I> by itself is also ambiguous.</P>
-
-<P>Code such as <TT>virtual FunctionType f = 0;</TT> can be valid, so
-disambiguation on the syntactic form of the <I>declarator</I> is not
-possible.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change and add before 11.4.1 [<A href="https://wg21.link/class.mem.general#1">class.mem.general</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-<PRE>
-    <I>member-declarator:
-        declarator virt-specifier-seq<SUB>opt</SUB> pure-specifier<SUB>opt</SUB>
-        declarator brace-or-equal-initializer<DEL><SUB>opt</SUB></DEL></I>
-</PRE>
-</BLOCKQUOTE>
-
-<BLOCKQUOTE class="ins">
-The token sequence <TT>= 0</TT> is treated as a <I>pure-specifier</I> if the type of
-the <I>declarator-id</I> (9.3.4.1 [<A href="https://wg21.link/dcl.meaning.general">dcl.meaning.general</A>]) is a function type, and is
-otherwise treated as a <I>brace-or-equal-initializer</I>. [ <I>Note:</I> If the
-member declaration acquires a function type through template
-instantiation, the program is ill-formed; see 13.9.1 [<A href="https://wg21.link/temp.spec.general">temp.spec.general</A>]. <I>--end note</I> ]
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2852"></A><H4>2852.
@@ -39245,111 +39426,6 @@ direct-list-initialization).
 
 <P>See also issues <A HREF="cwg_defects.html#2137">2137</A> and
 <A HREF="cwg_active.html#2327">2327</A>.</P>
-
-<BR><BR><HR>
-<A NAME="2856"></A><H4>2856.
-  
-Initialization with empty braces
-</H4>
-<B>Section: </B>12.2.2.8&#160; [<A href="https://wg21.link/over.match.list">over.match.list</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Anoop Rana
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-09<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/486">#486</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  struct A {
-     explicit A(int = 10);
-     A() = default;   // <SPAN CLASS="cmnt">converting constructor (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor#1">class.conv.ctor</A>] paragraph 1)</SPAN>
-  };
-
-  A a = {};       // <SPAN CLASS="cmnt">#1, copy-initialization</SPAN>
-  
-  int f(A);
-  int x = f({});  // <SPAN CLASS="cmnt">#2</SPAN>
-
-  A b;            // <SPAN CLASS="cmnt">#3</SPAN>
-</PRE>
-
-<P>#1 and #2 are accepted by MSVC and EDG, but considered ambiguous by
-gcc and clang.  #3 is accepted by MSVC only.</P>
-
-<P>#1 is copy-list-initialization (9.4.5 [<A href="https://wg21.link/dcl.init.list#1">dcl.init.list</A>] paragraph 1), and <TT>A</TT> has a default constructor, thus <TT>a</TT>
-is value-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list#3.4">dcl.init.list</A>] bullet 3.4).  The
-default constructors are user-provided, thus <TT>a</TT> is
-default-initialized (9.4.1 [<A href="https://wg21.link/dcl.init.general#8.1">dcl.init.general</A>] bullet 8.1,
-9.4.1 [<A href="https://wg21.link/dcl.init.general#7.1">dcl.init.general</A>] bullet 7.1).  Overload resolution then
-chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
-
-<BLOCKQUOTE>
-
-... For copy-initialization (including default initialization in the
-context of copy-initialization), the candidate functions are all the
-converting constructors (11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. ...
-
-</BLOCKQUOTE>
-
-<P>Thus, the explicit constructor is not a candidate; #1 chooses the
-converting constructor.</P>
-
-<P>In contrast, #2 uses the special rules for forming a
-list-initialization sequence (12.2.4.2.6 [<A href="https://wg21.link/over.ics.list#7">over.ics.list</A>] paragraph 7), which perform overload resolution according to
-12.2.2.8 [<A href="https://wg21.link/over.match.list#1">over.match.list</A>] paragraph 1, which considers all
-constructors for overload resolution (and makes the program ill-formed
-if an explicit constructor is chosen).  For the example, overload
-resolution is ambiguous.</P>
-
-<P>#3 performs default-initialization, and overload resolution then
-chooses a constructor according to 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1:</P>
-
-<BLOCKQUOTE>
-
-... For direct-initialization or default-initialization that is not in the
-context of copy-initialization, the candidate functions are all the
-constructors of the class of the object being initialized. ...
-
-</BLOCKQUOTE>
-
-<P>In this case, the overload resolution is ambiguous.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 12.2.2.4 [<A href="https://wg21.link/over.match.ctor#1">over.match.ctor</A>] paragraph 1 as follows:</P>
-
-
-<BLOCKQUOTE>
-
-When objects of class type are direct-initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), copy-initialized from an expression of the
-same or a derived class type (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), or
-default-initialized (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]), overload resolution
-selects the constructor. For direct-initialization or
-default-initialization <DEL>that is not in the context of
-copy-initialization</DEL> <INS>(including default-initialization in
-the context of copy-list-initialization)</INS>, the candidate
-functions are all the constructors of the class of the object being
-initialized. <DEL>For copy-initialization (including default
-initialization in the context of
-copy-initialization)</DEL> <INS>Otherwise</INS>, the candidate
-functions are all the converting constructors
-(11.4.8.2 [<A href="https://wg21.link/class.conv.ctor">class.conv.ctor</A>]) of that class. The argument list is
-the <I>expression-list</I> or <I>assignment-expression</I> of the
-initializer. <INS>For default-initialization in the context of
-copy-list-initialization, if an explicit constructor is chosen, the
-initialization is ill-formed.</INS>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2425"></A><H4>2425.
@@ -42711,74 +42787,6 @@ type.</P>
 rules seem to cover this case (deduction is not specified to
 &#8220;succeed,&#8221; so it's a reasonable conclusion that it fails),
 but it might be helpful to be clearer.</P>
-
-<BR><BR><HR>
-<A NAME="2854"></A><H4>2854.
-  
-Storage duration of exception objects
-</H4>
-<B>Section: </B>14.2&#160; [<A href="https://wg21.link/except.throw">except.throw</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>2024-01-22
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-01-22<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/492">#492</A>.)</P>
-
-<P>According to 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3, the exception
-object is a temporary object.  But none of the possible storage
-durations of temporary objects matches the behavior of exception
-objects.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#1">class.temporary</A>] paragraph 1 as follows:</P>
-
-
-<BLOCKQUOTE>
-
-Temporary objects are created
-<UL>
-<LI>when a prvalue is converted to an xvalue (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>])<DEL>,</DEL> <INS>and</INS>
-</LI>
-<LI>when needed by the implementation to pass or return an object of
-trivially copyable type (see below)<DEL>, and</DEL><INS>.</INS>
-</LI>
-<LI class="del">when throwing an exception
-(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]).  [<I>Note 1:</I> The lifetime of
-exception objects is described in
-14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]. &#8212;<I>end note</I>]</LI>
-</UL>
-...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 14.2 [<A href="https://wg21.link/except.throw#3">except.throw</A>] paragraph 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-Throwing an exception initializes <DEL>a temporary</DEL> <INS>an</INS>
-object <INS>with dynamic storage duration</INS>, called the exception
-object. If the type of the exception object would be an incomplete
-type (6.8.1 [<A href="https://wg21.link/basic.types.general">basic.types.general</A>]), an abstract class type
-(11.7.4 [<A href="https://wg21.link/class.abstract">class.abstract</A>]), or a pointer to an incomplete type
-other than cv void (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) the program is
-ill-formed.
-
-</BLOCKQUOTE>
-</LI>
-</OL>
 
 <BR><BR><HR>
 <A NAME="2417"></A><H4>2417.
