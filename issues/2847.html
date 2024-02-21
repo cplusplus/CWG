@@ -16,7 +16,7 @@
   Core Issues List revision 113b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-02-17</P>
+<P>2024-02-21</P>
 <HR>
 <A NAME="2847"></A><H4>2847.
   
@@ -64,8 +64,10 @@ explicit specializations of function templates at class scope
 is present, and EDG accepts, but ignores the constraint, causing #1 to
 fail.</P>
 
-<P><B>Proposed resolution (approved by CWG 2024-02-02):</B></P>
+<P><B>Proposed resolution:</B></P>
 
+<OL>
+<LI>
 <P>Add a new paragraph before 13.9.4 [<A href="https://wg21.link/temp.expl.spec#8">temp.expl.spec</A>] paragraph 8 as
 follows:</P>
 
@@ -89,13 +91,14 @@ declares a function template.  [ Example:</P>
     void f(char);    //<SPAN CLASS="cmnt"> OK</SPAN>
 
     template&lt;&gt;
-    void f(short) requires true; //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
+    void f(short) requires (sizeof(T) &gt;= 1); //<SPAN CLASS="cmnt"> error: trailing <I>requires-clause</I> not allowed</SPAN>
   };
 
   template&lt;&gt;
   template&lt;typename U&gt;
   void A&lt;int&gt;::f(U) requires C&lt;U&gt; {} //<SPAN CLASS="cmnt"> OK, explicit specialization is a template</SPAN>
 </PRE>
+
 <P class="ins">-- end example ]
 </P>
 
@@ -103,6 +106,42 @@ declares a function template.  [ Example:</P>
 templates ...</P>
 
 </BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add another example at the end of 13.9.4 [<A href="https://wg21.link/temp.expl.spec#15">temp.expl.spec</A>] paragraph 15 as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<P>[ Example:</P>
+
+<PRE>
+   template&lt;typename T&gt;
+   struct D {
+     template&lt;typename U&gt;
+     static constexpr int f(U);          //<SPAN CLASS="cmnt"> #1</SPAN>
+
+     template&lt;typename U&gt;
+     static constexpr int f(U) requires (sizeof(T) == 1);    //<SPAN CLASS="cmnt"> #2</SPAN>
+
+     template&lt;&gt;
+     constexpr int f(int)                //<SPAN CLASS="cmnt"> #3</SPAN>
+     { return 1; }
+   };
+
+   template&lt;&gt; template&lt;typename U&gt;
+   constexpr int D&lt;signed char&gt;::f(U) requires (sizeof(signed char) == 1)  //<SPAN CLASS="cmnt"> #4</SPAN> 
+   { return 0; }
+
+   static_assert(D&lt;char&gt;::f(0) == 1);          // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is considered a specialization for #2</SPAN>
+   static_assert(D&lt;char[2]&gt;::f(0) == 1);       // <SPAN CLASS="cmnt">overload resolution selects #1; #3 is considered a specialization for #1</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0) == 1);   // <SPAN CLASS="cmnt">overload resolution selects #4; #3 is considered a specialization for #4</SPAN>
+</PRE>
+<P>-- end example ]</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR>
 </BODY>
