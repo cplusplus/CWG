@@ -16,7 +16,7 @@
   Core Issues List revision 113b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-02-22</P>
+<P>2024-02-24</P>
 <HR>
 <A NAME="2862"></A><H4>2862.
   
@@ -75,18 +75,59 @@ class template, or</LI>
 
 <P>
 <DEL>A <I>template-declaration</I> is a <I>declaration</I>.</DEL>
-<INS>A <I>class template</I> is introduced by
+<INS>
+If the <I>declaration</I> in a <I>template-declaration</I> introduces
+an entity using a <I>declarator-id</I> that has a
+dependent <I>nested-name-specifier</I> that is equivalent to the
+injected-class-name of a class template or class template partial
+specialization <TT>C</TT>, and the <I>template-head</I> of
+the <I>template-declaration</I> is equivalent to that of <TT>C</TT>,
+the <I>template-declaration</I> declares a member of <TT>C</TT>, and
+the <I>nested-name-specifier</I> is treated as a non-dependent
+reference to <TT>C</TT> for the purpose of further interpreting the
+declaration. Otherwise:</INS>
+<UL class="ins">
+<LI>A <I>class template</I> is introduced by
 a <I>template-declaration</I> whose <I>declaration</I> is
 a <I>simple-declaration</I> that either contains
 a <I>class-specifier</I> in its <I>decl-specifier-seq</I> or comprises
-solely of an <I>elaborated-type-specifier</I>.  A <I>function
-template</I> is introduced by a <I>template-declaration</I>
-whose <I>declaration</I> declares a function.  An <I>alias
-template</I> is introduced by a <I>template-declaration</I>
-whose <I>declaration</I> is an <I>alias-declaration</I>.
-A <I>variable template</I> is introduced by
-a <I>template-declaration</I> whose <I>declaration</I> declares a
-variable.
+solely of an <I>elaborated-type-specifier</I>.</LI>
+<LI>A <I>function template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+function.</LI>
+<LI>An <I>alias template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> is
+an <I>alias-declaration</I>.</LI>
+<LI>A <I>variable template</I> is introduced by a
+<I>template-declaration</I> whose <I>declaration</I> declares a
+variable.</LI>
+</UL>
+<INS>[ Example:</INS>
+<PRE class="ins">
+  template&lt;typename T&gt; struct A {
+    template&lt;typename U&gt; struct B;
+    template&lt;typename U&gt; struct B&lt;U*&gt; {
+      template&lt;typename V&gt; void f();
+    };
+  };
+  template&lt;typename T&gt; //<SPAN CLASS="cmnt"> #1</SPAN>
+  template&lt;typename U&gt; //<SPAN CLASS="cmnt"> #2</SPAN>
+  template&lt;typename V&gt; //<SPAN CLASS="cmnt"> #3</SPAN>
+  void A&lt;T&gt;::B&lt;U*&gt;::f() {}
+</PRE>
+<INS>
+The <I>template-declaration</I> #1 declares a member of the class
+template <TT>A</TT>, because <TT>A&lt;T&gt;</TT> is equivalent to the
+injected-class-name of <TT>A</TT>.  The <I>template-declaration</I> #2
+declares a member of the class template partial specialization
+<TT>A&lt;T&gt;::B&lt;U*&gt;</TT>,
+because <TT>A&lt;T&gt;::B&lt;U*&gt;</TT> is equivalent to the
+injected-class-name of the partial specialization when <TT>A&lt;T&gt;</TT> is
+treated as a non-dependent reference to the primary template <TT>A</TT>.
+The <I>template-declaration</I> #3 declares a function template that
+is a member of the class template partial specialization.
+
+-- end example ]
 </INS>
 
 <DEL>A declaration introduced by a template declaration of a variable
