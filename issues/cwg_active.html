@@ -4298,7 +4298,7 @@ Definition of "ambiguous base class" missing
   <A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2857">2857</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Argument-dependent lookup with incomplete class types
@@ -5101,7 +5101,7 @@ Reference odr-use vs implicit capture
   <A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2737">2737</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Temporary lifetime extension for reference init-captures
@@ -5507,7 +5507,7 @@ Arguments to deallocation functions </TD>
   <A href="https://wg21.link/expr.delete">expr.delete</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2728">2728</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Evaluation of conversions in a <I>delete-expression</I>
@@ -6409,7 +6409,7 @@ Improve the example for initializing by initializer list
   <A href="https://wg21.link/dcl.init.list">dcl.init.list</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2742">2742</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">drafting</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Guaranteed copy elision for brace-initialization from prvalue
@@ -9637,6 +9637,61 @@ implementation for use as a name in the global namespace.</LI>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2857"></A><H4>2857.
+  
+Argument-dependent lookup with incomplete class types
+</H4>
+<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Lewis Baker
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-02-08<BR>
+
+
+
+
+<P>Subclause 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 specifies:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If T is a class type (including unions), its associated entities are:
+the class itself; the class of which it is a member, if any; and its
+direct and indirect base classes. ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>It is unclear what happens if <TT>T</TT> is incomplete, for example
+because it was instantiated from a template whose definition was not
+(yet) available.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01)</B></P>
+
+<P>Change in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If T is a class type (including unions), its associated entities
+are: the class itself; the class of which it is a member, if any;
+and<INS>, if it is a complete type,</INS> its direct and indirect base
+classes. ...</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+
+<BR><BR><HR>
 <A NAME="2533"></A><H4>2533.
   
 Storage duration of implicitly created objects
@@ -10767,6 +10822,79 @@ a <I>function-body</I> <INS>or <I>lambda-expression</I>, in either
 case</INS> outside of a handler (14.1 [<A href="https://wg21.link/except.pre">except.pre</A>]). ...
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2728"></A><H4>2728.
+  
+Evaluation of conversions in a <I>delete-expression</I>
+</H4>
+<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-05<BR>
+
+
+<P>Subclause 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+The <I>cast-expression</I> in a <I>delete-expression</I> shall be
+evaluated exactly once.
+
+</BLOCKQUOTE>
+
+<P>Due to the reference to the syntactic
+non-terminal <I>cast-expression</I>, it is unclear whether that
+includes the conversion to pointer type specified in
+7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1 and paragraph 2 as
+follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+... The operand shall be <INS>of class type or a prvalue</INS> of
+pointer to object type<DEL> or of class type</DEL>. If of class type,
+the operand is contextually implicitly converted
+(7.3 [<A href="https://wg21.link/conv">conv</A>]) to a <INS>prvalue</INS> pointer to object
+type. [ Footnote: ... ]
+<INS>The converted operand is used in place of the original operand
+for the remainder of this subclause.</INS>
+The <I>delete-expression</I> has type void.
+</P>
+
+<P>
+<DEL>If the operand has a class type, the operand is converted to a
+pointer type by calling the above-mentioned conversion function, and
+the converted operand is used in place of the original operand for the
+remainder of this subclause.</DEL> ... </P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <DEL><I>cast-expression</I> in</DEL> <INS>operand of</INS>
+a <I>delete-expression</I> shall be evaluated exactly once.
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
 
 <BR><BR><HR>
 <A NAME="2828"></A><H4>2828.
@@ -15666,6 +15794,93 @@ function. ...
 
 <P>Keeping in review status in anticipation of a paper proposing
 reasonable semantics for the function pointer conversions.</P>
+
+<BR><BR><HR>
+<A NAME="2737"></A><H4>2737.
+  
+Temporary lifetime extension for reference init-captures
+</H4>
+<B>Section: </B>7.5.5.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-05-23<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {};
+  const S f();
+  auto x = [&amp;ref = f()] { return ref; }
+</PRE>
+
+<P>Subclause 7.5.5.3 [<A href="https://wg21.link/expr.prim.lambda.capture#6">expr.prim.lambda.capture</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+An <I>init-capture</I> inhabits the lambda scope
+(6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]) of the <I>lambda-expression</I>.
+An <I>init-capture</I> without ellipsis behaves as if it declares and
+explicitly captures a variable of the form
+<TT>&#8220;auto <I>init-capture</I> ;&#8221;</TT>, except that:
+
+<UL>
+<LI>if the capture is by copy (see below), the non-static data member
+declared for the capture and the variable are treated as two different
+ways of referring to the same object, which has the lifetime of the
+non-static data member, and no additional copy and destruction is
+performed, and
+</LI>
+<LI>if the capture is by reference, the variable's lifetime ends when
+the closure object's lifetime ends.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>It is unclear whether the temporary returned by <TT>f()</TT> is
+lifetime-extended by being bound to a reference init-capture.</P>
+
+<P>There is implementation divergence: gcc rejects the example; clang
+accepts and extends the lifetime of the temporary; MSVC and EDG accept
+and do not extend the lifetime.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-03-01):</B></P>
+
+<P>Change in 7.5.5.3 [<A href="https://wg21.link/expr.prim.lambda.capture#6">expr.prim.lambda.capture</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>init-capture</I> inhabits the lambda scope
+(6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]) of the <I>lambda-expression</I>.
+An <I>init-capture</I> without ellipsis behaves as if it declares and
+explicitly captures a variable of the form
+<TT>&#8220;auto <I>init-capture</I> ;&#8221;</TT>, except that:
+
+<UL>
+<LI>if the capture is by copy (see below), the non-static data member
+declared for the capture and the variable are treated as two different
+ways of referring to the same object, which has the lifetime of the
+non-static data member, and no additional copy and destruction is
+performed, and
+</LI>
+<LI class="ins">
+if the capture is by reference and the reference would bind to an
+object that is the result of a temporary expression, the program is
+ill-formed, and
+</LI>
+<LI>if the capture is by reference, the variable's lifetime ends when
+the closure object's lifetime ends.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2813"></A><H4>2813.
@@ -21405,6 +21620,79 @@ following example is ill-formed:</P>
   struct S { operator struct D &amp;(); } s;
   D &amp;d{s};
 </PRE>
+
+<BR><BR><HR>
+<A NAME="2742"></A><H4>2742.
+  
+Guaranteed copy elision for brace-initialization from prvalue
+</H4>
+<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-06-06<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    A();
+    A(A const&amp;) = delete;
+  };
+  int main(){
+    A a = A(A(A())); //<SPAN CLASS="cmnt"> #1 </SPAN>
+    A b = A{A{A{}}}; //<SPAN CLASS="cmnt"> #2 </SPAN>
+  }
+</PRE>
+
+<P>#1 is well-formed per 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6.1">dcl.init.general</A>] bullet 16.6.1.
+However, even though #2 is intended to have a similar effect, the
+relevant rule excludes non-aggregates, making the example ill-formed
+(because the relevant constructor is deleted); see
+9.4.5 [<A href="https://wg21.link/dcl.init.list#3.2">dcl.init.list</A>] bullet 3.2:</P>
+
+<BLOCKQUOTE>
+
+If T is an aggregate class and the initializer list has a single
+element of type cv U, where U is T or a class derived from T, the
+object is initialized from that element (by copy-initialization for
+copy-list-initialization, or by direct-initialization for
+direct-list-initialization).
+
+</BLOCKQUOTE>
+
+<P>There is implementation divergence: gcc and clang accept, MSVC rejects.</P>
+
+<P>See also <A HREF="cwg_active.html#2311">issue 2311</A>.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.2">dcl.init.list</A>] bullet 3.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If T is <DEL>an aggregate class</DEL> <INS>a class type</INS> and the
+initializer list has a single element of type cv U, where U is T or a
+class derived from T, the object is initialized from that element (by
+copy-initialization for copy-list-initialization, or by
+direct-initialization for direct-list-initialization).
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-03-01</B></P>
+
+<P>Recent MSVC no longer rejects the example.  The suggested
+resolution would revert <A HREF="cwg_defects.html#2137">issue 2137</A>, which
+is not desirable.  The consensus is to try an initializer-list
+constructor first and then fall back to copy-initialization (with
+guaranteed copy elision).  A change to 12.2.4.2.6 [<A href="https://wg21.link/over.ics.list">over.ics.list</A>]
+may be necessary.</P>
 
 <BR><BR><HR>
 <A NAME="2144"></A><H4>2144.
@@ -30404,61 +30692,6 @@ anywhere.  6.5.2 [<A href="https://wg21.link/class.member.lookup#7">class.member
 to do it.</P>
 
 <BR><BR><HR>
-<A NAME="2857"></A><H4>2857.
-  
-Argument-dependent lookup with incomplete class types
-</H4>
-<B>Section: </B>6.5.4&#160; [<A href="https://wg21.link/basic.lookup.argdep">basic.lookup.argdep</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Lewis Baker
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-02-08<BR>
-
-
-
-
-<P>Subclause 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 specifies:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>If T is a class type (including unions), its associated entities are:
-the class itself; the class of which it is a member, if any; and its
-direct and indirect base classes. ...</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>It is unclear what happens if <TT>T</TT> is incomplete, for example
-because it was instantiated from a template whose definition was not
-(yet) available.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 6.5.4 [<A href="https://wg21.link/basic.lookup.argdep#3.2">basic.lookup.argdep</A>] bullet 3.2 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>If T is a class type (including unions), its associated entities
-are: the class itself; the class of which it is a member, if any;
-and<INS>, if it is a complete type,</INS> its direct and indirect base
-classes. ...</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-
-<BR><BR><HR>
 <A NAME="1089"></A><H4>1089.
   
 Template parameters in member selections
@@ -33228,92 +33461,6 @@ a <DEL><I>decltype-specifier</I></DEL>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
-<A NAME="2737"></A><H4>2737.
-  
-Temporary lifetime extension for reference init-captures
-</H4>
-<B>Section: </B>7.5.5.3&#160; [<A href="https://wg21.link/expr.prim.lambda.capture">expr.prim.lambda.capture</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Tomasz Kami&#324;ski
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-05-23<BR>
-
-
-<P>Consider:</P>
-
-<PRE>
-  struct S {};
-  const S f();
-  auto x = [&amp;ref = f()] { return ref; }
-</PRE>
-
-<P>Subclause 7.5.5.3 [<A href="https://wg21.link/expr.prim.lambda.capture#6">expr.prim.lambda.capture</A>] paragraph 6 specifies:</P>
-
-<BLOCKQUOTE>
-
-An <I>init-capture</I> inhabits the lambda scope
-(6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]) of the <I>lambda-expression</I>.
-An <I>init-capture</I> without ellipsis behaves as if it declares and
-explicitly captures a variable of the form
-<TT>&#8220;auto <I>init-capture</I> ;&#8221;</TT>, except that:
-
-<UL>
-<LI>if the capture is by copy (see below), the non-static data member
-declared for the capture and the variable are treated as two different
-ways of referring to the same object, which has the lifetime of the
-non-static data member, and no additional copy and destruction is
-performed, and
-</LI>
-<LI>if the capture is by reference, the variable's lifetime ends when
-the closure object's lifetime ends.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>It is unclear whether the temporary returned by <TT>f()</TT> is
-lifetime-extended by being bound to a reference init-capture.</P>
-
-<P>There is implementation divergence: gcc rejects the example; clang
-accepts and extends the lifetime of the temporary; MSVC and EDG accept
-and do not extend the lifetime.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 7.5.5.3 [<A href="https://wg21.link/expr.prim.lambda.capture#6">expr.prim.lambda.capture</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-An <I>init-capture</I> inhabits the lambda scope
-(6.4.5 [<A href="https://wg21.link/basic.scope.lambda">basic.scope.lambda</A>]) of the <I>lambda-expression</I>.
-An <I>init-capture</I> without ellipsis behaves as if it declares and
-explicitly captures a variable of the form
-<TT>&#8220;auto <I>init-capture</I> ;&#8221;</TT>, except that:
-
-<UL>
-<LI>if the capture is by copy (see below), the non-static data member
-declared for the capture and the variable are treated as two different
-ways of referring to the same object, which has the lifetime of the
-non-static data member, and no additional copy and destruction is
-performed, and
-</LI>
-<LI class="ins">
-if the capture is by reference and the reference would bind to a
-temporary, the program is ill-formed, and
-</LI>
-<LI>if the capture is by reference, the variable's lifetime ends when
-the closure object's lifetime ends.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2565"></A><H4>2565.
   
 Invalid types in the <I>parameter-declaration-clause</I> of a <I>requires-expression</I>
@@ -34369,79 +34516,6 @@ deallocation functions.</P>
  to clarify that any
 offset added in an array <I>new-expression</I> must be subtracted in
 the array <I>delete-expression</I>.</P>
-<BR><BR><HR>
-<A NAME="2728"></A><H4>2728.
-  
-Evaluation of conversions in a <I>delete-expression</I>
-</H4>
-<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jiang An
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-05-05<BR>
-
-
-<P>Subclause 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 specifies:</P>
-
-<BLOCKQUOTE>
-
-The <I>cast-expression</I> in a <I>delete-expression</I> shall be
-evaluated exactly once.
-
-</BLOCKQUOTE>
-
-<P>Due to the reference to the syntactic
-non-terminal <I>cast-expression</I>, it is unclear whether that
-includes the conversion to pointer type specified in
-7.6.2.9 [<A href="https://wg21.link/expr.delete#2">expr.delete</A>] paragraph 2.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#1">expr.delete</A>] paragraph 1 and paragraph 2 as
-follows:</P>
-
-<BLOCKQUOTE>
-
-<P>
-... The operand shall be <INS>of class type or a prvalue</INS> of
-pointer to object type<DEL> or of class type</DEL>. If of class type,
-the operand is contextually implicitly converted
-(7.3 [<A href="https://wg21.link/conv">conv</A>]) to a <INS>prvalue</INS> pointer to object
-type. [ Footnote: ... ]
-<INS>The converted operand is used in place of the original operand
-for the remainder of this subclause.</INS>
-The <I>delete-expression</I> has type void.
-</P>
-
-<P>
-<DEL>If the operand has a class type, the operand is converted to a
-pointer type by calling the above-mentioned conversion function, and
-the converted operand is used in place of the original operand for the
-remainder of this subclause.</DEL> ... </P>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-
-The <DEL><I>cast-expression</I> in</DEL> <INS>operand of</INS>
-a <I>delete-expression</I> shall be evaluated exactly once.
-
-</BLOCKQUOTE>
-</LI>
-
-</OL>
-
 <BR><BR><HR>
 <A NAME="2805"></A><H4>2805.
   
@@ -36752,70 +36826,6 @@ However, using <TT>std::numeric_limits&lt;T&gt;::infinity()</TT>
 is okay, but it can't be used as a subexpression. Conversions that
 produce infinity from non-infinity values are considered to be
 narrowing conversions.</P>
-
-<BR><BR><HR>
-<A NAME="2742"></A><H4>2742.
-  
-Guaranteed copy elision for brace-initialization from prvalue
-</H4>
-<B>Section: </B>9.4.5&#160; [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jim X
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-06-06<BR>
-
-
-<P>Consider:</P>
-
-<PRE>
-  struct A {
-    A();
-    A(A const&amp;) = delete;
-  };
-  int main(){
-    A a = A(A(A())); //<SPAN CLASS="cmnt"> #1 </SPAN>
-    A b = A{A{A{}}}; //<SPAN CLASS="cmnt"> #2 </SPAN>
-  }
-</PRE>
-
-<P>#1 is well-formed per 9.4.1 [<A href="https://wg21.link/dcl.init.general#16.6.1">dcl.init.general</A>] bullet 16.6.1.
-However, even though #2 is intended to have a similar effect, the
-relevant rule excludes non-aggregates, making the example ill-formed
-(because the relevant constructor is deleted); see
-9.4.5 [<A href="https://wg21.link/dcl.init.list#3.2">dcl.init.list</A>] bullet 3.2:</P>
-
-<BLOCKQUOTE>
-
-If T is an aggregate class and the initializer list has a single
-element of type cv U, where U is T or a class derived from T, the
-object is initialized from that element (by copy-initialization for
-copy-list-initialization, or by direct-initialization for
-direct-list-initialization).
-
-</BLOCKQUOTE>
-
-<P>There is implementation divergence: gcc and clang accept, MSVC rejects.</P>
-
-<P>See also <A HREF="cwg_active.html#2311">issue 2311</A>.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 9.4.5 [<A href="https://wg21.link/dcl.init.list#3.2">dcl.init.list</A>] bullet 3.2 as follows:</P>
-
-<BLOCKQUOTE>
-
-If T is <DEL>an aggregate class</DEL> <INS>a class type</INS> and the
-initializer list has a single element of type cv U, where U is T or a
-class derived from T, the object is initialized from that element (by
-copy-initialization for copy-list-initialization, or by
-direct-initialization for direct-list-initialization).
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2864"></A><H4>2864.
@@ -42556,7 +42566,7 @@ Checking of default template arguments
  <B>Submitter: </B>Shafik Yaghmour
  &#160;&#160;&#160;
 
- <B>Date: </B>2023-06-07<BR>
+ <B>Date: </B>2022-12-13<BR>
 
 
 
