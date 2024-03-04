@@ -4199,7 +4199,7 @@ ODR vs alternative tokens
   <A href="https://wg21.link/basic.def.odr">basic.def.odr</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2745">2745</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Dependent odr-use in generic lambdas
@@ -8279,7 +8279,7 @@ Omission of the <TT>typename</TT> keyword in a member template parameter list
   <A href="https://wg21.link/temp.res.general">temp.res.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2746">2746</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Checking of default template arguments
@@ -9633,6 +9633,69 @@ D.11 [<A href="https://wg21.link/depr.c.macros">depr.c.macros</A>] as well as id
 <LI>Each identifier that begins with an underscore is reserved to the
 implementation for use as a name in the global namespace.</LI>
 </UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2745"></A><H4>2745.
+  
+Dependent odr-use in generic lambdas
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Shafik Yaghmour
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-13<BR>
+
+
+
+
+<P>Default template arguments of generic lambdas can refer to local
+variables.  It is unclear whether the potential odr-use is checked
+when parsing the template definition or when instantiating the
+template.</P>
+
+<P>There is wide implementation divergence.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<P>Insert a new paragraph before 6.3 [<A href="https://wg21.link/basic.def.odr#11">basic.def.odr</A>] paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+[ Example:
+</P>
+<PRE class="ins">
+  void g() {
+    constexpr int x = 1;
+    auto lambda = [] &lt;typename T, T V = x&gt; {};  //<SPAN CLASS="cmnt"> OK</SPAN>
+    lambda.operator()&lt;int, 1&gt;();         //<SPAN CLASS="cmnt"> OK, does not consider x at all</SPAN>
+    lambda.operator()&lt;int&gt;();            //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
+    lambda.operator()&lt;const int&amp;&gt;();     //<SPAN CLASS="cmnt"> error: odr-uses x from a context where x is not odr-usable</SPAN>
+  }
+
+  void h() {
+    constexpr int x = 1;
+    auto lambda = [] &lt;typename T&gt; { (T)x; };  //<SPAN CLASS="cmnt"> OK</SPAN>
+    lambda.operator()&lt;int&gt;();            //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
+    lambda.operator()&lt;void&gt;();           //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
+    lambda.operator()&lt;const int&amp;&gt;();     //<SPAN CLASS="cmnt"> error: odr-uses x from a context where x is not odr-usable</SPAN>
+  }
+</PRE>
+<P class="ins">
+-- end example ]
+</P>
+
+<P>
+Every program shall contain at least one definition of every function
+or variable ...
+</P>
 
 </BLOCKQUOTE>
 
@@ -13866,6 +13929,87 @@ a trailing <I>requires-clause</I>:</P>
 <I>deduction-guide</I>:
    <I>explicit-specifier<SUB>opt</SUB> template-name</I> ( <I>parameter-declaration-clause</I> ) <INS><I>requires-clause<SUB>opt</SUB></I></INS> -&gt; <I>simple-template-id</I> ;
 </PRE>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2746"></A><H4>2746.
+  
+Checking of default template arguments
+</H4>
+<B>Section: </B>13.8.1&#160; [<A href="https://wg21.link/temp.res.general">temp.res.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Shafik Yaghmour
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2022-12-13<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  static int x = 1;
+  template&lt;auto y = x&gt; void f() {}
+</PRE>
+
+<P>Is the definition of <TT>f</TT> well-formed? Since <TT>x</TT> is
+not a constant expression, any use of the default template argument is
+ill-formed, but for example <TT>f&lt;5&gt;()</TT> does not actually
+use it.</P>
+
+<P>Are implementations allowed or required to reject this situation,
+even if the template is never instantiated?  If the default template
+argument is dependent, checking may need to be deferred to
+instantiations in any case.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<P>Change in 13.8.1 [<A href="https://wg21.link/temp.res.general#6">temp.res.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The validity of a template may be checked prior to any instantiation.
+[<I>Note :</I> ... &#8212;<I>end note</I>]</P>
+
+<P>The program is ill-formed, no diagnostic required, if:</P>
+
+<UL>
+<LI>no valid specialization, ignoring
+<I>static_assert-declaration</I>s that fail, can be generated for a
+template or a substatement of a constexpr if statement
+(8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]) within a template and the template is not
+instantiated, or</LI>
+
+<LI class="ins">
+no valid specialization, ignoring
+<I>static_assert-declaration</I>s that fail, can be generated for a
+template using a default <I>template-argument</I> and the
+default <I>template-argument</I> is not used in any instantiation, or
+</LI>
+
+<LI>any <I>constraint-expression</I> in the program, introduced or
+otherwise, has (in its normal form) an atomic constraint A where no
+satisfaction check of A could be well-formed and no satisfaction check
+of A is performed, or</LI>
+
+<LI>every valid specialization of a variadic template requires an
+empty template parameter pack, or</LI>
+
+<LI>a hypothetical instantiation of a template immediately following
+its definition would be ill-formed due to a construct that does not
+depend on a template parameter, or</LI>
+
+<LI>the interpretation of such a construct in the hypothetical
+instantiation is different from the interpretation of the
+corresponding construct in any actual instantiation of the
+template.</LI>
+</UL>
 
 </BLOCKQUOTE>
 
@@ -30048,69 +30192,6 @@ definitions.</P>
 (See also <A HREF="cwg_closed.html#1254">issue 1254</A>.)
 
 <BR><BR><HR>
-<A NAME="2745"></A><H4>2745.
-  
-Dependent odr-use in generic lambdas
-</H4>
-<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Shafik Yaghmour
- &#160;&#160;&#160;
-
- <B>Date: </B>2022-12-13<BR>
-
-
-
-
-<P>Default template arguments of generic lambdas can refer to local
-variables.  It is unclear whether the potential odr-use is checked
-when parsing the template definition or when instantiating the
-template.</P>
-
-<P>There is wide implementation divergence.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Insert a new paragraph before 6.3 [<A href="https://wg21.link/basic.def.odr#11">basic.def.odr</A>] paragraph 11:</P>
-
-<BLOCKQUOTE>
-
-<P class="ins">
-[ Example:
-</P>
-<PRE class="ins">
-  void g() {
-    constexpr int x = 1;
-    auto lambda = [] &lt;typename T, T V = x&gt; {};  //<SPAN CLASS="cmnt"> OK</SPAN>
-    lambda.operator()&lt;int, 1&gt;();         //<SPAN CLASS="cmnt"> OK, does not consider x at all</SPAN>
-    lambda.operator()&lt;int&gt;();            //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
-    lambda.operator()&lt;const int&amp;&gt;();     //<SPAN CLASS="cmnt"> error: odr-uses x from a context where x is not odr-usable</SPAN>
-  }
-
-  void h() {
-    constexpr int x = 1;
-    auto lambda = [] &lt;typename T&gt; { (T)x; };  //<SPAN CLASS="cmnt"> OK</SPAN>
-    lambda.operator()&lt;int&gt;();            //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
-    lambda.operator()&lt;void&gt;();           //<SPAN CLASS="cmnt"> OK, does not odr-use </SPAN>x
-    lambda.operator()&lt;const int&amp;&gt;();     //<SPAN CLASS="cmnt"> error: odr-uses x from a context where x is not odr-usable</SPAN>
-  }
-</PRE>
-<P class="ins">
--- end example ]
-</P>
-
-<P>
-Every program shall contain at least one definition of every function
-or variable ...
-</P>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2781"></A><H4>2781.
   
 Unclear recursion in the one-definition rule
@@ -42551,87 +42632,6 @@ of an entity (that was not itself instantiated) requires at
 least one of the enclosing template argument lists to
 include an empty template argument pack, then the program is
 ill-formed (no diagnostic required).</P>
-
-<BR><BR><HR>
-<A NAME="2746"></A><H4>2746.
-  
-Checking of default template arguments
-</H4>
-<B>Section: </B>13.8.1&#160; [<A href="https://wg21.link/temp.res.general">temp.res.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Shafik Yaghmour
- &#160;&#160;&#160;
-
- <B>Date: </B>2022-12-13<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  static int x = 1;
-  template&lt;auto y = x&gt; void f() {}
-</PRE>
-
-<P>Is the definition of <TT>f</TT> well-formed? Since <TT>x</TT> is
-not a constant expression, any use of the default template argument is
-ill-formed, but for example <TT>f&lt;5&gt;()</TT> does not actually
-use it.</P>
-
-<P>Are implementations allowed or required to reject this situation,
-even if the template is never instantiated?  If the default template
-argument is dependent, checking may need to be deferred to
-instantiations in any case.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 13.8.1 [<A href="https://wg21.link/temp.res.general#6">temp.res.general</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<P>The validity of a template may be checked prior to any instantiation.
-[<I>Note :</I> ... &#8212;<I>end note</I>]</P>
-
-<P>The program is ill-formed, no diagnostic required, if:</P>
-
-<UL>
-<LI>no valid specialization, ignoring
-<I>static_assert-declaration</I>s that fail, can be generated for a
-template or a substatement of a constexpr if statement
-(8.5.2 [<A href="https://wg21.link/stmt.if">stmt.if</A>]) within a template and the template is not
-instantiated, or</LI>
-
-<LI class="ins">
-no valid specialization, ignoring
-<I>static_assert-declaration</I>s that fail, can be generated for a
-template using a default <I>template-argument</I> and the
-default <I>template-argument</I> is not used in any instantiation, or
-</LI>
-
-<LI>any <I>constraint-expression</I> in the program, introduced or
-otherwise, has (in its normal form) an atomic constraint A where no
-satisfaction check of A could be well-formed and no satisfaction check
-of A is performed, or</LI>
-
-<LI>every valid specialization of a variadic template requires an
-empty template parameter pack, or</LI>
-
-<LI>a hypothetical instantiation of a template immediately following
-its definition would be ill-formed due to a construct that does not
-depend on a template parameter, or</LI>
-
-<LI>the interpretation of such a construct in the hypothetical
-instantiation is different from the interpretation of the
-corresponding construct in any actual instantiation of the
-template.</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="186"></A><H4>186.
