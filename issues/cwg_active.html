@@ -5815,7 +5815,7 @@ Too many objects have constexpr-unknown type
   <A href="https://wg21.link/expr.const">expr.const</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2778">2778</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Trivial destructor does not imply constant destruction
@@ -6783,7 +6783,7 @@ Complete-class contexts and class-scope lambdas
   <A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2771">2771</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Transformation for <I>unqualified-id</I>s in address operator
@@ -7872,7 +7872,7 @@ Default template arguments for template members of non-template classes
   <A href="https://wg21.link/temp.param">temp.param</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2777">2777</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Type of <I>id-expression</I> denoting a template parameter object
@@ -13205,6 +13205,199 @@ instantiation, the program is ill-formed; see 13.9.1 [<A href="https://wg21.link
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2771"></A><H4>2771.
+  
+Transformation for <I>unqualified-id</I>s in address operator
+</H4>
+<B>Section: </B>11.4.3&#160; [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-16<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A{
+    int a;
+    void show(){
+      int* r = &amp;a; //<SPAN CLASS="cmnt"> #1 </SPAN>
+    }
+  };
+</PRE>
+
+<P>According to 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, the
+transformation to class member access does not happen for
+the <I>id-expression</I> <TT>a</TT>, because it is the unparenthesized
+operand of <TT>&amp;</TT>:</P>
+
+<BLOCKQUOTE>
+
+When an <I>id-expression</I> (7.5.4 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
+neither part of a class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
+unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
+current class is X (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
+the <I>id-expression</I> to a non-static non-type member of some class
+C, and if either the <I>id-expression</I> is potentially evaluated or
+C is X or a base class of X, the <I>id-expression</I> is transformed
+into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+using (*this) as the <I>postfix-expression</I> to the left of the .
+operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<P>This resolution moves the transformation to
+7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>], where the similar transformation for
+anonymous unions is already described.</P>
+
+<OL>
+
+<LI>
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#7">basic.def.odr</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+<TT>*this</TT> is odr-used if this appears as a potentially-evaluated
+expression (including as the result of <DEL>the</DEL> <INS>any</INS>
+implicit transformation <DEL>in the body of a non-static member
+function</DEL> <INS>to a class member access expression</INS>
+(<DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL>
+<INS>7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS>)).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph before 7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general#2">expr.prim.id.general</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+<DIV class="ins">
+<P>
+If an <I>id-expression</I> <I>E</I> denotes a non-static non-type member of
+some class <TT>C</TT> at a point where the current class
+(7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is <TT>X</TT> and
+<UL class="ins">
+<LI>
+<I>E</I> is potentially evaluated or <TT>C</TT> is <TT>X</TT> or a
+base class of <TT>X</TT>, and</LI>
+<LI>
+<I>E</I> is not the <I>id-expression</I> of a class member access
+expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), and</LI>
+<LI>if <I>E</I> is a <I>qualified-id</I>, <I>E</I> is not the
+un-parenthesized operand of the unary <TT>&amp;</TT> operator
+(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),</LI>
+</UL>
+the <I>id-expression</I> is transformed into a class member access
+expression using <TT>(*this)</TT> as the object expression.
+[<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
+</P>
+</DIV>
+
+<P>If an <I>id-expression</I> E denotes a member M of an anonymous union 
+(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) U:
+<UL>
+<LI>If U is a non-static data member, E refers to M as a member of the
+lookup context of the terminal name of E (after
+any <INS>implicit</INS> transformation to a class member access
+expression <DEL>(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])</DEL>).</LI>
+<LI>...</LI>
+</UL>
+</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general#3">expr.prim.id.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> that denotes a non-static data member or
+implicit object member function of a class can only be used:
+
+<UL>
+<LI>as part of a class member access
+(<DEL>7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]</DEL><INS>after any implicit
+transformation (see above)</INS>) in which the
+object expression refers to the member's class <DEL>[ Footnote: This
+also applies when the object expression is an
+implicit <TT>(*this)</TT> (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).]</DEL> or a
+class derived from that class, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.4.2 [<A href="https://wg21.link/expr.prim.id.unqual#1">expr.prim.id.unqual</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [ Note: ... <DEL>Within the definition of a non-static member
+function, an identifier that names a non-static member is transformed
+to a class member access expression
+(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).</DEL> &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, including the example:</P>
+
+<BLOCKQUOTE>
+
+<DEL>When an <I>id-expression</I> (7.5.4 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
+neither part of a class member access syntax
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
+unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
+current class is X (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
+(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
+the <I>id-expression</I> to a non-static non-type member of some class
+C, and if either the <I>id-expression</I> is potentially evaluated or
+C is X or a base class of X, the <I>id-expression</I> is transformed
+into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
+using (*this) as the <I>postfix-expression</I> to the left of the .
+operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
+class member access expression is ill-formed. &#8212;<I>end
+note</I>] This transformation does not apply in the template
+definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]). [ Example: ... ]</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.8.3.1 [<A href="https://wg21.link/temp.dep.general#6">temp.dep.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+[ Example: ...
+<PRE>
+  template int C&lt;B&gt;::g();    //<SPAN CLASS="cmnt"> OK, transformation to class member access syntax</SPAN>
+                             //<SPAN CLASS="cmnt"> does not occur in the template definition context; see <DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL> <INS>7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS></SPAN>
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2588"></A><H4>2588.
   
 friend declarations and module linkage
@@ -13887,6 +14080,89 @@ type, and <TT>T2</TT> is reference-compatible with <TT>T1</TT></INS>.
 
 </LI>
 </OL>
+
+<BR><BR><HR>
+<A NAME="2777"></A><H4>2777.
+  
+Type of <I>id-expression</I> denoting a template parameter object
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-26<BR>
+
+
+<P>The type of a template parameter object is specified to
+be <TT>const T</TT> in 13.2 [<A href="https://wg21.link/temp.param#8">temp.param</A>] paragraph 8:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> naming a non-type <I>template-parameter</I> of
+class type T denotes a static storage duration object of
+type <TT>const T</TT>, known as a template parameter object, whose
+value is that of the corresponding template argument after it has been
+converted to the type of the <I>template-parameter</I>.  ...
+
+</BLOCKQUOTE>
+
+<P>However, it is unclear what the type of an <I>id-expression</I> is
+that refers to such an object.  There is implementation divergence in
+the treatment of the following example:</P>
+
+<PRE>
+  struct A {};
+
+  template&lt;auto a, auto x&gt;  // <SPAN CLASS="cmnt">also consider</SPAN> A a <SPAN CLASS="cmnt">and</SPAN> const auto x
+  int f() {
+    decltype(a) b;          // <SPAN CLASS="cmnt">also consider</SPAN> decltype((a))
+    A&amp; rb = b;
+    decltype(x) y;
+    int&amp; ry = y;
+  }
+
+  int x = f&lt;A{}, 42&gt;();
+</PRE>
+
+<P>Note that non-type template parameters are handled specially for <TT>decltype</TT>, as specified in 9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype#1">dcl.type.decltype</A>] paragraph 1:</P>
+
+<BLOCKQUOTE>
+
+For an expression E, the type denoted by <TT>decltype(E)</TT> is defined as
+follows:
+
+<UL>
+<LI>...</LI>
+<LI>
+otherwise, if E is an unparenthesized <I>id-expression</I> naming a
+non-type <I>template-parameter</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]),
+decltype(E) is the type of the <I>template-parameter</I> after
+performing any necessary type deduction (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>],
+9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]);
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<P>Change in 7.5.4.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 4:</I></DEL> If the entity is a template parameter object for a
+template parameter of type T (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), the type of
+the expression is <TT>const T</TT>. <DEL>&#8212;<I>end note</I>]</DEL>
+<INS>In all other case, the type of the expression is the type of the
+entity.</INS>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2707"></A><H4>2707.
@@ -16557,6 +16833,101 @@ type C nor a base class subobject of an object of type C, then
 the behavior is undefined.
 
 </BLOCKQUOTE>
+<BR><BR><HR>
+<A NAME="2778"></A><H4>2778.
+  
+Trivial destructor does not imply constant destruction
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-27<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct Foo {};
+  struct Bar {
+    mutable Foo f;
+  };
+  constexpr Bar b{};     //<SPAN CLASS="cmnt"> #1</SPAN>
+</PRE>
+
+<P>In C++20, Foo and Bar are literal types, and #1 is well-formed.  In
+C++23, the requirement for the variable <TT>b</TT> changed to
+"constant destruction".  However, <TT>Bar</TT> does not have constant
+destruction, because its mutable member violates
+7.7 [<A href="https://wg21.link/expr.const#5.17">expr.const</A>] bullet 5.17:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>
+an invocation of a destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) or a
+function call whose <I>postfix-expression</I> names a
+pseudo-destructor (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), in either case for
+an object whose lifetime did not begin within the evaluation of E;
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>This is because the mutable member is considered to have its
+lifetime begin outside of E per 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9:</P>
+
+<BLOCKQUOTE>
+
+An object a is said to have constant destruction if:
+<UL>
+<LI>it is not
+of class type nor (possibly multidimensional) array thereof, or
+</LI>
+<LI>
+it is of class type or (possibly multidimensional) array thereof, that
+class type has a constexpr destructor, and for a hypothetical
+expression E whose only effect is to destroy a, E would be a core
+constant expression if the lifetime of a and its non-mutable
+subobjects (but not its mutable subobjects) were considered to start
+within E.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-03-01):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#10">expr.const</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+An object a is said to have constant destruction if:
+<UL>
+<LI>it is not
+of class type nor (possibly multidimensional) array thereof, or
+</LI>
+<LI>
+it is of class type or (possibly multidimensional) array thereof, that
+class type has a constexpr destructor, and for a hypothetical
+expression E whose only effect is to destroy a, E would be a core
+constant expression
+<INS>if any invocation of a trivial destructor for a mutable subobject
+is ignored and</INS> if the lifetime of a and its non-mutable
+subobjects (but not its mutable subobjects) were considered to start
+within E.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
 <BR><BR><HR>
 <A NAME="2800"></A><H4>2800.
   
@@ -35610,100 +35981,6 @@ lifetime did not begin within E are treated as having a dynamic type
 that is their declared type.</P>
 
 <BR><BR><HR>
-<A NAME="2778"></A><H4>2778.
-  
-Trivial destructor does not imply constant destruction
-</H4>
-<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jiang An
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-07-27<BR>
-
-
-<P>Consider:</P>
-
-<PRE>
-  struct Foo {};
-  struct Bar {
-    mutable Foo f;
-  };
-  constexpr Bar b{};     //<SPAN CLASS="cmnt"> #1</SPAN>
-</PRE>
-
-<P>In C++20, Foo and Bar are literal types, and #1 is well-formed.  In
-C++23, the requirement for the variable <TT>b</TT> changed to
-"constant destruction".  However, <TT>Bar</TT> does not have constant
-destruction, because its mutable member violates
-7.7 [<A href="https://wg21.link/expr.const#5.17">expr.const</A>] bullet 5.17:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>
-an invocation of a destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) or a
-function call whose <I>postfix-expression</I> names a
-pseudo-destructor (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), in either case for
-an object whose lifetime did not begin within the evaluation of E;
-</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>This is because the mutable member is considered to have its
-lifetime begin outside of E per 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9:</P>
-
-<BLOCKQUOTE>
-
-An object a is said to have constant destruction if:
-<UL>
-<LI>it is not
-of class type nor (possibly multidimensional) array thereof, or
-</LI>
-<LI>
-it is of class type or (possibly multidimensional) array thereof, that
-class type has a constexpr destructor, and for a hypothetical
-expression E whose only effect is to destroy a, E would be a core
-constant expression if the lifetime of a and its non-mutable
-subobjects (but not its mutable subobjects) were considered to start
-within E.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 7.7 [<A href="https://wg21.link/expr.const#9">expr.const</A>] paragraph 9 as follows:</P>
-
-<BLOCKQUOTE>
-
-An object a is said to have constant destruction if:
-<UL>
-<LI>it is not
-of class type nor (possibly multidimensional) array thereof, or
-</LI>
-<LI>
-it is of class type or (possibly multidimensional) array thereof, that
-class type has a constexpr destructor, <INS>any mutable member has a
-trivial destructor,</INS> and for a hypothetical expression E whose
-only effect is to destroy a, E would be a core constant expression
-<INS>if any mutable members were ignored and</INS> if the lifetime of
-a and its non-mutable subobjects (but not its mutable subobjects) were
-considered to start within E.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2495"></A><H4>2495.
   
 Glvalue result of a function call
@@ -37958,199 +38235,6 @@ class is defined within the <I>member-specification</I> of the
 enclosing class. &#8212;<I>end note</I>]</DEL>
 
 </BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="2771"></A><H4>2771.
-  
-Transformation for <I>unqualified-id</I>s in address operator
-</H4>
-<B>Section: </B>11.4.3&#160; [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jim X
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-07-16<BR>
-
-
-<P>Consider:</P>
-
-<PRE>
-  struct A{
-    int a;
-    void show(){
-      int* r = &amp;a; //<SPAN CLASS="cmnt"> #1 </SPAN>
-    }
-  };
-</PRE>
-
-<P>According to 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, the
-transformation to class member access does not happen for
-the <I>id-expression</I> <TT>a</TT>, because it is the unparenthesized
-operand of <TT>&amp;</TT>:</P>
-
-<BLOCKQUOTE>
-
-When an <I>id-expression</I> (7.5.4 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
-neither part of a class member access syntax
-(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
-unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
-current class is X (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
-(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
-the <I>id-expression</I> to a non-static non-type member of some class
-C, and if either the <I>id-expression</I> is potentially evaluated or
-C is X or a base class of X, the <I>id-expression</I> is transformed
-into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
-using (*this) as the <I>postfix-expression</I> to the left of the .
-operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
-class member access expression is ill-formed. &#8212;<I>end
-note</I>] This transformation does not apply in the template
-definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
-
-</BLOCKQUOTE>
-
-<P><U>Possible resolution:</U></P>
-
-<P>This resolution moves the transformation to
-7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>], where the similar transformation for
-anonymous unions is already described.</P>
-
-<OL>
-
-<LI>
-<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#7">basic.def.odr</A>] paragraph 7 as follows:</P>
-
-<BLOCKQUOTE>
-
-<TT>*this</TT> is odr-used if this appears as a potentially-evaluated
-expression (including as the result of <DEL>the</DEL> <INS>any</INS>
-implicit transformation <DEL>in the body of a non-static member
-function</DEL> <INS>to a class member access expression</INS>
-(<DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL>
-<INS>7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS>)).
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a new paragraph before 7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general#2">expr.prim.id.general</A>] paragraph 2:</P>
-
-<BLOCKQUOTE>
-
-<DIV class="ins">
-<P>
-If an <I>id-expression</I> <I>E</I> denotes a non-static non-type member of
-some class <TT>C</TT> at a point where the current class
-(7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is <TT>X</TT> and
-<UL class="ins">
-<LI>
-<I>E</I> is potentially evaluated or <TT>C</TT> is <TT>X</TT> or a
-base class of <TT>X</TT>, and</LI>
-<LI>
-<I>E</I> is not the <I>id-expression</I> of a class member access
-expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]), and</LI>
-<LI>if <I>E</I> is a <I>qualified-id</I>, <I>E</I> is not the
-un-parenthesized operand of the unary <TT>&amp;</TT> operator
-(7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]),</LI>
-</UL>
-the <I>id-expression</I> is transformed into a class member access
-expression using <TT>(*this)</TT> as the object expression.
-[<I>Note 1:</I> If C is not X or a base class of X, the
-class member access expression is ill-formed. &#8212;<I>end
-note</I>] This transformation does not apply in the template
-definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]).
-</P>
-</DIV>
-
-<P>If an <I>id-expression</I> E denotes a member M of an anonymous union 
-(11.5.2 [<A href="https://wg21.link/class.union.anon">class.union.anon</A>]) U:
-<UL>
-<LI>If U is a non-static data member, E refers to M as a member of the
-lookup context of the terminal name of E (after
-any <INS>implicit</INS> transformation to a class member access
-expression <DEL>(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>])</DEL>).</LI>
-<LI>...</LI>
-</UL>
-</P>
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general#3">expr.prim.id.general</A>] paragraph 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-An <I>id-expression</I> that denotes a non-static data member or
-implicit object member function of a class can only be used:
-
-<UL>
-<LI>as part of a class member access
-(<DEL>7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]</DEL><INS>after any implicit
-transformation (see above)</INS>) in which the
-object expression refers to the member's class <DEL>[ Footnote: This
-also applies when the object expression is an
-implicit <TT>(*this)</TT> (11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).]</DEL> or a
-class derived from that class, or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.5.4.2 [<A href="https://wg21.link/expr.prim.id.unqual#1">expr.prim.id.unqual</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-... [ Note: ... <DEL>Within the definition of a non-static member
-function, an identifier that names a non-static member is transformed
-to a class member access expression
-(11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]).</DEL> &#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Remove 11.4.3 [<A href="https://wg21.link/class.mfct.non.static#2">class.mfct.non.static</A>] paragraph 2, including the example:</P>
-
-<BLOCKQUOTE>
-
-<DEL>When an <I>id-expression</I> (7.5.4 [<A href="https://wg21.link/expr.prim.id">expr.prim.id</A>]) that is
-neither part of a class member access syntax
-(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) nor the un-parenthesized operand of the
-unary &amp; operator (7.6.2.2 [<A href="https://wg21.link/expr.unary.op">expr.unary.op</A>]) is used where the
-current class is X (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]), if name lookup
-(6.5 [<A href="https://wg21.link/basic.lookup">basic.lookup</A>]) resolves the name in
-the <I>id-expression</I> to a non-static non-type member of some class
-C, and if either the <I>id-expression</I> is potentially evaluated or
-C is X or a base class of X, the <I>id-expression</I> is transformed
-into a class member access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>])
-using (*this) as the <I>postfix-expression</I> to the left of the .
-operator.  [<I>Note 1:</I> If C is not X or a base class of X, the
-class member access expression is ill-formed. &#8212;<I>end
-note</I>] This transformation does not apply in the template
-definition context (13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]). [ Example: ... ]</DEL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.8.3.1 [<A href="https://wg21.link/temp.dep.general#6">temp.dep.general</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-[ Example: ...
-<PRE>
-  template int C&lt;B&gt;::g();    //<SPAN CLASS="cmnt"> OK, transformation to class member access syntax</SPAN>
-                             //<SPAN CLASS="cmnt"> does not occur in the template definition context; see <DEL>11.4.3 [<A href="https://wg21.link/class.mfct.non.static">class.mfct.non.static</A>]</DEL> <INS>7.5.4.1 [<A href="https://wg21.link/expr.prim.id.general">expr.prim.id.general</A>]</INS></SPAN>
-</PRE>
--- end example ]
-</BLOCKQUOTE>
-
-</LI>
-</OL>
 
 <BR><BR><HR>
 <A NAME="2787"></A><H4>2787.
@@ -41632,89 +41716,6 @@ declaration shall contain at most one declarator. <DEL>When such a
 declaration is used to declare a class template, no declarator is
 permitted.</DEL>
 </P>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="2777"></A><H4>2777.
-  
-Type of <I>id-expression</I> denoting a template parameter object
-</H4>
-<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jim X
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-07-26<BR>
-
-
-<P>The type of a template parameter object is specified to
-be <TT>const T</TT> in 13.2 [<A href="https://wg21.link/temp.param#8">temp.param</A>] paragraph 8:</P>
-
-<BLOCKQUOTE>
-
-An <I>id-expression</I> naming a non-type <I>template-parameter</I> of
-class type T denotes a static storage duration object of
-type <TT>const T</TT>, known as a template parameter object, whose
-value is that of the corresponding template argument after it has been
-converted to the type of the <I>template-parameter</I>.  ...
-
-</BLOCKQUOTE>
-
-<P>However, it is unclear what the type of an <I>id-expression</I> is
-that refers to such an object.  There is implementation divergence in
-the treatment of the following example:</P>
-
-<PRE>
-  struct A {};
-
-  template&lt;auto a, auto x&gt;  // <SPAN CLASS="cmnt">also consider</SPAN> A a <SPAN CLASS="cmnt">and</SPAN> const auto x
-  int f() {
-    decltype(a) b;          // <SPAN CLASS="cmnt">also consider</SPAN> decltype((a))
-    A&amp; rb = b;
-    decltype(x) y;
-    int&amp; ry = y;
-  }
-
-  int x = f&lt;A{}, 42&gt;();
-</PRE>
-
-<P>Note that non-type template parameters are handled specially for <TT>decltype</TT>, as specified in 9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype#1">dcl.type.decltype</A>] paragraph 1:</P>
-
-<BLOCKQUOTE>
-
-For an expression E, the type denoted by <TT>decltype(E)</TT> is defined as
-follows:
-
-<UL>
-<LI>...</LI>
-<LI>
-otherwise, if E is an unparenthesized <I>id-expression</I> naming a
-non-type <I>template-parameter</I> (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]),
-decltype(E) is the type of the <I>template-parameter</I> after
-performing any necessary type deduction (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>],
-9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]);
-</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 7.5.4.2 [<A href="https://wg21.link/expr.prim.id.unqual#3">expr.prim.id.unqual</A>] paragraph 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-<DEL>[<I>Note 4:</I></DEL> If the entity is a template parameter object for a
-template parameter of type T (13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]), the type of
-the expression is <TT>const T</TT>. <DEL>&#8212;<I>end note</I>]</DEL>
-<INS>In all other case, the type of the expression is the type of the
-entity.</INS>
 
 </BLOCKQUOTE>
 
