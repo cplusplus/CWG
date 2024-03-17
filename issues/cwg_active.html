@@ -63,7 +63,7 @@
       
 
      Revision
-     113c</H2></CENTER>
+     113d</H2></CENTER>
 <BR><P>
       This document contains the C++ core language issues on which the
       Committee (INCITS PL22.16 + WG21) has not yet acted, that is, issues
@@ -174,6 +174,10 @@ USA.</P>
 <A HREF="cwg_active.html#2866">2866</A>,
 <A HREF="cwg_active.html#2867">2867</A>,
 <A HREF="cwg_active.html#2868">2868</A>,
+<A HREF="cwg_active.html#2869">2869</A>,
+<A HREF="cwg_active.html#2870">2870</A>,
+<A HREF="cwg_active.html#2871">2871</A>,
+<A HREF="cwg_active.html#2872">2872</A>,
 </P>
 
 <P><B>Revision 113, 2023-12-19:</B></P>
@@ -4129,6 +4133,17 @@ Repeated evaluation of a <I>string-literal</I> may yield different objects
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">5.13.5&#160;
+  <A href="https://wg21.link/lex.string">lex.string</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2870">2870</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Combining absent <I>encoding-prefix</I>es
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">5.13.9&#160;
   <A href="https://wg21.link/lex.ext">lex.ext</A>
 </TD>
@@ -4335,6 +4350,17 @@ Programs and translation units
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Repeated structured binding declarations
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">6.6&#160;
+  <A href="https://wg21.link/basic.link">basic.link</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2872">2872</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Linkage and unclear "can be referred to"
 </TD>
 </TR>
 <TR>
@@ -5009,6 +5035,17 @@ Problems in the specification of qualification conversions
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">7.5.2&#160;
+  <A href="https://wg21.link/expr.prim.this">expr.prim.this</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2869">2869</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+<TT>this</TT> in local classes
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">7.5.4&#160;
   <A href="https://wg21.link/expr.prim.id">expr.prim.id</A>
 </TD>
@@ -5255,7 +5292,7 @@ Accessing static data members via null pointer
   <A href="https://wg21.link/expr.ref">expr.ref</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2813">2813</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Class member access with prvalues
@@ -6845,6 +6882,17 @@ Inheriting default constructors
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">11.4.5.2&#160;
+  <A href="https://wg21.link/class.default.ctor">class.default.ctor</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2871">2871</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+User-declared constructor templates inhibiting default constructors
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">11.4.5.3&#160;
   <A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>
 </TD>
@@ -7003,7 +7051,7 @@ Static data members of classes with typedef name for linkage purposes
   <A href="https://wg21.link/class.static.data">class.static.data</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#1721">1721</A></TD>
-<TD ALIGN="CENTER">drafting</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Diagnosing ODR violations for static data members
@@ -10658,6 +10706,236 @@ determines the result of the entire postfix expression.
 </P>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2813"></A><H4>2813.
+  
+Class member access with prvalues
+</H4>
+<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-08-28<BR>
+
+
+<P>Subclause 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot) the first expression shall be a glvalue. ...
+
+</BLOCKQUOTE>
+
+<P>This provision forces a temporary materialization conversion
+(i.e. a copy) per 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7:</P>
+
+<BLOCKQUOTE>
+
+Whenever a prvalue appears as an operand of an operator that expects a
+glvalue for that operand, the temporary materialization conversion
+(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied to convert the expression to
+an xvalue.
+
+</BLOCKQUOTE>
+
+<P>However, this is limiting in the case that an explicit object
+member function with a by-value object parameter is invoked for a
+non-copyable class object, for example:</P>
+
+<PRE>
+  struct X {
+    X() = default;
+
+    X(const X&amp;) = delete;
+    X&amp; operator=(const X&amp;) = delete;
+
+    void f(this X self) { }
+  };
+
+  void f() {
+    X{}.f();   // OK?
+  }
+</PRE>
+
+<P>The example ought to be well-formed.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2024-02-16) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> Temporary objects are materialized:
+<UL>
+<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
+<LI>when performing <INS>certain</INS>
+member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
+<LI class="ins">when invoking an implicit object member function on a
+class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>...</LI>
+</UL>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>]
+<INS>If the function is a static member function invoked using class
+member access syntax, the object expression is a discarded-value
+expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
+implicit object member function, <INS>the object expression of the
+class member access shall be a glvalue</INS> and the <TT>this</TT>
+parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
+with a pointer to the object of the call, converted as if by an
+explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
+5:</I> There is no access or ambiguity checking on this conversion;
+the access checking and disambiguation are done as part of the
+(possibly implicit) class member access operator. See
+6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot)<INS>, if the <I>id-expression</I> is a data
+member,</INS> the first expression shall be a glvalue. For the second
+option (arrow)<INS>,</INS> the first expression shall be a prvalue
+having pointer type. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-02-16</B></P>
+
+<P>When a class member access refers to a static data member or a
+member enumerator, the object expression should also be treated as a
+discarded-value expression.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-03-01):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> Temporary objects are materialized:
+<UL>
+<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
+7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
+<LI>when performing <INS>certain</INS>
+member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
+(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
+<LI class="ins">when invoking an implicit object member function on a
+class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>...</LI>
+</UL>
+&#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a function is called, each parameter
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
+corresponding argument.  If the function is an explicit object member
+function and there is an implied object argument
+(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
+preceded by the implied object argument for the purposes of this
+correspondence.  If there is no corresponding argument, the default
+argument for the parameter is used.  [<I>Example 1:</I>
+<PRE>
+template&lt;typename ...T&gt; int f(int n = 0, T ...t);
+int x = f&lt;int&gt;(); // error: no argument for second function parameter
+</PRE>
+&#8212;<I>end example</I>] If the function is an implicit object
+member function, <INS>the object expression of the class member access
+shall be a glvalue</INS> and the <TT>this</TT> parameter of the
+function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized with a pointer to
+the object of the call, converted as if by an explicit type conversion
+(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note 5:</I> There is no access or
+ambiguity checking on this conversion; the access checking and
+disambiguation are done as part of the (possibly implicit) class
+member access operator. See 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>],
+11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
+7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
+is called, the type of any parameter shall not be a class type that is
+either incomplete or abstract.  [<I>Note 6:</I> This still allows a
+parameter to be a pointer or reference to such a type. However, it
+prevents a passed-by-value parameter to have an incomplete or abstract
+class type. &#8212;<I>end note</I>] It is implementation-defined
+whether ...
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+For the first option (dot)<INS>, if the <I>id-expression</I> names a
+static member or an enumerator, the first expression is a
+discarded-value expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]); if
+the <I>id-expression</I> names a non-static data member,</INS> the first
+expression shall be a glvalue. For the second option
+(arrow)<INS>,</INS> the first expression shall be a prvalue having
+pointer type. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="2855"></A><H4>2855.
@@ -16303,236 +16581,6 @@ the closure object's lifetime ends.
 </BLOCKQUOTE>
 
 <BR><BR><HR>
-<A NAME="2813"></A><H4>2813.
-  
-Class member access with prvalues
-</H4>
-<B>Section: </B>7.6.1.5&#160; [<A href="https://wg21.link/expr.ref">expr.ref</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Barry Revzin
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-08-28<BR>
-
-
-<P>Subclause 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 specifies:</P>
-
-<BLOCKQUOTE>
-
-For the first option (dot) the first expression shall be a glvalue. ...
-
-</BLOCKQUOTE>
-
-<P>This provision forces a temporary materialization conversion
-(i.e. a copy) per 7.2.1 [<A href="https://wg21.link/basic.lval#7">basic.lval</A>] paragraph 7:</P>
-
-<BLOCKQUOTE>
-
-Whenever a prvalue appears as an operand of an operator that expects a
-glvalue for that operand, the temporary materialization conversion
-(7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>]) is applied to convert the expression to
-an xvalue.
-
-</BLOCKQUOTE>
-
-<P>However, this is limiting in the case that an explicit object
-member function with a by-value object parameter is invoked for a
-non-copyable class object, for example:</P>
-
-<PRE>
-  struct X {
-    X() = default;
-
-    X(const X&amp;) = delete;
-    X&amp; operator=(const X&amp;) = delete;
-
-    void f(this X self) { }
-  };
-
-  void f() {
-    X{}.f();   // OK?
-  }
-</PRE>
-
-<P>The example ought to be well-formed.</P>
-
-<P><B>Proposed resolution (reviewed by CWG 2024-02-16) [SUPERSEDED]:</B></P>
-
-<OL>
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-... [<I>Note 3:</I> Temporary objects are materialized:
-<UL>
-<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
-7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
-<LI>when performing <INS>certain</INS>
-member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
-(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
-<LI class="ins">when invoking an implicit object member function on a
-class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>...</LI>
-</UL>
-&#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-When a function is called, each parameter
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
-corresponding argument.  If the function is an explicit object member
-function and there is an implied object argument
-(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
-preceded by the implied object argument for the purposes of this
-correspondence.  If there is no corresponding argument, the default
-argument for the parameter is used.  [<I>Example 1:</I>
-<PRE>
-template&lt;typename ...T&gt; int f(int n = 0, T ...t);
-int x = f&lt;int&gt;(); // error: no argument for second function parameter
-</PRE>
-&#8212;<I>end example</I>]
-<INS>If the function is a static member function invoked using class
-member access syntax, the object expression is a discarded-value
-expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</INS> If the function is an
-implicit object member function, <INS>the object expression of the
-class member access shall be a glvalue</INS> and the <TT>this</TT>
-parameter of the function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized
-with a pointer to the object of the call, converted as if by an
-explicit type conversion (7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note
-5:</I> There is no access or ambiguity checking on this conversion;
-the access checking and disambiguation are done as part of the
-(possibly implicit) class member access operator. See
-6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>], 11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
-7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
-is called, the type of any parameter shall not be a class type that is
-either incomplete or abstract.  [<I>Note 6:</I> This still allows a
-parameter to be a pointer or reference to such a type. However, it
-prevents a passed-by-value parameter to have an incomplete or abstract
-class type. &#8212;<I>end note</I>] It is implementation-defined
-whether ...
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-For the first option (dot)<INS>, if the <I>id-expression</I> is a data
-member,</INS> the first expression shall be a glvalue. For the second
-option (arrow)<INS>,</INS> the first expression shall be a prvalue
-having pointer type. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<P><B>CWG 2024-02-16</B></P>
-
-<P>When a class member access refers to a static data member or a
-member enumerator, the object expression should also be treated as a
-discarded-value expression.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#2">class.temporary</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-... [<I>Note 3:</I> Temporary objects are materialized:
-<UL>
-<LI>when binding a reference to a prvalue (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>], 7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>],
-7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]),</LI>
-<LI>when performing <INS>certain</INS>
-member <DEL>access</DEL> <INS>accesses</INS> on a class prvalue
-(7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>], 7.6.4 [<A href="https://wg21.link/expr.mptr.oper">expr.mptr.oper</A>]),</LI>
-<LI class="ins">when invoking an implicit object member function on a
-class prvalue (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>...</LI>
-</UL>
-&#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#6">expr.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-When a function is called, each parameter
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) is initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>]) with its
-corresponding argument.  If the function is an explicit object member
-function and there is an implied object argument
-(12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]), the list of provided arguments is
-preceded by the implied object argument for the purposes of this
-correspondence.  If there is no corresponding argument, the default
-argument for the parameter is used.  [<I>Example 1:</I>
-<PRE>
-template&lt;typename ...T&gt; int f(int n = 0, T ...t);
-int x = f&lt;int&gt;(); // error: no argument for second function parameter
-</PRE>
-&#8212;<I>end example</I>] If the function is an implicit object
-member function, <INS>the object expression of the class member access
-shall be a glvalue</INS> and the <TT>this</TT> parameter of the
-function (7.5.2 [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]) is initialized with a pointer to
-the object of the call, converted as if by an explicit type conversion
-(7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]).  [<I>Note 5:</I> There is no access or
-ambiguity checking on this conversion; the access checking and
-disambiguation are done as part of the (possibly implicit) class
-member access operator. See 6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>],
-11.8.3 [<A href="https://wg21.link/class.access.base">class.access.base</A>], and
-7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]. &#8212;<I>end note</I>] When a function
-is called, the type of any parameter shall not be a class type that is
-either incomplete or abstract.  [<I>Note 6:</I> This still allows a
-parameter to be a pointer or reference to such a type. However, it
-prevents a passed-by-value parameter to have an incomplete or abstract
-class type. &#8212;<I>end note</I>] It is implementation-defined
-whether ...
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 7.6.1.5 [<A href="https://wg21.link/expr.ref#2">expr.ref</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-For the first option (dot)<INS>, if the <I>id-expression</I> names a
-static member or an enumerator, the first expression is a
-discarded-value expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]); if
-the <I>id-expression</I> names a non-static data member,</INS> the first
-expression shall be a glvalue. For the second option
-(arrow)<INS>,</INS> the first expression shall be a prvalue having
-pointer type. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="2814"></A><H4>2814.
   
 Alignment requirement of incomplete class type
@@ -17512,6 +17560,79 @@ function (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]).</INS></P>
 <P><B>CWG 2023-11-09</B></P>
 
 <P>Progress of this issue is blocked on <A HREF="cwg_active.html#2554">issue 2554</A>.</P>
+
+<BR><BR><HR>
+<A NAME="1721"></A><H4>1721.
+  
+Diagnosing ODR violations for static data members
+</H4>
+<B>Section: </B>11.4.9.3&#160; [<A href="https://wg21.link/class.static.data">class.static.data</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mike Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2013-07-31<BR>
+
+
+<P>Describing the handling of static data members with
+<I>brace-or-equal-initializer</I>s, 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4
+says,</P>
+
+<BLOCKQUOTE>
+
+The member shall still be defined in a namespace scope if it is odr-used
+(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) in the program and the namespace scope
+definition shall not contain an initializer.
+
+</BLOCKQUOTE>
+
+<P>The word &#8220;shall&#8221; implies a required diagnostic, but this
+is describing an ODR violation (the static data member might be defined
+in a different translation unit) and thus should be &#8220;no diagnostic
+required.&#8221;</P>
+
+<P><B>Additional notes (March, 2024)</B></P>
+
+<P>This paragraph has more issues and is largely redundant with
+6.2 [<A href="https://wg21.link/basic.def#2.3">basic.def</A>] paragraph 2.3 and paragraph 2.4.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+If a non-volatile non-inline const static data member is of integral
+or enumeration type, its declaration in the class definition can
+specify a <I>brace-or-equal-initializer</I> in which
+every <I>initializer-clause</I> that is
+an <I>assignment-expression</I> is a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). The member shall still be defined in a
+namespace scope if it is odr-used (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) in the
+program and the namespace scope definition shall not contain an
+initializer . The declaration of an inline static data member (which
+is a definition) may specify a <I>brace-or-equal-initializer</I> .  If
+the member is declared with the constexpr specifier, it may be
+redeclared in namespace scope with no initializer (this usage is
+deprecated; see D.5 [<A href="https://wg21.link/depr.static.constexpr">depr.static.constexpr</A>]). Declarations of other
+static data members shall not specify a
+<I>brace-or-equal-initializer</I>.
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+
+A declaration of a static data member in a class definition shall not
+specify a <I>brace-or-equal-initializer</I> unless the member is
+either inline or of non-volatile const integral or enumeration
+type. In the latter case, the member shall be constant-initialized
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]).
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2554"></A><H4>2554.
@@ -18628,7 +18749,7 @@ explicit specializations of function templates at class scope
 is present, and EDG accepts, but ignores the constraint, causing #1 to
 fail.</P>
 
-<P><B>Proposed resolution:</B></P>
+<P><B>Proposed resolution (reviewed by CWG 2024-03-01):</B></P>
 
 <OL>
 <LI>
@@ -18638,9 +18759,9 @@ follows:</P>
 <BLOCKQUOTE>
 
 <P class="ins">
-An explicit specialization shall not have a
-trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]) unless it
-declares a function template.  [ Example:</P>
+An explicit specialization of a function shall not have a
+trailing <I>requires-clause</I> (9.3.1 [<A href="https://wg21.link/dcl.decl.general">dcl.decl.general</A>]).  [
+Example:</P>
 
 <PRE class="ins">
   template&lt;typename T&gt;
@@ -18700,6 +18821,7 @@ templates ...</P>
    static_assert(D&lt;char&gt;::f(0) == 1);          // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
    static_assert(D&lt;char[2]&gt;::f(0) == 1);       // <SPAN CLASS="cmnt">overload resolution selects #1; #3 is a specialization for #1</SPAN>
    static_assert(D&lt;signed char&gt;::f(0) == 1);   // <SPAN CLASS="cmnt">overload resolution selects #2; #3 is a specialization for #2</SPAN>
+   static_assert(D&lt;signed char&gt;::f(0.0) == 0); // <SPAN CLASS="cmnt">overload resolution selects #2; #4 is a specialization for #2</SPAN>
 </PRE>
 <P>-- end example ]</P>
 
@@ -24033,40 +24155,6 @@ reason to prohibit such members in an unnamed class even without a
 typedef name for linkage purposes. </P>
 
 <BR><BR><HR>
-<A NAME="1721"></A><H4>1721.
-  
-Diagnosing ODR violations for static data members
-</H4>
-<B>Section: </B>11.4.9.3&#160; [<A href="https://wg21.link/class.static.data">class.static.data</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>drafting
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Mike Miller
- &#160;&#160;&#160;
-
- <B>Date: </B>2013-07-31<BR>
-
-
-<P>Describing the handling of static data members with
-<I>brace-or-equal-initializer</I>s, 11.4.9.3 [<A href="https://wg21.link/class.static.data#4">class.static.data</A>] paragraph 4
-says,</P>
-
-<BLOCKQUOTE>
-
-The member shall still be defined in a namespace scope if it is odr-used
-(6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) in the program and the namespace scope
-definition shall not contain an initializer.
-
-</BLOCKQUOTE>
-
-<P>The word &#8220;shall&#8221; implies a required diagnostic, but this
-is describing an ODR violation (the static data member might be defined
-in a different translation unit) and thus should be &#8220;no diagnostic
-required.&#8221;</P>
-
-<BR><BR><HR>
 <A NAME="2335"></A><H4>2335.
   
 Deduced return types vs member types
@@ -28253,6 +28341,10 @@ is implementation divergence on these questions.</P>
 <P>CWG felt that such errors should be substitution failures, not hard
 errors.</P>
 
+<P><B>Additional notes (March, 2024)</B></P>
+
+<P>This issue is related to <A HREF="cwg_active.html#2296">issue 2296</A>.</P>
+
 <BR><BR><HR>
 <A NAME="2222"></A><H4>2222.
   
@@ -30503,6 +30595,60 @@ instantiations across different translation units.</P>
 <P>The matter should be revisited in light of this new information.</P>
 
 <BR><BR><HR>
+<A NAME="2870"></A><H4>2870.
+  
+Combining absent <I>encoding-prefix</I>es
+</H4>
+<B>Section: </B>5.13.5&#160; [<A href="https://wg21.link/lex.string">lex.string</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-09<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/511">#511</A>.)</P>
+
+<P>Subclause 5.13.5 [<A href="https://wg21.link/lex.string#7">lex.string</A>] paragraph 7 does not properly
+handle the case where both <I>encoding-prefix</I>es are absent:</P>
+
+<BLOCKQUOTE>
+
+The common <I>encoding-prefix</I> for a sequence of
+adjacent <I>string-literal</I>s is determined pairwise as follows: If
+two <I>string-literal</I>s have the same <I>encoding-prefix</I> , the
+common <I>encoding-prefix</I> is that <I>encoding-prefix</I> . If
+one <I>string-literal</I> has no <I>encoding-prefix</I> , the
+common <I>encoding-prefix</I> is that of the
+other <I>string-literal</I>. Any other combinations are ill-formed.
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution:</U></P>
+
+<BLOCKQUOTE>
+
+The common <I>encoding-prefix</I> for a sequence of
+adjacent <I>string-literal</I>s is determined pairwise as
+follows: <DEL>If two <I>string-literal</I>s have the same
+<I>encoding-prefix</I>, the common <I>encoding-prefix</I> is that
+<I>encoding-prefix</I>.</DEL> If one <I>string-literal</I> has no
+<I>encoding-prefix</I>, the common <I>encoding-prefix</I> is that of
+the other <I>string-literal</I> <INS>or is absent if the other
+<I>string-literal</I> has no <I>encoding-prefix</I>. Otherwise,
+both <I>string-literal</I>s shall have the same
+<I>encoding-prefix</I>, and the common <I>encoding-prefix</I> is that
+<I>encoding-prefix</I></INS>. <DEL>Any other combinations are
+ill-formed.</DEL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="1266"></A><H4>1266.
   
 <I>user-defined-integer-literal</I> overflow
@@ -31370,6 +31516,85 @@ declare E as one of the same type.</LI>
 </UL>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2872"></A><H4>2872.
+  
+Linkage and unclear "can be referred to"
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-08<BR>
+
+
+
+
+<P>It is unclear what "can be referred to" means in
+6.6 [<A href="https://wg21.link/basic.link#2">basic.link</A>] paragraph 2.  Paragraph 8 provides precise
+definitions for "same entity".</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Replace in 6.6 [<A href="https://wg21.link/basic.link#2">basic.link</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+A name is said to have <I>linkage</I> when it can denote the same object,
+reference, function, type, template, namespace or value as a name
+introduced by a declaration in another scope:
+
+<UL>
+<LI>When a name has external linkage, the entity it denotes can be
+referred to by names from scopes of other translation units or from
+other scopes of the same translation unit.</LI>
+<LI>When a name has module linkage, the entity it denotes can be
+referred to by names from other scopes of the same module unit
+(10.1 [<A href="https://wg21.link/module.unit">module.unit</A>]) or from scopes of other module units of
+that same module.</LI>
+<LI>When a
+name has internal linkage, the entity it denotes can be referred to by
+names from other scopes in the same translation unit.</LI>
+<LI>When a name has no linkage, the entity it denotes cannot be
+referred to by names from other scopes.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BLOCKQUOTE class="ins">
+
+A name can have <I>external linkage</I>, <I>module linkage</I>,
+<I>internal linkage</I>, or <I>no linkage</I>, as determined by the
+rules below.  [ Note: The linkage of a name determines when
+corresponding declarations (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) that introduce
+that name can declare the same entity. ---end note]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.6 [<A href="https://wg21.link/class.local#3">class.local</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If class X is a local class, a nested class
+Y <DEL>may</DEL> <INS>shall</INS> be declared <INS>only</INS> in class
+X and later defined in the definition of class X or be later defined
+in the same scope as the definition of class X. A class nested within
+a local class is a local class.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="1953"></A><H4>1953.
@@ -33867,6 +34092,61 @@ or to perform the array-to-pointer conversion before considering
 the composite pointer type.</P></LI>
 
 </OL>
+
+<BR><BR><HR>
+<A NAME="2869"></A><H4>2869.
+  
+<TT>this</TT> in local classes
+</H4>
+<B>Section: </B>7.5.2&#160; [<A href="https://wg21.link/expr.prim.this">expr.prim.this</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/515">#515</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    static void f() {
+      struct B {
+        void *g() { return this; }
+       };
+     }
+  };
+</PRE>
+
+<P>According to 7.5.2 [<A href="https://wg21.link/expr.prim.this#3">expr.prim.this</A>] paragraph 3, this example is
+ill-formed, because <TT>this</TT> "appears within" the declaration of a
+static meember function.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<BLOCKQUOTE>
+
+If a declaration declares a member function or member function
+template of a class X, the expression <TT>this</TT> is a prvalue of type
+&#8220;pointer to <I>cv-qualifier-seq</I> X&#8221; wherever X is the
+current class between the optional <I>cv-qualifier-seq</I> and the end
+of the <I>function-definition</I>, <I>member-declarator</I> , or
+<I>declarator</I>. <DEL>It shall not appear within
+the</DEL> <INS>The</INS> declaration <DEL>of either</DEL> <INS>that
+determines the type of <TT>this</TT> shall declare neither</INS> a
+static member function <DEL>or</DEL> <INS>nor</INS> an explicit object
+member function of the current class (although its type and value
+category are defined within such member functions as they are within
+an implicit object member function).
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2858"></A><H4>2858.
@@ -38075,6 +38355,9 @@ Standard layout class with empty base class also in first member
  <B>Date: </B>2023-05-10<BR>
 
 
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/317">#317</A>.)</P>
+
 <P>Consider:</P>
 
 <PRE>
@@ -38101,8 +38384,10 @@ standard-layout, including 11.2 [<A href="https://wg21.link/class.prop#3.7">clas
 thus C is standard-layout, contrary to popular ABI rules that do not
 provide pointer interconvertibility between C::b and C.</P>
 
-<P><U>Suggested resolution:</U></P>
+<P><U>Suggested resolution (reviewed by CWG 2024-03-01, with no consensus):</U></P>
 
+<OL>
+<LI>
 <P>Change in 11.2 [<A href="https://wg21.link/class.prop#3.7">class.prop</A>] bullet 3.7 as follows:</P>
 
 <BLOCKQUOTE>
@@ -38137,6 +38422,24 @@ of</DEL> M(Xe).</LI>
 </UL>
 
 </BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add more examples in 11.2 [<A href="https://wg21.link/class.prop#4">class.prop</A>] paragraph 4:</P>
+
+<PRE class="ins">
+
+  struct X {};                     // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct Y : X { char c; };        // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct Z : X { Y y; };           // <SPAN CLASS="cmnt">not a standard-layout class</SPAN>
+
+  struct H {};                     // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct I : H {};                 // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct J { I i; };               // <SPAN CLASS="cmnt">standard-layout class</SPAN>
+  struct K : I { J j; };           // <SPAN CLASS="cmnt">not a standard-layout class</SPAN>
+</PRE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="2188"></A><H4>2188.
@@ -38386,6 +38689,42 @@ has been initialized and whether it is const.</P>
 user code can determine whether NRVO occurs at runtime by comparing a
 pointer to the local object with a pointer to the object in the
 surrounding context.</P>
+
+<BR><BR><HR>
+<A NAME="2871"></A><H4>2871.
+  
+User-declared constructor templates inhibiting default constructors
+</H4>
+<B>Section: </B>11.4.5.2&#160; [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-03-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/510">#510</A>.)</P>
+
+<P>Subclause 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#1">class.default.ctor</A>] paragraph 1 does not, but
+should, consider user-declared constructor templaets.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 11.4.5.2 [<A href="https://wg21.link/class.default.ctor#1">class.default.ctor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If there is no user-declared constructor <INS>or constructor
+template</INS> for class X, a non-explicit constructor having no
+parameters is implicitly declared as defaulted
+(9.5 [<A href="https://wg21.link/dcl.fct.def">dcl.fct.def</A>]). ...
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2743"></A><H4>2743.
@@ -43253,7 +43592,10 @@ argument for making this a SFINAE case can be made.</P>
 <P><B>EWG 2022-11-11</B></P>
 
 <P>This is tracked in github issue
-<A HREF="https://github.com/cplusplus/papers/issues/1377">cplusplus/papers#1377</A>.</P>
+<A HREF="https://github.com/cplusplus/papers/issues/1377">cplusplus/papers#1377</A>.
+
+See also paper P2285 (Are default function arguments in the immediate context?), tracked by github issue
+<A HREF="https://github.com/cplusplus/papers/issues/976">cplusplus/papers#976</A>.</P>
 
 <BR><BR><HR>
 <A NAME="2498"></A><H4>2498.
