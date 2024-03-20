@@ -16,7 +16,7 @@
   Core Issues List revision 113d.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-03-16</P>
+<P>2024-03-20</P>
 <HR>
 <A NAME="2657"></A><H4>2657.
   
@@ -52,7 +52,6 @@ instead. (5.4.2 would be used if the initializer were, for example,
 <P><B>Proposed resolution (approved by CWG 2023-11-11):</B></P>
 
 <OL>
-
 <LI>
 <P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
 
@@ -83,16 +82,20 @@ reference binds to the resulting glvalue (or to an appropriate base
 class subobject).
 
 </BLOCKQUOTE>
-
 </LI>
 
 <LI>
-
 <P>Append to the example in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.3">dcl.init.ref</A>] bullet 5.3 as follows:</P>
 
 <PRE>
   B&amp;&amp; rrb = x;  //<SPAN CLASS="cmnt"> binds directly to the result of</SPAN> operator B
-  <INS>const int&amp; r2 = 0;  //<SPAN CLASS="cmnt"> binds directly to temporary of type </SPAN>const int</INS>
+
+  <INS>constexpr int f() {
+    const int &amp;x = 42;
+    const_cast&lt;int &amp;&gt;(x) = 1;  // <SPAN CLASS="cmnt">undefined behavior</SPAN>
+    return x;
+  }
+  constexpr int z = f();   // <SPAN CLASS="cmnt">error: not a constant expression</SPAN></INS>
 </PRE>
 
 </LI>
