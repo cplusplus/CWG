@@ -154,6 +154,9 @@ USA.</P>
 <A HREF="cwg_active.html#2917">2917</A>,
 <A HREF="cwg_active.html#2918">2918</A>,
 <A HREF="cwg_active.html#2919">2919</A>,
+<A HREF="cwg_active.html#2920">2920</A>,
+<A HREF="cwg_active.html#2921">2921</A>,
+<A HREF="cwg_active.html#2922">2922</A>,
 </P>
 
 <P><B>Revision 115, 2024-07-20:</B></P>
@@ -5756,6 +5759,17 @@ Subtle difference between constant-initialized and constexpr
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">7.7&#160;
+  <A href="https://wg21.link/expr.const">expr.const</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2922">2922</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+constexpr placement-new is too permissive
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">8.6.5&#160;
   <A href="https://wg21.link/stmt.ranged">stmt.ranged</A>
 </TD>
@@ -6380,6 +6394,17 @@ Linkage specifications, module purview, and module attachment
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Visibility of enumerator names
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">10.2&#160;
+  <A href="https://wg21.link/module.interface">module.interface</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2921">2921</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Exporting redeclarations of entities not attached to a named module
 </TD>
 </TR>
 <TR>
@@ -7579,6 +7604,17 @@ What is a &#8220;nested&#8221; <TT>&gt;</TT> or <TT>&gt;&gt;</TT>?
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Can we omit the <TT>template</TT> disambiguator in <I>nested-name-specifier</I>s in type-only contexts?
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">13.3&#160;
+  <A href="https://wg21.link/temp.names">temp.names</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2920">2920</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+The <TT>template</TT> keyword for base classes
 </TD>
 </TR>
 <TR>
@@ -32221,6 +32257,57 @@ initialized. ...
 <P>Is the difference intentional?</P>
 
 <BR><BR><HR>
+<A NAME="2922"></A><H4>2922.
+  
+constexpr placement-new is too permissive
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-10<BR>
+
+
+
+
+<P>constexpr placement new requires (just) pointer-interconvertibility
+for the argument pointer, whereas <TT>static_cast</TT>
+from <TT>void*</TT> to <TT>T*</TT> requires similarity.  Requiring
+pointer-interconvertibility would not allow to differentiate two
+members of some union of the same type; such differentiation is
+required diagnose access to inactive union members.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.18.2">expr.const</A>] bullet 5.18.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>
+the selected allocation function is a non-allocating form
+(17.6.3.4 [<A href="https://wg21.link/new.delete.placement">new.delete.placement</A>]) with an allocated type T, where
+<UL>
+<LI>the placement argument to the <I>new-expression</I> points to an
+object <DEL>that is pointer-interconvertible with an object
+of</DEL> <INS>whose</INS> type <INS>is similar to</INS>
+T <INS>(7.3.6 [<A href="https://wg21.link/conv.qual">conv.qual</A>])</INS> or, if T is an array
+type, <DEL>with</DEL> <INS>to</INS> the first element of an object
+of <INS>a</INS> type <INS>similar to</INS> T, and</LI>
+<LI>the placement argument points to storage whose
+duration began within the evaluation of E;</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2495"></A><H4>2495.
   
 Glvalue result of a function call
@@ -33899,6 +33986,68 @@ shall not be exported <INS>unless it has external linkage</INS>..
 </LI>
 
 </OL>
+
+<BR><BR><HR>
+<A NAME="2921"></A><H4>2921.
+  
+Exporting redeclarations of entities not attached to a named module
+</H4>
+<B>Section: </B>10.2&#160; [<A href="https://wg21.link/module.interface">module.interface</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-20<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  export module mod;
+  extern "C++" void func();
+  export extern "C++" {
+    void func();
+  }
+</PRE>
+
+<P>Per 10.2 [<A href="https://wg21.link/module.interface#6">module.interface</A>] paragraph 6, this is currently
+ill-formed, but implementation treatment varies and there seems to be
+little rationale why this should be ill-formed for entities not
+attached to a named module.</P>
+
+<P>The rule also makes the following example ill-formed, which was
+intended to be well-formed:</P>
+
+<PRE>
+  export module M;
+  namespace N { //<SPAN CLASS="cmnt"> external linkage, attached to global module, not exported</SPAN>
+    void f();
+  }
+  namespace N { //<SPAN CLASS="cmnt"> error: exported namespace, redeclares non-exported namespace</SPAN>
+    export void g();
+  }
+</PRE>
+
+<P>The mental model here is that for an entity not attached to a named
+module, exportedness is not a meaningful property of that entity.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 10.2 [<A href="https://wg21.link/module.interface#6">module.interface</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A redeclaration of an entity X is implicitly exported if X was
+introduced by an exported declaration; otherwise it shall not be
+exported <INS>if it is attached to a named module</INS>.
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2727"></A><H4>2727.
@@ -38215,6 +38364,148 @@ putative <I>template-id</I> &#8220;nested&#8221; or not?</P>
 <P>Somehow the specification must be written to avoid taking the
 <TT>&gt;</TT> token in the operator name as the end of the template
 argument list for <TT>X</TT>.</P>
+
+<BR><BR><HR>
+<A NAME="2920"></A><H4>2920.
+  
+The <TT>template</TT> keyword for base classes
+</H4>
+<B>Section: </B>13.3&#160; [<A href="https://wg21.link/temp.names">temp.names</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-15<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;int T&gt;
+  struct BaseT {
+    void Foo() {}
+  };
+
+  template&lt;int T&gt;
+  struct DerivedT : BaseT&lt;T&gt; {
+    void Inner() {
+      this-&gt;template /* unnecessary keyword before CWG1835 */ BaseT&lt;T&gt;::Foo();
+    }
+  };
+</PRE>
+
+<P>The resolution of <A HREF="cwg_defects.html#1835">issue 1835</A> in P1787
+now requires the <TT>template</TT> keyword in this situation.  This
+breaks code in several large projects.</P>
+
+<P>The reason to require the <TT>template</TT> keyword is that the
+injected-class-name, like any other member, is inherited from the base
+class, but the base class is dependent, and thus name lookup does not
+consider base class members when parsing the template definition.  For
+example:</P>
+
+<PRE>
+  namespace N
+  {
+    template&lt;int I&gt;
+    struct A { };
+
+    template&lt;int I&gt;
+    struct B
+    {
+      using C = A&lt;I&gt;;
+
+      template&lt;int J&gt;
+      using D = A&lt;J&gt;;
+    };
+  }
+
+  //<SPAN CLASS="cmnt"> impossible to determine the injected-class-name of the base class in the definition context since 'N::B' could be specialized.</SPAN>
+  //<SPAN CLASS="cmnt"> it might not be the injected-class-name of a template, and it might not even be 'C'/'D'!</SPAN>
+
+  template&lt;int I&gt;
+  struct X : N::B&lt;I&gt;::C { }; 
+
+  template&lt;int I&gt;
+  struct Y : N::B&lt;I&gt;::template D&lt;I&gt; { };
+</PRE>
+
+<P>
+Even if we specified how to find the injected-class-name of a dependent base class for a subset of cases, we would reintroduce the problem that the resolution to <A HREF="cwg_defects.html#1835">issue 1835</A> solves:
+</P>
+
+<PRE>
+  template&lt;int I&gt;
+  struct A
+  {
+    int A;
+  };
+
+  bool f();
+
+  template&lt;int I&gt;
+  struct B : A&lt;I&gt;
+  {
+    bool g()
+    {
+      return this-&gt;A &lt; I; //<SPAN CLASS="cmnt"> do we interpret '&lt;' as the start of a template-argument-list here?</SPAN>
+    }
+
+    bool h()
+    {
+      return this-&gt;A &lt; I &gt; ::f(); //<SPAN CLASS="cmnt"> how about here?</SPAN>
+    }
+  };
+</PRE>
+
+<P>
+Using the unqualified lookup results from the template definition
+context for disambiguation when the object expression is dependent is
+also wrong since they are discarded if we find a member in the
+template instantiation context. Consider:
+</P>
+
+<PRE>
+  namespace N
+  {
+    template&lt;int I&gt;
+    struct A
+    {
+      int B;
+    };
+  }
+
+  template&lt;int I&gt;
+  using B = N::A&lt;I&gt;;
+
+  template&lt;int I&gt;
+  struct C : B&lt;I&gt;
+  {
+    bool f()
+    {
+      return this-&gt;B &lt; I;
+    }
+  };
+</PRE>
+
+<P>
+Since the lookup context of <TT>B</TT> in <TT>this-&gt;B</TT> is
+dependent, we cannot determine whether it would be invalid as a
+complete class member access expression.  We also cannot parse past
+the '&lt;' to determine whether <TT>B</TT> is the terminal name of a
+member-qualified <TT>nested-name-specifier</TT>, so we do not know if
+unqualified name lookup should happen.  <A HREF="cwg_defects.html#1835">Issue 1835</A> resolves this by treating <TT>this-&gt;B</TT> as a
+complete class member access expression. Using the results of
+unqualified name lookup to determine whether <TT>B</TT> is the name of
+a template is incorrect because it may refer to a non-template member
+when <TT>C</TT> is instantiated.
+</P>
 
 <BR><BR><HR>
 <A NAME="2105"></A><H4>2105.
