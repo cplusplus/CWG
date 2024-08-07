@@ -16,7 +16,7 @@
   Core Issues List revision 115a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-08-06</P>
+<P>2024-08-07</P>
 <HR>
 <A NAME="2917"></A><H4>2917.
   
@@ -78,8 +78,26 @@ to declare a class template, no declarator is permitted.
 <INS>In a <I>template-declaration</I> whose <I>declaration</I> is
 a <I>friend-type-declaration</I>,
 the <I>friend-type-specifier-list</I> shall consist of exactly
-one <I>friend-type-specifier</I> that is not a pack expansion
-(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]).</INS>
+one <I>friend-type-specifier</I>; if it is a pack expansion
+(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), any packs expanded by that pack
+expansion shall not have been introduced by
+the <I>template-declaration</I>.  [ Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
 
 </BLOCKQUOTE>
 <BR><BR>
