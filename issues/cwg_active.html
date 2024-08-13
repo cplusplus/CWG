@@ -38261,8 +38261,9 @@ Disallow multiple <I>friend-type-specifier</I>s for a friend template
  <B>Date: </B>2024-07-30<BR>
 
 
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/586">#586</A>.)</P>
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/586">#586</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/593">#593</A>.)</P>
 
 <P>Consider:</P>
 
@@ -38274,6 +38275,20 @@ struct C {
 </PRE>
 
 <P>This is obviously nonsense, but is not prohibited by the wording.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct S {
+
+    template &lt;typename T&gt;
+    friend class Foo&lt;T&gt;::Nested;       //<SPAN CLASS="cmnt"> OK; see 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5</SPAN>
+
+    template &lt;typename ...Ts&gt;
+    friend class Foo&lt;Ts&gt;::Nested...;   //<SPAN CLASS="cmnt"> makes no sense</SPAN>
+
+  };
+</PRE>
 
 <P><U>Suggested resolution:</U></P>
 
@@ -38290,7 +38305,26 @@ to declare a class template, no declarator is permitted.
 <INS>In a <I>template-declaration</I> whose <I>declaration</I> is
 a <I>friend-type-declaration</I>,
 the <I>friend-type-specifier-list</I> shall consist of exactly
-one <I>friend-type-specifier</I>.</INS>
+one <I>friend-type-specifier</I>; if it is a pack expansion
+(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), any packs expanded by that pack
+expansion shall not have been introduced by
+the <I>template-declaration</I>.  [ Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
 
 </BLOCKQUOTE>
 <BR><BR><HR>
