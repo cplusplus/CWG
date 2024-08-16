@@ -16,7 +16,7 @@
   Core Issues List revision 115a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-07-24</P>
+<P>2024-08-16</P>
 <HR>
 <A NAME="2899"></A><H4>2899.
   
@@ -49,16 +49,10 @@ bool f() {
 }
 </PRE>
 
-<P>At #1, the lifetime of the original <TT>b</TT> ends because its
-storage is reused by the memcpy (6.7.3 [<A href="https://wg21.link/basic.life#1.5">basic.life</A>] bullet 1.5).  <TT>memcpy</TT> implicitly creates objects
-(23.5.3 [<A href="https://wg21.link/cstring.syn#3">cstring.syn</A>] paragraph 3).  Creating a <TT>bool</TT>
-object gives the rest of the program defined behavior, as
-follows.  <TT>b</TT> refers to the newly-created object, because
-scalars of the same type are transparently replaceable
-(6.7.3 [<A href="https://wg21.link/basic.life#9">basic.life</A>] paragraph 9).  Assuming that false and true
-are represented as 0 and 1, the value representation of <TT>b</TT> now
-has a bad value.  This should, but does not, result in undefined
-behavior during the lvalue-to-rvalue conversion at #2.</P>
+<P>Assuming that false and true are represented as 0 and 1, the value
+representation of <TT>b</TT> now has a bad value.  This should, but
+does not, result in undefined behavior during the lvalue-to-rvalue
+conversion at #2.</P>
 
 <P><U>Possible resolution:</U></P>
 
@@ -89,7 +83,7 @@ type, the behavior is undefined.
 bool f() {
   bool b = true;
   char c = 42;
-  memcpy(&amp;b, &amp;c, 1);  //<SPAN CLASS="cmnt"> implicitly creates objects at </SPAN>b<SPAN CLASS="cmnt"> (23.5.3 [<A href="https://wg21.link/cstring.syn">cstring.syn</A>], 6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>])</SPAN>
+  memcpy(&amp;b, &amp;c, 1);
   return b;           //<SPAN CLASS="cmnt"> undefined behavior if 42 is not a valid value representation for </SPAN>bool
 }
 </PRE>
