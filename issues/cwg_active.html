@@ -7473,7 +7473,7 @@ Taking the address of a function involving template argument deduction
   <A href="https://wg21.link/over.over">over.over</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2918">2918</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Consideration of constraints for address of overloaded function
@@ -7583,8 +7583,8 @@ Introducing <I>template-name</I>s
   <A href="https://wg21.link/temp.pre">temp.pre</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2917">2917</A></TD>
-<TD ALIGN="CENTER">open</TD>
-<TD ALIGN="CENTER"></TD>
+<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">EWG</TD>
 <TD ALIGN="LEFT">
 Disallow multiple <I>friend-type-specifier</I>s for a friend template
 </TD>
@@ -13688,6 +13688,231 @@ shall remain exactly one selected function.
 the address operation.</P>
 
 <BR><BR><HR>
+<A NAME="2918"></A><H4>2918.
+  
+Consideration of constraints for address of overloaded function
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-26<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;bool B&gt; struct X {
+   void f(short) requires B;
+   void f(long);
+   template&lt;typename&gt; void g(short) requires B;
+   template&lt;typename&gt; void g(long);
+  };
+  void test(X&lt;true&gt; x) {
+   x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
+   x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
+   &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
+   &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
+  }
+</PRE>
+
+<P>For the function call cases, 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 and 13.7.7.3 [<A href="https://wg21.link/temp.func.order#6">temp.func.order</A>] paragraph 6 specify that
+constraints are only considered if the competing overloads are
+otherwise basically the same.  There is no corresponding restriction
+when taking the address of a function.</P>
+
+<P>For a second issue, the treatment of placeholder type deduction is
+unclear:</P>
+
+<PRE>
+  template&lt;bool B&gt; struct X {
+   void f(short) requires B;
+   void f(short);
+   template&lt;typename&gt; void g(short) requires B;
+   template&lt;typename&gt; void g(short);
+  };
+  void test(X&lt;true&gt; x) {
+   auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
+   auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
+  }
+</PRE>
+
+<P>When the address of the overload set is resolved, there is a
+target, but the target type is <TT>auto</TT>, which is not properly
+handled.</P>
+
+<P>See also <A HREF="cwg_active.html#2572">issue 2572</A>.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>F1 and F2 are non-template functions and <INS>F1 is more
+partial-ordering-constrained than F2
+(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
+<UL class="del">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
+<LI>if they are member
+functions, both are direct members of the same class, and</LI>
+<LI>if
+both are non-static member functions, they have the same types for
+their object parameters, and</LI>
+<LI>F1 is more constrained than F2
+according to the partial ordering of constraints described in
+13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
+</UL>
+or if not that,
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The target can be
+<UL>
+<LI>an object or reference being initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
+<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
+<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>a parameter of a user-defined operator
+(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
+<LI>the return value of a function,
+operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
+<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
+<LI>a
+non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
+</UL>
+
+<INS>If the target type contains a placeholder type, placeholder type
+deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
+remainder of this subclause uses the target type so deduced.
+</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+All functions with associated constraints that are not satisfied
+(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
+functions. If more than one function in the set remains, all function
+template specializations in the set are eliminated if the set also
+contains a function that is not a function template
+specialization. Any given non-template function F0 is eliminated if
+the set contains a second non-template function that is more
+<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
+<DEL>according to the partial ordering rules of</DEL>
+<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
+function template specialization F1 is eliminated if the set contains
+a second function template specialization whose function template is
+more specialized than the function template of F1 according to the
+partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
+eliminations, if any, there shall remain exactly one selected
+function.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>A declaration D1 is more constrained than another declaration D2 when
+D1 is at least as constrained as D2, and D2 is not at least as
+constrained as D1. [ Example: ... ]</P>
+
+<P class="ins">
+A non-template function F1 is more <I>partial-ordering-constrained</I>
+than a non-template function F2 if
+<UL class="ins">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
+<LI>if they are member functions, both are direct members of the same class, and</LI>
+<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
+<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
+</UL>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#6">temp.deduct.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When P is a function type, function pointer type, or
+pointer-to-member-function type:
+<UL>
+<LI>If the argument is an overload set containing one or more function
+templates, the parameter is treated as a non-deduced context.</LI>
+<LI>If the argument is an overload set (not containing function
+templates), trial argument deduction is attempted using each of the
+members of the set. <DEL>If deduction succeeds for only one of the
+overload set members, that member is used as the argument value for
+the deduction. If deduction succeeds for more than one member of the
+overload set</DEL>
+<INS>If all successful deductions yield the same deduced A, that
+deduced A is the result of deduction; otherwise,</INS> the parameter
+is treated as a non-deduced context.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>A function parameter for which the associated argument is an overload
+set (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or more of the following
+apply:
+<UL>
+<LI>
+<DEL>more than one function matches</DEL> <INS>functions with more
+than one function type match</INS> the function parameter type
+(resulting in an ambiguous deduction), or</LI>
+<LI>no function matches the function parameter type, or</LI>
+<LI>the overload set supplied as an argument contains one or more
+function templates.
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2862"></A><H4>2862.
   
 Unclear boundaries of template declarations
@@ -13977,6 +14202,136 @@ the class template</INS>. <INS>-- end note ]</INS>
 </P>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2917"></A><H4>2917.
+  
+Disallow multiple <I>friend-type-specifier</I>s for a friend template
+</H4>
+<B>Section: </B>13.1&#160; [<A href="https://wg21.link/temp.pre">temp.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Ambrose T
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-30
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submissions
+<A HREF="https://github.com/cplusplus/CWG/issues/586">#586</A> and
+<A HREF="https://github.com/cplusplus/CWG/issues/593">#593</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+struct C {
+  template &lt;typename&gt;
+  friend class Foo, int;
+};
+</PRE>
+
+<P>This is obviously nonsense, but is not prohibited by the wording.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct S {
+
+    template &lt;typename T&gt;
+    friend class Foo&lt;T&gt;::Nested;       //<SPAN CLASS="cmnt"> OK; see 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5</SPAN>
+
+    template &lt;typename ...Ts&gt;
+    friend class Foo&lt;Ts&gt;::Nested...;   //<SPAN CLASS="cmnt"> makes no sense</SPAN>
+
+  };
+</PRE>
+
+<P><B>Proposed resolution (2024-08-16):</B></P>
+
+<P>(This is not a DR.)</P>
+
+<P>(<A HREF="cwg_active.html#2862">Issue 2862</A> modifies the same paragraph.)</P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#5">temp.pre</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a <I>template-declaration</I>, explicit specialization, or explicit
+instantiation, the <I>init-declarator-list</I> in the declaration
+shall contain at most one declarator. When such a declaration is used
+to declare a class template, no declarator is permitted.
+<INS>In a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>friend-type-declaration</I>,
+the <I>friend-type-specifier-list</I> shall consist of exactly
+one <I>friend-type-specifier</I> that is not a pack expansion.  [
+Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-08-16</B></P>
+
+<P>The proposed resolution above disallows a few examples from paper
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2893r3.html">P2893R3</A>
+(Variadic friends), such as
+</P>
+
+<PRE>
+  template&lt;class... Ts&gt;
+  struct VS {
+    template&lt;class U&gt;
+    friend class C&lt;Ts&gt;::Nested...; //<SPAN CLASS="cmnt"> now ill-formed</SPAN>
+  };
+</PRE>
+
+<P>The adopted wording for P2893R3 makes
+the <I>friend-type-specifier</I> (not the
+entire <I>template-declaration</I>) the pattern that is expanded by
+the pack expansion, leading to the expansion
+</P>
+
+<PRE>
+  struct VS&lt;T1, T2, T3&gt; {
+    template&lt;class U&gt;
+    friend class C&lt;T1&gt;::Nested, class C&lt;T2&gt;::Nested, class C&lt;T3&gt;::Nested;
+  };
+</PRE>
+
+<P>However, that violates the principle that
+a <I>template-declaration</I> declares exactly one entity
+(see <A HREF="cwg_active.html#2862">issue 2862</A>).</P>
+
+<P>As an aside, the paper as adopted misrepresents the status of
+members of dependent types, which are covered by
+13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5.</P>
+
+<P>CWG welcomes a paper making the template friend cases valid, but
+such a facility would appear to require substantial changes to the
+normative wording, which a core issue is not equipped for.</P>
+
+<P>CWG asks EWG to consent to the reduction in scope for the variadic
+friends facility, via paper issue
+<A HREF="https://github.com/cplusplus/papers/issues/2032">cplusplus/papers#2032</A>.</P>
 
 <BR><BR><HR>
 <A NAME="2617"></A><H4>2617.
@@ -38059,207 +38414,6 @@ inconsistent outcomes where overload resolution is not applied:</P>
 </PRE>
 
 <BR><BR><HR>
-<A NAME="2918"></A><H4>2918.
-  
-Consideration of constraints for address of overloaded function
-</H4>
-<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-26<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(long);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(long);
-  };
-  void test(X&lt;true&gt; x) {
-   x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
-   x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
-   &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
-   &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
-  }
-</PRE>
-
-<P>For the function call cases, 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 and 13.7.7.3 [<A href="https://wg21.link/temp.func.order#6">temp.func.order</A>] paragraph 6 specify that
-constraints are only considered if the competing overloads are
-otherwise basically the same.  There is no corresponding restriction
-when taking the address of a function.</P>
-
-<P>For a second issue, the treatment of placeholder type deduction is
-unclear:</P>
-
-<PRE>
-  template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(short);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(short);
-  };
-  void test(X&lt;true&gt; x) {
-   auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
-   auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
-  }
-</PRE>
-
-<P>When the address of the overload set is resolved, there is a
-target, but the target type is <TT>auto</TT>, which is not properly
-handled.</P>
-
-<P>See also <A HREF="cwg_active.html#2572">issue 2572</A>.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>F1 and F2 are non-template functions and <INS>F1 is more
-partial-ordering-constrained than F2
-(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
-<UL class="del">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
-<LI>if they are member
-functions, both are direct members of the same class, and</LI>
-<LI>if
-both are non-static member functions, they have the same types for
-their object parameters, and</LI>
-<LI>F1 is more constrained than F2
-according to the partial ordering of constraints described in
-13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
-</UL>
-or if not that,
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-... The target can be
-<UL>
-<LI>an object or reference being initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
-<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
-<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>a parameter of a user-defined operator
-(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
-<LI>the return value of a function,
-operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
-<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
-<LI>a
-non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
-</UL>
-
-<INS>If the target type contains a placeholder type, placeholder type
-deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
-remainder of this subclause uses the target type so deduced.
-</INS>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-All functions with associated constraints that are not satisfied
-(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
-functions. If more than one function in the set remains, all function
-template specializations in the set are eliminated if the set also
-contains a function that is not a function template
-specialization. Any given non-template function F0 is eliminated if
-the set contains a second non-template function that is more
-<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
-<DEL>according to the partial ordering rules of</DEL>
-<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
-function template specialization F1 is eliminated if the set contains
-a second function template specialization whose function template is
-more specialized than the function template of F1 according to the
-partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
-eliminations, if any, there shall remain exactly one selected
-function.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
-
-<BLOCKQUOTE>
-
-<P>A declaration D1 is more constrained than another declaration D2 when
-D1 is at least as constrained as D2, and D2 is not at least as
-constrained as D1. [ Example: ... ]</P>
-
-<P class="ins">
-A non-template function F1 is more <I>partial-ordering-constrained</I>
-than a non-template function F2 if
-<UL class="ins">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
-<LI>if they are member functions, both are direct members of the same class, and</LI>
-<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
-<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
-</UL>
-</P>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
-
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>A function parameter for which the associated argument is an overload
-set (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or more of the following
-apply:
-<UL>
-<LI>
-<DEL>more than one function matches</DEL> <INS>functions with more
-than one function type match</INS> the function parameter type
-(resulting in an ambiguous deduction), or</LI>
-<LI>no function matches the function parameter type, or</LI>
-<LI>the overload set supplied as an argument contains one or more
-function templates.
-</LI>
-</UL>
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="1549"></A><H4>1549.
   
 Overloaded comma operator with <TT>void</TT> operand
@@ -38627,89 +38781,6 @@ might appear. &#8212;<I>end note</I>]
 </OL>
 
 <BR><BR><HR>
-<A NAME="2917"></A><H4>2917.
-  
-Disallow multiple <I>friend-type-specifier</I>s for a friend template
-</H4>
-<B>Section: </B>13.1&#160; [<A href="https://wg21.link/temp.pre">temp.pre</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Ambrose T
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-07-30<BR>
-
-
-<P>(From submissions
-<A HREF="https://github.com/cplusplus/CWG/issues/586">#586</A> and
-<A HREF="https://github.com/cplusplus/CWG/issues/593">#593</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-struct C {
-  template &lt;typename&gt;
-  friend class Foo, int;
-};
-</PRE>
-
-<P>This is obviously nonsense, but is not prohibited by the wording.</P>
-
-<P>Also consider:</P>
-
-<PRE>
-  struct S {
-
-    template &lt;typename T&gt;
-    friend class Foo&lt;T&gt;::Nested;       //<SPAN CLASS="cmnt"> OK; see 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5</SPAN>
-
-    template &lt;typename ...Ts&gt;
-    friend class Foo&lt;Ts&gt;::Nested...;   //<SPAN CLASS="cmnt"> makes no sense</SPAN>
-
-  };
-</PRE>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>(<A HREF="cwg_active.html#2862">Issue 2862</A> modifies the same paragraph.)</P>
-
-<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#5">temp.pre</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-In a <I>template-declaration</I>, explicit specialization, or explicit
-instantiation, the <I>init-declarator-list</I> in the declaration
-shall contain at most one declarator. When such a declaration is used
-to declare a class template, no declarator is permitted.
-<INS>In a <I>template-declaration</I> whose <I>declaration</I> is
-a <I>friend-type-declaration</I>,
-the <I>friend-type-specifier-list</I> shall consist of exactly
-one <I>friend-type-specifier</I>; if it is a pack expansion
-(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), any packs expanded by that pack
-expansion shall not have been introduced by
-the <I>template-declaration</I>.  [ Example:</INS>
-
-<PRE class="ins">
-template&lt;class ...&gt;
-struct C {
-  struct Nested { };
-};
-
-template&lt;class ... Us&gt;
-struct S {
-  template &lt;typename ...Ts&gt;
-  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
-  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
-};
-</PRE>
-
-<INS>-- end example ]</INS>
-
-</BLOCKQUOTE>
-<BR><BR><HR>
 <A NAME="579"></A><H4>579.
   
 What is a &#8220;nested&#8221; <TT>&gt;</TT> or <TT>&gt;&gt;</TT>?
@@ -38922,6 +38993,15 @@ unqualified name lookup to determine whether <TT>B</TT> is the name of
 a template is incorrect because it may refer to a non-template member
 when <TT>C</TT> is instantiated.
 </P>
+
+<P><B>CWG 2024-08-16</B></P>
+
+<P>The resolution for <A HREF="cwg_defects.html#1835">issue 1835</A> in P1787
+has addressed real concerns.  CWG recognizes that real-world code now
+no longer compiles, although the fix for the affected source code is
+trivial.  A limited exception to support some of the existing code
+might be feasible.  CWG solicits a paper with specification and
+analysis.</P>
 
 <BR><BR><HR>
 <A NAME="2105"></A><H4>2105.
