@@ -22,7 +22,7 @@
       Date:
      </TD>
 <TD>
-      &#160;2024-07-20</TD>
+      &#160;2024-08-20</TD>
 </TR>
 <TR>
 <TD ALIGN="RIGHT">
@@ -63,7 +63,7 @@
       
 
      Revision
-     115a</H2></CENTER>
+     115b</H2></CENTER>
 <BR><P>
       This document contains the C++ core language issues on which the
       Committee (INCITS PL22.16 + WG21) has not yet acted, that is, issues
@@ -4966,7 +4966,7 @@ Thread storage duration and order of initialization
   <A href="https://wg21.link/basic.start.static">basic.start.static</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2914">2914</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear order of initialization of static and thread-local variables
@@ -5010,7 +5010,7 @@ Evaluation of odr-use
   <A href="https://wg21.link/basic.lval">basic.lval</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2901">2901</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear semantics for near-match aliased access
@@ -10935,6 +10935,76 @@ forever without an execution step occurring. &#8212;<I>end note</I>]
 </OL>
 
 <BR><BR><HR>
+<A NAME="2914"></A><H4>2914.
+  
+Unclear order of initialization of static and thread-local variables
+</H4>
+<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/559">#559</A>.)</P>
+
+<P>Specification is missing that clarifies that non-local variables
+with static storage duration are initialized before those with thread
+storage duration.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Variables with static storage duration are initialized as a
+consequence of program initiation. Variables with thread storage
+duration are initialized as a consequence of thread execution.
+<INS>
+If the program does not start a thread (6.9.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>])
+other than the main thread (6.9.3.1 [<A href="https://wg21.link/basic.start.main">basic.start.main</A>]) before the
+completion of all non-deferred (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>])
+initialization of non-block variables with static storage duration,
+then all non-deferred initialization (if any) of non-block variables
+with static storage duration strongly happens before any non-deferred
+initialization of non-block variables with thread storage duration.
+</INS>
+Within each of these phases of initiation, initialization occurs as follows.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#5">basic.start.dynamic</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+It is implementation-defined whether the dynamic initialization of a
+non-block non-inline variable <INS><I>o</I></INS> with static storage
+duration is sequenced before the first statement of main or is
+deferred. If it is deferred, it strongly happens before any
+non-initialization odr-use of any non-inline function or non-inline
+variable defined in the same translation unit as <DEL>the variable to
+be initialized</DEL> <INS><I>o</I> and any deferred initialiation of
+non-inline non-block variables with thread storage duration defined in
+the same translation unit as <I>o</I></INS>. [ Footnote: ... ] It is
+implementation-defined in which threads and at which points in the
+program such deferred dynamic initialization occurs.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+<BR><BR><HR>
 <A NAME="2833"></A><H4>2833.
   
 Evaluation of odr-use
@@ -11102,6 +11172,116 @@ non-inline variable with thread storage duration ...
 </P>
 
 </BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2901"></A><H4>2901.
+  
+Unclear semantics for near-match aliased access
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/548">#548</A>.)</P>
+
+<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 specifies:</P>
+
+<BLOCKQUOTE>
+
+... If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
+value of an object through a glvalue through which it is not
+type-accessible, the behavior is undefined. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, access (read or write) to an <TT>int</TT> object using an
+lvalue of type <TT>unsigned int</TT> is valid.  However,
+7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 does not specify the resulting
+value when, for example, the object contains the value -1:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
+the prvalue result. ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Similarly, 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 is silent for the
+assignment case:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), the object referred to by the left operand
+is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
+result of the right operand.
+
+</BLOCKQUOTE>
+
+<P>Any concerns about accesses to the object representation are handled in the context of
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1839r5.pdf">P1839</A>.</P>
+
+<P><B>Proposed resolution (August, 2024):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])<DEL>, and the value contained in the object
+is the prvalue result</DEL>.<INS> Let <I>V</I> be the value contained
+in the object.  If <TT>T</TT> is an integer type, the prvalue result
+is the value of type <TT>T</TT> congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+to <I>V</I>, and <I>V</I> otherwise.</INS> ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value <DEL>of</DEL>
+<INS>obtained by applying the lvalue-to-rvalue conversion
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to</INS> its operand.  [<I>Note 1:</I>
+The value obtained is a copy of the original value. &#8212;<I>end
+note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), <INS>let <I>V</I> be the result of the right
+operand;</INS> the object referred to by the left operand is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with <DEL>the result
+of the right operand</DEL> <INS>V or, if the object is of integer
+type, with the value congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to
+V</INS>.
+
+</BLOCKQUOTE>
+
 </LI>
 </OL>
 
@@ -30490,73 +30670,6 @@ trigger the initialization of any <TT>thread_local</TT> variable other than
 that one?</P>
 
 <BR><BR><HR>
-<A NAME="2914"></A><H4>2914.
-  
-Unclear order of initialization of static and thread-local variables
-</H4>
-<B>Section: </B>6.9.3.2&#160; [<A href="https://wg21.link/basic.start.static">basic.start.static</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-20<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/559">#559</A>.)</P>
-
-<P>Specification is missing that clarifies that non-local variables
-with static storage duration are initialized before those with thread
-storage duration.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.9.3.2 [<A href="https://wg21.link/basic.start.static#1">basic.start.static</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-Variables with static storage duration are initialized as a
-consequence of program initiation. Variables with thread storage
-duration are initialized as a consequence of thread execution.
-<INS>
-All non-deferred (6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic">basic.start.dynamic</A>]) initialization (if any)
-of non-block variables with static storage duration strongly happens before
-any non-deferred initialization
-of non-block variables with thread storage duration.
-</INS>
-Within each of these phases of initiation, initialization occurs as follows.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 6.9.3.3 [<A href="https://wg21.link/basic.start.dynamic#5">basic.start.dynamic</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-It is implementation-defined whether the dynamic initialization of a
-non-block non-inline variable <INS><I>o</I></INS> with static storage
-duration is sequenced before the first statement of main or is
-deferred. If it is deferred, it strongly happens before any
-non-initialization odr-use of any non-inline function or non-inline
-variable defined in the same translation unit as <DEL>the variable to
-be initialized</DEL> <INS><I>o</I> and any deferred initialiation of
-non-inline non-block variables with thread storage duration defined in
-the same translation unit as <I>o</I></INS>. [ Footnote: ... ] It is
-implementation-defined in which threads and at which points in the
-program such deferred dynamic initialization occurs.
-
-</BLOCKQUOTE>
-
-</LI>
-</OL>
-<BR><BR><HR>
 <A NAME="2684"></A><H4>2684.
   
 thread_local dynamic initialization
@@ -30615,98 +30728,6 @@ storage duration <INS>and dynamic initialization</INS> defined in the
 same translation unit as the variable to be initialized. ...
 
 </BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="2901"></A><H4>2901.
-  
-Unclear semantics for near-match aliased access
-</H4>
-<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-14<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/548">#548</A>.)</P>
-
-<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 specifies:</P>
-
-<BLOCKQUOTE>
-
-... If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
-value of an object through a glvalue through which it is not
-type-accessible, the behavior is undefined. ...
-
-</BLOCKQUOTE>
-
-<P>Thus, access (read or write) to an <TT>int</TT> object using an
-lvalue of type <TT>unsigned int</TT> is valid.  However,
-7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 does not specify the resulting
-value when, for example, the object contains the value -1:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>Otherwise, the object indicated by the glvalue is read
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
-the prvalue result. ...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>Similarly, 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 is silent for the
-assignment case:</P>
-
-<BLOCKQUOTE>
-
-In simple assignment (=), the object referred to by the left operand
-is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
-result of the right operand.
-
-</BLOCKQUOTE>
-
-<P>Any concerns about accesses to the object representation are handled in the context of
-<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1839r5.pdf">P1839</A>.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>Otherwise, the object indicated by the glvalue is read
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the <INS>value congruent
-(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to the</INS> value contained in the
-object is the prvalue result. ...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-</LI>
-<LI>
-<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-In simple assignment (=), the object referred to by the left operand
-is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
-<INS>value congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to the</INS> result
-of the right operand.
-
-</BLOCKQUOTE>
-
-</LI>
-</OL>
 
 <BR><BR><HR>
 <A NAME="2438"></A><H4>2438.
