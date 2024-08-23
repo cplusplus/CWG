@@ -16,7 +16,7 @@
   Core Issues List revision 115b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-08-20</P>
+<P>2024-08-23</P>
 <HR>
 <A NAME="2917"></A><H4>2917.
   
@@ -55,15 +55,63 @@ struct C {
 
 <PRE>
   struct S {
-
     template &lt;typename T&gt;
     friend class Foo&lt;T&gt;::Nested;       //<SPAN CLASS="cmnt"> OK; see 13.7.5 [<A href="https://wg21.link/temp.friend#5">temp.friend</A>] paragraph 5</SPAN>
 
     template &lt;typename ...Ts&gt;
     friend class Foo&lt;Ts&gt;::Nested...;   //<SPAN CLASS="cmnt"> makes no sense</SPAN>
-
   };
 </PRE>
+
+<P><U>Suggested resolution (2024-07-30):</U></P>
+
+<P>Change in 13.1 [<A href="https://wg21.link/temp.pre#5">temp.pre</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a <I>template-declaration</I>, explicit specialization, or explicit
+instantiation, the <I>init-declarator-list</I> in the declaration
+shall contain at most one declarator. When such a declaration is used
+to declare a class template, no declarator is permitted.
+<INS>In a <I>template-declaration</I> whose <I>declaration</I> is
+a <I>friend-type-declaration</I>, the
+<I>friend-type-specifier-list</I> shall consist of exactly
+one <I>friend-type-specifier</I>; if it is a pack expansion
+(13.7.4 [<A href="https://wg21.link/temp.variadic">temp.variadic</A>]), any packs expanded by that pack
+expansion shall not have been introduced by the
+<I>template-declaration</I>. [ Example:</INS>
+
+<PRE class="ins">
+template&lt;class ...&gt;
+struct C {
+  struct Nested { };
+};
+
+template&lt;class ... Us&gt;
+struct S {
+  template &lt;typename ...Ts&gt;
+  friend class C&lt;Ts&gt;::Nested...;     //<SPAN CLASS="cmnt"> error</SPAN>
+  friend class C&lt;Us&gt;::Nested...;     // <SPAN CLASS="cmnt">OK</SPAN>
+};
+</PRE>
+
+<INS>-- end example ]</INS>
+
+</BLOCKQUOTE>
+
+<P>The above resolution allows the following example:</P>
+
+<PRE>
+  template&lt;class ... Us&gt;
+  struct S {
+   template&lt;class T&gt;
+   friend class C&lt;T, Us&gt;::Nested...;
+  };
+</PRE>
+
+<P>CWG was not convinced the above example was intended to be
+supported by paper P2893R3, which introduced pack expansions for
+friend declarations.</P>
 
 <P><B>Proposed resolution (2024-08-16):</B></P>
 
