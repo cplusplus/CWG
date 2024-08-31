@@ -1,0 +1,86 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2932</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 115b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-08-31</P>
+<HR>
+<A NAME="2932"></A><H4>2932.
+  
+Value range of empty enumeration
+</H4>
+<B>Section: </B>9.6&#160; [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Benjamin Sch.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/604">#604</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  enum E { };
+  constexpr auto x = static_cast&lt;E&gt;(-1);
+</PRE>
+
+<P>It is unclear whether the hypothetical integer type for <TT>E</TT>
+is a signed integer type of width 1 or an unsigned integer type of
+width 0, which does not have a signed counterpart and thus does not
+exist.  The former choice makes the example well-formed, the latter
+one ill-formed.  Before P1236, the specification was clear.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.6 [<A href="https://wg21.link/dcl.struct.bind#8">dcl.struct.bind</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+For an enumeration whose underlying type is fixed, the values of the
+enumeration are the values of the underlying type. Otherwise<DEL>, the</DEL><INS>:</INS>
+<UL>
+<LI class="ins">
+If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.
+</LI>
+<LI>
+<INS>The</INS> values of the enumeration are the values representable
+by a hypothetical integer type with minimal width M such that all
+enumerators can be represented<INS>; if all enumerators have value 0,
+the values of the enumeration consist of the single value 0
+and <I>M</I> is 0</INS>. The width of the smallest bit-field large
+enough to hold all the values of the enumeration type is M.
+</LI>
+</UL>
+<INS>[ Note: </INS> It is possible to define an enumeration that has
+values not defined by any of its enumerators. <INS>-- end note ]</INS>
+<DEL>If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.</DEL> [Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
