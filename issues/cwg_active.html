@@ -165,6 +165,8 @@ USA.</P>
 <A HREF="cwg_active.html#2928">2928</A>,
 <A HREF="cwg_active.html#2929">2929</A>,
 <A HREF="cwg_active.html#2930">2930</A>,
+<A HREF="cwg_active.html#2931">2931</A>,
+<A HREF="cwg_active.html#2932">2932</A>,
 </P>
 
 <P><B>Revision 115, 2024-07-20:</B></P>
@@ -6350,6 +6352,17 @@ Ambiguity with <I>opaque-enum-declaration</I>
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">9.7.1&#160;
+  <A href="https://wg21.link/dcl.enum">dcl.enum</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2932">2932</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Value range of empty enumeration
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">9.8.2.2&#160;
   <A href="https://wg21.link/namespace.unnamed">namespace.unnamed</A>
 </TD>
@@ -7513,6 +7526,17 @@ Consideration of constraints for address of overloaded function
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Insufficient restrictions on parameters of postfix operators
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">12.4.1&#160;
+  <A href="https://wg21.link/over.oper.general">over.oper.general</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2931">2931</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Restrictions on operator functions that are explicit object member functions
 </TD>
 </TR>
 <TR>
@@ -34694,6 +34718,70 @@ used in this description.</P>
 <P>See also <A HREF="cwg_defects.html#2313">issue 2313</A>.</P>
 
 <BR><BR><HR>
+<A NAME="2932"></A><H4>2932.
+  
+Value range of empty enumeration
+</H4>
+<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Benjamin Sch.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/604">#604</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  enum E { };
+  constexpr auto x = static_cast&lt;E&gt;(-1);
+</PRE>
+
+<P>It is unclear whether the hypothetical integer type for <TT>E</TT>
+is a signed integer type of width 1 or an unsigned integer type of
+width 0, which does not have a signed counterpart and thus does not
+exist.  The former choice makes the example well-formed, the latter
+one ill-formed.  Before P1236, the specification was clear.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.7.1 [<A href="https://wg21.link/dcl.enum#8">dcl.enum</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+For an enumeration whose underlying type is fixed, the values of the
+enumeration are the values of the underlying type. Otherwise<DEL>, the</DEL><INS>:</INS>
+<UL>
+<LI class="ins">
+If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.
+</LI>
+<LI>
+<INS>The</INS> values of the enumeration are the values representable
+by a hypothetical integer type with minimal width M such that all
+enumerators can be represented<INS>; if all enumerators have value 0,
+the values of the enumeration consist of the single value 0
+and <I>M</I> is 0</INS>. The width of the smallest bit-field large
+enough to hold all the values of the enumeration type is M.
+</LI>
+</UL>
+<INS>[ Note: </INS> It is possible to define an enumeration that has
+values not defined by any of its enumerators. <INS>-- end note ]</INS>
+<DEL>If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.</DEL> [Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="813"></A><H4>813.
   
 <TT>typename</TT> in a <I>using-declaration</I> with a non-dependent name
@@ -38677,6 +38765,70 @@ inconsistent outcomes where overload resolution is not applied:</P>
 
   decltype(&amp;g) p;    // <SPAN CLASS="cmnt">rejected by implementations for no reason in the wording</SPAN>
 </PRE>
+
+<BR><BR><HR>
+<A NAME="2931"></A><H4>2931.
+  
+Restrictions on operator functions that are explicit object member functions
+</H4>
+<B>Section: </B>12.4.1&#160; [<A href="https://wg21.link/over.oper.general">over.oper.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-26<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/600">#600</A>.)</P>
+
+<P>With the introduction of explicit object member functions, the
+restrictions on operator functions became inconsistent.  Subclause
+12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 specifies:</P>
+
+<BLOCKQUOTE>
+
+An operator function shall either
+<UL>
+<LI>be a member function or</LI>
+<LI>be a non-member function that has at least one non-object
+parameter whose type is a class, a reference to a class, an
+enumeration, or a reference to an enumeration.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Talking about non-object parameters in a bullet discussing
+non-member functions makes no sense.  The following example ought to
+be prohibited, for consistency with <TT>operator==(int, int)</TT>:</P>
+
+<PRE>
+  struct B {
+    bool operator==(this int, int);
+    operator int() const;
+  };
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 as follows, removing
+the bullets:</P>
+
+<BLOCKQUOTE>
+
+An operator function shall <DEL>either</DEL>
+<UL>
+<LI><DEL>be a member function or</DEL></LI>
+<LI>be <DEL>a non-member</DEL> function that has at least
+one <DEL>non-object</DEL> parameter whose type is a class, a reference
+to a class, an enumeration, or a reference to an enumeration.</LI>
+</UL>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="1549"></A><H4>1549.
