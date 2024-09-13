@@ -167,6 +167,10 @@ USA.</P>
 <A HREF="cwg_active.html#2930">2930</A>,
 <A HREF="cwg_active.html#2931">2931</A>,
 <A HREF="cwg_active.html#2932">2932</A>,
+<A HREF="cwg_active.html#2933">2933</A>,
+<A HREF="cwg_active.html#2934">2934</A>,
+<A HREF="cwg_active.html#2935">2935</A>,
+<A HREF="cwg_active.html#2936">2936</A>,
 </P>
 
 <P><B>Revision 115, 2024-07-20:</B></P>
@@ -5033,6 +5037,17 @@ Unclear semantics for near-match aliased access
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">7.2.2&#160;
+  <A href="https://wg21.link/expr.type">expr.type</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2933">2933</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Dangling references
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">7.3.2&#160;
   <A href="https://wg21.link/conv.lval">conv.lval</A>
 </TD>
@@ -6316,6 +6331,28 @@ Exceptions thrown during coroutine startup
 <TD ALIGN="CENTER">EWG</TD>
 <TD ALIGN="LEFT">
 Initialization of coroutine result object
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">9.5.4&#160;
+  <A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2934">2934</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Unclear semantics of exception escaping from <TT>unhandled_exception</TT>
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">9.5.4&#160;
+  <A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2935">2935</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Destroying the coroutine state when initial-await-resume-called is false
 </TD>
 </TR>
 <TR>
@@ -8164,6 +8201,17 @@ Definition of current instantiation
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Type-dependence of local class of function template
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">13.8.3.2&#160;
+  <A href="https://wg21.link/temp.dep.type">temp.dep.type</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2936">2936</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Local classes of templated functions should be part of the current instantiation
 </TD>
 </TR>
 <TR>
@@ -30898,6 +30946,71 @@ destroying any object with static storage duration.
 </OL>
 
 <BR><BR><HR>
+<A NAME="2933"></A><H4>2933.
+  
+Dangling references
+</H4>
+<B>Section: </B>7.2.2&#160; [<A href="https://wg21.link/expr.type">expr.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-09-04<BR>
+
+
+
+
+<P>
+<A HREF="cwg_defects.html#453">Issue 453</A> clarified that there are no
+empty lvalues, and undefined behavior ensues when trying to create
+one.  However, the wording now does not specify the behavior of
+dangling references, where the storage of the referenced object has
+gone away.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.8.2 [<A href="https://wg21.link/basic.fundamental#4">basic.fundamental</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+A pointer value P is valid in the context of an evaluation E if P
+is <INS>a pointer to function or</INS> a null pointer value, or if it
+is a pointer to or past the end of an object O and E happens before
+the end of the duration of the region of storage for O. If a pointer
+value P is used in an evaluation E and P is not valid in the context
+of E, then ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.2.2 [<A href="https://wg21.link/expr.type#1">expr.type</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+If an expression initially has the type &#8220;reference to T&#8221;
+(9.3.4.3 [<A href="https://wg21.link/dcl.ref">dcl.ref</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), the type
+is adjusted to T prior to any further analysis<INS>; the value
+category of the expression is not altered</INS>.
+<DEL>The expression designates</DEL>
+<INS>Let <I>X</I> be</INS> the object or function denoted by the
+reference<DEL>, and the expression is an lvalue or an xvalue,
+depending on the expression</DEL>.  <INS>If a pointer to <I>X</I>
+would be valid in the context of the evalution of the expression
+(6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]), the result designates <I>X</I>;
+otherwise, the behavior is undefined.</INS>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2438"></A><H4>2438.
   
 Problems in the specification of qualification conversions
@@ -34676,6 +34789,87 @@ carrying with it ownership of the coroutine state.</LI>
 </UL>
 
 <P>See also <A HREF="cwg_defects.html#2451">issue 2451</A>.</P>
+
+<BR><BR><HR>
+<A NAME="2934"></A><H4>2934.
+  
+Unclear semantics of exception escaping from <TT>unhandled_exception</TT>
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-13<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/574">#574</A>.
+See also
+<A HREF="https://github.com/GorNishanov/coroutines-ts/issues/17">coroutines-ts#17</A> and
+<A HREF="https://github.com/GorNishanov/coroutines-ts/issues/30">coroutines-ts#30</A>.)</P>
+
+<P>Subclause 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#14">dcl.fct.def.coroutine</A>] paragraph 14 specifies:</P>
+
+
+
+<BLOCKQUOTE>
+
+If the evaluation of the
+expression <TT><I>promise</I>.unhandled_exception()</TT> exits via an
+exception, the coroutine is considered suspended at the final suspend
+point and the exception propagates to the caller or resumer.
+
+</BLOCKQUOTE>
+
+<P>However, implementations destroy the promise object, the parameter
+copies, and the coroutine state before propagating the exception,
+which is consistent with the as-if code presented in
+9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#5">dcl.fct.def.coroutine</A>] paragraph 5.</P>
+
+<BR><BR><HR>
+<A NAME="2935"></A><H4>2935.
+  
+Destroying the coroutine state when initial-await-resume-called is false
+</H4>
+<B>Section: </B>9.5.4&#160; [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-07-13<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/575">#575</A>.)
+</P>
+
+<P>According to 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#11">dcl.fct.def.coroutine</A>] paragraph 11:</P>
+
+<BLOCKQUOTE>
+
+The coroutine state is destroyed when control flows off the end of the
+coroutine or the destroy member function
+(17.12.4.6 [<A href="https://wg21.link/coroutine.handle.resumption">coroutine.handle.resumption</A>]) of a coroutine handle
+(17.12.4 [<A href="https://wg21.link/coroutine.handle">coroutine.handle</A>]) that refers to the coroutine is
+invoked.
+
+</BLOCKQUOTE>
+
+<P>Considering the as-if code in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#5">dcl.fct.def.coroutine</A>] paragraph 5,
+if an exception occurs at any point
+before <I>initial-await-resume-called</I> becomes <TT>true</TT>, then
+there is no requirement to destroy the coroutine state, nor is the
+coroutine ever suspended.  Consequently, the coroutine state is
+necessarily leaked.  It is unclear whether that is intentional.</P>
 
 <BR><BR><HR>
 <A NAME="2340"></A><H4>2340.
@@ -40328,6 +40522,71 @@ instantiation</I> if it is...&#8221;); it does not define when a type
 is the current instantiation.  Thus the interpretation of <TT>*this</TT>
 and of phrases like &#8220;member of a class that is the current
 instantiation&#8221; is not formally specified.</P>
+
+<BR><BR><HR>
+<A NAME="2936"></A><H4>2936.
+  
+Local classes of templated functions should be part of the current instantiation
+</H4>
+<B>Section: </B>13.8.3.2&#160; [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-09-02<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;class T&gt;
+  void f()
+  {
+    struct Y {
+      using type = int;
+    };
+    Y::type y;  //<SPAN CLASS="cmnt"> error; missing typename</SPAN>
+  }
+</PRE>
+
+<P>Since lookup of <TT>Y</TT> always finds the local class, regardless
+of <TT>T</TT>, the requirement to apply <TT>typename</TT> is too
+strict.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.8.3.2 [<A href="https://wg21.link/temp.dep.type#1">temp.dep.type</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A name or <I>template-id</I> refers to the current instantiation if it
+is
+
+<UL>
+<LI>...</LI>
+
+<LI>in the definition of a nested class of a class template, the name
+of the nested class referenced as a member of the current
+instantiation, <DEL>or</DEL>
+</LI>
+
+<LI>in the definition of a class template partial specialization or a
+member of a class template partial specialization, the name of the
+class template followed by a template argument list equivalent to that
+of the partial specialization (13.7.6 [<A href="https://wg21.link/temp.spec.partial">temp.spec.partial</A>]) enclosed
+in &lt;&gt; (or an equivalent template alias specialization)<DEL>.</DEL><INS>, or</INS>
+</LI>
+
+<LI class="ins">in the definition of a templated function, the name of a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>].</LI>
+
+</UL>
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2774"></A><H4>2774.
