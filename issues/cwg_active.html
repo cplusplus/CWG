@@ -22,7 +22,7 @@
       Date:
      </TD>
 <TD>
-      &#160;2024-08-20</TD>
+      &#160;2024-09-25</TD>
 </TR>
 <TR>
 <TD ALIGN="RIGHT">
@@ -63,7 +63,7 @@
       
 
      Revision
-     115b</H2></CENTER>
+     115c</H2></CENTER>
 <BR><P>
       This document contains the C++ core language issues on which the
       Committee (INCITS PL22.16 + WG21) has not yet acted, that is, issues
@@ -159,7 +159,7 @@ USA.</P>
 <A HREF="cwg_active.html#2922">2922</A>,
 <A HREF="cwg_active.html#2923">2923</A>,
 <A HREF="cwg_active.html#2924">2924</A>,
-<A HREF="cwg_active.html#2925">2925</A>,
+<A HREF="cwg_closed.html#2925">2925</A>,
 <A HREF="cwg_active.html#2926">2926</A>,
 <A HREF="cwg_active.html#2927">2927</A>,
 <A HREF="cwg_active.html#2928">2928</A>,
@@ -176,7 +176,7 @@ USA.</P>
 <P><B>Revision 115, 2024-07-20:</B></P>
 
 <P>Added new issues
-<A HREF="cwg_active.html#2880">2880</A>,
+<A HREF="cwg_defects.html#2880">2880</A>,
 <A HREF="cwg_defects.html#2881">2881</A>,
 <A HREF="cwg_defects.html#2882">2882</A>,
 <A HREF="cwg_defects.html#2883">2883</A>,
@@ -4072,7 +4072,7 @@ Definition of &#8220;argument&#8221;
   <A href="https://wg21.link/defns.undefined">defns.undefined</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2924">2924</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Undefined behavior during constant evaluation
@@ -4392,7 +4392,7 @@ Template parameters in member selections
   <A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2926">2926</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Lookup context for dependent qualified names
@@ -4898,7 +4898,7 @@ Unclear phrasing "may assume ... eventually"
   <A href="https://wg21.link/intro.progress">intro.progress</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2923">2923</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Note about infinite loops and execution steps
@@ -5030,7 +5030,7 @@ Lifetime of trivially-destructible static or thread-local objects
   <A href="https://wg21.link/basic.lval">basic.lval</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2901">2901</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear semantics for near-match aliased access
@@ -5512,33 +5512,11 @@ Underspecified selection of deallocation function
 <TD ALIGN="LEFT">7.6.2.9&#160;
   <A href="https://wg21.link/expr.delete">expr.delete</A>
 </TD>
-<TD ALIGN="RIGHT"><A HREF="#2880">2880</A></TD>
-<TD ALIGN="CENTER">open</TD>
-<TD ALIGN="CENTER"></TD>
-<TD ALIGN="LEFT">
-Accessibility check for destructor of incomplete class type
-</TD>
-</TR>
-<TR>
-<TD ALIGN="LEFT">7.6.2.9&#160;
-  <A href="https://wg21.link/expr.delete">expr.delete</A>
-</TD>
 <TD ALIGN="RIGHT"><A HREF="#2889">2889</A></TD>
 <TD ALIGN="CENTER">open</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Requiring an accessible destructor for destroying operator delete
-</TD>
-</TR>
-<TR>
-<TD ALIGN="LEFT">7.6.2.9&#160;
-  <A href="https://wg21.link/expr.delete">expr.delete</A>
-</TD>
-<TD ALIGN="RIGHT"><A HREF="#2925">2925</A></TD>
-<TD ALIGN="CENTER">open</TD>
-<TD ALIGN="CENTER"></TD>
-<TD ALIGN="LEFT">
-Deleting a pointer to an incomplete enumeration type
 </TD>
 </TR>
 <TR>
@@ -8835,7 +8813,7 @@ White space within preprocessing directives
   <A href="https://wg21.link/cpp.pre">cpp.pre</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2927">2927</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear status of translation unit with <TT>module</TT> keyword
@@ -9144,6 +9122,215 @@ Missing support for round-tripping null pointer values through indirection/addre
 <BR><BR><HR>
 <A NAME="Tentatively%20Ready%20Status"></A><H3>Issues with "Tentatively Ready" Status</H3>
 <HR>
+<A NAME="2926"></A><H4>2926.
+  
+Lookup context for dependent qualified names
+</H4>
+<B>Section: </B>6.5.5.1&#160; [<A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-16<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/599">#599</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename U&gt;
+  constexpr bool foo = U::b;
+
+  template &lt;class T&gt;
+  struct A {
+    A() requires(foo&lt;A&gt;) {}
+    static constexpr bool b = true;
+  };
+  A&lt;int&gt; a;
+</PRE>
+	       
+<P>All implementation accept, but there is no normative wording
+prescribing the lookup context for <TT>U::b</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-13):</B></P>
+
+<P>Change in 6.5.5.1 [<A href="https://wg21.link/basic.lookup.qual.general#3">basic.lookup.qual.general</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Qualified name lookup</I> in a class, namespace, or enumeration
+performs a search of the scope associated with it
+(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) except as specified below. Unless
+otherwise specified, a qualified name undergoes qualified name lookup
+in its lookup context from the point where it appears unless the
+lookup context <DEL>either</DEL>
+<UL>
+<LI>is dependent and is not the current instantiation
+(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])<INS>, in which case the lookup is done from the point of instantiation (13.8.4.1 [<A href="https://wg21.link/temp.point">temp.point</A>]),</INS> or</LI>
+<LI>is <DEL>not a class or class template</DEL> <INS>a type that is
+neither a class nor an enumeration, in which case unqualified lookup
+is performed</INS>. <INS>[ Note: Such a qualified name can be used to
+name a destructor (7.5.5.5 [<A href="https://wg21.link/expr.prim.id.dtor">expr.prim.id.dtor</A>]). -- end note ]</INS>
+</LI>
+</UL>
+If nothing is found by qualified lookup for a
+member-qualified name that is the terminal name
+(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]) of a <I>nested-name-specifier</I> and
+is not dependent, it undergoes unqualified lookup.
+
+</BLOCKQUOTE>
+<BR><BR><HR>
+<A NAME="2923"></A><H4>2923.
+  
+Note about infinite loops and execution steps
+</H4>
+<B>Section: </B>6.9.2.3&#160; [<A href="https://wg21.link/intro.progress">intro.progress</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Simon Cooksey
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-12<BR>
+
+
+<P>Given that certain infinite loops are no longer undefined behavior
+(see P2809R3 (Trivial infinite loops are not Undefined Behavior),
+adopted in March 2024), the note in 6.9.2.3 [<A href="https://wg21.link/intro.progress#5">intro.progress</A>] paragraph 5 claiming there are no executions without eventual execution
+steps should be struck.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-13):</B></P>
+
+<P>Remove 6.9.2.3 [<A href="https://wg21.link/intro.progress#5">intro.progress</A>] paragraph 5:</P>
+
+<BLOCKQUOTE class="del">
+
+[<I>Note 4:</I> Because of this and the preceding requirement
+regarding what threads of execution have to perform eventually, it
+follows that no thread of execution can execute forever without an
+execution step occurring. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2901"></A><H4>2901.
+  
+Unclear semantics for near-match aliased access
+</H4>
+<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/548">#548</A>.)</P>
+
+<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 specifies:</P>
+
+<BLOCKQUOTE>
+
+... If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
+value of an object through a glvalue through which it is not
+type-accessible, the behavior is undefined. ...
+
+</BLOCKQUOTE>
+
+<P>Thus, access (read or write) to an <TT>int</TT> object using an
+lvalue of type <TT>unsigned int</TT> is valid.  However,
+7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 does not specify the resulting
+value when, for example, the object contains the value -1:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
+the prvalue result. ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Similarly, 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 is silent for the
+assignment case:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), the object referred to by the left operand
+is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
+result of the right operand.
+
+</BLOCKQUOTE>
+
+<P>Any concerns about accesses to the object representation are handled in the context of
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1839r5.pdf">P1839</A>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-09-13):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])<DEL>, and the value contained in the object
+is the prvalue result</DEL>.<INS> Let <I>V</I> be the value contained
+in the object.  If <TT>T</TT> is an integer type, the prvalue result
+is the value of type <TT>T</TT> congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
+to <I>V</I>, and <I>V</I> otherwise.</INS> ...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The value of a postfix ++ expression is the value <DEL>of</DEL>
+<INS>obtained by applying the lvalue-to-rvalue conversion
+(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to</INS> its operand.  [<I>Note 1:</I>
+The value obtained is a copy of the original value. &#8212;<I>end
+note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+In simple assignment (=), <INS>let <I>V</I> be the result of the right
+operand;</INS> the object referred to by the left operand is modified
+(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with <DEL>the result
+of the right operand</DEL> <INS>V or, if the object is of integer
+type, with the value congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to
+V</INS>.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2899"></A><H4>2899.
   
 Bad value representations should cause undefined behavior
@@ -9927,6 +10114,97 @@ well-formed program.</P>
 
 </BLOCKQUOTE>
 </LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2924"></A><H4>2924.
+  
+Undefined behavior during constant evaluation
+</H4>
+<B>Section: </B>3.63&#160; [<A href="https://wg21.link/defns.undefined">defns.undefined</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-04<BR>
+
+
+<P>(From editorial issue
+<A HREF="https://github.com/cplusplus/draft/issues/7042">#7042</A>
+and submission
+<A HREF="https://github.com/cplusplus/CWG/issues/595">#595</A>.)</P>
+
+<P>Subclause 3.63 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] states:</P>
+
+<BLOCKQUOTE>
+
+[Note 1 to entry: ... Evaluation of a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
+specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P>However, 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8
+excludes <TT>[[noreturn]]</TT> and <TT>[[assume]]</TT>; see also
+7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 3.63 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+[Note 1 to entry: ... Evaluation of a constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
+specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
+Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]<INS>, excluding
+9.12 [<A href="https://wg21.link/dcl.attr">dcl.attr</A>]</INS>. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-09-13</B></P>
+
+<P>Admitting unbounded core-language undefined behavior in constant
+expressions is to be avoided.  The quoted note is correct; the
+semantics of <TT>[[noreturn]]</TT> and <TT>[[assume]]</TT> need to be
+clarified.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated. If the converted expression would
+evaluate to true at the point where the assumption appears <INS>or if
+the assumption is evaluated in a context that is manifestly
+constant-evaluated</INS>, the assumption has no effect.  Otherwise,
+the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute<INS>, the function call
+is evaluated in a context that is not manifestly constant-evaluated
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</INS> and <TT>f</TT> eventually
+returns, the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+
 </OL>
 
 <BR><BR><HR>
@@ -11219,116 +11497,6 @@ non-inline variable with thread storage duration ...
 </P>
 
 </BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="2901"></A><H4>2901.
-  
-Unclear semantics for near-match aliased access
-</H4>
-<B>Section: </B>7.2.1&#160; [<A href="https://wg21.link/basic.lval">basic.lval</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-14<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/548">#548</A>.)</P>
-
-<P>Subclause 7.2.1 [<A href="https://wg21.link/basic.lval#11">basic.lval</A>] paragraph 11 specifies:</P>
-
-<BLOCKQUOTE>
-
-... If a program attempts to access (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) the stored
-value of an object through a glvalue through which it is not
-type-accessible, the behavior is undefined. ...
-
-</BLOCKQUOTE>
-
-<P>Thus, access (read or write) to an <TT>int</TT> object using an
-lvalue of type <TT>unsigned int</TT> is valid.  However,
-7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 does not specify the resulting
-value when, for example, the object contains the value -1:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>Otherwise, the object indicated by the glvalue is read
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]), and the value contained in the object is
-the prvalue result. ...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>Similarly, 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 is silent for the
-assignment case:</P>
-
-<BLOCKQUOTE>
-
-In simple assignment (=), the object referred to by the left operand
-is modified (3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with the
-result of the right operand.
-
-</BLOCKQUOTE>
-
-<P>Any concerns about accesses to the object representation are handled in the context of
-<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1839r5.pdf">P1839</A>.</P>
-
-<P><B>Proposed resolution (August, 2024):</B></P>
-
-<OL>
-<LI>
-<P>Change in 7.3.2 [<A href="https://wg21.link/conv.lval#3.4">conv.lval</A>] bullet 3.4 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>Otherwise, the object indicated by the glvalue is read
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>])<DEL>, and the value contained in the object
-is the prvalue result</DEL>.<INS> Let <I>V</I> be the value contained
-in the object.  If <TT>T</TT> is an integer type, the prvalue result
-is the value of type <TT>T</TT> congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>])
-to <I>V</I>, and <I>V</I> otherwise.</INS> ...</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.1.6 [<A href="https://wg21.link/expr.post.incr#1">expr.post.incr</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The value of a postfix ++ expression is the value <DEL>of</DEL>
-<INS>obtained by applying the lvalue-to-rvalue conversion
-(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) to</INS> its operand.  [<I>Note 1:</I>
-The value obtained is a copy of the original value. &#8212;<I>end
-note</I>] ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.19 [<A href="https://wg21.link/expr.ass#2">expr.ass</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-In simple assignment (=), <INS>let <I>V</I> be the result of the right
-operand;</INS> the object referred to by the left operand is modified
-(3.1 [<A href="https://wg21.link/defns.access">defns.access</A>]) by replacing its value with <DEL>the result
-of the right operand</DEL> <INS>V or, if the object is of integer
-type, with the value congruent (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) to
-V</INS>.
-
-</BLOCKQUOTE>
-
 </LI>
 </OL>
 
@@ -13937,16 +14105,16 @@ Consideration of constraints for address of overloaded function
 
 <PRE>
   template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(long);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(long);
-  };
-  void test(X&lt;true&gt; x) {
-   x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
-   x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
-   &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
-   &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+   };
+   void test(X&lt;true&gt; x) {
+    x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
+    x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
   }
 </PRE>
 
@@ -13960,14 +14128,14 @@ unclear:</P>
 
 <PRE>
   template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(short);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(short);
+    void f(short) requires B;
+    void f(short);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(short);
   };
   void test(X&lt;true&gt; x) {
-   auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
-   auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
+    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
+    auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
   }
 </PRE>
 
@@ -14064,6 +14232,42 @@ function.
 </LI>
 
 <LI>
+<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<P>[Example 1: ...</P>
+
+<P>The initialization of pfe is ill-formed because no f() with type
+int(...) has been declared, and not because of any ambiguity. <DEL>For
+another example,</DEL> <INS>-- end example]</INS>
+</P>
+
+<P class="ins">[Example:</P>
+
+<P>...</P>
+
+<P>-- end example]</P>
+
+<P class="ins">[Example:</P>
+
+<PRE class="ins">
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+  };
+  void test(X&lt;true&gt; x) {
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+  }
+</PRE>
+
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
 
 <BLOCKQUOTE>
@@ -14113,6 +14317,25 @@ is treated as a non-deduced context.
 </LI>
 
 <LI>
+<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+[ Example:
+<PRE>
+  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(short);
+  };
+  void test(X&lt;true&gt; x) {
+    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> deduces </SPAN>void(*)(short)
+  }
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
 
 <BLOCKQUOTE>
@@ -14123,9 +14346,9 @@ set (12.3 [<A href="https://wg21.link/over.over">over.over</A>]), and one or mor
 apply:
 <UL>
 <LI>
-<DEL>more than one function matches</DEL> <INS>functions with more
-than one function type match</INS> the function parameter type
-(resulting in an ambiguous deduction), or</LI>
+<DEL>more than one function matches</DEL> <INS>functions that do
+not all have the same function type match</INS> the function parameter
+type (resulting in an ambiguous deduction), or</LI>
 <LI>no function matches the function parameter type, or</LI>
 <LI>the overload set supplied as an argument contains one or more
 function templates.
@@ -15574,6 +15797,106 @@ with empty sets of types P and A.
 </BLOCKQUOTE>
 </LI>
 </OL>
+
+<BR><BR><HR>
+<A NAME="2927"></A><H4>2927.
+  
+Unclear status of translation unit with <TT>module</TT> keyword
+</H4>
+<B>Section: </B>15.1&#160; [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Chuanqi Xu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-15<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  using module = int;
+  module i;
+  int foo() {
+    return i;
+  }
+</PRE>
+
+<P>Is this a valid translation unit?</P>
+
+<P>It is not a valid <I>module-file</I>, because the translation unit
+does not start with <TT>module</TT> or <TT>export module</TT>
+(15.4 [<A href="https://wg21.link/cpp.module">cpp.module</A>]).  It is also not a valid
+traditional <I>preprocessing-file</I> (15.1 [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]),
+because <TT>module i</TT> is considered a preprocessing directive
+(15.1 [<A href="https://wg21.link/cpp.pre#1.3">cpp.pre</A>] bullet 1.3, which is never
+a <I>text-line</I> (15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2):
+</P>
+
+<BLOCKQUOTE>
+
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token. ...
+
+</BLOCKQUOTE>
+
+<P>A clarifying note would be appreciated.</P>
+
+<P><U>Possible resolution (August, 2024):</U></P>
+
+<P>Change in 15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token.
+<INS>[ Note: A source line starting
+with <TT>module</TT> <I>identifier</I> is always interpreted as a
+preprocessing directive, not as a
+<I>text-line</I>, even if parsing the source file as a
+<I>preprocessing-file</I> subsequently fails.  -- end note ]</INS>
+</P>
+
+<P>A sequence of preprocessing tokens is only a
+<I>conditionally-supported-directive</I> if ...</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2024-09-13</B></P>
+
+<P>A source line starting with <TT>module</TT> <I>identifier</I>
+appearing in a macro argument may or may not be interpreted as a
+preprocessing directive (15.6.2 [<A href="https://wg21.link/cpp.subst#13">cpp.subst</A>] paragraph 13), thus
+the note as written is incorrect.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>
+A sequence of preprocessing tokens is only a <I>text-line</I> if it
+does not begin with a directive-introducing token.
+<INS>[ Example:</INS>
+</P>
+
+<PRE class="ins">
+  using module = int;
+  module i;       // <SPAN CLASS="cmnt">not a <I>text-line</I> and not a <I>control-line</I></SPAN>
+  int foo() {
+    return i;
+  }
+</PRE>
+
+<INS>The example is not a valid <I>preprocessing-file</I>. -- end example]</INS>
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2875"></A><H4>2875.
@@ -27083,57 +27406,6 @@ concept_map instantiations? What about user-defined
 literals where parens are not used?</P>
 
 <BR><BR><HR>
-<A NAME="2924"></A><H4>2924.
-  
-Undefined behavior during constant evaluation
-</H4>
-<B>Section: </B>3.63&#160; [<A href="https://wg21.link/defns.undefined">defns.undefined</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-04<BR>
-
-
-<P>(From editorial issue
-<A HREF="https://github.com/cplusplus/draft/issues/7042">#7042</A>
-and submission
-<A HREF="https://github.com/cplusplus/CWG/issues/595">#595</A>.)</P>
-
-<P>Subclause 3.63 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] states:</P>
-
-<BLOCKQUOTE>
-
-[Note 1 to entry: ... Evaluation of a constant expression
-(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
-specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
-Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]. &#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-
-<P>However, 7.7 [<A href="https://wg21.link/expr.const#5.8">expr.const</A>] bullet 5.8
-excludes <TT>[[noreturn]]</TT> and <TT>[[assume]]</TT>; see also
-7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 3.63 [<A href="https://wg21.link/defns.undefined">defns.undefined</A>] as follows:</P>
-
-<BLOCKQUOTE>
-
-[Note 1 to entry: ... Evaluation of a constant expression
-(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) never exhibits behavior explicitly
-specified as undefined in Clause 4 [<A href="https://wg21.link/intro">intro</A>] through
-Clause 15 [<A href="https://wg21.link/cpp">cpp</A>]<INS>, excluding
-9.12 [<A href="https://wg21.link/dcl.attr">dcl.attr</A>]</INS>. &#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="949"></A><H4>949.
   
 Requirements for freestanding implementations
@@ -28439,68 +28711,6 @@ the other expression. ...
 <P>In order to clarify this, suggestions for a note including the
 example from this issue are welcome.</P>
 
-<BR><BR><HR>
-<A NAME="2926"></A><H4>2926.
-  
-Lookup context for dependent qualified names
-</H4>
-<B>Section: </B>6.5.5.1&#160; [<A href="https://wg21.link/basic.lookup.qual.general">basic.lookup.qual.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-16<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/599">#599</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  template &lt;typename U&gt;
-  constexpr bool foo = U::b;
-
-  template &lt;class T&gt;
-  struct A {
-    A() requires(foo&lt;A&gt;) {}
-    static constexpr bool b = true;
-  };
-  A&lt;int&gt; a;
-</PRE>
-	       
-<P>All implementation accept, but there is no normative wording
-prescribing the lookup context for <TT>U::b</TT>.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 6.5.5.1 [<A href="https://wg21.link/basic.lookup.qual.general#3">basic.lookup.qual.general</A>] paragraph 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-<I>Qualified name lookup</I> in a class, namespace, or enumeration
-performs a search of the scope associated with it
-(6.5.2 [<A href="https://wg21.link/class.member.lookup">class.member.lookup</A>]) except as specified below. Unless
-otherwise specified, a qualified name undergoes qualified name lookup
-in its lookup context from the point where it appears unless the
-lookup context <DEL>either</DEL>
-<UL>
-<LI>is dependent and is not the current instantiation
-(13.8.3.2 [<A href="https://wg21.link/temp.dep.type">temp.dep.type</A>])<INS>, in which case the lookup is done from the point of instantiation (13.8.4.1 [<A href="https://wg21.link/temp.point">temp.point</A>]),</INS> or</LI>
-<LI>is <DEL>not a class or class template</DEL> <INS>a type that is
-neither a class nor an enumeration, in which case unqualified lookup
-is performed</INS>.</LI>
-</UL>
-If nothing is found by qualified lookup for a
-member-qualified name that is the terminal name
-(7.5.5.2 [<A href="https://wg21.link/expr.prim.id.unqual">expr.prim.id.unqual</A>]) of a <I>nested-name-specifier</I> and
-is not dependent, it undergoes unqualified lookup.
-
-</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2670"></A><H4>2670.
   
@@ -30561,41 +30771,6 @@ statement to that effect.</P>
 reflecting the former "concurrency" status of this issue.</P>
 
 <BR><BR><HR>
-<A NAME="2923"></A><H4>2923.
-  
-Note about infinite loops and execution steps
-</H4>
-<B>Section: </B>6.9.2.3&#160; [<A href="https://wg21.link/intro.progress">intro.progress</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Simon Cooksey
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-12<BR>
-
-
-<P>Given that certain infinite loops are no longer undefined behavior
-(see P2809R3 (Trivial infinite loops are not Undefined Behavior),
-adopted in March 2024), the note in 6.9.2.3 [<A href="https://wg21.link/intro.progress#5">intro.progress</A>] paragraph 5 claiming there are no executions without eventual execution
-steps should be struck.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Remove 6.9.2.3 [<A href="https://wg21.link/intro.progress#5">intro.progress</A>] paragraph 5:</P>
-
-<BLOCKQUOTE class="del">
-
-[<I>Note 4:</I> Because of this and the preceding requirement
-regarding what threads of execution have to perform eventually, it
-follows that no thread of execution can execute forever without an
-execution step occurring. &#8212;<I>end note</I>]
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="371"></A><H4>371.
   
 Interleaving of constructor calls
@@ -32309,47 +32484,6 @@ how to deal with the unspecified choice between overloads with and
 without a <TT>std::size_t</TT> parameter.</P>
 
 <BR><BR><HR>
-<A NAME="2880"></A><H4>2880.
-  
-Accessibility check for destructor of incomplete class type
-</H4>
-<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Alisdair Meredith
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-03-07<BR>
-
-
-<P>Subclause 7.6.2.9 [<A href="https://wg21.link/expr.delete#6">expr.delete</A>] paragraph 6 specifies:</P>
-
-<BLOCKQUOTE>
-
-... The destructor shall be accessible from the point where
-the <I>delete-expression</I> appears. ...
-
-</BLOCKQUOTE>
-
-<P>This check cannot be performed in case the operand of
-the <I>delete-expression</I> is a pointer to incomplete type.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in  7.6.2.9 [<A href="https://wg21.link/expr.delete#6">expr.delete</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-... <DEL>The</DEL> <INS>Unless the object being deleted has incomplete
-class type, the</INS> destructor shall be accessible from the point
-where the <I>delete-expression</I> appears. ...
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2889"></A><H4>2889.
   
 Requiring an accessible destructor for destroying operator delete
@@ -32427,64 +32561,8 @@ index.
 <P>This area of the wording is affected by P3144 (Deprecate Delete of
 a Pointer to an Incomplete Type).  The wording above requires a class
 definition due to the "potentially invoked" phrasing. See also
-<A HREF="cwg_active.html#2880">issue 2880</A>.</P>
+<A HREF="cwg_defects.html#2880">issue 2880</A>.</P>
 
-<BR><BR><HR>
-<A NAME="2925"></A><H4>2925.
-  
-Deleting a pointer to an incomplete enumeration type
-</H4>
-<B>Section: </B>7.6.2.9&#160; [<A href="https://wg21.link/expr.delete">expr.delete</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jiang An
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-14<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/597">#597</A>.)</P>
-
-<P>Paper
-<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3144r2.pdf">P3144R2</A>
-(Deleting a Pointer to an Incomplete Type Should be Ill-formed),
-approved in June, 2024, only covered deletion of incomplete class
-types.  However, enumeration types can also be incomplete per
-9.7.1 [<A href="https://wg21.link/dcl.enum#6">dcl.enum</A>] paragraph 6:</P>
-
-<BLOCKQUOTE>
-
-An enumeration whose underlying type is fixed is an incomplete type
-until immediately after its <I>enum-base</I> (if any), at which point
-it becomes a complete type. An enumeration whose underlying type is
-not fixed is an incomplete type until the closing } of
-its <I>enum-specifier</I> , at which point it becomes a complete type.
-
-</BLOCKQUOTE>
-
-<P>This leads to the following example that ought to be ill-formed as well:</P>
-
-<PRE>
-  enum E {
-    zero = decltype(delete static_cast&lt;E*&gt;(nullptr), 0){}
-  };
-</PRE>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 7.6.2.9 [<A href="https://wg21.link/expr.delete#4">expr.delete</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-
-If the <INS>static type of the</INS> object <DEL>being</DEL> <INS>to
-be</INS> deleted has incomplete <DEL>class</DEL> type at the point of
-deletion, the program is ill-formed.
-
-</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2878"></A><H4>2878.
   
@@ -40583,7 +40661,8 @@ of the partial specialization (13.7.6 [<A href="https://wg21.link/temp.spec.part
 in &lt;&gt; (or an equivalent template alias specialization)<DEL>.</DEL><INS>, or</INS>
 </LI>
 
-<LI class="ins">in the definition of a templated function, the name of a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>].</LI>
+<LI class="ins">in the definition of a templated function, the name of
+a local class (11.6 [<A href="https://wg21.link/class.local">class.local</A>].</LI>
 
 </UL>
 </BLOCKQUOTE>
@@ -41775,76 +41854,6 @@ translation phase 3).
 translation phase 3 is permitted to transform all white space
 characters and comments into spaces.  The relationship between
 these two rules should be clarified.</P>
-
-<BR><BR><HR>
-<A NAME="2927"></A><H4>2927.
-  
-Unclear status of translation unit with <TT>module</TT> keyword
-</H4>
-<B>Section: </B>15.1&#160; [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Chuanqi Xu
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-15<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  using module = int;
-  module i;
-  int foo() {
-    return i;
-  }
-</PRE>
-
-<P>Is this a valid translation unit?</P>
-
-<P>It is not a valid <I>module-file</I>, because the translation unit
-does not start with <TT>module</TT> or <TT>export module</TT>
-(15.4 [<A href="https://wg21.link/cpp.module">cpp.module</A>]).  It is also not a valid
-traditional <I>preprocessing-file</I> (15.1 [<A href="https://wg21.link/cpp.pre">cpp.pre</A>]),
-because <TT>module i</TT> is considered a preprocessing directive
-(15.1 [<A href="https://wg21.link/cpp.pre#1.3">cpp.pre</A>] bullet 1.3, which is never
-a <I>text-line</I> (15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2):
-</P>
-
-<BLOCKQUOTE>
-
-A sequence of preprocessing tokens is only a <I>text-line</I> if it
-does not begin with a directive-introducing token. ...
-
-</BLOCKQUOTE>
-
-<P>A clarifying note would be appreciated.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 15.1 [<A href="https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-<P>
-A sequence of preprocessing tokens is only a <I>text-line</I> if it
-does not begin with a directive-introducing token.
-<INS>[ Note: A source line starting
-with <TT>module</TT> <I>identifier</I> is always interpreted as a
-preprocessing directive, not as a
-<I>text-line</I>, even if parsing the source file as a
-<I>preprocessing-file</I> subsequently fails.  -- end note ]</INS>
-</P>
-
-<P>A sequence of preprocessing tokens is only a
-<I>conditionally-supported-directive</I> if ...</P>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="925"></A><H4>925.
