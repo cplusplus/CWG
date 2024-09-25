@@ -16,7 +16,7 @@
   Core Issues List revision 115b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-09-13</P>
+<P>2024-09-25</P>
 <HR>
 <A NAME="2918"></A><H4>2918.
   
@@ -40,16 +40,16 @@ Consideration of constraints for address of overloaded function
 
 <PRE>
   template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(long);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(long);
-  };
-  void test(X&lt;true&gt; x) {
-   x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
-   x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
-   &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
-   &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+   };
+   void test(X&lt;true&gt; x) {
+    x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
+    x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
   }
 </PRE>
 
@@ -63,14 +63,14 @@ unclear:</P>
 
 <PRE>
   template&lt;bool B&gt; struct X {
-   void f(short) requires B;
-   void f(short);
-   template&lt;typename&gt; void g(short) requires B;
-   template&lt;typename&gt; void g(short);
+    void f(short) requires B;
+    void f(short);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(short);
   };
   void test(X&lt;true&gt; x) {
-   auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
-   auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
+    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
+    auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
   }
 </PRE>
 
@@ -167,6 +167,42 @@ function.
 </LI>
 
 <LI>
+<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<P>[Example 1: ...</P>
+
+<P>The initialization of pfe is ill-formed because no f() with type
+int(...) has been declared, and not because of any ambiguity. <DEL>For
+another example,</DEL> <INS>-- end example]</INS>
+</P>
+
+<P class="ins">[Example:</P>
+
+<P>...</P>
+
+<P>-- end example]</P>
+
+<P class="ins">[Example:</P>
+
+<PRE class="ins">
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+  };
+  void test(X&lt;true&gt; x) {
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+  }
+</PRE>
+
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
 
 <BLOCKQUOTE>
@@ -212,6 +248,25 @@ is treated as a non-deduced context.
 </LI>
 </UL>
 
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+[ Example:
+<PRE>
+  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(short);
+  };
+  void test(X&lt;true&gt; x) {
+    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> deduces </SPAN>void(*)(short)
+  }
+</PRE>
+-- end example]
 </BLOCKQUOTE>
 </LI>
 
