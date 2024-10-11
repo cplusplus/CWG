@@ -4307,7 +4307,7 @@ Treatment of closure types in the one-definition rule
   <A href="https://wg21.link/basic.def.odr">basic.def.odr</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2910">2910</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Effect of <I>requirement-parameter-list</I>s on odr-usability
@@ -5044,7 +5044,7 @@ No ordering for initializing thread-local variables
   <A href="https://wg21.link/basic.start.term">basic.start.term</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2929">2929</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Lifetime of trivially-destructible static or thread-local objects
@@ -5187,7 +5187,7 @@ Invalid types in the <I>parameter-declaration-clause</I> of a <I>requires-expres
   <A href="https://wg21.link/expr.prim.req.general">expr.prim.req.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2911">2911</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear meaning of expressions "appearing within" subexpressions
@@ -5835,7 +5835,7 @@ Instantiating constexpr variables for potential constant evaluation
   <A href="https://wg21.link/expr.const">expr.const</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2907">2907</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Constant lvalue-to-rvalue conversion on uninitialized <TT>std::nullptr_t</TT>
@@ -5846,7 +5846,7 @@ Constant lvalue-to-rvalue conversion on uninitialized <TT>std::nullptr_t</TT>
   <A href="https://wg21.link/expr.const">expr.const</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2909">2909</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Subtle difference between constant-initialized and constexpr
@@ -6407,7 +6407,7 @@ Ambiguity with <I>opaque-enum-declaration</I>
   <A href="https://wg21.link/dcl.enum">dcl.enum</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2932">2932</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Value range of empty enumeration
@@ -7100,7 +7100,7 @@ Copy elision through reference parameters of inline functions
   <A href="https://wg21.link/class.copy.elision">class.copy.elision</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2930">2930</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Unclear term "copy/move operation" in specification of copy elision
@@ -7518,7 +7518,7 @@ Incorrect implication of logic ladder for conversion sequence tiebreakers
   <A href="https://wg21.link/over.ics.rank">over.ics.rank</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2815">2815</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Overload resolution for references/pointers to <TT>noexcept</TT> functions
@@ -7562,7 +7562,7 @@ Taking the address of a function involving template argument deduction
   <A href="https://wg21.link/over.over">over.over</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2918">2918</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Consideration of constraints for address of overloaded function
@@ -7584,7 +7584,7 @@ Insufficient restrictions on parameters of postfix operators
   <A href="https://wg21.link/over.oper.general">over.oper.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2931">2931</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Restrictions on operator functions that are explicit object member functions
@@ -9158,6 +9158,74 @@ Missing support for round-tripping null pointer values through indirection/addre
 <BR><BR><HR>
 <A NAME="Tentatively%20Ready%20Status"></A><H3>Issues with "Tentatively Ready" Status</H3>
 <HR>
+<A NAME="2910"></A><H4>2910.
+  
+Effect of <I>requirement-parameter-list</I>s on odr-usability
+</H4>
+<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/561">#561</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  bool f() {
+    constexpr int z = 42;
+    return requires {
+      sizeof(int [*&amp;z]);
+    } &amp;&amp; requires (int x) {
+      sizeof(int [*&amp;z]);
+    };
+  }
+</PRE>
+
+<P>The second <I>requires-expression</I> introduces a function
+parameter scope according to 6.4.4 [<A href="https://wg21.link/basic.scope.param">basic.scope.param</A>].  This affects
+odr-usability as specified in 6.3 [<A href="https://wg21.link/basic.def.odr#10">basic.def.odr</A>] paragraph 10, but
+the two <I>requires-expression</I> in the example ought to actually
+behave the same.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#10.2.2">basic.def.odr</A>] bullet 10.2.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A local entity (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) is odr-usable in a scope
+(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) if:
+
+<UL>
+<LI>...</LI>
+<LI>
+for each intervening scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) between the
+point at which the entity is introduced and the scope (where *this is
+considered to be introduced within the innermost enclosing class or
+non-lambda function definition scope), either:
+<UL>
+<LI>the intervening scope is a block scope, <DEL>or</DEL>
+</LI>
+<LI class="ins">the intervening scope is the function parameter scope
+of a <I>requires-expression</I>, or</LI>
+<LI>the intervening scope is the function parameter scope of
+a <I>lambda-expression</I> that has a <I>simple-capture</I> naming the
+entity or has a <I>capture-default</I>, and the block scope of
+the <I>lambda-expression</I> is also an intervening scope.</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+<BR><BR><HR>
 <A NAME="2923"></A><H4>2923.
   
 Note about infinite loops and execution steps
@@ -9191,6 +9259,118 @@ follows that no thread of execution can execute forever without an
 execution step occurring. &#8212;<I>end note</I>]
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2929"></A><H4>2929.
+  
+Lifetime of trivially-destructible static or thread-local objects
+</H4>
+<B>Section: </B>6.9.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Mathias Stearn
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-05<BR>
+
+
+
+
+<P>
+<A HREF="cwg_defects.html#2256">Issue 2256</A> (adopted in February, 2019)
+changed the rules such that the lifetimes of objects do not depend on
+whether the destructor is trivial or not.  However, the motivation of
+that issue mentioned only objects with automatic storage duration.  To
+be able to avoid order-of-destruction issues across translation units,
+it would be useful to never end the lifetime of trivially-destructible
+objects with static storage duration and to delay the end of the
+lifetime of such objects with thread storage duration as long as
+possible.</P>
+
+<P><U>Possible resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Constructed <INS>class</INS> objects (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with
+static storage duration <INS>and having a non-trivial destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed and functions
+registered with std::atexit are called as part of a call to std::exit
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
+the destructions and the registered functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+
+Constructed <INS>class</INS> objects with thread storage duration
+within a given thread <INS>and having a non-trivial destructor
+(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed as a result of
+returning from the initial function of that thread and as a result of
+that thread calling std::exit. The destruction
+of <DEL>all</DEL> <INS>those</INS> constructed objects with thread
+storage duration within that thread strongly happens before
+<INS>releasing the storage for objects with thread storage duration
+within that thread, which in turn strongly happens before</INS>
+destroying any object with static storage duration.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-09-27</B></P>
+
+<P>Also allow for constant destruction, consider arrays of class type,
+and adjust the happens-before requirements.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with static storage
+duration <INS>and not having constant destruction
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed and functions
+registered with std::atexit are called as part of a call to std::exit
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
+the destructions and the registered functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects with thread storage duration
+within a given thread <INS>and not having constant destruction
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed as a result of
+returning from the initial function of that thread and as a result of
+that thread calling std::exit. <INS>The destruction of those
+constructed objects within that thread is sequenced before releasing
+the storage for all objects with thread storage duration within that
+thread (6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]).  Also, the</INS> <DEL>The</DEL>
+destruction of <DEL>all</DEL> <INS>those</INS> constructed
+objects <DEL>with thread storage duration</DEL> within that thread
+strongly happens before destroying any object with static storage
+duration.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="2901"></A><H4>2901.
@@ -9386,6 +9566,103 @@ undefined.</DEL>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2911"></A><H4>2911.
+  
+Unclear meaning of expressions "appearing within" subexpressions
+</H4>
+<B>Section: </B>7.5.8.1&#160; [<A href="https://wg21.link/expr.prim.req.general">expr.prim.req.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/562">#562</A>.)</P>
+
+<P>Subclause 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#2">expr.prim.req.general</A>] paragraph 2 specifies:</P>
+
+<BLOCKQUOTE>
+
+A <I>requires-expression</I> is a prvalue of type bool whose value is
+described below. Expressions appearing within
+a <I>requirement-body</I> are unevaluated operands
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).
+
+</BLOCKQUOTE>
+
+<P>A <I>constant-expression</I> used as a non-type template argument
+"appearing within" the <I>requirement-body</I> should not be
+considered an "unevaluated operand".  Similarly, bodies
+of <I>lambda-expression</I>s should not be in focus of "appearing
+within".</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.2.3 [<A href="https://wg21.link/expr.context#1">expr.context</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+In some contexts, unevaluated operands appear
+(<DEL>7.5.8 [<A href="https://wg21.link/expr.prim.req">expr.prim.req</A>]</DEL> <INS>7.5.8.2 [<A href="https://wg21.link/expr.prim.req.simple">expr.prim.req.simple</A>],
+7.5.8.4 [<A href="https://wg21.link/expr.prim.req.compound">expr.prim.req.compound</A>]</INS>, 7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>],
+7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>], 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>],
+9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype">dcl.type.decltype</A>], 13.1 [<A href="https://wg21.link/temp.pre">temp.pre</A>],
+13.7.9 [<A href="https://wg21.link/temp.concept">temp.concept</A>]). An unevaluated operand is not evaluated.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#2">expr.prim.req.general</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>requires-expression</I> is a prvalue of type bool whose value is
+described below. <DEL>Expressions appearing within
+a <I>requirement-body</I> are unevaluated operands
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.8.2 [<A href="https://wg21.link/expr.prim.req.simple#1">expr.prim.req.simple</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>simple-requirement</I> asserts the validity of an expression.
+<INS>The <I>expression</I> is an unevaluated operand.</INS>
+[<I>Note 1:</I> The enclosing <I>requires-expression</I> will evaluate
+to false if substitution of template arguments into the expression
+fails. <DEL>The expression is an unevaluated operand
+(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</DEL> &#8212;<I>end note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.8.4 [<A href="https://wg21.link/expr.prim.req.compound#1">expr.prim.req.compound</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>compound-requirement</I> asserts properties of the expression
+E. <INS>The <I>expression</I> is an unevaluated operand.</INS>
+Substitution of template arguments (if any) and verification of
+semantic properties proceed in the following order:
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+<BR><BR><HR>
 <A NAME="2906"></A><H4>2906.
   
 Lvalue-to-rvalue conversion of class types for conditional operator
@@ -9474,6 +9751,69 @@ of type std::nullptr_t.
 </LI>
 </UL>
 </P>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2907"></A><H4>2907.
+  
+Constant lvalue-to-rvalue conversion on uninitialized <TT>std::nullptr_t</TT>
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jim X
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-01-10<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/215">#215</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void f() {
+    std::nullptr_t np;       //<SPAN CLASS="cmnt"> uninitialized, thus </SPAN>np<SPAN CLASS="cmnt"> contains an erroneous value</SPAN>
+    constexpr void *p1 = np; //<SPAN CLASS="cmnt"> error: converted initializer is not a constant expression</SPAN>
+  }
+</PRE>
+
+<P>The lvalue-to-rvalue conversion on <TT>np</TT> does not actually
+read the value of <TT>np</TT> (7.3.2 [<A href="https://wg21.link/conv.lval#3.1">conv.lval</A>] bullet 3.1), yet the situation is made ill-formed by
+7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+
+<LI>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) unless it
+is applied to
+<UL>
+<LI class="ins">a glvalue of type <I>cv</I> <TT>std::nullptr_t</TT>,</LI>
+<LI>a non-volatile glvalue that refers to an object
+that is usable in constant expressions, or</LI>
+<LI>a non-volatile
+glvalue of literal type that refers to a non-volatile object whose
+lifetime began within the evaluation of E;</LI>
+</UL>
+</LI>
+
+<LI>...</LI>
+</UL>
 
 </BLOCKQUOTE>
 
@@ -9636,6 +9976,106 @@ exported <INS>if it is attached to a named module</INS>.
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2930"></A><H4>2930.
+  
+Unclear term "copy/move operation" in specification of copy elision
+</H4>
+<B>Section: </B>11.9.6&#160; [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Gabriel Dos Reis
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-16<BR>
+
+
+
+
+<P>The specification of copy elision in 11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
+uses the undefined term "copy/move operation", even though the
+constructor actually selected might not be a copy or move constructor
+as specified in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>].  It is thus unclear
+whether copy elision can be applied even in the case a non-copy/move
+constructor is selected.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<P>Change in 11.9.6 [<A href="https://wg21.link/class.copy.elision#1">class.copy.elision</A>] paragraph 1 through 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+When certain criteria are met, an implementation is allowed to omit
+the <DEL>copy/move construction of</DEL> <INS>creation of</INS> a
+class object, even if the <INS>selected</INS> constructor
+<DEL>selected for the copy/move operation</DEL> and/or the destructor
+for the object have side effects. In such cases, the implementation
+treats the source and target of the omitted <DEL>copy/move
+operation</DEL> <INS>initialization</INS> as simply two different ways
+of referring to the same object. If the first parameter of the
+selected constructor is an rvalue reference to the object's type, the
+destruction of that object occurs when the target would have been
+destroyed; otherwise, the destruction occurs at the later of the times
+when the two objects would have been destroyed without the
+optimization.  [ <DEL>Footnote:</DEL> <INS>Note:</INS> Because only one object is destroyed instead
+of two, and <DEL>one copy/move constructor is not executed</DEL>
+<INS>the creation of one object is omitted</INS>, there is still one object destroyed
+for each one constructed. -- end <DEL>footnote</DEL> <INS>note</INS> ] This elision
+of <DEL>copy/move operations</DEL> <INS>object creation</INS>,
+called <I>copy elision</I>, is permitted in the following
+circumstances (which may be combined to eliminate multiple copies):
+<UL>
+<LI>in a <TT>return</TT>
+statement <INS>(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</INS> in a function with a
+class return type, when the <I>expression</I> is the name of a
+non-volatile object <INS><I>o</I></INS> with automatic storage
+duration (other than a function parameter or a variable introduced by
+the <I>exception-declaration</I> of a <I>handler</I>
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])) with the same type (ignoring
+cv-qualification) as the function return type, the
+<DEL>copy/move operation</DEL> <INS>copy-initialization of the result
+object</INS> can be omitted by constructing <DEL>the
+object</DEL> <INS><I>o</I></INS> directly into the function call's
+<DEL>return</DEL> <INS>result</INS> object<INS>;</INS>
+</LI>
+<LI>
+in a <I>throw-expression</I> (7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>]), when the
+operand is the name of a non-volatile object <INS><I>o</I></INS> with
+automatic storage duration (other than a function <DEL>or
+catch-clause</DEL> parameter <INS>or a variable introduced by
+the <I>exception-declaration</I> of a <I>handler</I></INS>) that
+belongs to a scope that does not contain the innermost
+enclosing <I>compound-statement</I> associated with a <I>try-block</I>
+(if there is one), the <DEL>copy/move
+operation</DEL> <INS>copy-initialization of the exception object</INS>
+can be omitted by constructing <DEL>the object</DEL>
+<INS><I>o</I></INS> directly into the exception object<INS>;</INS>
+</LI>
+<LI>in a coroutine (9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]), a copy of a coroutine
+parameter can be omitted and references to that copy replaced with
+references to the corresponding parameter if the meaning of the
+program will be unchanged except for the execution of a constructor
+and destructor for the parameter copy object<INS>;</INS>
+</LI>
+<LI>when the <I>exception-declaration</I> of a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) declares an object <INS><I>o</I></INS> of
+the same type (except for cv-qualification) as the exception object
+(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the <DEL>copy operation</DEL>
+<INS>copy-initialization of <I>o</I></INS> can be
+omitted by treating the <I>exception-declaration</I> as an alias for
+the exception object if the meaning of the program will be unchanged
+except for the execution of constructors and destructors for the
+object declared by the <I>exception-declaration</I>.  [<I>Note 1:</I>
+There cannot be a move from the exception object because it is always
+an lvalue. &#8212;<I>end note</I>]
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2919"></A><H4>2919.
   
 Conversion function candidates for initialization of const lvalue reference
@@ -9691,6 +10131,790 @@ for any T2.
 
 </BLOCKQUOTE>
 
+<BR><BR><HR>
+<A NAME="2815"></A><H4>2815.
+  
+Overload resolution for references/pointers to <TT>noexcept</TT> functions
+</H4>
+<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-10-05<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)() noexcept) {}
+  void g(void (&amp;)()) {}
+
+  int main() {
+    g(f);     // <SPAN CLASS="cmnt">error: ambiguous</SPAN>
+  }
+</PRE>
+
+<P>In contrast:</P>
+
+<PRE>
+  void f() noexcept {}
+
+  void g(void (*)()) {} 
+  void g(void (&amp;)()) {}      // <SPAN CLASS="cmnt">#1</SPAN>
+
+  int main() {
+    g(f);    // <SPAN CLASS="cmnt">OK, calls #1</SPAN>
+  }
+</PRE>
+
+<P>In both cases, binding <TT>void(&amp;)()</TT> to <TT>void()
+noexcept</TT> is considered an identity conversion, without further
+disambiguation by 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>].</P>
+
+<P><B>CWG 2024-06-26</B></P>
+
+<P>Binding a reference to a function should not be considered an
+identity conversion if it strips a non-throwing exception
+specification.  This amendment removes the ambiguity for the first
+example and makes the second example ambiguous, which is
+desirable.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#1">over.ics.ref</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+When a parameter of type &#8220;reference to cvT&#8221; binds directly
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to an argument expression:
+<UL>
+<LI>If the argument expression has a type that is a derived class of
+the parameter type, the implicit conversion sequence is a
+derived-to-base conversion (12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]).</LI>
+<LI>Otherwise, <DEL>if T is a function type, or</DEL> if the type of
+the argument is possibly cv-qualified T, or if T is an array type of
+unknown bound with element type U and the argument has an array type
+of known bound whose element type is possibly cv-qualified U, the
+implicit conversion sequence is the identity
+conversion.  <DEL>[<I>Note 1:</I> When T is a function type, the type
+of the argument can differ only by the presence of noexcept.
+&#8212;<I>end note</I>]</DEL>
+</LI>
+<LI class="ins">Otherwise, if T is a function type, the implicit
+conversion sequence is a function pointer conversion.</LI>
+<LI>Otherwise, the implicit conversion
+sequence is a qualification conversion.
+</LI>
+</UL>
+
+[<I>Example 1:</I>
+<PRE>
+  struct A {};
+  struct B : public A {} b;
+  int f(A&amp;);
+  int f(B&amp;);
+  int i = f(b);    //<SPAN CLASS="cmnt"> calls f(B&amp;), an exact match, rather than f(A&amp;), a conversion</SPAN>
+</PRE>
+<PRE class="ins">
+   void g() noexcept;
+   int h(void (&amp;)() noexcept); //<SPAN CLASS="cmnt"> #1</SPAN>
+   int h(void (&amp;)());          //<SPAN CLASS="cmnt"> #2</SPAN>
+   int j = h(g);               //<SPAN CLASS="cmnt"> calls #1, an exact match, rather than #2, a function pointer conversion</SPAN>
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.2.6">over.ics.rank</A>] bullet 3.2.6 as follows:</P>
+
+<BLOCKQUOTE>
+<PRE>
+  int f(const int &amp;);
+  int f(int &amp;);
+  int g(const int &amp;);
+  int g(int);
+  int i;
+  int j = f(i);   //<SPAN CLASS="cmnt"> calls </SPAN>f(int &amp;)
+  int k = g(i);   //<SPAN CLASS="cmnt"> ambiguous</SPAN>
+
+  struct X {
+    void f() const;
+    void f();
+  };
+  void g(const X&amp; a, X b) {
+    a.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f() const
+    b.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f()
+  }
+
+  int h1(int (&amp;)[]);
+  int h1(int (&amp;)[1]);
+<DEL>  int h2(void (&amp;)());
+  int h2(void (&amp;)() noexcept);</DEL>
+  void g2() {
+    int a[1];
+    h1(a);
+<DEL>    extern void f2() noexcept;
+    h2(f2);</DEL>
+  }
+</PRE>
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2918"></A><H4>2918.
+  
+Consideration of constraints for address of overloaded function
+</H4>
+<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-26<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+   };
+   void test(X&lt;true&gt; x) {
+    x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
+    x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
+  }
+</PRE>
+
+<P>For the function call cases, 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 and 13.7.7.3 [<A href="https://wg21.link/temp.func.order#6">temp.func.order</A>] paragraph 6 specify that
+constraints are only considered if the competing overloads are
+otherwise basically the same.  There is no corresponding restriction
+when taking the address of a function.</P>
+
+<P>For a second issue, the treatment of placeholder type deduction is
+unclear:</P>
+
+<PRE>
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(short);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(short);
+  };
+  void test(X&lt;true&gt; x) {
+    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
+    auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
+  }
+</PRE>
+
+<P>When the address of the overload set is resolved, there is a
+target, but the target type is <TT>auto</TT>, which is not properly
+handled.</P>
+
+<P>See also <A HREF="cwg_active.html#2572">issue 2572</A>.</P>
+
+<P><B>Proposed resolution (September, 2024) [SUPERSEDED]:</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>F1 and F2 are non-template functions and <INS>F1 is more
+partial-ordering-constrained than F2
+(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
+<UL class="del">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
+<LI>if they are member
+functions, both are direct members of the same class, and</LI>
+<LI>if
+both are non-static member functions, they have the same types for
+their object parameters, and</LI>
+<LI>F1 is more constrained than F2
+according to the partial ordering of constraints described in
+13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
+</UL>
+or if not that,
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The target can be
+<UL>
+<LI>an object or reference being initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
+<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
+<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>a parameter of a user-defined operator
+(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
+<LI>the return value of a function,
+operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
+<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
+<LI>a
+non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
+</UL>
+
+<INS>If the target type contains a placeholder type, placeholder type
+deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
+remainder of this subclause uses the target type so deduced.
+</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+All functions with associated constraints that are not satisfied
+(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
+functions. If more than one function in the set remains, all function
+template specializations in the set are eliminated if the set also
+contains a function that is not a function template
+specialization. Any given non-template function F0 is eliminated if
+the set contains a second non-template function that is more
+<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
+<DEL>according to the partial ordering rules of</DEL>
+<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
+function template specialization F1 is eliminated if the set contains
+a second function template specialization whose function template is
+more specialized than the function template of F1 according to the
+partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
+eliminations, if any, there shall remain exactly one selected
+function.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<P>[Example 1: ...</P>
+
+<P>The initialization of pfe is ill-formed because no f() with type
+int(...) has been declared, and not because of any ambiguity. <DEL>For
+another example,</DEL> <INS>-- end example]</INS>
+</P>
+
+<P class="ins">[Example:</P>
+
+<P>...</P>
+
+<P>-- end example]</P>
+
+<P class="ins">[Example:</P>
+
+<PRE class="ins">
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+  };
+  void test() {
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+  }
+</PRE>
+
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>A declaration D1 is more constrained than another declaration D2 when
+D1 is at least as constrained as D2, and D2 is not at least as
+constrained as D1. [ Example: ... ]</P>
+
+<P class="ins">
+A non-template function F1 is more <I>partial-ordering-constrained</I>
+than a non-template function F2 if
+<UL class="ins">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
+<LI>if they are member functions, both are direct members of the same class, and</LI>
+<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
+<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
+</UL>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#6">temp.deduct.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When P is a function type, function pointer type, or
+pointer-to-member-function type:
+<UL>
+<LI>If the argument is an overload set containing one or more function
+templates, the parameter is treated as a non-deduced context.</LI>
+<LI>If the argument is an overload set (not containing function
+templates), trial argument deduction is attempted using each of the
+members of the set. <DEL>If deduction succeeds for only one of the
+overload set members, that member is used as the argument value for
+the deduction. If deduction succeeds for more than one member of the
+overload set</DEL>
+<INS>If all successful deductions yield the same deduced A, that
+deduced A is the result of deduction; otherwise,</INS> the parameter
+is treated as a non-deduced context.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+[ Example:
+<PRE>
+  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;   // #1
+    void f(short);              // #2
+  };
+  void test() {
+    auto x = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #1</SPAN>
+    auto y = &amp;X&lt;false&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #2</SPAN>
+  }
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>A function parameter for which the associated argument is an overload
+set <DEL>(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL>, and one or more of the following
+apply:
+<UL>
+<LI>
+<DEL>more than one function matches</DEL> <INS>functions that do
+not all have the same function type match</INS> the function parameter
+type (resulting in an ambiguous deduction), or</LI>
+<LI>no function matches the function parameter type, or</LI>
+<LI>the overload set supplied as an argument contains one or more
+function templates.
+</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add a section to C.1.4 [<A href="https://wg21.link/diff.cpp23.temp">diff.cpp23.temp</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+<P>
+Affected subclause: 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]<BR>
+Change: Template argument deduction from overload sets succeeds in more cases.<BR>
+Rationale: Allow consideration of constraints to disambiguate overload sets used as parameters in function calls.<BR>
+Effect on original feature: Valid C++ 2023 code may become ill-formed.<BR>
+[Example 1:
+</P>
+<PRE>
+  template &lt;typename T&gt;
+  void f(T &amp;&amp;, void (*)(T &amp;&amp;));
+
+  void g(int &amp;);
+  inline namespace A {
+    void g(short &amp;&amp;);
+  }
+  inline namespace B {
+    void g(short &amp;&amp;);
+  }
+
+  void q() {
+    int x;
+    f(x, g);         //<SPAN CLASS="cmnt"> ill-formed; previously well-formed, deducing </SPAN>T=int&amp;
+  }
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-09-27</B></P>
+
+<P>Functions whose constraints are not satisfied should be excluded
+from the overload set before attempting deduction.  Also, clarify that
+12.3 [<A href="https://wg21.link/over.over">over.over</A>] applies after deduction is complete.</P>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<OL>
+<LI>
+<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>F1 and F2 are non-template functions and <INS>F1 is more
+partial-ordering-constrained than F2
+(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
+<UL class="del">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
+<LI>if they are member
+functions, both are direct members of the same class, and</LI>
+<LI>if
+both are non-static member functions, they have the same types for
+their object parameters, and</LI>
+<LI>F1 is more constrained than F2
+according to the partial ordering of constraints described in
+13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
+</UL>
+or if not that,
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The target can be
+<UL>
+<LI>an object or reference being initialized
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
+9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
+<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
+<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
+<LI>a parameter of a user-defined operator
+(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
+<LI>the return value of a function,
+operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
+<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
+7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
+<LI>a
+non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
+</UL>
+
+<INS>If the target type contains a placeholder type, placeholder type
+deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
+remainder of this subclause uses the target type so deduced.
+</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+All functions with associated constraints that are not satisfied
+(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
+functions. If more than one function in the set remains, all function
+template specializations in the set are eliminated if the set also
+contains a function that is not a function template
+specialization. Any given non-template function F0 is eliminated if
+the set contains a second non-template function that is more
+<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
+<DEL>according to the partial ordering rules of</DEL>
+<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
+function template specialization F1 is eliminated if the set contains
+a second function template specialization whose function template is
+more specialized than the function template of F1 according to the
+partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
+eliminations, if any, there shall remain exactly one selected
+function.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<P>[Example 1: ...</P>
+
+<P>The initialization of pfe is ill-formed because no f() with type
+int(...) has been declared, and not because of any ambiguity. <DEL>For
+another example,</DEL> <INS>-- end example]</INS>
+</P>
+
+<P class="ins">[Example:</P>
+
+<P>...</P>
+
+<P>-- end example]</P>
+
+<P class="ins">[Example:</P>
+
+<PRE class="ins">
+  template&lt;bool B&gt; struct X {
+    void f(short) requires B;
+    void f(long);
+    template&lt;typename&gt; void g(short) requires B;
+    template&lt;typename&gt; void g(long);
+  };
+  void test() {
+    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
+  }
+</PRE>
+
+<P class="ins">-- end example]</P>
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>A declaration D1 is more constrained than another declaration D2 when
+D1 is at least as constrained as D2, and D2 is not at least as
+constrained as D1. [ Example: ... ]</P>
+
+<P class="ins">
+A non-template function F1 is more <I>partial-ordering-constrained</I>
+than a non-template function F2 if
+<UL class="ins">
+<LI>they have the same non-object-parameter-type-lists
+(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
+<LI>if they are member functions, both are direct members of the same class, and</LI>
+<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
+<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
+</UL>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#6">temp.deduct.call</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+When P is a function type, function pointer type, or
+pointer-to-member-function type:
+<UL>
+<LI>If the argument is an overload set containing one or more function
+templates, the parameter is treated as a non-deduced context.</LI>
+<LI>If the argument is an overload set (not containing function
+templates), trial argument deduction is attempted using each of the
+members of the set <INS>whose associated constraints
+(13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.constr</A>]) are satisfied</INS>.
+<DEL>If deduction succeeds for only one of the
+overload set members, that member is used as the argument value for
+the deduction. If deduction succeeds for more than one member of the
+overload set</DEL>
+<INS>If all successful deductions yield the same deduced A, that
+deduced A is the result of deduction; otherwise,</INS> the parameter
+is treated as a non-deduced context.
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+[ Example:
+<PRE>
+  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
+  template&lt;bool B&gt; struct X {
+    static void f(short) requires B;   // #1
+    static void f(short);              // #2
+  };
+  void test() {
+    auto x = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #1</SPAN>
+    auto y = &amp;X&lt;false&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #2</SPAN>
+  }
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>A function parameter for which the associated argument is an overload
+set <DEL>(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL>, and one or more of the following
+apply:
+<UL>
+<LI>
+<DEL>more than one function matches</DEL> <INS>functions whose
+associated constraints are satisfied and that do not all have the same
+function type match</INS> the function parameter type (resulting in an
+ambiguous deduction), or</LI>
+<LI>no function <INS>whose associated constraints are satisfied</INS>
+matches the function parameter type, or</LI>
+<LI>the overload set supplied as an argument contains one or more
+function templates.
+</LI>
+</UL>
+<INS>[ Note: A particular function from the overload set is selected
+(12.3 [<A href="https://wg21.link/over.over">over.over</A>]) after template argument deduction has
+succeeded (13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]). -- end note ]</INS>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Add a section to C.1.4 [<A href="https://wg21.link/diff.cpp23.temp">diff.cpp23.temp</A>]:</P>
+
+<BLOCKQUOTE class="ins">
+<P>
+Affected subclause: 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]<BR>
+Change: Template argument deduction from overload sets succeeds in more cases.<BR>
+Rationale: Allow consideration of constraints to disambiguate overload sets used as parameters in function calls.<BR>
+Effect on original feature: Valid C++ 2023 code may become ill-formed.<BR>
+[Example 1:
+</P>
+<PRE>
+  template &lt;typename T&gt;
+  void f(T &amp;&amp;, void (*)(T &amp;&amp;));
+
+  void g(int &amp;);
+  inline namespace A {
+    void g(short &amp;&amp;);
+  }
+  inline namespace B {
+    void g(short &amp;&amp;);
+  }
+
+  void q() {
+    int x;
+    f(x, g);         //<SPAN CLASS="cmnt"> ill-formed; previously well-formed, deducing </SPAN>T=int&amp;
+  }
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
+<A NAME="2931"></A><H4>2931.
+  
+Restrictions on operator functions that are explicit object member functions
+</H4>
+<B>Section: </B>12.4.1&#160; [<A href="https://wg21.link/over.oper.general">over.oper.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Barry Revzin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-26<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/600">#600</A>.)</P>
+
+<P>With the introduction of explicit object member functions, the
+restrictions on operator functions became inconsistent.  Subclause
+12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 specifies:</P>
+
+<BLOCKQUOTE>
+
+An operator function shall either
+<UL>
+<LI>be a member function or</LI>
+<LI>be a non-member function that has at least one non-object
+parameter whose type is a class, a reference to a class, an
+enumeration, or a reference to an enumeration.</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>Talking about non-object parameters in a bullet discussing
+non-member functions makes no sense.  The following example ought to
+be prohibited, for consistency with <TT>operator==(int, int)</TT>:</P>
+
+<PRE>
+  struct B {
+    bool operator==(this int, int);
+    operator int() const;
+  };
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+
+<P>Change in 12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 as follows, removing
+the bullets:</P>
+
+<BLOCKQUOTE>
+
+An operator function shall <DEL>either</DEL>
+<UL>
+<LI><DEL>be a member function or</DEL></LI>
+<LI>
+<DEL>be a non-member function that has</DEL> <INS>have</INS> at least
+one <DEL>non-object</DEL> parameter <INS>or implicit object parameter</INS>
+whose type is a class, a reference
+to a class, an enumeration, or a reference to an enumeration.</LI>
+</UL>
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2903"></A><H4>2903.
   
@@ -11610,119 +12834,6 @@ non-inline variable with thread storage duration ...
 </OL>
 
 <BR><BR><HR>
-<A NAME="2929"></A><H4>2929.
-  
-Lifetime of trivially-destructible static or thread-local objects
-</H4>
-<B>Section: </B>6.9.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Mathias Stearn
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-05<BR>
-
-
-
-
-<P>
-<A HREF="cwg_defects.html#2256">Issue 2256</A> (adopted in February, 2019)
-changed the rules such that the lifetimes of objects do not depend on
-whether the destructor is trivial or not.  However, the motivation of
-that issue mentioned only objects with automatic storage duration.  To
-be able to avoid order-of-destruction issues across translation units,
-it would be useful to never end the lifetime of trivially-destructible
-objects with static storage duration and to delay the end of the
-lifetime of such objects with thread storage duration as long as
-possible.</P>
-
-<P><U>Possible resolution [SUPERSEDED]:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-Constructed <INS>class</INS> objects (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with
-static storage duration <INS>and having a non-trivial destructor
-(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed and functions
-registered with std::atexit are called as part of a call to std::exit
-(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
-the destructions and the registered functions.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
-<BLOCKQUOTE>
-
-Constructed <INS>class</INS> objects with thread storage duration
-within a given thread <INS>and having a non-trivial destructor
-(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>])</INS> are destroyed as a result of
-returning from the initial function of that thread and as a result of
-that thread calling std::exit. The destruction
-of <DEL>all</DEL> <INS>those</INS> constructed objects with thread
-storage duration within that thread strongly happens before
-<INS>releasing the storage for objects with thread storage duration
-within that thread, which in turn strongly happens before</INS>
-destroying any object with static storage duration.
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<P><B>CWG 2024-09-27</B></P>
-
-<P>Also allow for constant destruction, consider arrays of class type,
-and adjust the happens-before requirements.</P>
-
-<P><U>Possible resolution:</U></P>
-
-
-<OL>
-<LI>
-<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-Constructed <INS>complete</INS> objects
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>]) with static storage
-duration <INS>and not having constant destruction
-(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed and functions
-registered with std::atexit are called as part of a call to std::exit
-(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
-the destructions and the registered functions.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
-<BLOCKQUOTE>
-
-Constructed <INS>complete</INS> objects with thread storage duration
-within a given thread <INS>and not having constant destruction
-(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>])</INS> are destroyed as a result of
-returning from the initial function of that thread and as a result of
-that thread calling std::exit. The destruction
-of <DEL>all</DEL> <INS>those</INS> constructed objects <DEL>with thread
-storage duration</DEL> within that thread strongly happens before
-<INS>releasing the storage for all objects with thread storage
-duration within that thread (6.7.5.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]).  Also, the
-destruction of those constructed objects within that thread strongly
-happens before</INS> destroying any object with static storage
-duration.
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="2902"></A><H4>2902.
   
 Implicit <TT>this</TT> transformation outside of permitted contexts
@@ -13142,6 +14253,77 @@ were needed for constant evaluation is considered
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="2909"></A><H4>2909.
+  
+Subtle difference between constant-initialized and constexpr
+</H4>
+<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>CWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-06-24<BR>
+
+
+<P>Subclause 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2 defines
+"constant-initialized" using the following rule:</P>
+
+<BLOCKQUOTE>
+A variable or temporary object o is <I>constant-initialized</I> if
+<UL>
+<LI>either it has an initializer or its default-initialization results in
+some initialization being performed, and</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>However, the rules for <TT>constexpr</TT> are slightly different,
+per 9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+A constexpr specifier used in an object declaration declares the
+object as const. Such an object shall have literal type and shall be
+initialized. ...
+
+</BLOCKQUOTE>
+
+<P>The difference manifests for an example such as:</P>
+
+<PRE>
+  struct S {};
+  int main() {
+    constexpr S s;       //<SPAN CLASS="cmnt"> OK</SPAN>
+    constexpr S s2 = s;  //<SPAN CLASS="cmnt"> error: </SPAN>s<SPAN CLASS="cmnt"> is not constant-initialized</SPAN>
+  }
+</PRE>
+
+<P>Is the difference intentional?</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+A variable or temporary object o is constant-initialized if
+<UL>
+<LI>either it has an initializer or <DEL>its default-initialization
+results in some initialization being performed</DEL> <INS>its type is
+const-default-constructible (9.4.1 [<A href="https://wg21.link/dcl.init.general">dcl.init.general</A>])</INS>,
+and</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2412"></A><H4>2412.
   
 SFINAE vs undeduced placeholder type
@@ -13574,6 +14756,71 @@ function (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]).</INS></P>
 <P><B>CWG 2023-11-09</B></P>
 
 <P>Progress of this issue is blocked on <A HREF="cwg_active.html#2554">issue 2554</A>.</P>
+
+<BR><BR><HR>
+<A NAME="2932"></A><H4>2932.
+  
+Value range of empty enumeration
+</H4>
+<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Benjamin Sch.
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/604">#604</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  enum E { };
+  constexpr auto x = static_cast&lt;E&gt;(-1);
+</PRE>
+
+<P>It is unclear whether the hypothetical integer type for <TT>E</TT>
+is a signed integer type of width 1 or an unsigned integer type of
+width 0, which does not have a signed counterpart and thus does not
+exist.  The former choice makes the example well-formed, the latter
+one ill-formed.  Before P1236, the specification was clear.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 9.7.1 [<A href="https://wg21.link/dcl.enum#8">dcl.enum</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+For an enumeration whose underlying type is fixed, the values of the
+enumeration are the values of the underlying type. Otherwise<DEL>, the</DEL><INS>:</INS>
+<UL>
+<LI class="ins">
+If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.
+</LI>
+<LI>
+<INS>The</INS> values of the enumeration are the values representable
+by a hypothetical integer type with minimal width M such that all
+enumerators can be represented<INS>; if all enumerators have value 0,
+the values of the enumeration consist of the single value 0
+and <I>M</I> is 0</INS>. The width of the smallest bit-field large
+enough to hold all the values of the enumeration type is <INS>the
+maximum of 1 and</INS> M.
+</LI>
+</UL>
+<INS>[ Note: </INS> It is possible to define an enumeration that has
+values not defined by any of its enumerators. <INS>-- end note ]</INS>
+<DEL>If the <I>enumerator-list</I> is empty, the values of the enumeration
+are as if the enumeration had a single enumerator with value
+0.</DEL> [Footnote: ... ]
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2885"></A><H4>2885.
@@ -14558,151 +15805,6 @@ rewrite target if its function template is a rewrite target.
 </OL>
 
 <BR><BR><HR>
-<A NAME="2815"></A><H4>2815.
-  
-Overload resolution for references/pointers to <TT>noexcept</TT> functions
-</H4>
-<B>Section: </B>12.2.4.3&#160; [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-10-05<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  void f() noexcept {}
-
-  void g(void (*)() noexcept) {}
-  void g(void (&amp;)()) {}
-
-  int main() {
-    g(f);     // <SPAN CLASS="cmnt">error: ambiguous</SPAN>
-  }
-</PRE>
-
-<P>In contrast:</P>
-
-<PRE>
-  void f() noexcept {}
-
-  void g(void (*)()) {} 
-  void g(void (&amp;)()) {}      // <SPAN CLASS="cmnt">#1</SPAN>
-
-  int main() {
-    g(f);    // <SPAN CLASS="cmnt">OK, calls #1</SPAN>
-  }
-</PRE>
-
-<P>In both cases, binding <TT>void(&amp;)()</TT> to <TT>void()
-noexcept</TT> is considered an identity conversion, without further
-disambiguation by 12.2.4.3 [<A href="https://wg21.link/over.ics.rank">over.ics.rank</A>].</P>
-
-<P><B>CWG 2024-06-26</B></P>
-
-<P>Binding a reference to a function should not be considered an
-identity conversion if it strips a non-throwing exception
-specification.  This amendment removes the ambiguity for the first
-example and makes the second example ambiguous, which is
-desirable.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 12.2.4.2.5 [<A href="https://wg21.link/over.ics.ref#1">over.ics.ref</A>] paragraph 1 as follows:</P>
-
-
-
-<BLOCKQUOTE>
-
-When a parameter of type &#8220;reference to cvT&#8221; binds directly
-(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to an argument expression:
-<UL>
-<LI>If the argument expression has a type that is a derived class of
-the parameter type, the implicit conversion sequence is a
-derived-to-base conversion (12.2.4.2 [<A href="https://wg21.link/over.best.ics">over.best.ics</A>]).</LI>
-<LI>Otherwise, <DEL>if T is a function type, or</DEL> if the type of
-the argument is possibly cv-qualified T, or if T is an array type of
-unknown bound with element type U and the argument has an array type
-of known bound whose element type is possibly cv-qualified U, the
-implicit conversion sequence is the identity
-conversion.  <DEL>[<I>Note 1:</I> When T is a function type, the type
-of the argument can differ only by the presence of noexcept.
-&#8212;<I>end note</I>]</DEL>
-</LI>
-<LI class="ins">Otherwise, if T is a function type, the implicit
-conversion sequence is a function pointer conversion.</LI>
-<LI>Otherwise, the implicit conversion
-sequence is a qualification conversion.
-</LI>
-</UL>
-
-[<I>Example 1:</I>
-<PRE>
-  struct A {};
-  struct B : public A {} b;
-  int f(A&amp;);
-  int f(B&amp;);
-  int i = f(b);    //<SPAN CLASS="cmnt"> calls f(B&amp;), an exact match, rather than f(A&amp;), a conversion</SPAN>
-</PRE>
-<PRE class="ins">
-   void g() noexcept;
-   int h(void (&amp;)() noexcept); //<SPAN CLASS="cmnt"> #1</SPAN>
-   int h(void (&amp;)());          //<SPAN CLASS="cmnt"> #2</SPAN>
-   int j = h(g);               //<SPAN CLASS="cmnt"> calls #1, an exact match, rather than #2, a function pointer conversion</SPAN>
-</PRE>
-&#8212;<I>end example</I>]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.2.4.3 [<A href="https://wg21.link/over.ics.rank#3.2.6">over.ics.rank</A>] bullet 3.2.6 as follows:</P>
-
-<BLOCKQUOTE>
-<PRE>
-  int f(const int &amp;);
-  int f(int &amp;);
-  int g(const int &amp;);
-  int g(int);
-  int i;
-  int j = f(i);   //<SPAN CLASS="cmnt"> calls </SPAN>f(int &amp;)
-  int k = g(i);   //<SPAN CLASS="cmnt"> ambiguous</SPAN>
-
-  struct X {
-    void f() const;
-    void f();
-  };
-  void g(const X&amp; a, X b) {
-    a.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f() const
-    b.f();     //<SPAN CLASS="cmnt"> calls </SPAN>X::f()
-  }
-
-  int h1(int (&amp;)[]);
-  int h1(int (&amp;)[1]);
-<DEL>  int h2(void (&amp;)());
-  int h2(void (&amp;)() noexcept);</DEL>
-  void g2() {
-    int a[1];
-    h1(a);
-<DEL>    extern void f2() noexcept;
-    h2(f2);</DEL>
-  }
-</PRE>
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="2572"></A><H4>2572.
   
 Address of overloaded function with no target
@@ -14793,647 +15895,6 @@ shall remain exactly one selected function.
 <P>The example in this issue is resolved by <A HREF="cwg_active.html#2918">issue 2918</A> by suitably ordering placeholder type deduction before
 the address operation.</P>
 
-<BR><BR><HR>
-<A NAME="2918"></A><H4>2918.
-  
-Consideration of constraints for address of overloaded function
-</H4>
-<B>Section: </B>12.3&#160; [<A href="https://wg21.link/over.over">over.over</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-26<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;
-    void f(long);
-    template&lt;typename&gt; void g(short) requires B;
-    template&lt;typename&gt; void g(long);
-   };
-   void test(X&lt;true&gt; x) {
-    x.f(0);           //<SPAN CLASS="cmnt"> #1, ambiguous</SPAN>
-    x.g&lt;int&gt;(0);      //<SPAN CLASS="cmnt"> #2, ambiguous</SPAN>
-    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> #3, OK!</SPAN>
-    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> #4, ambiguous</SPAN>
-  }
-</PRE>
-
-<P>For the function call cases, 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 and 13.7.7.3 [<A href="https://wg21.link/temp.func.order#6">temp.func.order</A>] paragraph 6 specify that
-constraints are only considered if the competing overloads are
-otherwise basically the same.  There is no corresponding restriction
-when taking the address of a function.</P>
-
-<P>For a second issue, the treatment of placeholder type deduction is
-unclear:</P>
-
-<PRE>
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;
-    void f(short);
-    template&lt;typename&gt; void g(short) requires B;
-    template&lt;typename&gt; void g(short);
-  };
-  void test(X&lt;true&gt; x) {
-    auto r = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> #5</SPAN>
-    auto s = &amp;X&lt;true&gt;::g&lt;int&gt;;  //<SPAN CLASS="cmnt"> #6</SPAN>
-  }
-</PRE>
-
-<P>When the address of the overload set is resolved, there is a
-target, but the target type is <TT>auto</TT>, which is not properly
-handled.</P>
-
-<P>See also <A HREF="cwg_active.html#2572">issue 2572</A>.</P>
-
-<P><B>Proposed resolution:</B></P>
-
-<OL>
-<LI>
-<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>F1 and F2 are non-template functions and <INS>F1 is more
-partial-ordering-constrained than F2
-(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
-<UL class="del">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
-<LI>if they are member
-functions, both are direct members of the same class, and</LI>
-<LI>if
-both are non-static member functions, they have the same types for
-their object parameters, and</LI>
-<LI>F1 is more constrained than F2
-according to the partial ordering of constraints described in
-13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
-</UL>
-or if not that,
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-... The target can be
-<UL>
-<LI>an object or reference being initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
-<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
-<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>a parameter of a user-defined operator
-(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
-<LI>the return value of a function,
-operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
-<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
-<LI>a
-non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
-</UL>
-
-<INS>If the target type contains a placeholder type, placeholder type
-deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
-remainder of this subclause uses the target type so deduced.
-</INS>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-All functions with associated constraints that are not satisfied
-(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
-functions. If more than one function in the set remains, all function
-template specializations in the set are eliminated if the set also
-contains a function that is not a function template
-specialization. Any given non-template function F0 is eliminated if
-the set contains a second non-template function that is more
-<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
-<DEL>according to the partial ordering rules of</DEL>
-<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
-function template specialization F1 is eliminated if the set contains
-a second function template specialization whose function template is
-more specialized than the function template of F1 according to the
-partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
-eliminations, if any, there shall remain exactly one selected
-function.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-<P>[Example 1: ...</P>
-
-<P>The initialization of pfe is ill-formed because no f() with type
-int(...) has been declared, and not because of any ambiguity. <DEL>For
-another example,</DEL> <INS>-- end example]</INS>
-</P>
-
-<P class="ins">[Example:</P>
-
-<P>...</P>
-
-<P>-- end example]</P>
-
-<P class="ins">[Example:</P>
-
-<PRE class="ins">
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;
-    void f(long);
-    template&lt;typename&gt; void g(short) requires B;
-    template&lt;typename&gt; void g(long);
-  };
-  void test() {
-    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
-    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
-  }
-</PRE>
-
-<P class="ins">-- end example]</P>
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
-
-<BLOCKQUOTE>
-
-<P>A declaration D1 is more constrained than another declaration D2 when
-D1 is at least as constrained as D2, and D2 is not at least as
-constrained as D1. [ Example: ... ]</P>
-
-<P class="ins">
-A non-template function F1 is more <I>partial-ordering-constrained</I>
-than a non-template function F2 if
-<UL class="ins">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
-<LI>if they are member functions, both are direct members of the same class, and</LI>
-<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
-<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
-</UL>
-</P>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#6">temp.deduct.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-When P is a function type, function pointer type, or
-pointer-to-member-function type:
-<UL>
-<LI>If the argument is an overload set containing one or more function
-templates, the parameter is treated as a non-deduced context.</LI>
-<LI>If the argument is an overload set (not containing function
-templates), trial argument deduction is attempted using each of the
-members of the set. <DEL>If deduction succeeds for only one of the
-overload set members, that member is used as the argument value for
-the deduction. If deduction succeeds for more than one member of the
-overload set</DEL>
-<INS>If all successful deductions yield the same deduced A, that
-deduced A is the result of deduction; otherwise,</INS> the parameter
-is treated as a non-deduced context.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
-
-<BLOCKQUOTE class="ins">
-[ Example:
-<PRE>
-  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;   // #1
-    void f(short);              // #2
-  };
-  void test() {
-    auto x = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #1</SPAN>
-    auto y = &amp;X&lt;false&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #2</SPAN>
-  }
-</PRE>
--- end example]
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>A function parameter for which the associated argument is an overload
-set <DEL>(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL>, and one or more of the following
-apply:
-<UL>
-<LI>
-<DEL>more than one function matches</DEL> <INS>functions that do
-not all have the same function type match</INS> the function parameter
-type (resulting in an ambiguous deduction), or</LI>
-<LI>no function matches the function parameter type, or</LI>
-<LI>the overload set supplied as an argument contains one or more
-function templates.
-</LI>
-</UL>
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Add a section to C.1.4 [<A href="https://wg21.link/diff.cpp23.temp">diff.cpp23.temp</A>]:</P>
-
-<BLOCKQUOTE class="ins">
-<P>
-Affected subclause: 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]<BR>
-Change: Template argument deduction from overload sets succeeds in more cases.<BR>
-Rationale: Allow consideration of constraints to disambiguate overload sets used as parameters in function calls.<BR>
-Effect on original feature: Valid C++ 2023 code may become ill-formed.<BR>
-[Example 1:
-</P>
-<PRE>
-  template &lt;typename T&gt;
-  void f(T &amp;&amp;, void (*)(T &amp;&amp;));
-
-  void g(int &amp;);
-  inline namespace A {
-    void g(short &amp;&amp;);
-  }
-  inline namespace B {
-    void g(short &amp;&amp;);
-  }
-
-  void q() {
-    int x;
-    f(x, g);         //<SPAN CLASS="cmnt"> ill-formed; previously well-formed, deducing </SPAN>T=int&amp;
-  }
-</PRE>
--- end example]
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<P><B>CWG 2024-09-27</B></P>
-
-<P>Functions whose constraints are not satisfied should be excluded
-from the overload set before attempting deduction.  Also, clarify that
-12.3 [<A href="https://wg21.link/over.over">over.over</A>] applies after deduction is complete.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 12.2.4.1 [<A href="https://wg21.link/over.match.best.general#2.6">over.match.best.general</A>] bullet 2.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>F1 and F2 are non-template functions and <INS>F1 is more
-partial-ordering-constrained than F2
-(13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>])</INS>
-<UL class="del">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), and</LI>
-<LI>if they are member
-functions, both are direct members of the same class, and</LI>
-<LI>if
-both are non-static member functions, they have the same types for
-their object parameters, and</LI>
-<LI>F1 is more constrained than F2
-according to the partial ordering of constraints described in
-13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>],</LI>
-</UL>
-or if not that,
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-... The target can be
-<UL>
-<LI>an object or reference being initialized
-(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>],
-9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]),</LI>
-<LI>the left side of an assignment (7.6.19 [<A href="https://wg21.link/expr.ass">expr.ass</A>]),</LI>
-<LI>a parameter of a function (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]),</LI>
-<LI>a parameter of a user-defined operator
-(12.4 [<A href="https://wg21.link/over.oper">over.oper</A>]),</LI>
-<LI>the return value of a function,
-operator function, or conversion (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]),</LI>
-<LI>an explicit type conversion (7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>],
-7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>], 7.6.3 [<A href="https://wg21.link/expr.cast">expr.cast</A>]), or</LI>
-<LI>a
-non-type <I>template-parameter</I> (13.4.3 [<A href="https://wg21.link/temp.arg.nontype">temp.arg.nontype</A>]).</LI>
-</UL>
-
-<INS>If the target type contains a placeholder type, placeholder type
-deduction is performed (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the
-remainder of this subclause uses the target type so deduced.
-</INS>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 12.3 [<A href="https://wg21.link/over.over#5">over.over</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-All functions with associated constraints that are not satisfied
-(13.5.3 [<A href="https://wg21.link/temp.constr.decl">temp.constr.decl</A>]) are eliminated from the set of selected
-functions. If more than one function in the set remains, all function
-template specializations in the set are eliminated if the set also
-contains a function that is not a function template
-specialization. Any given non-template function F0 is eliminated if
-the set contains a second non-template function that is more
-<DEL>constrained</DEL> <INS>partial-ordering-constrained</INS> than F0
-<DEL>according to the partial ordering rules of</DEL>
-<INS>(</INS>13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]<INS>)</INS>. Any given
-function template specialization F1 is eliminated if the set contains
-a second function template specialization whose function template is
-more specialized than the function template of F1 according to the
-partial ordering rules of 13.7.7.3 [<A href="https://wg21.link/temp.func.order">temp.func.order</A>]. After such
-eliminations, if any, there shall remain exactly one selected
-function.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Split and change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-<P>[Example 1: ...</P>
-
-<P>The initialization of pfe is ill-formed because no f() with type
-int(...) has been declared, and not because of any ambiguity. <DEL>For
-another example,</DEL> <INS>-- end example]</INS>
-</P>
-
-<P class="ins">[Example:</P>
-
-<P>...</P>
-
-<P>-- end example]</P>
-
-<P class="ins">[Example:</P>
-
-<PRE class="ins">
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;
-    void f(long);
-    template&lt;typename&gt; void g(short) requires B;
-    template&lt;typename&gt; void g(long);
-  };
-  void test() {
-    &amp;X&lt;true&gt;::f;      //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
-    &amp;X&lt;true&gt;::g&lt;int&gt;; //<SPAN CLASS="cmnt"> error: ambiguous; constraints are not considered</SPAN>
-  }
-</PRE>
-
-<P class="ins">-- end example]</P>
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a paragraph at the end of 13.5.5 [<A href="https://wg21.link/temp.constr.order">temp.constr.order</A>]:</P>
-
-<BLOCKQUOTE>
-
-<P>A declaration D1 is more constrained than another declaration D2 when
-D1 is at least as constrained as D2, and D2 is not at least as
-constrained as D1. [ Example: ... ]</P>
-
-<P class="ins">
-A non-template function F1 is more <I>partial-ordering-constrained</I>
-than a non-template function F2 if
-<UL class="ins">
-<LI>they have the same non-object-parameter-type-lists
-(9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>], and</LI>
-<LI>if they are member functions, both are direct members of the same class, and</LI>
-<LI>if both are non-static member functions, they have the same types for their object parameters, and</LI>
-<LI>the declaration of F1 is more constrained than the declaration of F2.</LI>
-</UL>
-</P>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call#6">temp.deduct.call</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-When P is a function type, function pointer type, or
-pointer-to-member-function type:
-<UL>
-<LI>If the argument is an overload set containing one or more function
-templates, the parameter is treated as a non-deduced context.</LI>
-<LI>If the argument is an overload set (not containing function
-templates), trial argument deduction is attempted using each of the
-members of the set <INS>whose associated constraints
-(13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.constr</A>]) are satisfied</INS>.
-<DEL>If deduction succeeds for only one of the
-overload set members, that member is used as the argument value for
-the deduction. If deduction succeeds for more than one member of the
-overload set</DEL>
-<INS>If all successful deductions yield the same deduced A, that
-deduced A is the result of deduction; otherwise,</INS> the parameter
-is treated as a non-deduced context.
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Add a new paragraph at the end of 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>] as follows:</P>
-
-<BLOCKQUOTE class="ins">
-[ Example:
-<PRE>
-  // <SPAN CLASS="cmnt">All arguments for placeholder type deduction (9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]) yield the same deduced type.</SPAN>
-  template&lt;bool B&gt; struct X {
-    void f(short) requires B;   // #1
-    void f(short);              // #2
-  };
-  void test() {
-    auto x = &amp;X&lt;true&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #1</SPAN>
-    auto y = &amp;X&lt;false&gt;::f;       //<SPAN CLASS="cmnt"> OK, deduces </SPAN>void(*)(short)<SPAN CLASS="cmnt">, selects #2</SPAN>
-  }
-</PRE>
--- end example]
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#5.6">temp.deduct.type</A>] bullet 5.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>A function parameter for which the associated argument is an overload
-set <DEL>(12.3 [<A href="https://wg21.link/over.over">over.over</A>])</DEL>, and one or more of the following
-apply:
-<UL>
-<LI>
-<DEL>more than one function matches</DEL> <INS>functions whose
-associated constraints are satisfied and that do not all have the same
-function type match</INS> the function parameter type (resulting in an
-ambiguous deduction), or</LI>
-<LI>no function <INS>whose associated constraints are satisfied</INS>
-matches the function parameter type, or</LI>
-<LI>the overload set supplied as an argument contains one or more
-function templates.
-</LI>
-</UL>
-<INS>[ Note: A particular function from the overload set is selected
-(12.3 [<A href="https://wg21.link/over.over">over.over</A>]) after template argument deduction has
-succeeded (13.10.4 [<A href="https://wg21.link/temp.over">temp.over</A>]). -- end note ]</INS>
-</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Add a section to C.1.4 [<A href="https://wg21.link/diff.cpp23.temp">diff.cpp23.temp</A>]:</P>
-
-<BLOCKQUOTE class="ins">
-<P>
-Affected subclause: 13.10.3.2 [<A href="https://wg21.link/temp.deduct.call">temp.deduct.call</A>]<BR>
-Change: Template argument deduction from overload sets succeeds in more cases.<BR>
-Rationale: Allow consideration of constraints to disambiguate overload sets used as parameters in function calls.<BR>
-Effect on original feature: Valid C++ 2023 code may become ill-formed.<BR>
-[Example 1:
-</P>
-<PRE>
-  template &lt;typename T&gt;
-  void f(T &amp;&amp;, void (*)(T &amp;&amp;));
-
-  void g(int &amp;);
-  inline namespace A {
-    void g(short &amp;&amp;);
-  }
-  inline namespace B {
-    void g(short &amp;&amp;);
-  }
-
-  void q() {
-    int x;
-    f(x, g);         //<SPAN CLASS="cmnt"> ill-formed; previously well-formed, deducing </SPAN>T=int&amp;
-  }
-</PRE>
--- end example]
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="2931"></A><H4>2931.
-  
-Restrictions on operator functions that are explicit object member functions
-</H4>
-<B>Section: </B>12.4.1&#160; [<A href="https://wg21.link/over.oper.general">over.oper.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Barry Revzin
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-26<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/600">#600</A>.)</P>
-
-<P>With the introduction of explicit object member functions, the
-restrictions on operator functions became inconsistent.  Subclause
-12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 specifies:</P>
-
-<BLOCKQUOTE>
-
-An operator function shall either
-<UL>
-<LI>be a member function or</LI>
-<LI>be a non-member function that has at least one non-object
-parameter whose type is a class, a reference to a class, an
-enumeration, or a reference to an enumeration.</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>Talking about non-object parameters in a bullet discussing
-non-member functions makes no sense.  The following example ought to
-be prohibited, for consistency with <TT>operator==(int, int)</TT>:</P>
-
-<PRE>
-  struct B {
-    bool operator==(this int, int);
-    operator int() const;
-  };
-</PRE>
-
-<P><B>Proposed resolution:</B></P>
-
-<P>Change in 12.4.1 [<A href="https://wg21.link/over.oper.general#7">over.oper.general</A>] paragraph 7 as follows, removing
-the bullets:</P>
-
-<BLOCKQUOTE>
-
-An operator function shall <DEL>either</DEL>
-<UL>
-<LI><DEL>be a member function or</DEL></LI>
-<LI>
-<DEL>be a non-member function that has</DEL> <INS>have</INS> at least
-one <DEL>non-object</DEL> parameter <INS>or implicit object parameter</INS>
-whose type is a class, a reference
-to a class, an enumeration, or a reference to an enumeration.</LI>
-</UL>
-
-</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2862"></A><H4>2862.
   
@@ -28934,73 +29395,6 @@ unnamed enumeration definition in the same scope...</P>
 </OL>
 
 <BR><BR><HR>
-<A NAME="2910"></A><H4>2910.
-  
-Effect of <I>requirement-parameter-list</I>s on odr-usability
-</H4>
-<B>Section: </B>6.3&#160; [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Hubert Tong
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-24<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/561">#561</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  bool f() {
-    constexpr int z = 42;
-    return requires {
-      sizeof(int [*&amp;z]);
-    } &amp;&amp; requires (int x) {
-      sizeof(int [*&amp;z]);
-    };
-  }
-</PRE>
-
-<P>The second <I>requires-expression</I> introduces a function
-parameter scope according to 6.4.4 [<A href="https://wg21.link/basic.scope.param">basic.scope.param</A>].  This affects
-odr-usability as specified in 6.3 [<A href="https://wg21.link/basic.def.odr#10">basic.def.odr</A>] paragraph 10, but
-the two <I>requires-expression</I> in the example ought to actually
-behave the same.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 6.3 [<A href="https://wg21.link/basic.def.odr#10.2.2">basic.def.odr</A>] bullet 10.2.2 as follows:</P>
-
-
-<BLOCKQUOTE>
-
-A local entity (6.1 [<A href="https://wg21.link/basic.pre">basic.pre</A>]) is odr-usable in a scope
-(6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) if:
-
-<UL>
-<LI>...</LI>
-<LI>
-for each intervening scope (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]) between the
-point at which the entity is introduced and the scope (where *this is
-considered to be introduced within the innermost enclosing class or
-non-lambda function definition scope), either:
-<UL>
-<LI>the intervening scope is a block scope, or</LI>
-<LI>the intervening scope is the function parameter scope
-of <INS>a <I>requires-expression</I> or</INS>
-a <I>lambda-expression</I> that has a <I>simple-capture</I> naming the
-entity or has a <I>capture-default</I>, and the block scope of
-the <I>lambda-expression</I> is also an intervening scope.</LI>
-</UL>
-</LI>
-</UL>
-</BLOCKQUOTE>
-<BR><BR><HR>
 <A NAME="2488"></A><H4>2488.
   
 Overloading virtual functions and functions with trailing <I>requires-clause</I>s
@@ -32160,103 +32554,6 @@ this situation is a hard error, though.</P>
 <P>EWG invites a paper to propose a change.</P>
 
 <BR><BR><HR>
-<A NAME="2911"></A><H4>2911.
-  
-Unclear meaning of expressions "appearing within" subexpressions
-</H4>
-<B>Section: </B>7.5.8.1&#160; [<A href="https://wg21.link/expr.prim.req.general">expr.prim.req.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Hubert Tong
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-24<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/562">#562</A>.)</P>
-
-<P>Subclause 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#2">expr.prim.req.general</A>] paragraph 2 specifies:</P>
-
-<BLOCKQUOTE>
-
-A <I>requires-expression</I> is a prvalue of type bool whose value is
-described below. Expressions appearing within
-a <I>requirement-body</I> are unevaluated operands
-(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).
-
-</BLOCKQUOTE>
-
-<P>A <I>constant-expression</I> used as a non-type template argument
-"appearing within" the <I>requirement-body</I> should not be
-considered an "unevaluated operand".  Similarly, bodies
-of <I>lambda-expression</I>s should not be in focus of "appearing
-within".</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-
-<LI>
-<P>Change in 7.2.3 [<A href="https://wg21.link/expr.context#1">expr.context</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-In some contexts, unevaluated operands appear
-(<DEL>7.5.8 [<A href="https://wg21.link/expr.prim.req">expr.prim.req</A>]</DEL> <INS>7.5.8.2 [<A href="https://wg21.link/expr.prim.req.simple">expr.prim.req.simple</A>],
-7.5.8.4 [<A href="https://wg21.link/expr.prim.req.compound">expr.prim.req.compound</A>]</INS>, 7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>],
-7.6.2.5 [<A href="https://wg21.link/expr.sizeof">expr.sizeof</A>], 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept">expr.unary.noexcept</A>],
-9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype">dcl.type.decltype</A>], 13.1 [<A href="https://wg21.link/temp.pre">temp.pre</A>],
-13.7.9 [<A href="https://wg21.link/temp.concept">temp.concept</A>]). An unevaluated operand is not evaluated.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.5.8.1 [<A href="https://wg21.link/expr.prim.req.general#2">expr.prim.req.general</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-A <I>requires-expression</I> is a prvalue of type bool whose value is
-described below. <DEL>Expressions appearing within
-a <I>requirement-body</I> are unevaluated operands
-(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</DEL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.5.8.2 [<A href="https://wg21.link/expr.prim.req.simple#1">expr.prim.req.simple</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-A <I>simple-requirement</I> asserts the validity of an expression.
-<INS>The <I>expression</I> is an unevaluated operand.</INS>
-[<I>Note 1:</I> The enclosing <I>requires-expression</I> will evaluate
-to false if substitution of template arguments into the expression
-fails. <DEL>The expression is an unevaluated operand
-(7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]).</DEL> &#8212;<I>end note</I>] ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.5.8.4 [<A href="https://wg21.link/expr.prim.req.compound#1">expr.prim.req.compound</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-A <I>compound-requirement</I> asserts properties of the expression
-E. <INS>The <I>expression</I> is an unevaluated operand.</INS>
-Substitution of template arguments (if any) and verification of
-semantic properties proceed in the following order:
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-<BR><BR><HR>
 <A NAME="2739"></A><H4>2739.
   
 Nested requirement not a constant expression
@@ -34399,124 +34696,6 @@ lifetime did not begin within E are treated as having a dynamic type
 that is their declared type.</P>
 
 <BR><BR><HR>
-<A NAME="2907"></A><H4>2907.
-  
-Constant lvalue-to-rvalue conversion on uninitialized <TT>std::nullptr_t</TT>
-</H4>
-<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jim X
- &#160;&#160;&#160;
-
- <B>Date: </B>2023-01-10<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/215">#215</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  void f() {
-    std::nullptr_t np;       //<SPAN CLASS="cmnt"> uninitialized, thus </SPAN>np<SPAN CLASS="cmnt"> contains an erroneous value</SPAN>
-    constexpr void *p1 = np; //<SPAN CLASS="cmnt"> error: converted initializer is not a constant expression</SPAN>
-  }
-</PRE>
-
-<P>The lvalue-to-rvalue conversion on <TT>np</TT> does not actually
-read the value of <TT>np</TT> (7.3.2 [<A href="https://wg21.link/conv.lval#3.1">conv.lval</A>] bullet 3.1), yet the situation is made ill-formed by
-7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 7.7 [<A href="https://wg21.link/expr.const#5.9">expr.const</A>] bullet 5.9 as follows:</P>
-
-
-
-<BLOCKQUOTE>
-
-An expression E is a core constant expression unless the evaluation of
-E, following the rules of the abstract machine
-(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
-
-<UL>
-<LI>...</LI>
-
-<LI>an lvalue-to-rvalue conversion (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]) unless it
-is applied to
-<UL>
-<LI class="ins">a glvalue of type <I>cv</I> <TT>std::nullptr_t</TT>,</LI>
-<LI>a non-volatile glvalue that refers to an object
-that is usable in constant expressions, or</LI>
-<LI>a non-volatile
-glvalue of literal type that refers to a non-volatile object whose
-lifetime began within the evaluation of E;</LI>
-</UL>
-</LI>
-
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="2909"></A><H4>2909.
-  
-Subtle difference between constant-initialized and constexpr
-</H4>
-<B>Section: </B>7.7&#160; [<A href="https://wg21.link/expr.const">expr.const</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>CWG
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-06-24<BR>
-
-
-<P>Subclause 7.7 [<A href="https://wg21.link/expr.const#2">expr.const</A>] paragraph 2 defines
-"constant-initialized" using the following rule:</P>
-
-<BLOCKQUOTE>
-A variable or temporary object o is <I>constant-initialized</I> if
-<UL>
-<LI>either it has an initializer or its default-initialization results in
-some initialization being performed, and</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>However, the rules for <TT>constexpr</TT> are slightly different,
-per 9.2.6 [<A href="https://wg21.link/dcl.constexpr#6">dcl.constexpr</A>] paragraph 6:</P>
-
-<BLOCKQUOTE>
-
-A constexpr specifier used in an object declaration declares the
-object as const. Such an object shall have literal type and shall be
-initialized. ...
-
-</BLOCKQUOTE>
-
-<P>The difference manifests for an example such as:</P>
-
-<PRE>
-  struct S {};
-  int main() {
-    constexpr S s;       //<SPAN CLASS="cmnt"> OK</SPAN>
-    constexpr S s2 = s;  //<SPAN CLASS="cmnt"> error: </SPAN>s<SPAN CLASS="cmnt"> is not constant-initialized</SPAN>
-  }
-</PRE>
-
-<P>Is the difference intentional?</P>
-
-<BR><BR><HR>
 <A NAME="2495"></A><H4>2495.
   
 Glvalue result of a function call
@@ -35917,71 +36096,6 @@ but reference collapsing is specified in terms of a
 used in this description.</P>
 
 <P>See also <A HREF="cwg_defects.html#2313">issue 2313</A>.</P>
-
-<BR><BR><HR>
-<A NAME="2932"></A><H4>2932.
-  
-Value range of empty enumeration
-</H4>
-<B>Section: </B>9.7.1&#160; [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Benjamin Sch.
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-31<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/604">#604</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  enum E { };
-  constexpr auto x = static_cast&lt;E&gt;(-1);
-</PRE>
-
-<P>It is unclear whether the hypothetical integer type for <TT>E</TT>
-is a signed integer type of width 1 or an unsigned integer type of
-width 0, which does not have a signed counterpart and thus does not
-exist.  The former choice makes the example well-formed, the latter
-one ill-formed.  Before P1236, the specification was clear.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 9.7.1 [<A href="https://wg21.link/dcl.enum#8">dcl.enum</A>] paragraph 8 as follows:</P>
-
-<BLOCKQUOTE>
-
-For an enumeration whose underlying type is fixed, the values of the
-enumeration are the values of the underlying type. Otherwise<DEL>, the</DEL><INS>:</INS>
-<UL>
-<LI class="ins">
-If the <I>enumerator-list</I> is empty, the values of the enumeration
-are as if the enumeration had a single enumerator with value
-0.
-</LI>
-<LI>
-<INS>The</INS> values of the enumeration are the values representable
-by a hypothetical integer type with minimal width M such that all
-enumerators can be represented<INS>; if all enumerators have value 0,
-the values of the enumeration consist of the single value 0
-and <I>M</I> is 0</INS>. The width of the smallest bit-field large
-enough to hold all the values of the enumeration type is <INS>the
-maximum of 1 and</INS> M.
-</LI>
-</UL>
-<INS>[ Note: </INS> It is possible to define an enumeration that has
-values not defined by any of its enumerators. <INS>-- end note ]</INS>
-<DEL>If the <I>enumerator-list</I> is empty, the values of the enumeration
-are as if the enumeration had a single enumerator with value
-0.</DEL> [Footnote: ... ]
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="813"></A><H4>813.
@@ -37992,106 +38106,6 @@ allowed cases, which could be considered part of <A HREF="cwg_closed.html#6">iss
 specification requires a paper.</P>
 
 
-
-<BR><BR><HR>
-<A NAME="2930"></A><H4>2930.
-  
-Unclear term "copy/move operation" in specification of copy elision
-</H4>
-<B>Section: </B>11.9.6&#160; [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Gabriel Dos Reis
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-08-16<BR>
-
-
-
-
-<P>The specification of copy elision in 11.9.6 [<A href="https://wg21.link/class.copy.elision">class.copy.elision</A>]
-uses the undefined term "copy/move operation", even though the
-constructor actually selected might not be a copy or move constructor
-as specified in 11.4.5.3 [<A href="https://wg21.link/class.copy.ctor">class.copy.ctor</A>].  It is thus unclear
-whether copy elision can be applied even in the case a non-copy/move
-constructor is selected.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 11.9.6 [<A href="https://wg21.link/class.copy.elision#1">class.copy.elision</A>] paragraph 1 through 3 as follows:</P>
-
-<BLOCKQUOTE>
-
-When certain criteria are met, an implementation is allowed to omit
-the <DEL>copy/move construction of</DEL> <INS>creation of</INS> a
-class object, even if the <INS>selected</INS> constructor
-<DEL>selected for the copy/move operation</DEL> and/or the destructor
-for the object have side effects. In such cases, the implementation
-treats the source and target of the omitted <DEL>copy/move
-operation</DEL> <INS>initialization</INS> as simply two different ways
-of referring to the same object. If the first parameter of the
-selected constructor is an rvalue reference to the object's type, the
-destruction of that object occurs when the target would have been
-destroyed; otherwise, the destruction occurs at the later of the times
-when the two objects would have been destroyed without the
-optimization.  [ Foonote: Because only one object is destroyed instead
-of two, and one <DEL>copy/move constructor is not executed</DEL>
-<INS>object is not created</INS>, there is still one object destroyed
-for each one constructed. -- end footnote ] This elision
-of <DEL>copy/move operations</DEL> <INS>object creation</INS>,
-called <I>copy elision</I>, is permitted in the following
-circumstances (which may be combined to eliminate multiple copies):
-<UL>
-<LI>in a <TT>return</TT>
-statement <INS>(8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])</INS> in a function with a
-class return type, when the <I>expression</I> is the name of a
-non-volatile object <INS><I>o</I></INS> with automatic storage
-duration (other than a function parameter or a variable introduced by
-the <I>exception-declaration</I> of a <I>handler</I>
-(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])) with the same type (ignoring
-cv-qualification) as the function return type, the
-<DEL>copy/move operation</DEL> <INS>copy-initialization of the result
-object</INS> can be omitted by constructing <DEL>the
-object</DEL> <INS><I>o</I></INS> directly into the function call's
-<DEL>return</DEL> <INS>result</INS> object<INS>;</INS>
-</LI>
-<LI>
-in a <I>throw-expression</I> (7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>]), when the
-operand is the name of a non-volatile object <INS><I>o</I></INS> with
-automatic storage duration (other than a function <DEL>or
-catch-clause</DEL> parameter <INS>or a variable introduced by
-the <I>exception-declaration</I> of a <I>handler</I></INS>) that
-belongs to a scope that does not contain the innermost
-enclosing <I>compound-statement</I> associated with a <I>try-block</I>
-(if there is one), the <DEL>copy/move
-operation</DEL> <INS>copy-initialization of the exception object</INS>
-can be omitted by constructing <DEL>the object</DEL>
-<INS><I>o</I></INS> directly into the exception object<INS>;</INS>
-</LI>
-<LI>in a coroutine (9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]), a copy of a coroutine
-parameter can be omitted and references to that copy replaced with
-references to the corresponding parameter if the meaning of the
-program will be unchanged except for the execution of a constructor
-and destructor for the parameter copy object<INS>;</INS>
-</LI>
-<LI>when the <I>exception-declaration</I> of a handler
-(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) declares an object <INS><I>o</I></INS> of
-the same type (except for cv-qualification) as the exception object
-(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]), the <DEL>copy operation</DEL>
-<INS>copy-initialization of <I>o</I></INS> can be
-omitted by treating the <I>exception-declaration</I> as an alias for
-the exception object if the meaning of the program will be unchanged
-except for the execution of constructors and destructors for the
-object declared by the <I>exception-declaration</I>.  [<I>Note 1:</I>
-There cannot be a move from the exception object because it is always
-an lvalue. &#8212;<I>end note</I>]
-</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2189"></A><H4>2189.
