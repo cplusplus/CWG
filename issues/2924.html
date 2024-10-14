@@ -16,7 +16,7 @@
   Core Issues List revision 115c.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-09-27</P>
+<P>2024-10-14</P>
 <HR>
 <A NAME="2924"></A><H4>2924.
   
@@ -140,6 +140,103 @@ is evaluated outside of an evaluation to determine whether an
 expression is a core constant expression
 (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]),</INS> and <TT>f</TT> eventually returns,
 the behavior is undefined.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>CWG 2024-10-11</B></P>
+
+<P>Implementations have two options: Either a violation of an
+attribute causes an expressions not to be a constant expression,
+leading to runtime undefine behavior, or the attribute has no effect
+during constant evaluation.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">It is implementation-defined whether <I>E</I> is a core
+constant expression as specified in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>] and
+9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>].
+</P>
+
+<P>It is unspecified whether E is a core constant expression if E
+satisfies the constraints of a core constant expression, but
+evaluation of E would evaluate</P>
+<UL>
+<LI>an operation that has undefined behavior as specified in
+Clause 16 [<A href="https://wg21.link/library">library</A>] through Clause 34 [<A href="https://wg21.link/exec">exec</A>]<DEL>,</DEL>
+<INS>or</INS>
+</LI>
+<LI>an invocation of the va_start macro
+(17.13.2 [<A href="https://wg21.link/cstdarg.syn">cstdarg.syn</A>])<DEL>,</DEL><INS>.</INS>
+</LI>
+<LI class="del">a call to a function that was previously declared with
+the noreturn attribute (9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>]) and that call
+returns to its caller, or</LI>
+<LI class="del">a statement with an assumption (9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]) whose
+converted <I>conditional-expression</I>, if evaluated where the
+assumption appears, would not disqualify E from being a core constant
+expression and would not evaluate to true.  [<I>Note 5:</I> E is not
+disqualified from being a core constant expression if the hypothetical
+evaluation of the converted <I>conditional-expression</I> would
+disqualify E from being a core constant expression. &#8212;<I>end
+note</I>]</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated.
+<UL>
+<LI>If the converted expression would evaluate to true at the point
+where the assumption appears, the assumption has no effect.</LI>
+<LI class="ins">Otherwise, if the statement with the assumption would
+be evaluated as part of an evaluation of an expression <I>E</I> that
+satisfies the constraints of a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]):
+<UL>
+<LI>If the converted expression, evaluated at the point where the
+assumption appears, would disqualify <I>E</I> from being a core
+constant expression, the assumption is ignored.</LI>
+<LI>Otherwise, it is implementation-defined whether <I>E</I> is a core
+constant expression; if so, the assumption has no effect.</LI>
+</UL>
+</LI>
+<LI>Otherwise, the behavior is undefined.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute and <TT>f</TT>
+eventually returns<INS>:</INS>
+<UL>
+<LI class="ins">If the function call would be part of an evaluation of
+an expression <I>E</I> that satisfies the constraints of a core
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), it is
+implementation-defined whether <I>E</I> is a core constant expression;
+if so, the attribute has no effect.</LI>
+<LI>
+<INS>Otherwise</INS>, the behavior is undefined.</LI>
+</UL>
 
 </BLOCKQUOTE>
 </LI>
