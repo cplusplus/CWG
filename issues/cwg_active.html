@@ -174,6 +174,8 @@ USA.</P>
 <A HREF="cwg_active.html#2937">2937</A>,
 <A HREF="cwg_active.html#2938">2938</A>,
 <A HREF="cwg_active.html#2939">2939</A>,
+<A HREF="cwg_active.html#2940">2940</A>,
+<A HREF="cwg_active.html#2941">2941</A>,
 </P>
 
 <P><B>Revision 115, 2024-07-20:</B></P>
@@ -2106,7 +2108,7 @@ Added new issues
 <A HREF="cwg_defects.html#1518">1518</A>,
 <A HREF="cwg_closed.html#1519">1519</A>,
 <A HREF="cwg_closed.html#1520">1520</A>,
-<A HREF="cwg_active.html#1521">1521</A>,
+<A HREF="cwg_closed.html#1521">1521</A>,
 <A HREF="cwg_defects.html#1522">1522</A>,
 <A HREF="cwg_defects.html#1523">1523</A>,
 <A HREF="cwg_active.html#1524">1524</A>,
@@ -4523,6 +4525,17 @@ Address comparisons between potentially non-unique objects during constant evalu
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.7.2&#160;
+  <A href="https://wg21.link/intro.object">intro.object</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2940">2940</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Definition of "object"
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">6.7.3&#160;
   <A href="https://wg21.link/basic.life">basic.life</A>
 </TD>
@@ -4784,6 +4797,17 @@ Invented temporary variables and temporary objects
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Self-references in trivially copyable objects as function return values
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">6.7.7&#160;
+  <A href="https://wg21.link/class.temporary">class.temporary</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2941">2941</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Lifetime extension for function-style cast to reference type
 </TD>
 </TR>
 <TR>
@@ -5208,6 +5232,17 @@ Nested requirement not a constant expression
 <TD ALIGN="LEFT">7.6.1.3&#160;
   <A href="https://wg21.link/expr.call">expr.call</A>
 </TD>
+<TD ALIGN="RIGHT"><A HREF="#2283">2283</A></TD>
+<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Missing complete type requirements
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">7.6.1.3&#160;
+  <A href="https://wg21.link/expr.call">expr.call</A>
+</TD>
 <TD ALIGN="RIGHT"><A HREF="#2284">2284</A></TD>
 <TD ALIGN="CENTER">open</TD>
 <TD ALIGN="CENTER"></TD>
@@ -5257,28 +5292,6 @@ Calling explicit object member functions
 <TD ALIGN="CENTER">EWG</TD>
 <TD ALIGN="LEFT">
 Value-initialization of array types
-</TD>
-</TR>
-<TR>
-<TD ALIGN="LEFT">7.6.1.4&#160;
-  <A href="https://wg21.link/expr.type.conv">expr.type.conv</A>
-</TD>
-<TD ALIGN="RIGHT"><A HREF="#1521">1521</A></TD>
-<TD ALIGN="CENTER">drafting</TD>
-<TD ALIGN="CENTER"></TD>
-<TD ALIGN="LEFT">
-<TT>T{</TT><I>expr</I><TT>}</TT> with reference types
-</TD>
-</TR>
-<TR>
-<TD ALIGN="LEFT">7.6.1.4&#160;
-  <A href="https://wg21.link/expr.type.conv">expr.type.conv</A>
-</TD>
-<TD ALIGN="RIGHT"><A HREF="#2283">2283</A></TD>
-<TD ALIGN="CENTER">drafting</TD>
-<TD ALIGN="CENTER"></TD>
-<TD ALIGN="LEFT">
-Missing complete type requirements
 </TD>
 </TR>
 <TR>
@@ -11543,6 +11556,105 @@ the behavior is undefined.
 </LI>
 </OL>
 
+<P><B>CWG 2024-10-11</B></P>
+
+<P>Implementations have two options: Either a violation of an
+attribute causes an expressions not to be a constant expression,
+leading to runtime undefined behavior, or the attribute has no effect
+during constant evaluation.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+
+<LI>
+<P>Change in 7.7 [<A href="https://wg21.link/expr.const#6">expr.const</A>] paragraph 6:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">It is implementation-defined whether <I>E</I> is a core
+constant expression in the situations specified in
+9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>] and 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>].
+</P>
+
+<P>It is unspecified whether E is a core constant expression if E
+satisfies the constraints of a core constant expression, but
+evaluation of E would evaluate</P>
+<UL>
+<LI>an operation that has undefined behavior as specified in
+Clause 16 [<A href="https://wg21.link/library">library</A>] through Clause 34 [<A href="https://wg21.link/exec">exec</A>]<DEL>,</DEL>
+<INS>or</INS>
+</LI>
+<LI>an invocation of the va_start macro
+(17.13.2 [<A href="https://wg21.link/cstdarg.syn">cstdarg.syn</A>])<DEL>,</DEL><INS>.</INS>
+</LI>
+<LI class="del">a call to a function that was previously declared with
+the noreturn attribute (9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn">dcl.attr.noreturn</A>]) and that call
+returns to its caller, or</LI>
+<LI class="del">a statement with an assumption (9.12.3 [<A href="https://wg21.link/dcl.attr.assume">dcl.attr.assume</A>]) whose
+converted <I>conditional-expression</I>, if evaluated where the
+assumption appears, would not disqualify E from being a core constant
+expression and would not evaluate to true.  [<I>Note 5:</I> E is not
+disqualified from being a core constant expression if the hypothetical
+evaluation of the converted <I>conditional-expression</I> would
+disqualify E from being a core constant expression. &#8212;<I>end
+note</I>]</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.3 [<A href="https://wg21.link/dcl.attr.assume#1">dcl.attr.assume</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The expression is not evaluated.
+<UL>
+<LI>If the converted expression would evaluate to true at the point
+where the assumption appears, the assumption has no effect.</LI>
+<LI class="ins">Otherwise, if the statement with the assumption would
+be evaluated as part of an evaluation of an expression <I>E</I> that
+satisfies the constraints of a core constant expression
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]):
+<UL>
+<LI>If the converted expression, evaluated at the point where the
+assumption appears, would disqualify <I>E</I> from being a core
+constant expression, the assumption is ignored.</LI>
+<LI>Otherwise, it is implementation-defined whether <I>E</I> is a core
+constant expression; if <I>E</I> is evaluated as a core constant
+expression, the assumption has no effect.</LI>
+</UL>
+</LI>
+<LI>Otherwise, the behavior is undefined.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12.11 [<A href="https://wg21.link/dcl.attr.noreturn#2">dcl.attr.noreturn</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a function <TT>f</TT> is called where <TT>f</TT> was previously
+declared with the <TT>noreturn</TT> attribute and <TT>f</TT>
+eventually returns<INS>:</INS>
+<UL>
+<LI class="ins">If the function call would be part of an evaluation of
+an expression <I>E</I> that satisfies the constraints of a core
+constant expression (7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]), it is
+implementation-defined whether <I>E</I> is a core constant expression;
+if <I>E</I> is evaluated as a core constant expression, the attribute
+has no effect.</LI>
+<LI>
+<INS>Otherwise</INS>, the behavior is undefined.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
 <BR><BR><HR>
 <A NAME="2726"></A><H4>2726.
   
@@ -13374,6 +13486,55 @@ the closure object's lifetime ends.
 
 </BLOCKQUOTE>
 
+<BR><BR><HR>
+<A NAME="2283"></A><H4>2283.
+  
+Missing complete type requirements
+</H4>
+<B>Section: </B>7.6.1.3&#160; [<A href="https://wg21.link/expr.call">expr.call</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2016-06-27<BR>
+
+
+
+
+<P>
+<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0135r1.html">P0135R1</A>
+(Wording for guaranteed copy elision through simplified value
+categories) removes complete type requirements from
+7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>] (under the assumption that subclause
+9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] has them; apparently it does not) and from
+7.6.1.8 [<A href="https://wg21.link/expr.typeid#3">expr.typeid</A>] paragraph 3.  These both appear to be bad
+changes and should presumably be reverted.
+</P>
+
+<P><B>Additional notes (October, 2024)</B></P>
+
+<P>An almost-editorial change (approved by CWG 2021-08-24) restored a
+consistent complete-type requirement for <TT>typeid</TT>; see
+<A HREF="https://github.com/cplusplus/draft/pull/4827">cplusplus/draft#4827</A>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 7.6.1.3 [<A href="https://wg21.link/expr.call#13">expr.call</A>] paragraph 13 as follows:</P>
+
+<BLOCKQUOTE>
+
+A function call is an lvalue if the result type is an lvalue reference
+type or an rvalue reference to function type, an xvalue if the result
+type is an rvalue reference to object type, and a prvalue otherwise.
+<INS>If it is a prvalue, the type of the function call expression
+shall be complete, except as specified in
+9.2.9.6 [<A href="https://wg21.link/dcl.type.decltype">dcl.type.decltype</A>].</INS>
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2894"></A><H4>2894.
   
@@ -19182,69 +19343,6 @@ the <I>lambda-expression</I>.</P>
     [=](auto q) { static_assert(bar(q, ref), ""); }(0);
   }
 </PRE>
-
-<BR><BR><HR>
-<A NAME="1521"></A><H4>1521.
-  
-<TT>T{</TT><I>expr</I><TT>}</TT> with reference types
-</H4>
-<B>Section: </B>7.6.1.4&#160; [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>drafting
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Steve Adamczyk
- &#160;&#160;&#160;
-
- <B>Date: </B>2012-07-10<BR>
-
-
-<P>According to 7.6.1.4 [<A href="https://wg21.link/expr.type.conv#4">expr.type.conv</A>] paragraph 4,</P>
-
-<BLOCKQUOTE>
-
-Similarly, a <I>simple-type-specifier</I> or <I>typename-specifier</I>
-followed by a <I>braced-init-list</I> creates a temporary object of
-the specified type direct-list-initialized (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) with the specified <I>braced-init-list</I>, and its
-value is that temporary object as a prvalue.
-
-</BLOCKQUOTE>
-
-<P>This wording does not handle the case where <TT>T</TT> is a
-reference type: it is not possible to create a temporary object of
-that type, and presumably the result would be an xvalue, not a prvalue.</P>
-
-
-
-<BR><BR><HR>
-<A NAME="2283"></A><H4>2283.
-  
-Missing complete type requirements
-</H4>
-<B>Section: </B>7.6.1.4&#160; [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>drafting
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2016-06-27<BR>
-
-
-
-
-<P>
-<A HREF="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0135r1.html">P0135R1</A>
-(Wording for guaranteed copy elision through simplified value
-categories) removes complete type requirements from
-7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>] (under the assumption that subclause
-9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>] has them; apparently it does not) and from
-7.6.1.8 [<A href="https://wg21.link/expr.typeid#3">expr.typeid</A>] paragraph 3.  These both appear to be bad
-changes and should presumably be reverted.
-</P>
 
 <BR><BR><HR>
 <A NAME="2557"></A><H4>2557.
@@ -30330,6 +30428,32 @@ reading from it via a different struct, that should
 constitute a data race, but the current wording does not
 clearly state that.</P>
 
+<P><B>Additional notes (October, 2024)</B></P>
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/621">#621</A>.)
+</P>
+
+<P>A similar concern arises for the following example:</P>
+
+<PRE>
+  union U { int x, y; } u;
+  (u.x = 1, 0) + (u.y = 2, 0);
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.1 [<A href="https://wg21.link/intro.memory#3">intro.memory</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>memory location</I> is <INS>the storage occupied by the value
+representation of</INS> either an object of scalar type that is not a
+bit-field or a maximal sequence of adjacent bit-fields all having
+nonzero width. ...
+
+</BLOCKQUOTE>
+
 <BR><BR><HR>
 <A NAME="2334"></A><H4>2334.
   
@@ -30501,6 +30625,82 @@ evaluation with the source location of the string literal.</LI>
 <P>In the latter cases, tag values can be preserved when performing
 pointer arithmetic.</P>
 
+<BR><BR><HR>
+<A NAME="2940"></A><H4>2940.
+  
+Definition of "object"
+</H4>
+<B>Section: </B>6.7.2&#160; [<A href="https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Roman Jasmann
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-09-22<BR>
+
+
+
+
+<P>Prior to
+<A HREF="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html">P0137R1</A>,
+the term "object" was defined to be "a region of storage".  Currently,
+the term "object" appears to be missing a definition.  The submitter
+suggests to restore wording similar to "An object is a region of
+storage associated with a type." and disagrees with the resolutions
+suggested below.</P>
+
+<P><U>Possible resolution (option 1):</U></P>
+
+<P>Change in 6.7.2 [<A href="https://wg21.link/intro.object#1">intro.object</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>An <I>object</I> is a logical element of the execution model of
+the abstract machine (4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>]).</INS> The
+constructs in a C++ program create, destroy, refer to, access, and
+manipulate objects. An <DEL><I>object</I></DEL> <INS>object</INS> is
+created by a definition (6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]), by
+a <I>new-expression</I> (7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), by an
+operation that implicitly creates objects (see below), when implicitly
+changing the active member of a union (11.5 [<A href="https://wg21.link/class.union">class.union</A>]), or
+when a temporary object is created (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>],
+6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). An object occupies a region of storage in
+its period of construction (11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]), throughout
+its lifetime (6.7.3 [<A href="https://wg21.link/basic.life">basic.life</A>]), and in its period of
+destruction (11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]).  [<I>Note 1:</I> A function
+is not an object, regardless of whether or not it occupies storage in
+the way that objects do.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<P><U>Possible resolution (option 2):</U></P>
+
+<P>Change in 6.7.2 [<A href="https://wg21.link/intro.object#1">intro.object</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>An <I>object</I> is an element of the execution representation of
+the program in the abstract machine (4.1.2 [<A href="https://wg21.link/intro.abstract">intro.abstract</A>]) that
+represents an instance of an object type.</INS> The constructs in a
+C++ program create, destroy, refer to, access, and manipulate
+objects. An <DEL><I>object</I></DEL>
+<INS>object</INS> is created by a definition
+(6.2 [<A href="https://wg21.link/basic.def">basic.def</A>]), by a <I>new-expression</I>
+(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>]), by an operation that implicitly
+creates objects (see below), when implicitly changing the active
+member of a union (11.5 [<A href="https://wg21.link/class.union">class.union</A>]), or when a temporary
+object is created (7.3.5 [<A href="https://wg21.link/conv.rval">conv.rval</A>],
+6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>]). An object occupies a region of storage in
+its period of construction (11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]), throughout
+its lifetime (6.7.3 [<A href="https://wg21.link/basic.life">basic.life</A>]), and in its period of
+destruction (11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>]).  [<I>Note 1:</I> A function
+is not an object, regardless of whether or not it occupies storage in
+the way that objects do.  &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="419"></A><H4>419.
   
@@ -31185,6 +31385,28 @@ and the glvalue result of the cast is bound directly
 
 </BLOCKQUOTE>
 
+<P><B>Additional notes (October, 2024)</B></P>
+
+<P>The suggested resolution does not use the "is one of these
+expressions" structure that limits the tracking of temporary objects
+through the expression tree required from implementation. For
+example:</P>
+
+<PRE>
+  int glob;
+  struct A {
+   constexpr ~A() { arr[0] = &amp;glob; }
+   int *arr[1];
+  };
+  constexpr int f() {
+   int *&amp;&amp;ref = static_cast&lt;int *&amp;&amp;&gt;(0[+A().arr]); //<SPAN CLASS="cmnt"> note unary +; lifetime is not extended</SPAN>
+   delete ref; //<SPAN CLASS="cmnt"> error: attempt to delete `&amp;glob`</SPAN>
+   return 0;
+  }
+  extern constexpr int x = f();
+
+
+</PRE>
 <BR><BR><HR>
 <A NAME="2832"></A><H4>2832.
   
@@ -31438,6 +31660,80 @@ duration variable is returned (11.9.6 [<A href="https://wg21.link/class.copy.eli
 </BLOCKQUOTE>
 </LI>
 </OL>
+
+<BR><BR><HR>
+<A NAME="2941"></A><H4>2941.
+  
+Lifetime extension for function-style cast to reference type
+</H4>
+<B>Section: </B>6.7.7&#160; [<A href="https://wg21.link/class.temporary">class.temporary</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-10-18<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/625">#625</A>.)
+</P>
+
+<P>
+<A HREF="cwg_active.html#2894">Issue 2894</A> will clarify that a
+function-style cast to reference type produces a glvalue, not a
+prvalue.  However, 6.7.7 [<A href="https://wg21.link/class.temporary">class.temporary</A>] does not specify
+lifetime-extension for this case, even though implementations
+uniformly do extend the lifetime.</P>
+
+<P>For example:</P>
+
+<PRE>
+  int glob;
+  struct A {
+   constexpr ~A() { p = &amp;glob; }
+   int *p;
+  };
+  constexpr int f() {
+   typedef const A &amp;AR;
+   const A &amp;ref = AR{0};
+   delete ref.p;
+   return 0;
+  }
+  extern constexpr int x = f(); //<SPAN CLASS="cmnt"> okay</SPAN>
+</PRE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.7.7 [<A href="https://wg21.link/class.temporary#6">class.temporary</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+<UL>
+<LI>a
+<UL>
+<LI>const_cast (7.6.1.11 [<A href="https://wg21.link/expr.const.cast">expr.const.cast</A>]),</LI>
+<LI>...</LI>
+</UL>
+</LI>
+
+<LI class="ins">an explicit type conversion (functional notation)
+(7.6.1.4 [<A href="https://wg21.link/expr.type.conv">expr.type.conv</A>]) to a reference type whose initializer
+is a <I>braced-init-list</I> where the reference is
+<UL>
+<LI>bound directly to the glvalue result of one of these expressions
+that is the sole element of the <I>braced-init-list</I> or</LI>
+<LI>bound to the result of a temporary materialization conversion,</LI>
+</UL>
+</LI>
+
+<LI>a conditional expression (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]) that is a
+glvalue where the second or third operand is one of these expressions,
+or</LI>
+</UL>
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="350"></A><H4>350.
