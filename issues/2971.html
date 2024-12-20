@@ -1,0 +1,105 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2971</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-20</P>
+<HR>
+<A NAME="2971"></A><H4>2971.
+  
+Specializations for a class are not decl-reachable
+</H4>
+<B>Section: </B>10.4&#160; [<A href="https://wg21.link/module.global.frag">module.global.frag</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Davis Herring
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-12-19<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/655">#655</A>.)
+</P>
+
+<P>Consider:</P>
+
+<PRE>
+  module;
+  //<SPAN CLASS="cmnt"> included...</SPAN>
+  template&lt;int&gt; struct X {};
+  template&lt;&gt; struct X&lt;0&gt; {};
+  struct Z;
+  template&lt;class&gt; struct Y {};
+  template&lt;&gt; struct Y&lt;Z&gt; {};
+  //<SPAN CLASS="cmnt"> ...done</SPAN>
+  export module M;
+  export using ::X;
+  export using ::Z;
+</PRE>
+
+<P>Subclause 10.4 [<A href="https://wg21.link/module.global.frag#3.5.7">module.global.frag</A>] bullet 3.5.7 implies
+that <TT>X&lt;0&gt;</TT>, but not <TT>Y&lt;Z&gt;</TT> is reachable in
+importers. This is not helpful when <TT>Y</TT> is a trait defined by
+another library and specialized for the library being exposed
+as <TT>M</TT>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 10.4 [<A href="https://wg21.link/module.global.frag#3.5">module.global.frag</A>] bullet 3.5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A declaration D is <I>decl-reachable</I> from a declaration S in the
+same translation unit if
+<UL>
+<LI>...</LI>
+<LI>
+there exists a declaration M that is not a <I>namespace-definition</I>
+for which M is decl-reachable from S and either
+<UL>
+<LI>D is decl-reachable from M , or</LI>
+<LI>D and M declare the same entity, and D neither is a friend
+declaration nor inhabits a block scope, or</LI>
+<LI>D declares a namespace N and M is a member of N , or</LI>
+<LI>one of D and M declares a class or class template C and the other
+declares a member or friend of C, or</LI>
+<LI>one of D and M declares an enumeration E and the other declares an
+enumerator of E, or</LI>
+<LI>D declares a function or variable and M is declared in D, [
+Footnote: ... ] or</LI>
+<LI>one of D and M declares a template and the other declares
+a partial or explicit specialization or an implicit or explicit
+instantiation of that template, or</LI>
+<LI class="ins">
+<I>D</I> declares a partial or explicit specialization
+or an explicit instantiation and <I>M</I> declares an entity that
+appears in <I>D</I>'s (possibly deduced) template arguments, or</LI>
+<LI>M declares a class template and D is a deduction guide for that
+template, or</LI>
+<LI>one of D and M declares a class or enumeration type and the other
+introduces a typedef name for linkage purposes for that type.</LI>
+</UL>
+</LI>
+</UL>
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
