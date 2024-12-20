@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-19</P>
+<P>2024-12-20</P>
 <HR>
 <A NAME="1001"></A><H4>1001.
   
@@ -122,9 +122,9 @@ and EDG accept, gcc and MSVC reject):</P>
   }
 </PRE>
 
-<P><U>Possible resolution:</U></P>
+<P><U>Possible resolution (option 1):</U></P>
 
-<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#6">dcl.fct</A>] paragraph 6 as follows:</P>
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
 
 <BLOCKQUOTE>
 
@@ -142,6 +142,66 @@ ellipsis or a function parameter pack is the
 function's <I>parameter-type-list</I>.
 ...
 
+</BLOCKQUOTE>
+
+<P><B>Additional notes (December, 2024)</B></P>
+
+<P>The resolution suggested above causes errors in ostensibly more
+common situations such as this one, requiring an Annex C entry:</P>
+
+<PRE>
+  template &lt;class T&gt;
+  void f(T*);                 //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template &lt;class T&gt;
+  void f(T* const) {}         //<SPAN CLASS="cmnt"> redeclaration of #2?</SPAN>
+
+  int main() {
+    f((int*)0);               //<SPAN CLASS="cmnt"> was ok, becomes ambiguous</SPAN>
+  }
+</PRE>
+
+
+
+<P><U>Possible resolution (option 2):</U></P>
+
+<P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The type of a function is determined using the following rules. The
+type of each parameter (including function parameter packs) is
+determined from its own <I>parameter-declaration</I>
+(9.3 [<A href="https://wg21.link/dcl.decl">dcl.decl</A>]). After determining the type of each
+parameter, any parameter of type &#8220;array of T&#8221; or of
+function type T is adjusted to be &#8220;pointer to T&#8221;.
+<INS>
+If a function parameter type is adjusted from "array of <TT>T</TT>" and
+acquires the array type through a dependent type, and any top-level
+cv-qualifier modifies the dependent parameter type in any declaration
+of the templated function, the program is ill-formed; no diagnostic is
+required unless a cv-qualifier modifies the parameter type in the
+function definition.
+</INS>
+After producing the list of parameter types, any top-level
+<I>cv-qualifier</I>s modifying a parameter type are deleted when
+forming the function type. The resulting list of transformed parameter
+types and the presence or absence of the ellipsis or a function
+parameter pack is the function's <I>parameter-type-list</I>.  ...
+
+<P>[ Example:</P>
+...
+<PRE>
+  void h(int x(const int));   //<SPAN CLASS="cmnt"> #3</SPAN>
+  void h(int (*)(int)) {}     //<SPAN CLASS="cmnt"> defines #3</SPAN>
+
+<INS>  template&lt;class T&gt;
+  int i(T);                   //<SPAN CLASS="cmnt"> #4</SPAN>
+  template&lt;class T&gt;
+  int i(const T) {}           //<SPAN CLASS="cmnt"> defines #4</SPAN>
+  int v = i&lt;int[]&gt;(0);        //<SPAN CLASS="cmnt"> error: cv-qualified array parameter type in definition of template</SPAN></INS>
+</PRE>
+<P>-- end example]</P>
 </BLOCKQUOTE>
 
 <BR><BR>
