@@ -1,0 +1,139 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2973</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-20</P>
+<HR>
+<A NAME="2973"></A><H4>2973.
+  
+Does an <I>alias-declaration</I> introduce a name for linkage purposes?
+</H4>
+<B>Section: </B>9.2.4&#160; [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jonathan Wakely
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-12-19<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+   using A = struct { int i; };
+</PRE>
+
+<P>Does the unnamed class have <TT>A</TT> as its name for linkage
+purposes?  There is implementation divergence.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The name of an entity that belongs to a namespace scope, that has not
+been given internal linkage above, and that is the name of
+<UL>
+<LI>a variable; or</LI>
+<LI>a function; or</LI>
+<LI>a named class (11.1 [<A href="https://wg21.link/class.pre">class.pre</A>]), or an unnamed class
+defined in a typedef
+declaration <INS>or <I>alias-declaration</I></INS> in which the class
+has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>a named enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an unnamed
+enumeration defined in a typedef
+declaration <INS>or <I>alias-declaration</I></INS> in which the
+enumeration has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>an unnamed enumeration that has an enumerator as a name for
+linkage purposes (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]); or</LI>
+<LI>a template</LI>
+</UL>
+has its linkage determined as follows: ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 as follows:</P>
+<BLOCKQUOTE>
+
+In addition, a member function, a static data member, a named class or
+enumeration that inhabits a class scope, or an unnamed class or
+enumeration defined in a typedef declaration <INS>or
+<I>alias-declaration</I></INS> that inhabits a class scope such that
+the class or enumeration has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]), has the same linkage, if any, as the
+name of the class of which it is a member.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#6">basic.types.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> The type of a pointer or reference to array of unknown
+bound permanently points to or refers to an incomplete type. An array
+of unknown bound named by a typedef declaration <INS>or
+<I>alias-declaration</I></INS> permanently refers to an incomplete
+type. In either case, the array type cannot be
+completed. &#8212;<I>end note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+An unnamed class or enumeration C defined in a typedef
+declaration <INS>or <I>alias-declaration</I></INS> has the
+first <I>typedef-name</I> declared by the declaration to be of type C
+as its typedef name for linkage purposes (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+[<I>Note 2:</I> A typedef declaration <INS>or
+<I>alias-declaration</I></INS> involving
+a <I>lambda-expression</I> does not itself define the associated
+closure type, and so the closure type is not given a typedef name for
+linkage purposes. &#8212;<I>end note</I>] [<I>Example 4:</I>
+<PRE>
+  typedef struct { } *ps, S;    //<SPAN CLASS="cmnt"> S is the typedef name for linkage purposes</SPAN>
+  typedef decltype([]{}) C;     //<SPAN CLASS="cmnt"> the closure type has no typedef name for linkage purposes</SPAN>
+<INS>  using U = class { };          // U<SPAN CLASS="cmnt"> is the typedef name for linkage purposes</SPAN></INS>
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
