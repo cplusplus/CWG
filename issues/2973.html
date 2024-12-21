@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-20</P>
+<P>2024-12-21</P>
 <HR>
 <A NAME="2973"></A><H4>2973.
   
@@ -45,7 +45,7 @@ Does an <I>alias-declaration</I> introduce a name for linkage purposes?
 <P>Does the unnamed class have <TT>A</TT> as its name for linkage
 purposes?  There is implementation divergence.</P>
 
-<P><U>Possible resolution:</U></P>
+<P><U>Possible resolution (option 1):</U></P>
 
 <OL>
 <LI>
@@ -130,8 +130,150 @@ linkage purposes. &#8212;<I>end note</I>] [<I>Example 4:</I>
 
 </BLOCKQUOTE>
 </LI>
+</OL>
+
+<P><U>Possible resolution (option 2):</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.2 [<A href="https://wg21.link/basic.def#2">basic.def</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each entity declared by a <I>declaration</I> is also <I>defined</I> by
+that declaration unless:
+<UL>
+<LI>...</LI>
+<LI>it is <DEL>a typedef</DEL> <INS>an alias</INS> declaration
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]),</LI>
+<LI class="del">it is an <I>alias-declaration</I> (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]),</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#4">basic.link</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The name of an entity that belongs to a namespace scope, that has not
+been given internal linkage above, and that is the name of
+<UL>
+<LI>a variable; or</LI>
+<LI>a function; or</LI>
+<LI>a named class (11.1 [<A href="https://wg21.link/class.pre">class.pre</A>]), or an unnamed class
+defined in <DEL>a typedef</DEL> <INS>an alias</INS> declaration in
+which the class has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>a named enumeration (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]), or an unnamed
+enumeration defined in <DEL>a typedef</DEL> <INS>an alias</INS>
+declaration in which the enumeration has the typedef name for linkage
+purposes (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]); or</LI>
+<LI>an unnamed enumeration that has an enumerator as a name for
+linkage purposes (9.7.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]); or</LI>
+<LI>a template</LI>
+</UL>
+has its linkage determined as follows: ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#5">basic.link</A>] paragraph 5 as follows:</P>
+<BLOCKQUOTE>
+
+In addition, a member function, a static data member, a named class or
+enumeration that inhabits a class scope, or an unnamed class or
+enumeration defined in <DEL>a typedef</DEL> <INS>an alias</INS>
+declaration that inhabits a class scope such that the class or
+enumeration has the typedef name for linkage purposes
+(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]), has the same linkage, if any, as the
+name of the class of which it is a member.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.1 [<A href="https://wg21.link/basic.types.general#6">basic.types.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> The type of a pointer or reference to array of
+unknown bound permanently points to or refers to an incomplete
+type. An array of unknown bound named by <DEL>a typedef</DEL> <INS>an
+alias</INS> declaration <INS>(9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>])</INS>
+permanently refers to an incomplete type. In either case, the array
+type cannot be completed. &#8212;<I>end note</I>] ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.1 [<A href="https://wg21.link/dcl.pre#5">dcl.pre</A>] paragraph 5 as follows:</P>
 
 
+
+<BLOCKQUOTE>
+
+If the <I>decl-specifier-seq</I> contains the <TT>typedef</TT> specifier, <INS>see 9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>].</INS>
+<DEL>the declaration is a <I>typedef declaration</I> and
+each <I>declarator-id</I> is declared to be a <I>typedef-name</I>,
+synonymous with its associated type (9.2.4 [<A href="https://wg21.link/dcl.typedef">dcl.typedef</A>]).
+[<I>Note 4:</I> Such a <I>declarator-id</I> is an identifier
+(11.4.8.3 [<A href="https://wg21.link/class.conv.fct">class.conv.fct</A>]). &#8212;<I>end note</I>]</DEL>
+Otherwise, if the type associated with a <I>declarator-id</I> is a
+function type (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]), the declaration is a
+function declaration. Otherwise, if the type associated with
+a <I>declarator-id</I> is an object or reference type, the declaration
+is an object declaration. Otherwise, the program is ill-formed.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph after 9.2.4 [<A href="https://wg21.link/dcl.typedef#2">dcl.typedef</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>... The <I>defining-type-specifier-seq</I> of the <I>defining-type-id</I>
+shall not define a class or enumeration if
+the <I>alias-declaration</I> is the declaration of
+a <I>template-declaration</I>.
+</P>
+
+<P class="ins">
+An <I>alias declaration</I> is a typedef declaration or an
+<I>alias-declaration</I>.
+</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.2.4 [<A href="https://wg21.link/dcl.typedef#4">dcl.typedef</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+An unnamed class or enumeration C defined in <DEL>a
+typedef</DEL> <INS>an alias</INS> declaration has the
+first <I>typedef-name</I> declared by the declaration to be of type C
+as its typedef name for linkage purposes (6.6 [<A href="https://wg21.link/basic.link">basic.link</A>]).
+[<I>Note 2:</I> <DEL>A typedef</DEL> <INS>An alias</INS> declaration
+involving a <I>lambda-expression</I> does not itself define the
+associated closure type, and so the closure type is not given a
+typedef name for linkage purposes. &#8212;<I>end note</I>] [<I>Example
+4:</I>
+<PRE>
+  typedef struct { } *ps, S;    //<SPAN CLASS="cmnt"> S is the typedef name for linkage purposes</SPAN>
+  typedef decltype([]{}) C;     //<SPAN CLASS="cmnt"> the closure type has no typedef name for linkage purposes</SPAN>
+<INS>  using U = class { };          // U<SPAN CLASS="cmnt"> is the typedef name for linkage purposes</SPAN></INS>
+</PRE>
+&#8212;<I>end example</I>]
+
+</BLOCKQUOTE>
+</LI>
 </OL>
 
 <BR><BR>
