@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-20</P>
+<P>2024-12-21</P>
 <HR>
 <A NAME="2972"></A><H4>2972.
   
@@ -72,6 +72,31 @@ ill-formed if no such partial specialization exists.</LI>
 
 <P>However, the <I>qualified-id</I> is obviously intended to refer a
 member of the partial specialization.</P>
+
+<P>Furthermore, the specification does not handle references to
+constrained partial specializations:</P>
+
+
+<PRE>
+  template &lt;typename T&gt; struct A;
+  template &lt;typename T&gt; concept C = true;
+
+  template &lt;typename T&gt;
+  requires C&lt;T&gt;
+  struct A&lt;T *&gt; {
+    struct B;
+  };
+
+  template &lt;typename T&gt;
+  requires true &amp;&amp; C&lt;T&gt;
+  struct A&lt;T *&gt; {
+    struct B;                   //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  template &lt;typename T&gt;
+  requires true &amp;&amp; C&lt;T&gt;
+  struct A&lt;T *&gt;::B {};         //<SPAN CLASS="cmnt"> ought to refer to #1</SPAN>
+</PRE>
 
 <BR><BR>
 </BODY>
