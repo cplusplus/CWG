@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2975</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-27</P>
+<HR>
+<A NAME="2975"></A><H4>2975.
+  
+Effect of concept <I>template-head</I> on parameter mappings
+</H4>
+<B>Section: </B>13.5.4&#160; [<A href="https://wg21.link/temp.constr.normal">temp.constr.normal</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-12-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/659">#659</A>.)
+</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;auto&gt; constexpr bool B = true;
+
+  template &lt;unsigned X0&gt; concept C = B&lt;X0&gt;;
+  template &lt;unsigned short X1&gt; concept C2 = C&lt;X1&gt;;
+
+  template &lt;unsigned X&gt; void f() requires C&lt;X&gt;; //<SPAN CLASS="cmnt"> #1</SPAN>
+  template &lt;unsigned X&gt; int f() requires C2&lt;X&gt; &amp;&amp; true; //<SPAN CLASS="cmnt"> #2</SPAN>
+
+  void g() {
+    return f&lt;65536&gt;(); //<SPAN CLASS="cmnt"> should probably call #1</SPAN>
+  }
+  void h() {
+    f&lt;0&gt;(); //<SPAN CLASS="cmnt"> ambiguous?</SPAN>
+  }
+</PRE>
+
+<P>The rules in 13.5.4 [<A href="https://wg21.link/temp.constr.normal#1.4">temp.constr.normal</A>] bullet 1.4 do not
+specify how the type of the non-type template parameter <TT>X1</TT> in
+the definition of concept <TT>C2</TT> affects the parameter mapping.
+There is implementation divergence: gcc and MSVC reject the call
+in <TT>g</TT> and accept the call in <TT>h</TT>, resolving to #2 in
+both cases.  Clang and EDG accept the call in <TT>g</TT> (resolving to
+#1) and reject the call in <TT>h</TT> as ambiguous.</P>
+
+<P>As a suggested resolution, introduce a shadow constraint that
+checks the validity of the template argument for the concept's
+template parameter when normalizing the use of <TT>C2</TT> from #2.
+This would reject the call to #2 from <TT>g</TT> (choosing #1) and
+select #2 as more constraint for the call from <TT>h</TT>.</P>
+
+<BR><BR>
+</BODY>
+</HTML>
