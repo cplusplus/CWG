@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-20</P>
+<P>2024-12-27</P>
 <HR>
 <A NAME="1001"></A><H4>1001.
   
@@ -165,6 +165,8 @@ common situations such as this one, requiring an Annex C entry:</P>
 
 <P><U>Possible resolution (option 2):</U></P>
 
+<OL>
+<LI>
 <P>Change in 9.3.4.6 [<A href="https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
 
 <BLOCKQUOTE>
@@ -203,6 +205,44 @@ parameter pack is the function's <I>parameter-type-list</I>.  ...
 </PRE>
 <P>-- end example]</P>
 </BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.2 [<A href="https://wg21.link/temp.param#10">temp.param</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-type <I>template-parameter</I> of type &#8220;array of T&#8221;
+or of function type T is adjusted to be of type &#8220;pointer to
+T&#8221;.  <INS>If the type of a non-type <I>template-parameter</I>
+is adjusted from "array of T" and acquires the array type through a
+dependent type, and any top-level cv-qualifier modifies the dependent
+type in any declaration of the template, the program is ill-formed; no
+diagnostic is required unless a cv-qualifier modifies the type of
+the <I>template-parameter</I> in the template definition.</INS>
+
+[ Example:
+
+<PRE>
+  template&lt;int* a&gt;
+  struct R { /* ... */ };
+  template&lt;int b[5]&gt; struct S { /* ... */ };
+  int p;
+  R&lt;&amp;p&gt; w;      //<SPAN CLASS="cmnt"> OK</SPAN>
+  S&lt;&amp;p&gt; x;      //<SPAN CLASS="cmnt"> OK due to parameter adjustment</SPAN>
+  int v[5];
+  R&lt;v&gt; y;       //<SPAN CLASS="cmnt"> OK due to implicit argument conversion</SPAN>
+  S&lt;v&gt; z;       //<SPAN CLASS="cmnt"> OK due to both adjustment and conversion</SPAN>
+
+<INS>  template&lt;class T, const T x&gt;
+  struct U { /* ... */ };
+  U&lt;int[], nullptr&gt; u;   //<SPAN CLASS="cmnt"> error: const array adjustment</SPAN></INS>
+</PRE>
+-- end example ]
+</BLOCKQUOTE>
+
+</LI>
+</OL>
 
 <BR><BR>
 </BODY>
