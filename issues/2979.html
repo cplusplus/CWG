@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2979</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2024-12-31</P>
+<HR>
+<A NAME="2979"></A><H4>2979.
+  
+Duplicate declarations of enumerations in class scope
+</H4>
+<B>Section: </B>11.4.1&#160; [<A href="https://wg21.link/class.mem.general">class.mem.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-12-31<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    enum B {
+      A
+    };
+    using B::A;
+    //<SPAN CLASS="cmnt"> or:</SPAN>
+    //<SPAN CLASS="cmnt"> using enum B ;</SPAN>
+  };
+</PRE>
+
+<P>This is neither prohibited by 11.4.1 [<A href="https://wg21.link/class.mem.general#6">class.mem.general</A>] paragraph 6
+(because <I>using-declarator</I>s are not members per
+11.4.1 [<A href="https://wg21.link/class.mem.general#3">class.mem.general</A>] paragraph 3) nor by 9.9 [<A href="https://wg21.link/namespace.udecl#8">namespace.udecl</A>] paragraph 8.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.9 [<A href="https://wg21.link/namespace.udecl#8">namespace.udecl</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>[ Note:</INS> If a declaration is named by
+two <I>using-declarator</I>s that inhabit the same class scope, the
+program is ill-formed <INS>(11.4.1 [<A href="https://wg21.link/class.mem.general">class.mem.general</A>])</INS>.
+[<I>Example:</I> ... -- end example ]
+<INS>-- end note ]</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.4.1 [<A href="https://wg21.link/class.mem.general#6">class.mem.general</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>A member</DEL> <INS>An entity</INS> shall not be declared <INS>or
+named by a <I>using-declarator</I> (9.9 [<A href="https://wg21.link/namespace.udecl">namespace.udecl</A>])</INS>
+twice in the
+<I>member-specification</I>, except that
+<UL>
+<LI>a nested class or member class template can be declared and then
+later defined, and</LI>
+<LI>an enumeration can be introduced with an
+<I>opaque-enum-declaration</I> and later redeclared with an
+<I>enum-specifier</I>.</LI>
+</UL>
+
+<INS>[ Example:</INS>
+<PRE class="ins">
+  struct S {
+    class C;
+    class C {};      //<SPAN CLASS="cmnt"> OK</SPAN>
+    enum E { e };
+    using E::e;      //<SPAN CLASS="cmnt"> error: redeclaration of </SPAN>e
+  };
+
+</PRE>
+<INS>-- end example ]</INS>
+
+<P>[Note 4: A single name can denote several member functions provided
+their types are sufficiently different (6.4.1 [<A href="https://wg21.link/basic.scope.scope">basic.scope.scope</A>]).
+-- end note]</P>
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
