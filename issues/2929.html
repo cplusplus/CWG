@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-19</P>
+<P>2024-12-31</P>
 <HR>
 <A NAME="2929"></A><H4>2929.
   
@@ -25,7 +25,7 @@ Lifetime of trivially-destructible static or thread-local objects
 <B>Section: </B>6.9.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
  &#160;&#160;&#160;
 
- <B>Status: </B>drafting
+ <B>Status: </B>review
  &#160;&#160;&#160;
 
  <B>Submitter: </B>Mathias Stearn
@@ -89,7 +89,7 @@ destroying any object with static storage duration.
 <P>Also allow for constant destruction, consider arrays of class type,
 and adjust the happens-before requirements.</P>
 
-<P><B>Proposed resolution (approved by CWG 2024-10-11):</B></P>
+<P><B>Proposed resolution (approved by CWG 2024-10-11) [SUPERSEDED]:</B></P>
 
 <OL>
 <LI>
@@ -133,6 +133,84 @@ duration.
 
 <P>Continue to actually destroy constant-destruction objects, but do
 so after all dynamic destruction is done.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#1">basic.start.term</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects (9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>])
+with static storage duration are destroyed and functions registered
+with std::atexit are called as part of a call to std::exit
+(17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]). The call to std::exit is sequenced before
+the destructions and the registered functions.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2 as follows:</P>
+<BLOCKQUOTE>
+
+Constructed <INS>complete</INS> objects with thread storage duration
+within a given thread are destroyed as a result of returning from the
+initial function of that thread and as a result of that thread calling
+std::exit. <INS>The destruction of those constructed objects is
+sequenced before releasing the storage for any object with thread
+storage duration within that thread (6.7.6.3 [<A href="https://wg21.link/basic.stc.thread">basic.stc.thread</A>]).
+The</INS> <DEL>The</DEL> destruction of <DEL>all</DEL>
+<INS>those</INS> constructed objects <DEL>with thread storage duration
+within that thread</DEL> strongly happens before destroying any object
+with static storage duration.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a paragraph after 6.9.3.4 [<A href="https://wg21.link/basic.start.term#2">basic.start.term</A>] paragraph 2:</P>
+
+<BLOCKQUOTE class="ins">
+
+The destruction of an object with thread storage duration within a
+given thread and having constant destruction (7.7 [expr.const]) is
+sequenced after the destruction of any other object with thread
+storage duration within the thread.  The destruction of an object with
+static storage duration and having constant destruction is sequenced
+after the destruction of any other object with static storage duration
+and after any call to a function passed to <TT>std::atexit</TT>.  The
+sequencing rules in the remainder of this subclause apply only to
+objects not having constant destruction.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Do not change in 6.9.3.4 [<A href="https://wg21.link/basic.start.term#3">basic.start.term</A>] paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+If the completion of the constructor or dynamic initialization of an
+object with static storage duration strongly happens before that of
+another, the completion of the destructor of the second is sequenced
+before the initiation of the destructor of the first. If the
+completion of the constructor or dynamic initialization of an object
+with thread storage duration is sequenced before that of another, the
+completion of the destructor of the second is sequenced before the
+initiation of the destructor of the first. If an object is initialized
+statically, the object is destroyed in the same order as if the object
+was dynamically initialized. For an object of array or class type, all
+subobjects of that object are destroyed before any block variable with
+static storage duration initialized during the construction of the
+subobjects is destroyed. If the destruction of an object with static
+or thread storage duration exits via an exception, the function
+std::terminate is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR>
 </BODY>
