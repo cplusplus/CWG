@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-01-02</P>
+<P>2025-01-03</P>
 <HR>
 <A NAME="2980"></A><H4>2980.
   
@@ -54,10 +54,10 @@ satisfied (13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.co
 
 <P>For template template parameters, it is unclear how this provision
 interacts with instantiation or substitution.  In particular,
-13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3 allows for the template tempalte
+13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3 allows for the template template
 parameter to be more constrained than the argument provided; however,
 once the parameter is replaced by the corresponding argument, the
-contraints of the parameter seemingly disappear. Consider:</P>
+constraints of the parameter seemingly disappear. Consider:</P>
 
 <PRE>
   template &lt;typename T&gt;
@@ -99,9 +99,44 @@ implement the basic feature at all) appear to use the constraints
 of <TT>TT</TT> from <TT>A</TT> despite the <I>simple-template-id</I>
 emanating from <TT>Alias</TT>.</P>
 
-<P>Maybe the constraints from the template template parameter should
-be checked where those appear to form a <I>simple-template-id</I> once
-the arguments are known.</P>
+<P>Maybe the constraints from template template parameters should be
+checked where they appear (including within an alias template) or are
+substituted into an alias template to form a <I>simple-template-id</I>
+once the arguments are known.  That is, the associated constraints of both</P>
+<UL>
+<LI>template template parameters of alias templates</LI>
+<LI>template template parameters used as arguments to alias templates</LI>
+</UL>
+<P>are checked for <I>simple-template-id</I>s appearing in an alias
+template.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  concept C = true;
+
+  template &lt;typename T&gt;
+  concept CandMore = C&lt;T&gt; &amp;&amp; true;
+
+  template &lt;typename&gt; struct Q;
+
+  template &lt;template &lt;C&gt; class P, typename T&gt;
+  using Alias = P&lt;T&gt;;
+
+  template &lt;template &lt;CandMore&gt; class TT&gt;
+  struct A {
+   Alias&lt;TT, int&gt; *p;  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  A&lt;Q&gt; a;
+</PRE>
+
+<P>The <TT>P</TT> for <TT>Alias</TT> is not at least as specialized as
+the argument <TT>TT</TT> given at #1, if we take the <TT>TT</TT>
+constraints as written.  However, the actual argument for <TT>TT</TT>
+may be such that <TT>P</TT> is at least as specialized as the
+argument <TT>TT</TT>. There is implementation divergence.</P>
 
 <BR><BR>
 </BODY>
