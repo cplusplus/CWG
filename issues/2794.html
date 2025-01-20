@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-19</P>
+<P>2025-01-20</P>
 <HR>
 <A NAME="2794"></A><H4>2794.
   
@@ -96,6 +96,44 @@ when the <I>lambda-expression</I> is not dependent.
 
 <P>The outcome seems unfortunate; the first example ought to be
 well-formed.</P>
+
+<P><B>Additional notes (Janauary, 2025)</B></P>
+
+<P>Another example:</P>
+
+<PRE>
+  template&lt;typename T, typename F = decltype([](){} )&gt;
+  struct Type {};
+  template&lt;typename A&gt;
+  using C = Type&lt;A&gt;;
+
+  static_assert(std::same_as&lt;Type&lt;int&gt;,Type&lt;int&gt;&gt;); //<SPAN CLASS="cmnt"> #1</SPAN>
+  static_assert(std::same_as&lt;C&lt;int&gt;,C&lt;int&gt;&gt;); //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>
+All of clang, EDG, gcc, and MSVC reject #1; clang additionally rejects #2.
+</P>
+
+<P>There is also implementation divergence for the following example:</P>
+
+<PRE>
+  template&lt;typename T&gt; using A = decltype([]{});
+  template&lt;typename T&gt; void f(A&lt;T&gt;) {}
+  template&lt;typename T&gt; void f(A&lt;T&gt;) {}  //<SPAN CLASS="cmnt"> Duplicate definition?</SPAN>
+</PRE>
+
+<P>MSVC and gcc reject as a redefinition; clang and EDG accept.  Even
+if only a single definition is present, implementations differ about
+whether <TT>f</TT> has internal or external linkage and what
+properties the mangled name has.</P>
+
+<P>
+<A HREF="1979.html">Issue 1979</A> is related and suggests to
+treat simple alias templates differently (those would not have
+specializations, but be transparent for template argument deduction)
+from more complicated ones (those would have specializations and be
+morally equivalent to a <TT>struct</TT> with a member typedef).</P>
 
 <BR><BR>
 </BODY>
