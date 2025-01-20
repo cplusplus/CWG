@@ -1,0 +1,73 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2986</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-01-20</P>
+<HR>
+<A NAME="2986"></A><H4>2986.
+  
+Creating objects within a mutable member of a const object
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-17<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/367">#367</A>.)
+</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    alignas(int) mutable unsigned char buf[sizeof(int)];
+  };
+  int f() {
+    const S s{};
+    ::new ((void*)s.buf) int{42};
+  }
+</PRE>
+
+<P>Creating a new object in the mutable portion of a const complete
+object is undefined behavior per 6.7.4 [<A href="https://wg21.link/basic.life#12">basic.life</A>] paragraph 12.
+However, this ought to be allowed.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#12">basic.life</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+Creating a new object <INS>O</INS> within the storage that a const,
+complete object <INS>X</INS> with static, thread, or automatic storage
+duration occupies, or within the storage that such a const object used
+to occupy before its lifetime ended, results in undefined behavior
+unless <INS>O is nested within a mutable subobject of X</INS>. [
+Example: ... ]
+
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>
