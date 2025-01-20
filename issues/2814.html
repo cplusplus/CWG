@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-19</P>
+<P>2025-01-20</P>
 <HR>
 <A NAME="2814"></A><H4>2814.
   
@@ -131,6 +131,39 @@ resulting unspecified pointer value may be an invalid pointer value
 that incomplete class types may have (minimum) alignment requirements,
 because an <I>alignment-specifier</I> can appear in
 an <I>elaborated-type-specifier</I>.</P>
+
+<P><B>Additional notes (January, 2025)</B></P>
+
+<PRE>
+  //<SPAN CLASS="cmnt"> Maybe in a different translation unit</SPAN>
+  struct X;
+  X *f(void *p) { return static_cast&lt;X*&gt;(p); }
+
+  //<SPAN CLASS="cmnt"> translation unit boundary</SPAN>
+  struct alignas(2) X { char c[2]; } x;
+  void h(X *p) {
+   //<SPAN CLASS="cmnt"> #1</SPAN>
+  }
+
+  int main() {
+   //<SPAN CLASS="cmnt"> Details of q aren't relevant here, the point is simply that this pointer is not properly aligned for an X.</SPAN>
+   void *q = &amp;x.c[1];
+   X *misaligned = f(q);
+   h(misaligned);
+  }
+</PRE>
+
+<P>Consider the value of <TT>p</TT> at #1.  If <TT>p</TT> was obtained
+by casting, the status quo rule in 7.6.1.9 [<A href="https://wg21.link/expr.static.cast#13">expr.static.cast</A>] paragraph 13 says that <TT>p</TT> has an unspecified pointer value if
+misaligned. That pointer value can be an invalid pointer value
+(6.8.4 [<A href="https://wg21.link/basic.compound#3.4">basic.compound</A>] paragraph 3.4).  An lvalue-to-rvalue conversion
+on an object storing an invalid pointer value is
+implementation-defined (7.3.2 [<A href="https://wg21.link/conv.lval#3.3">conv.lval</A>] paragraph 3.3), and
+thus might trap.  There is no guarantee that invalid pointer values
+have a predictable bit-pattern.</P>
+
+<P>Effectively, the implementation can assume that <TT>p</TT> is
+suitably aligned at <TT>p</TT>.</P>
 
 <BR><BR>
 </BODY>
