@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2024-12-19</P>
+<P>2025-01-21</P>
 <HR>
 <A NAME="2765"></A><H4>2765.
   
@@ -98,6 +98,97 @@ evaluation with the source location of the string literal.</LI>
 
 <P>In the latter cases, tag values can be preserved when performing
 pointer arithmetic.</P>
+
+<P><U>Possible resolution (January, 2025)</U></P>
+
+<OL>
+
+<LI>
+<P>Add a new paragraph before 6.8.4 [<A href="https://wg21.link/basic.compound#4">basic.compound</A>] paragraph 4:</P>
+
+<BLOCKQUOTE>
+
+<P class="ins">
+A pointer value pointing to a potentially non-unique object <I>O</I>
+(6.7.2 [<A href="https://wg21.link/intro.object">intro.object</A>]) is <I>associated with</I> the evaluation
+of the <I>string-literal</I> (5.13.5 [<A href="https://wg21.link/lex.string">lex.string</A>]) or
+initializer list (9.4.5 [<A href="https://wg21.link/dcl.init.list">dcl.init.list</A>]) that resulted in the
+string literal object or backing array, respectively, that is <I>O</I>
+or of which <I>O</I> is a subobject.  [ Note: A pointer value obtained
+by pointer arithmetic (7.6.6 [<A href="https://wg21.link/expr.add">expr.add</A>]) from a pointer
+value associated with an evaluation <I>E</I> is also associated
+with <I>E</I>. -- end note ]</P>
+
+<P>A pointer value P is valid in the context of an evaluation E if ...</P>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a bullet after 7.7 [<A href="https://wg21.link/expr.const#10.25">expr.const</A>] bullet 10.25 as follows:</P>
+
+<BLOCKQUOTE>
+
+An expression E is a core constant expression unless the evaluation of
+E, following the rules of the abstract machine
+(6.9.1 [<A href="https://wg21.link/intro.execution">intro.execution</A>]), would evaluate one of the following:
+
+<UL>
+<LI>...</LI>
+<LI>a three-way comparison (7.6.8 [<A href="https://wg21.link/expr.spaceship">expr.spaceship</A>]), relational
+(7.6.9 [<A href="https://wg21.link/expr.rel">expr.rel</A>]), or equality
+(7.6.10 [<A href="https://wg21.link/expr.eq">expr.eq</A>]) operator where the result is
+unspecified;</LI>
+
+<LI class="ins">an equality operator comparing pointers to potentially
+non-unique objects, if the pointer values of both operands are
+associated with different evaluations (6.8.4 [<A href="https://wg21.link/basic.compound">basic.compound</A>]) and
+they can both point to the same offset within the same potentially
+non-unique object;
+
+[ Example:
+<PRE>
+  constexpr const char *f() { return "foo"; }
+
+  constexpr bool b1 = "foo" == "foo";   //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr bool b2 = f() == f();       //<SPAN CLASS="cmnt"> error: non-constant</SPAN>
+  constexpr const char *p = f();
+  constexpr bool b3 = p == p;           //<SPAN CLASS="cmnt"> OK, value of </SPAN>b3<SPAN CLASS="cmnt"> is </SPAN>true
+  constexpr bool b4 = "xfoo" + 1 == "foo\0y"; //<SPAN CLASS="cmnt"> error: non-constant; string literal object could contain </SPAN>"xfoo\0y"
+  constexpr bool b5 = "foo" == "bar";   //<SPAN CLASS="cmnt"> OK, value of </SPAN>b5<SPAN CLASS="cmnt"> is </SPAN>false
+  constexpr bool b6 = "foo" == "oo";    //<SPAN CLASS="cmnt"> OK, value of </SPAN>b6<SPAN CLASS="cmnt"> is </SPAN>false<SPAN CLASS="cmnt">; offsets would be different in a merged string literal object</SPAN>
+</PRE>
+-- end example ]
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+
+<BLOCKQUOTE>
+
+
+- Evaluation of a string literal attaches a version tag to the pointer
+value, as Jens suggested. Distinct evaluations get distinct tags.  -
+Comparisons of string literal pointers with equal tags are permitted.
+
+- Comparisons of string literal pointers with distinct tags *that
+cannot both be pointers into the same offset in the same string
+literal object* are permitted, aiming to address Jason's concern that
+we should be able to say that string literals with different constants
+are non-equal.
+
+- Comparisons of string literal pointers with distinct
+tags that can both point to the same offset within the same string
+literal object are treated as non-constant, aiming to address Hubert's
+concern that giving a compile-time answer that differs from the
+runtime answer would be terrible.
+
+</BLOCKQUOTE>
 
 <BR><BR>
 </BODY>
