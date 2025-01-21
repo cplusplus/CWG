@@ -159,6 +159,10 @@ USA.</P>
 <A HREF="cwg_active.html#2980">2980</A>,
 <A HREF="cwg_active.html#2981">2981</A>,
 <A HREF="cwg_active.html#2982">2982</A>,
+<A HREF="cwg_active.html#2983">2983</A>,
+<A HREF="cwg_active.html#2984">2984</A>,
+<A HREF="cwg_active.html#2985">2985</A>,
+<A HREF="cwg_active.html#2986">2986</A>,
 </P>
 
 <P><B>Revision 116, 2024-12-19:</B></P>
@@ -4287,6 +4291,17 @@ Nomenclature for variable vs reference non-static data member
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.1&#160;
+  <A href="https://wg21.link/basic.pre">basic.pre</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2983">2983</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Non-type template parameters are not variables
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">6.3&#160;
   <A href="https://wg21.link/basic.def.odr">basic.def.odr</A>
 </TD>
@@ -4746,6 +4761,17 @@ Vacuous initialization for subobjects
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Introduce discontiguous object lifetime
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">6.7.4&#160;
+  <A href="https://wg21.link/basic.life">basic.life</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2986">2986</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Creating objects within a mutable member of a const object
 </TD>
 </TR>
 <TR>
@@ -6362,6 +6388,17 @@ Reference binding with ambiguous conversions
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Clarify meaning of "bind directly"
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">9.4.4&#160;
+  <A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2985">2985</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Unclear rules for reference initialization with conversion
 </TD>
 </TR>
 <TR>
@@ -8411,6 +8448,17 @@ Value-dependence of <I>requires-expression</I>s
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">13.8.3.4&#160;
+  <A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2984">2984</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Value-dependent structured bindings
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">13.8.3.5&#160;
   <A href="https://wg21.link/temp.dep.temp">temp.dep.temp</A>
 </TD>
@@ -9697,6 +9745,9 @@ the way that objects do.  &#8212;<I>end note</I>]
 <P><B>CWG 2024-11-08</B></P>
 
 <P>An alternative phrasing was suggested.</P>
+
+<P>Update 2025-01-13: The submitter of the issue conveys his agreement
+with this phrasing.</P>
 
 <P><U>Possible resolution:</U></P>
 
@@ -12391,8 +12442,8 @@ If a function parameter type is adjusted from "array of <TT>T</TT>" and
 acquires the array type through a dependent type, and any top-level
 cv-qualifier modifies the dependent parameter type in any declaration
 of the templated function, the program is ill-formed; no diagnostic is
-required unless a cv-qualifier modifies the parameter type in the
-function definition.
+required unless a cv-qualifier modifies the parameter type in a
+reachable definition of the function.
 </INS>
 After producing the list of parameter types, any top-level
 <I>cv-qualifier</I>s modifying a parameter type are deleted when
@@ -12417,18 +12468,41 @@ parameter pack is the function's <I>parameter-type-list</I>.  ...
 </LI>
 
 <LI>
+<P>Change in 13.2 [<A href="https://wg21.link/temp.param#6">temp.param</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-type <I>template-parameter</I> shall have one of the following
+(possibly cv-qualified) types:
+<UL>
+<LI>a structural type (see below),</LI>
+<LI>a type that contains a placeholder type
+(9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]), or</LI>
+<LI>a placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]).</LI>
+</UL>
+<DEL>The top-level <I>cv-qualifier</I>s on
+the <I>template-parameter</I> are ignored when determining its
+type.</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
 <P>Change in 13.2 [<A href="https://wg21.link/temp.param#10">temp.param</A>] paragraph 10 as follows:</P>
 
 <BLOCKQUOTE>
 
 A non-type <I>template-parameter</I> of type &#8220;array of T&#8221;
 or of function type T is adjusted to be of type &#8220;pointer to
-T&#8221;.  <INS>If the type of a non-type <I>template-parameter</I>
-is adjusted from "array of T" and acquires the array type through a
+T&#8221;.  <INS>If the type of a non-type <I>template-parameter</I> is
+adjusted from "array of T" and acquires the array type through a
 dependent type, and any top-level cv-qualifier modifies the dependent
 type in any declaration of the template, the program is ill-formed; no
 diagnostic is required unless a cv-qualifier modifies the type of
-the <I>template-parameter</I> in the template definition.</INS>
+the <I>template-parameter</I> in a reachable definition of the
+template.</INS>
 
 [ Example:
 
@@ -12448,6 +12522,9 @@ the <I>template-parameter</I> in the template definition.</INS>
   U&lt;int[], nullptr&gt; u;   //<SPAN CLASS="cmnt"> error: const array adjustment</SPAN></INS>
 </PRE>
 -- end example ]
+
+<P class="ins">The top-level cv-qualifiers on the (possibly adjusted)
+type of a template parameter are ignored.</P>
 </BLOCKQUOTE>
 
 </LI>
@@ -13463,7 +13540,7 @@ Three-way comparison requiring strong ordering for floating-point types, take 2
 
 <P>The resolution accepted for <A HREF="cwg_defects.html#2539">issue 2539</A>
 does not actually address the example in the issue, because overload
-resolution is never performed for expressions involved only built-in
+resolution is never performed for expressions involving only built-in
 types.</P>
 
 <P><U>Suggested resolution:</U></P>
@@ -24141,7 +24218,7 @@ complications.</P>
 
 <P>(See also issues <A HREF="cwg_active.html#1980">1980</A>,
 <A HREF="cwg_closed.html#2021">2021</A>, <A HREF="cwg_closed.html#2025">2025</A>,
-and <A HREF="cwg_active.html#2037">2037</A>.)</P>
+<A HREF="cwg_active.html#2037">2037</A>, and <A HREF="cwg_active.html#2794">2794</A>.)</P>
 
 <P><B>Notes from the May, 2015 meeting:</B></P>
 
@@ -27399,6 +27476,53 @@ a literal operator template; however, the existing wording of
 of the value of the <I>decimal-literal</I>.</P>
 
 <BR><BR><HR>
+<A NAME="2983"></A><H4>2983.
+  
+Non-type template parameters are not variables
+</H4>
+<B>Section: </B>6.1&#160; [<A href="https://wg21.link/basic.pre">basic.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-09<BR>
+
+
+
+
+<P>Subclause 6.1 [<A href="https://wg21.link/basic.pre#6">basic.pre</A>] paragraph 6 specifies:</P>
+
+<BLOCKQUOTE>
+
+A <I>variable</I> is introduced by the declaration of a reference other than
+a non-static data member or of an object. The variable's name, if any,
+denotes the reference or object.
+
+</BLOCKQUOTE>
+
+<P>Does this mean that non-type template parameters of class type are
+variables?  Better not.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.1 [<A href="https://wg21.link/basic.pre#6">basic.pre</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+<INS>A <I>non-template-parameter declaration</I> is a declaration that
+is not a <I>type-parameter</I> or <I>parameter-declaration</I> of
+a <I>template-parameter</I>.</INS> A <I>variable</I> is introduced by
+the <INS>non-template-parameter</INS> declaration of a reference other
+than a non-static data member or of an object. The variable's name, if
+any, denotes the reference or object.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="1209"></A><H4>1209.
   
 Is a potentially-evaluated expression in a template definition a &#8220;use?&#8221;
@@ -29347,6 +29471,57 @@ special exceptions for pointers to transparently replaced objects
 would simplify the wording; when transparemtly replacing an object,
 the lifetime of the prior objecct would simply start again.</P>
 
+<BR><BR><HR>
+<A NAME="2986"></A><H4>2986.
+  
+Creating objects within a mutable member of a const object
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2023-07-17<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/367">#367</A>.)
+</P>
+
+<P>Consider:</P>
+
+<PRE>
+  struct S {
+    alignas(int) mutable unsigned char buf[sizeof(int)];
+  };
+  int f() {
+    const S s{};
+    ::new ((void*)s.buf) int{42};
+  }
+</PRE>
+
+<P>Creating a new object in the mutable portion of a const complete
+object is undefined behavior per 6.7.4 [<A href="https://wg21.link/basic.life#12">basic.life</A>] paragraph 12.
+However, this ought to be allowed.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#12">basic.life</A>] paragraph 12 as follows:</P>
+
+<BLOCKQUOTE>
+
+Creating a new object <INS>O</INS> within the storage that a const,
+complete object <INS>X</INS> with static, thread, or automatic storage
+duration occupies, or within the storage that such a const object used
+to occupy before its lifetime ended, results in undefined behavior
+unless <INS>O is nested within a mutable subobject of X</INS>. [
+Example: ... ]
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="365"></A><H4>365.
   
@@ -35575,6 +35750,68 @@ the initializer expression <INS>if it does not bind indirectly</INS>.
 </OL>
 
 <BR><BR><HR>
+<A NAME="2985"></A><H4>2985.
+  
+Unclear rules for reference initialization with conversion
+</H4>
+<B>Section: </B>9.4.4&#160; [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Anoop Rana
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-08-13<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/596">#596</A>.)
+</P>
+
+<P>It is unclear whether 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4.1">dcl.init.ref</A>] bullet 5.4.1
+intends list-initialization or not-list-initializaiton when it talks
+about direct-initialization.</P>
+
+<P>Furthermore, the following example was well-formed before the
+resolution of <A HREF="cwg_defects.html#1604">issue 1604</A> was applied:</P>
+
+<PRE>
+  struct X { };
+  
+  struct Y : X {};
+
+  struct Z {
+    operator const Y () const;
+  };
+  
+  Z z;
+  X&amp;&amp; r = z; //<SPAN CLASS="cmnt"> #1, ill-formed; was well-formed before CWG1604</SPAN>
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.4.4 [<A href="https://wg21.link/dcl.init.ref#5.4.1">dcl.init.ref</A>] bullet 5.4.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+If T1 or T2 is a class type, user-defined conversions are considered
+using the rules for copy-initialization of an object of type
+&#8220;cv1 T1&#8221; by user-defined conversion
+(9.4 [<A href="https://wg21.link/dcl.init">dcl.init</A>], 12.2.2.5 [<A href="https://wg21.link/over.match.copy">over.match.copy</A>],
+12.2.2.6 [<A href="https://wg21.link/over.match.conv">over.match.conv</A>]); the program is ill-formed if the
+corresponding non-reference copy-initialization would be
+ill-formed. The result <INS>E</INS> of the call to the conversion
+function, as described for the non-reference copy-initialization, is
+then used to direct-initialize the reference <INS>using the form <TT>(
+E )</TT>; if <INS>E</INS> is a prvalue, its cv-qualification is
+adjusted to <I>cv1</I></INS>. For this direct-initialization,
+user-defined conversions are not considered.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="2168"></A><H4>2168.
   
 Narrowing conversions and +/- infinity
@@ -40851,10 +41088,10 @@ satisfied (13.5.2 [<A href="https://wg21.link/temp.constr.constr">temp.constr.co
 
 <P>For template template parameters, it is unclear how this provision
 interacts with instantiation or substitution.  In particular,
-13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3 allows for the template tempalte
+13.4.4 [<A href="https://wg21.link/temp.arg.template#3">temp.arg.template</A>] paragraph 3 allows for the template template
 parameter to be more constrained than the argument provided; however,
 once the parameter is replaced by the corresponding argument, the
-contraints of the parameter seemingly disappear. Consider:</P>
+constraints of the parameter seemingly disappear. Consider:</P>
 
 <PRE>
   template &lt;typename T&gt;
@@ -40864,7 +41101,7 @@ contraints of the parameter seemingly disappear. Consider:</P>
 
   template &lt;template &lt;C&gt; class TT&gt;
   struct A {
-   template &lt;typename T&gt; void f(TT&lt;T&gt; *) {}
+    template &lt;typename T&gt; void f(TT&lt;T&gt; *) {}
   };
 
   template void A&lt;Q&gt;::f(Q&lt;int&gt; *);
@@ -40896,9 +41133,44 @@ implement the basic feature at all) appear to use the constraints
 of <TT>TT</TT> from <TT>A</TT> despite the <I>simple-template-id</I>
 emanating from <TT>Alias</TT>.</P>
 
-<P>Maybe the constraints from the template template parameter should
-be checked where those appear to form a <I>simple-template-id</I> once
-the arguments are known.</P>
+<P>Maybe the constraints from template template parameters should be
+checked where they appear (including within an alias template) --- or are
+substituted into an alias template --- to form a <I>simple-template-id</I>
+once the arguments are known.  That is, the associated constraints of both</P>
+<UL>
+<LI>template template parameters of alias templates and</LI>
+<LI>template template parameters used as arguments to alias templates</LI>
+</UL>
+<P>are checked for <I>simple-template-id</I>s appearing in an alias
+template.</P>
+
+<P>Also consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  concept C = true;
+
+  template &lt;typename T&gt;
+  concept CandMore = C&lt;T&gt; &amp;&amp; true;
+
+  template &lt;typename&gt; struct Q;
+
+  template &lt;template &lt;C&gt; class P, typename T&gt;
+  using Alias = P&lt;T&gt;;
+
+  template &lt;template &lt;CandMore&gt; class TT&gt;
+  struct A {
+    Alias&lt;TT, int&gt; *p;  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  A&lt;Q&gt; a;
+</PRE>
+
+<P>The <TT>P</TT> for <TT>Alias</TT> is not at least as specialized as
+the argument <TT>TT</TT> given at #1, if we take the <TT>TT</TT>
+constraints as written.  However, the actual argument for <TT>TT</TT>
+may be such that <TT>P</TT> is at least as specialized as the
+argument <TT>TT</TT>. There is implementation divergence.</P>
 
 <BR><BR><HR>
 <A NAME="2105"></A><H4>2105.
@@ -42086,6 +42358,44 @@ when the <I>lambda-expression</I> is not dependent.
 <P>The outcome seems unfortunate; the first example ought to be
 well-formed.</P>
 
+<P><B>Additional notes (January, 2025)</B></P>
+
+<P>Another example:</P>
+
+<PRE>
+  template&lt;typename T, typename F = decltype([](){} )&gt;
+  struct Type {};
+  template&lt;typename A&gt;
+  using C = Type&lt;A&gt;;
+
+  static_assert(std::same_as&lt;Type&lt;int&gt;,Type&lt;int&gt;&gt;); //<SPAN CLASS="cmnt"> #1</SPAN>
+  static_assert(std::same_as&lt;C&lt;int&gt;,C&lt;int&gt;&gt;); //<SPAN CLASS="cmnt"> #2</SPAN>
+</PRE>
+
+<P>
+All of clang, EDG, gcc, and MSVC reject #1; clang additionally rejects #2.
+</P>
+
+<P>There is also implementation divergence for the following example:</P>
+
+<PRE>
+  template&lt;typename T&gt; using A = decltype([]{});
+  template&lt;typename T&gt; void f(A&lt;T&gt;) {}
+  template&lt;typename T&gt; void f(A&lt;T&gt;) {}  //<SPAN CLASS="cmnt"> Duplicate definition?</SPAN>
+</PRE>
+
+<P>MSVC and gcc reject as a redefinition; clang and EDG accept.  Even
+if only a single definition is present, implementations differ about
+whether <TT>f</TT> has internal or external linkage and what
+properties the mangled name has.</P>
+
+<P>
+<A HREF="cwg_active.html#1979">Issue 1979</A> is related and suggests to
+treat simple alias templates differently (those would not have
+specializations, but be transparent for template argument deduction)
+from more complicated ones (those would have specializations and be
+morally equivalent to a <TT>struct</TT> with a member typedef).</P>
+
 <BR><BR><HR>
 <A NAME="1257"></A><H4>1257.
   
@@ -42303,6 +42613,65 @@ similar to other paragraphs in 13.8.3.4 [<A href="https://wg21.link/temp.dep.con
 implementation divergence is believed to be an independent bug in one
 implementation.</P>
 
+<BR><BR><HR>
+<A NAME="2984"></A><H4>2984.
+  
+Value-dependent structured bindings
+</H4>
+<B>Section: </B>13.8.3.4&#160; [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Michael Park
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-14<BR>
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct S { int x; };
+
+  template &lt;S s&gt;
+  void f() {
+   constexpr auto [x] = s;
+   constexpr bool b = (x == 0); // x<SPAN CLASS="cmnt"> ought to be value-dependent</SPAN>
+  }
+</PRE>
+
+<P>The rules in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr">temp.dep.constexpr</A>] do not seem to cover the
+case of structured bindings.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.8.3.4 [<A href="https://wg21.link/temp.dep.constexpr#2">temp.dep.constexpr</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>id-expression</I> is value-dependent if
+<UL>
+<LI>it is a <I>concept-id</I> and any of its arguments are
+dependent,</LI>
+<LI>it is type-dependent,</LI>
+<LI>it is the name of a non-type template parameter,</LI>
+<LI>it names a static data member that is a dependent member of the
+current instantiation and is not initialized in a
+<I>member-declarator</I>,</LI>
+<LI>it names a static member function that is a dependent member of
+the current instantiation, <DEL>or</DEL>
+</LI>
+<LI>it names a potentially-constant variable
+(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]) that is initialized with an expression that
+is value-dependent<DEL>.</DEL> <INS>, or</INS>
+</LI>
+<LI class="ins">it names a structured binding whose associated
+variable (9.6 [<A href="https://wg21.link/dcl.struct.bind">dcl.struct.bind</A>]) is value-dependent.</LI>
+</UL>
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2250"></A><H4>2250.
   
