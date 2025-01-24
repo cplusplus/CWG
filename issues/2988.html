@@ -1,0 +1,83 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2988</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-01-24</P>
+<HR>
+<A NAME="2988"></A><H4>2988.
+  
+Is a closure type from a <I>lambda-expression</I> appearing in a <I>concept-definition</I> a TU-local entity?
+</H4>
+<B>Section: </B>6.6&#160; [<A href="https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-24<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+   template&lt;typename _Tp&gt;
+    concept __is_derived_from_optional = requires (const _Tp&amp; __t) {
+     []&lt;typename _Up&gt;(const optional&lt;_Up&gt;&amp;){ }(__t);
+    };
+</PRE>
+
+<P>According to 6.6 [<A href="https://wg21.link/basic.link#15">basic.link</A>] paragraph 15, the closure type
+of the <I>lambda-expression</I> is a TU-local entity, thus the concept
+is an exposure, thus it cannot appear in a module interface unit.
+There is no fundamental reason why this needs to be the case.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 6.6 [<A href="https://wg21.link/basic.link#15.2">basic.link</A>] paragraph 15.2 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+An entity is TU-local if it is
+<UL>
+<LI>a type, function, variable, or template that
+<UL>
+<LI>has a name with internal linkage, or</LI>
+<LI>does not have a name with linkage and is declared, or introduced
+by a <I>lambda-expression</I>, within the definition of a TU-local
+entity,</LI>
+</UL>
+</LI>
+<LI>a type with no name that is defined outside
+a <I>class-specifier</I>, function body,
+<INS><I>concept-definition</I>,</INS> or initializer or is introduced
+by a <I>defining-type-specifier</I> that is used to declare only
+TU-local entities,</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
