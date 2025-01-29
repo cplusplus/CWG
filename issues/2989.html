@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-01-24</P>
+<P>2025-01-29</P>
 <HR>
 <A NAME="2989"></A><H4>2989.
   
@@ -42,20 +42,257 @@ Remove misleading general allowance for parentheses
 causes confusion whether parenthesized constructs are allowed where
 the grammar or other rules do not specifically allow them.</P>
 
+<P>Specific areas of concern are:</P>
+<UL>
+<LI>Parenthesized integer literal with value 0, e.g. <TT>(((0ULL)))</TT>
+(supported by all implementations)</LI>
+<LI>Parenthesized operand for <TT>&amp;</TT> when forming a
+pointer-to-member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3)</LI>
+</UL>
+
 <P><U>Possible resolution:</U></P>
 
+<OL>
+<LI>
+<P>Change in 6.7.5 [<A href="https://wg21.link/basic.indet#2.1">basic.indet</A>] bullet 2.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>If an indeterminate or erroneous value of unsigned ordinary character
+type (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]) or std::byte type
+(17.2.1 [<A href="https://wg21.link/cstddef.syn">cstddef.syn</A>]) is produced by the evaluation of:
+<UL>
+<LI class="ins">the operand of a parenthesized expression
+(7.5.4 [<A href="https://wg21.link/expr.prim.paren">expr.prim.paren</A>]),</LI>
+<LI>the second or third operand of a conditional expression
+(7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]),</LI>
+<LI>the right operand of a comma
+expression (7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]),</LI>
+<LI>...</LI>
+</UL>
+then the result of the operation is an indeterminate value or that
+erroneous value, respectively.
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.8.2 [<A href="https://wg21.link/basic.fundamental#15">basic.fundamental</A>] paragraph 15 as follows:</P>
+<BLOCKQUOTE>
+
+A type cv void is an incomplete type that cannot be completed; such a
+type has an empty set of values. It is used as the return type for
+functions that do not return a value. An expression of type cv void
+shall be used only as
+<UL>
+<LI>an expression statement (8.3 [<A href="https://wg21.link/stmt.expr">stmt.expr</A>]),</LI>
+<LI>the expression in a return statement (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>])
+for a function with the return type cv void,</LI>
+<LI class="ins">the operand of a parenthesized expression
+(7.5.4 [<A href="https://wg21.link/expr.prim.paren">expr.prim.paren</A>]),</LI>
+<LI>an operand of a comma expression
+(7.6.20 [<A href="https://wg21.link/expr.comma">expr.comma</A>]),</LI>
+<LI>the second or third operand of <DEL>?:</DEL> <INS>a conditional
+expression</INS> (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]),</LI>
+<LI>the operand of a typeid expression
+(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]),</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.12 [<A href="https://wg21.link/conv.ptr#1">conv.ptr</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+A <I>null pointer constant</I> is <DEL>an</DEL> <INS>a (possibly
+parenthesized)</INS> integer literal (5.13.2 [<A href="https://wg21.link/lex.icon">lex.icon</A>])
+with value zero or a prvalue of type std::nullptr_t. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Change 7.5.4 [<A href="https://wg21.link/expr.prim.paren#1">expr.prim.paren</A>] paragraph 1 as follows:</P>
 
 <BLOCKQUOTE>
 
 A parenthesized expression (E) is a primary expression whose type,
 result, and value category are identical to those of E. <INS>The
-parenthesized expression is a bit-field if E is a bit-field.</INS>
+parenthesized expression is a bit-field if E is a bit-field. If (E) is
+a discarded-value expression (7.2.3 [<A href="https://wg21.link/expr.context">expr.context</A>]), so is
+E.</INS>
 <DEL>The parenthesized expression can be used in
 exactly the same contexts as those where E can be used, and with the
 same meaning, except as otherwise indicated.</DEL>
 
 </BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.5.5.5 [<A href="https://wg21.link/expr.prim.id.dtor#2">expr.prim.id.dtor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the <I>id-expression</I> names a pseudo-destructor, T shall be a
+scalar type and the <I>id-expression</I> shall appear as the right
+operand of a class member access (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) that
+forms the <INS>(possibly parenthesized)</INS>
+<I>postfix-expression</I> of a function call
+(7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]).
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.5.1 [<A href="https://wg21.link/class.union.general#5">class.union.general</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+When the left operand of an assignment operator involves a member
+access expression (7.6.1.5 [<A href="https://wg21.link/expr.ref">expr.ref</A>]) that nominates a
+union member, it may begin the lifetime of that union member, as
+described below. For an expression E, define the set S(E) of
+subexpressions of E as follows:
+<UL>
+<LI class="ins">If E is of the form (A), S(E) is S(A).</LI>
+<LI>If E is of the form A.B, S(E) contains the elements of S(A), and
+also contains A.B if B names a union member of a non-class, non-array
+type, or of a class type with a trivial default constructor that is
+not deleted, or an array of such types.</LI>
+<LI>If E is of the form A[B] and is interpreted as a built-in array
+subscripting operator, S(E) is S(A) if A is of array type, S(B) if B
+is of array type, and empty otherwise.</LI>
+<LI>Otherwise, S(E) is empty.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 11.9.6 [<A href="https://wg21.link/class.copy.elision#1">class.copy.elision</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+This elision of object creation, called copy elision, is permitted in
+the following circumstances (which may be combined to eliminate
+multiple copies):
+<UL>
+<LI>in a return statement (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]) in a function
+with a class return type, when the expression is the <INS>(possibly
+parenthesized)</INS> name of a non-volatile object o with automatic
+storage duration (other than a function parameter or a variable
+introduced by the <I>exception-declaration</I> of a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])), the copy-initialization of the result
+object can be omitted by constructing o directly into the function
+call's result object;
+</LI>
+<LI>in a <I>throw-expression</I> (7.6.18 [<A href="https://wg21.link/expr.throw">expr.throw</A>]), when
+the operand is the <INS>(possibly parenthesized)</INS> name of a
+non-volatile object o with automatic storage duration (other than a
+function parameter or a variable introduced by
+the <I>exception-declaration</I> of a handler ) that belongs to a
+scope that does not contain the innermost
+enclosing <I>compound-statement</I> associated with a <I>try-block</I>
+(if there is one), the copy-initialization of the exception object can
+be omitted by constructing o directly into the exception object;
+</LI>
+<LI>in a coroutine (9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]), ...;
+</LI>
+<LI>when the <I>exception-declaration</I> of a handler
+(14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) declares an object o, ...
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.2.1 [<A href="https://wg21.link/over.match.call.general#1">over.match.call.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+In a function call (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>])
+<PRE>
+   postfix-expression ( expression-list<SUB>opt</SUB> )
+</PRE>
+if the <I>postfix-expression</I> <DEL>names at least one function or
+function template</DEL> <INS>is an overload set</INS>, overload
+resolution is applied as specified in
+12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>]. If the <I>postfix-expression</I>
+denotes an object of class type, overload resolution is applied as
+specified in 12.2.2.2.3 [<A href="https://wg21.link/over.call.object">over.call.object</A>].
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.2.2.2.2 [<A href="https://wg21.link/over.call.func#1">over.call.func</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Of interest in 12.2.2.2.2 [<A href="https://wg21.link/over.call.func">over.call.func</A>] are only those function
+calls in which the <I>postfix-expression</I> <DEL>ultimately contains
+an <I>id-expression</I> that denotes one or more
+functions</DEL> <INS>is an overload set</INS>. Such
+a <I>postfix-expression</I>, perhaps nested arbitrarily deep in
+parentheses, has one of the following forms: ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#1">over.over</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <DEL><I>id-expression</I> whose</DEL> <INS>expression E designates
+the <I>address of an overload set</I> S if E is</INS>
+<UL class="ins">
+<LI>an <I>id-expression</I>, or</LI>
+<LI>of the form <TT>&amp; <I>X</I></TT>, where <I>X</I> is a (possibly
+parenthesized) <I>id-expression</I>, or</LI>
+<LI>of the form <TT>( <I>X</I> )</TT>, where <I>X</I> is one of these
+expressions,</LI>
+</UL>
+<INS>where the</INS> terminal name <INS>of the
+<I>id-expression</I> </INS>refers to an overload set S
+and <DEL>that</DEL> <INS>E</INS> appears without arguments<INS>.  Such
+an expression</INS> is resolved to a function, a pointer to function,
+or a pointer to member function for a specific function that is chosen
+from a set of functions selected from S determined based on the target
+type required in the context (if any), as described below. The target
+can be ....  If the target type contains a placeholder type,
+placeholder type deduction is performed
+(9.2.9.7.2 [<A href="https://wg21.link/dcl.type.auto.deduct">dcl.type.auto.deduct</A>]), and the remainder of this subclause
+uses the target type so deduced. <DEL>The <I>id-expression</I> can be
+preceded by the &amp; operator.</DEL>
+<DEL>[<I>Note 1:</I> Any redundant set of parentheses surrounding the
+function name is ignored (7.5.4 [<A href="https://wg21.link/expr.prim.paren">expr.prim.paren</A>]). &#8212;<I>end
+note</I>]</DEL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 12.3 [<A href="https://wg21.link/over.over#6">over.over</A>] paragraph 6 as follows:</P>
+
+<PRE>
+  int f(double);
+  int f(int);
+  int (*pfd)(double) = &amp;f;         //<SPAN CLASS="cmnt"> selects f(double)</SPAN>
+  int (*pfi)(int) = <INS>(((</INS>&amp;f<INS>)))</INS>;      //<SPAN CLASS="cmnt"> selects f(int)</SPAN>
+  ...
+</PRE>
+</LI>
+</OL>
 
 <BR><BR>
 </BODY>
