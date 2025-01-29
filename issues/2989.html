@@ -16,7 +16,7 @@
   Core Issues List revision 116a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-01-29</P>
+<P>2025-01-30</P>
 <HR>
 <A NAME="2989"></A><H4>2989.
   
@@ -49,6 +49,9 @@ constant, e.g. <TT>(((0ULL)))</TT> (supported by all
 implementations)</LI>
 <LI>Parenthesized operand for <TT>&amp;</TT> when forming a
 pointer-to-member (7.6.2.2 [<A href="https://wg21.link/expr.unary.op#3">expr.unary.op</A>] paragraph 3)</LI>
+<LI>Parenthesized non-type template arguments when matching template
+specializations (13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#8">temp.spec.partial.general</A>] paragraph 8,
+13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#8">temp.deduct.type</A>] paragraph 8)</LI>
 </UL>
 
 <P><U>Possible resolution:</U></P>
@@ -292,6 +295,40 @@ note</I>]</DEL>
   int (*pfi)(int) = <INS>(((</INS>&amp;f<INS>)))</INS>;      //<SPAN CLASS="cmnt"> selects f(int)</SPAN>
   ...
 </PRE>
+</LI>
+
+<LI>
+<P>Change in 13.7.6.1 [<A href="https://wg21.link/temp.spec.partial.general#8">temp.spec.partial.general</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+A non-type argument is non-specialized if it is
+the <INS>unparenthesized</INS> name of a non-type parameter. All other
+non-type arguments are specialized.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 13.10.3.6 [<A href="https://wg21.link/temp.deduct.type#8">temp.deduct.type</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 3:</I> If a type matches such a form but contains no Ts, is,
+or TTs, deduction is not possible. &#8212;<I>end note</I>] Similarly,
+&lt;T&gt; represents template argument lists where at least one
+argument contains a T, &lt;i&gt; represents template argument lists
+where at least one argument contains an i and &lt;&gt; represents
+template argument lists where no argument contains a T or an i.
+<INS>[ Note: If a non-type template parameter is parenthesized,
+deduction is not possible.  [ Example:</INS>
+<PRE class="ins">
+  template&lt;int N&gt; struct X {};
+  template&lt;int N&gt; void f(X&lt;(N)&gt;);   //<SPAN CLASS="cmnt"> #1</SPAN>
+  void g() { f(X&lt;0&gt;()); }           //<SPAN CLASS="cmnt"> error: cannot deduce </SPAN>N<SPAN CLASS="cmnt"> in #1</SPAN>
+</PRE>
+<INS>-- end example ] -- end note ]</INS>
+</BLOCKQUOTE>
 </LI>
 </OL>
 
