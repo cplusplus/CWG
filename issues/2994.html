@@ -1,0 +1,85 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2994</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-02-23</P>
+<HR>
+<A NAME="2994"></A><H4>2994.
+  
+Allowing template parameters following template parameter packs that are pack expansions
+</H4>
+<B>Section: </B>13.2&#160; [<A href="https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/666">#666</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;class Head, class... Tail&gt;
+  struct test {
+    template &lt;Tail..., Head&gt;
+    static void make() {}       // <SPAN CLASS="cmnt">clang accepts, MSVC rejects</SPAN>
+  };
+
+  int main() {
+    test&lt;char, int, float&gt;::make&lt;4, 6.f, 'a'&gt;();
+  }
+</PRE>
+
+<P>There is implementation divergence for the treatment of this
+example.  It ought to be allowed.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 13.2 [<A href="https://wg21.link/temp.param#14">temp.param</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+... <DEL>If a</DEL> <INS>A</INS> <I>template-parameter</I> <INS>pack</INS> of a function template <DEL>declares a
+template parameter pack, it</DEL> shall not be followed by
+another <I>template-parameter</I> <INS>P</INS> unless
+<UL>
+<LI>
+<DEL>that template parameter</DEL> <INS>P</INS> is deducible from
+the <I>parameter-type-list</I> (9.3.4.6 [<A href="https://wg21.link/dcl.fct">dcl.fct</A>]) of the
+function template <DEL>or</DEL> <INS>,</INS>
+</LI>
+<LI>
+<INS>P</INS> has a default
+argument (13.10.3 [<A href="https://wg21.link/temp.deduct">temp.deduct</A>])<INS>, or</INS>
+</LI>
+<LI>
+<INS>that template parameter pack is also a pack
+expansion</INS>.</LI>
+</UL>...
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
