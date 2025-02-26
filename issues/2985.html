@@ -16,7 +16,7 @@
   Core Issues List revision 116b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-02-25</P>
+<P>2025-02-27</P>
 <HR>
 <A NAME="2985"></A><H4>2985.
   
@@ -83,6 +83,37 @@ user-defined conversions are not considered.
 
 <P>Permitting a binding of <TT>X&amp;&amp;</TT> to a <TT>const Y</TT>
 seems ill-advised; the change effected by <A HREF="1604.html">issue 1604</A> in that regard is intended.</P>
+
+<P>In more detail, copy-initializing a T object from a cv T prvalue
+succeeds:</P>
+
+<PRE>
+  struct X { X() = default; X(X&amp;&amp;) = delete; };
+  using CX = const X;
+  X x = CX();    //<SPAN CLASS="cmnt"> OK, default-initializes </SPAN>x
+</PRE>
+
+<P>However, even with guaranteed copy elision, the pre-CWG1604 model
+does not handle derived classes appropriately when reference binding:</P>
+
+<PRE>
+  struct X {
+    X() = default;
+    X(X&amp;&amp;) = delete;
+  };
+  struct Y : X {};
+  struct Z {
+    operator Y() { return Y(); }
+  };
+  X&amp;&amp; x = Z();
+</PRE>
+
+<P>In this case, the rvalue reference <TT>x</TT> should bind directly
+to the <TT>Y</TT> materialized prvalue; there should never be an
+attempt to copy-initialize an <TT>X</TT> from <TT>Z</TT> to satisfy
+the reference binding.  However, such direct reference binding would
+not be expected to work for a <TT>const Y</TT> prvalue.</P>
+
 
 <P><U>Possible resolution:</U></P>
 
