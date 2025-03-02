@@ -79,7 +79,7 @@ cross-reference to the definition of the technical term; the
 formulation does not preclude that the ODR also prohibits A, B, C
 beyond X.
 
-Footnotes present anicillary information, establishing context beyond
+Footnotes present ancillary information, establishing context beyond
 the C++ Standard, such as trademark hints.  They should appear rarely.
 
 Add examples to the Working Draft text.  Do not spend more than one
