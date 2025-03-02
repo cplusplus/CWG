@@ -95,11 +95,36 @@ determine where updates are needed.
 [expr.prim.id] establishes the meaning of names
 (in some cases, even when appearing outside of expressions).
 
+Use math-like abstract concepts such as pairs (a bundle of two
+things), tuples (a bundle of multiple things), sets (an unordered
+collection of things), or lists (an ordered colleciton of things) as
+necessary to convey a rule as precisely as possible.
+
 Consider introducing definitions of terms and phrases to manage complexity.
 Add cross-references when using a term or phrase
-that could be mistaken has having the ordinary English meaning.
+that could be mistaken as having the ordinary English meaning.
 Within a single paragraph,
 have at most one cross-reference to any given subclause.
+
+Clearly differentiate definitions from normative rules,
+for example by having them in separate sentences.
+
+It is acceptable to introduce hypothetical C++ entities
+such as types (e.g. closure types) or templates,
+but all salient properties of such must be clearly specified.
+For grammar non-terminals such as <I>template-head</I>,
+the hypothetical definition is expected to have a valid token representation;
+otherwise,
+the abstract concept needs to be divorced from the grammar non-terminal
+(see "exception specification" vs. _exception-specification_).
+
+In library wording,
+when specifying a complex component (e.g. RCU or hazard pointers),
+spend a few paragraphs of introductory wording
+to describe the data structure in the abstract,
+possibly defining terms and phrases as necessary, and
+then refer to the abstract description
+in the specification of the individual classes and member functions.
 
 ### Notes, examples, and footnotes
 
