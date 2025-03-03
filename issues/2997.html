@@ -16,7 +16,7 @@
   Core Issues List revision 116b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-03-01</P>
+<P>2025-03-02</P>
 <HR>
 <A NAME="2997"></A><H4>2997.
   
@@ -42,8 +42,6 @@ defaulted function not be defined until it is odr-used or needed for
 constant evaluation (9.5.2 [<A href="https://wg21.link/dcl.fct.def.default#5">dcl.fct.def.default</A>] paragraph 5).</P>
 
 <P>Consider:</P>
-
-
 
 <PRE>
   template &lt;class T&gt;
@@ -96,6 +94,22 @@ definition of a member function only if the member function is
 deleted. Does that mean, at the point of instantiation of the class,
 the compiler must determine whether a defaulted definition is deleted?
 </P>
+
+<P>The issue also arises when attempting to default equality operator
+functions for standard library types, e.g.</P>
+
+<PRE>
+  template&lt;class T, int N&gt;
+  struct A {
+    T m[N];
+    bool operator==(const A&amp;) const = default;
+  };
+
+  struct Incomplete;
+  template&lt;class T&gt; struct Holder { T t; };
+  using H = Holder&lt;Holder&lt;Incomplete&gt;*&gt;;
+  A&lt;H, 2&gt; a;    //<SPAN CLASS="cmnt"> error: data member of incomplete type</SPAN>
+</PRE>
 
 <BR><BR>
 </BODY>
