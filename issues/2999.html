@@ -1,0 +1,74 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 2999</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-03-05</P>
+<HR>
+<A NAME="2999"></A><H4>2999.
+  
+Trivial unions changing existing behavior
+</H4>
+<B>Section: </B>11.4.5.2&#160; [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-14<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  union U { int a, b; };
+  template&lt;U u&gt; class X {};
+  constexpr U make() { U u; return u; }
+  void f(X&lt;make()&gt;) {}
+</PRE>
+
+<P>Before P3074R7, the template argument of <TT>X</TT> was a union
+object with no active member.  Now, the default construction
+of <TT>U</TT> starts the lifetime of <TT>U::a</TT> because it has
+implicit-lifetime type (11.4.5.2 [<A href="https://wg21.link/class.default.ctor#4">class.default.ctor</A>] paragraph 4).</P>
+
+<P>This changes the mangling of <TT>f</TT>, because a union with no
+active member is different from a union with the first member active.
+More importantly, it is now ill-formed, because <TT>U::a</TT> is
+in-lifetime, but uninitialized (7.7 [<A href="https://wg21.link/expr.const#22.2">expr.const</A>] bullet 22.2).</P>
+
+<P>Also consider the following implementation divergence</P>
+
+<PRE>
+  struct E { };
+  union U { E e; };
+  template&lt;U u&gt; class X {};
+
+  constexpr U make() { U u; return u; }
+  constexpr U make2() { U u{}; return u; }
+
+  void f(X&lt;make()&gt;) {}
+  void f(X&lt;make2()&gt;) {}    //<SPAN CLASS="cmnt"> OK with clang; redefinition error with gcc</SPAN>
+</PRE>
+
+<BR><BR>
+</BODY>
+</HTML>
