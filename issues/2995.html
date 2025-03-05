@@ -16,7 +16,7 @@
   Core Issues List revision 116b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-03-04</P>
+<P>2025-03-05</P>
 <HR>
 <A NAME="2995"></A><H4>2995.
   
@@ -72,7 +72,7 @@ the same semantics:</P>
   void g() { ... }
 </PRE>
 
-<P><U>Suggested resolution:</U></P>
+<P><U>Suggested resolution (option 1):</U></P>
 
 <OL>
 <LI>
@@ -201,6 +201,158 @@ the <I>compound-statement</I> of a handler of
 a <I>function-try-block</I> is equivalent to flowing off the end of
 the <I>compound-statement</I> of that function (see
 8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]).</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+</OL>
+
+<P><U>Possible resolution (option 2):</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.3.1 [<A href="https://wg21.link/basic.start.main#5">basic.start.main</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+A return statement (8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]) in main has the effect
+of leaving the main function (destroying any objects with automatic
+storage duration) and calling std::exit with the return value as the
+argument. <DEL>If control flows off the end of
+the <I>compound-statement</I> of main, the effect is
+equivalent to a return with operand 0 (see also
+14.4 [<A href="https://wg21.link/except.handle">except.handle</A>])</DEL>.  <INS>The statement <TT>return
+0;</TT> is appended to <TT>main</TT> (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]).</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a new paragraph at the end of 8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]:</P>
+
+<BLOCKQUOTE>
+
+<P>[<I>Note 1:</I> A compound statement defines a block scope
+(6.4 [<A href="https://wg21.link/basic.scope">basic.scope</A>]). A declaration is a statement
+(8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]). &#8212;<I>end note</I>]</P>
+
+<DIV class="ins">
+<P>The <I>outermost blocks</I> of a function are
+<UL>
+<LI>the <I>compound-statement</I> of its <I>function-body</I> or
+<I>function-try-block</I> (if any) and</LI>
+<LI>the <I>compound-statement</I>s of the <I>handler</I>s of its
+<I>function-try-block</I> (if any).</LI>
+</UL>
+[Note: A defaulted or deleted function has no outermost blocks. -- end note]
+</P>
+
+<P>
+A statement is <I>appended</I> to a <I>compound-statement</I> by
+inserting it immediately prior to the closing <TT>}</TT>.
+</P>
+
+<P>The statement <TT>throw;</TT> is appended to
+the <I>compound-statement</I>s of the <I>handler</I>s of
+a <I>function-try-block</I> of a constructor or destructor.  The
+statement <TT>return;</TT> is appended to any other outermost block of
+a non-coroutine function with a <I>cv</I> <TT>void</TT> return type or
+with no return type.
+</P>
+
+<P>
+If control flows off the end of an outermost block of a function and
+the destruction of block variables with automatic storage duration, if
+any, completes normally (8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]), the behavior is
+undefined.  [Note: Control never flows off the end of <TT>main</TT>
+(6.9.3.1 [<A href="https://wg21.link/basic.start.main">basic.start.main</A>]), a constructor, a destructor, or a
+void-returning function. -- end note]
+</P>
+</DIV>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.7.4 [<A href="https://wg21.link/stmt.return#4">stmt.return</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+Flowing off the end of a constructor, a destructor, or a non-coroutine
+function with a cv void return type is equivalent to a return with no
+operand. Otherwise, flowing off the end of a function that is neither
+main (6.9.3.1 [<A href="https://wg21.link/basic.start.main">basic.start.main</A>]) nor a coroutine
+(9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine">dcl.fct.def.coroutine</A>]) results in undefined behavior.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 8.7.5 [<A href="https://wg21.link/stmt.return.coroutine#3">stmt.return.coroutine</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a search for the name <TT>return_void</TT> in the scope of the
+promise type finds any declarations, <DEL>flowing off the end of a
+coroutine's <I>function-body</I> is equivalent to a co_return with no
+operand; otherwise flowing offthe end of a coroutine's
+<I>function-body</I> results in undefined behavior</DEL>.
+<INS>the statement <TT>co_return;</TT> is appended to the original
+coroutine (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>]).</INS>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#6">dcl.fct.def.coroutine</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+[<I>Note 1:</I> If <TT>return_void</TT> is found, <DEL>flowing off</DEL> <INS>reaching</INS> the end of a
+<DEL>coroutine</DEL> <INS>coroutine's original <I>function-body</I>
+(8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>])</INS> is equivalent to a <TT>co_return</TT>
+with no operand.  Otherwise, <DEL>flowing off</DEL>
+<INS>reaching</INS> the end of a <DEL>coroutine</DEL>
+<INS>coroutine's original <I>function-body</I></INS> results in
+undefined behavior (8.7.5 [<A href="https://wg21.link/stmt.return.coroutine">stmt.return.coroutine</A>]). &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.5.4 [<A href="https://wg21.link/dcl.fct.def.coroutine#11">dcl.fct.def.coroutine</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+The coroutine state is destroyed <DEL>when control flows off the end
+of the coroutine</DEL> <INS>at the end of its
+replacement <I>function-body</I> (8.4 [<A href="https://wg21.link/stmt.block">stmt.block</A>])</INS> or
+when the destroy member function (17.12.4.6 [<A href="https://wg21.link/coroutine.handle.resumption">coroutine.handle.resumption</A>]) of a
+coroutine handle (17.12.4 [<A href="https://wg21.link/coroutine.handle">coroutine.handle</A>]) that refers to the
+coroutine is invoked. In the latter case, control in the coroutine is
+considered to be transferred out of the function
+(8.8 [<A href="https://wg21.link/stmt.dcl">stmt.dcl</A>]). The storage for the coroutine state is
+released by calling a non-array deallocation function
+(6.7.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]). If destroy is called for a coroutine
+that is not suspended, the program has undefined behavior.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.4 [<A href="https://wg21.link/except.handle#14">except.handle</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE class="del">
+
+The currently handled exception is rethrown if control reaches the end
+of a <I>handler</I> of
+the <I>function-try-block</I> of a constructor or
+destructor. Otherwise, flowing off the end of
+the <I>compound-statement</I> of a handler of
+a <I>function-try-block</I> is equivalent to flowing off the end of
+the <I>compound-statement</I> of that function (see
+8.7.4 [<A href="https://wg21.link/stmt.return">stmt.return</A>]).
 
 </BLOCKQUOTE>
 </LI>
