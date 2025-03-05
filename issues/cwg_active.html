@@ -175,6 +175,7 @@ USA.</P>
 <A HREF="cwg_active.html#2996">2996</A>,
 <A HREF="cwg_active.html#2997">2997</A>,
 <A HREF="cwg_active.html#2998">2998</A>,
+<A HREF="cwg_active.html#2999">2999</A>,
 </P>
 
 <P><B>Revision 116, 2024-12-19:</B></P>
@@ -6950,6 +6951,17 @@ Inheriting default constructors
 <TD ALIGN="CENTER">LWG</TD>
 <TD ALIGN="LEFT">
 Non-eligible trivial default constructors
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">11.4.5.2&#160;
+  <A href="https://wg21.link/class.default.ctor">class.default.ctor</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#2999">2999</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Trivial unions changing existing behavior
 </TD>
 </TR>
 <TR>
@@ -35539,6 +35551,15 @@ differ.</P>
 function body, which is where the destruction of local variables
 occurs.  Current consensus appears to solidify around "after".</P>
 
+<P>This approach is consistent with the observation that the following
+two functions, given identical (valid) function bodies, should have
+the same semantics:</P>
+
+<PRE>
+  void f() {{ ... }}
+  void g() { ... }
+</PRE>
+
 <P><U>Suggested resolution:</U></P>
 
 <OL>
@@ -38627,6 +38648,61 @@ has been initialized and whether it is const.</P>
 user code can determine whether NRVO occurs at runtime by comparing a
 pointer to the local object with a pointer to the object in the
 surrounding context.</P>
+
+<BR><BR><HR>
+<A NAME="2999"></A><H4>2999.
+  
+Trivial unions changing existing behavior
+</H4>
+<B>Section: </B>11.4.5.2&#160; [<A href="https://wg21.link/class.default.ctor">class.default.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-14<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  union U { int a, b; };
+  template&lt;U u&gt; class X {};
+  constexpr U make() { U u; return u; }
+  void f(X&lt;make()&gt;) {}
+</PRE>
+
+<P>Before P3074R7, the template argument of <TT>X</TT> was a union
+object with no active member.  Now, the default construction
+of <TT>U</TT> starts the lifetime of <TT>U::a</TT> because it has
+implicit-lifetime type (11.4.5.2 [<A href="https://wg21.link/class.default.ctor#4">class.default.ctor</A>] paragraph 4).</P>
+
+<P>This changes the mangling of <TT>f</TT>, because a union with no
+active member is different from a union with the first member active.
+More importantly, it is now ill-formed, because <TT>U::a</TT> is
+in-lifetime, but uninitialized (7.7 [<A href="https://wg21.link/expr.const#22.2">expr.const</A>] bullet 22.2).</P>
+
+<P>Also consider the following implementation divergence</P>
+
+<PRE>
+  struct E { };
+  union U { E e; };
+  template&lt;U u&gt; class X {};
+
+  constexpr U make() { U u; return u; }
+  constexpr U make2() { U u{}; return u; }
+
+  void f(X&lt;make()&gt;) {}
+  void f(X&lt;make2()&gt;) {}    //<SPAN CLASS="cmnt"> OK with clang; redefinition error with gcc</SPAN>
+</PRE>
+
+<P>If any of those behavior changes are intended, an Annex C entry is
+needed.</P>
 
 <BR><BR><HR>
 <A NAME="2743"></A><H4>2743.
@@ -42769,11 +42845,15 @@ where <I>E</I> is an expression and <I>M</I> is a mapping from the
 template parameters that appear within <I>E</I> to template arguments
 expressed using the normalizing context of the atomic constraint.  The
 <I>parameter mapping</I> of an atomic constraint is <I>M</I>.
-The <I>normalizing context</I> of an atomic constraint is the context
-where the last <I>concept-id</I> for which arguments were substituted
-into the parameter mapping via constraint normalization
-(13.5.4 [<A href="https://wg21.link/temp.constr.normal">temp.constr.normal</A>]) appears, if any, and the context where E
-appears otherwise. [Note: The atomic constraints in the associated
+The <I>normalizing context</I> of an atomic constraint is</P>
+<UL class="ins">
+<LI>
+the surrounding context of the last <I>concept-id</I> for which
+arguments were substituted into the parameter mapping via constraint
+normalization (13.5.4 [<A href="https://wg21.link/temp.constr.normal">temp.constr.normal</A>]), if any, and</LI>
+<LI>the surrounding context where E appears otherwise.</LI>
+</UL>
+<P class="ins">[Note: The atomic constraints in the associated
 constraints of a constrained entity have parameter mappings that map
 the template parameters that appear within their expressions to
 template arguments expressed using the context of the declaration of
