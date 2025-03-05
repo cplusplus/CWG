@@ -1,0 +1,149 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3000</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116c.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-03-05</P>
+<HR>
+<A NAME="3000"></A><H4>3000.
+  
+Handling of cv-qualified class types in conditional operator
+</H4>
+<B>Section: </B>7.6.16&#160; [<A href="https://wg21.link/expr.cond">expr.cond</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-02<BR>
+
+
+
+
+<P>With <A HREF="2321.html">issue 2321</A>, the following example
+was supposed to be made valid:</P>
+
+<PRE>
+   struct A {};
+   struct B : A {};
+   using T = const B;
+   A a = true ? A() : T();
+</PRE>
+
+<P>When reaching 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6, the two
+operands have type <TT>A</TT> and <TT>const A</TT>, thus their types
+differ.  However, the built-in candidates for the overload resolution
+specified in paragraph 6 do not handle class types.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change 7.6.16 [<A href="https://wg21.link/expr.cond#6">expr.cond</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+Otherwise, the result is a prvalue. <DEL>If the second and third operands
+do not have the same type, and either has (possibly cv-qualified)
+class type, overload resolution is used to determine the conversions
+(if any) to be applied to the operands (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper</A>],
+12.5 [<A href="https://wg21.link/over.built">over.built</A>]). If the overload resolution fails, the
+program is ill-formed. Otherwise, the conversions thus determined are
+applied, and the converted operands are used in place of the original
+operands for the remainder of this subclause.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.16 [<A href="https://wg21.link/expr.cond#7.1">expr.cond</A>] bullet 7.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]) and function-to-pointer
+(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions are performed on the
+second and third operands. After those conversions, one of the
+following shall hold:
+<UL>
+<LI>
+<DEL>The</DEL> <INS>For some type <TT>T</TT>, the </INS>
+second <INS>operand has type <TT>cv1 T</TT></INS> and <INS>the</INS>
+third <DEL>operands</DEL> <INS>operand</INS> <DEL>have the
+same</DEL> <INS>has</INS> type <INS><TT>cv2 T</TT></INS>; the result
+is of <DEL>that</DEL> type <INS><TT>T</TT></INS> and the result is
+copy-initialized using the selected operand.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 12.2.2.3 [<A href="https://wg21.link/over.match.oper#1">over.match.oper</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... [<I>Note 1:</I> Because ., .*, <INS><TT>:?</TT>,</INS> and ::
+cannot be overloaded, these operators are always built-in operators
+interpreted according to 7.6 [<A href="https://wg21.link/expr.compound">expr.compound</A>] <INS>and
+7.5.5.3 [<A href="https://wg21.link/expr.prim.id.qual">expr.prim.id.qual</A>]</INS>. <DEL>?: cannot be overloaded, but
+the rules in this subclause are used to determine the conversions to
+be applied to the second and third operands when they have class or
+enumeration type (7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>]).</DEL> &#8212;<I>end
+note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Remove 12.5 [<A href="https://wg21.link/over.built#24">over.built</A>] paragraph 24 and paragraph 25:</P>
+
+
+
+<BLOCKQUOTE class="del">
+
+<P>For every pair of types L and R , where each of L and R is a
+floating-point or promoted integral type, there exist candidate
+operator functions of the form
+<PRE>
+LR operator?:(bool, L, R);
+</PRE>
+where LR is the result of the usual arithmetic conversions
+(7.4 [<A href="https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) between types L and R .  [<I>Note 3:</I> As
+with all these descriptions of candidate functions, this declaration
+serves only to describe the built-in operator for purposes of overload
+resolution. The operator &#8220;?:&#8221; cannot be
+overloaded. &#8212;<I>end note</I>]</P>
+
+<P>For every type T , where T is a pointer, pointer-to-member, or scoped
+enumeration type, there exist candidate operator functions of the form
+<PRE>
+operator?:(bool, T, T);
+</PRE>
+</P>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+
+<BR><BR>
+</BODY>
+</HTML>
