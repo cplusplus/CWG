@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3001</TITLE>
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116c.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-03-06</P>
+<HR>
+<A NAME="3001"></A><H4>3001.
+  
+Inconsistent restrictions for <TT>static_cast</TT> on pointers to out-of-lifetime objects
+</H4>
+<B>Section: </B>6.7.4&#160; [<A href="https://wg21.link/basic.life">basic.life</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Cody Miller
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-26<BR>
+
+
+
+
+<P>According to 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7, converting a pointer-to-derived to pointer-to-base for an out-of-lifetime object is allowed implicitly, but disallowed using <TT>static_cast</TT>.  That seems inconsistent.</P>
+
+<P>Also, the out-of-lifetime rules mishandle this example:</P>
+
+<PRE>
+  int a;
+  int *p = &amp;a;
+  *p = 1;
+  new (p) int;
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.7.4 [<A href="https://wg21.link/basic.life#7">basic.life</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+Before the lifetime of an object has started but after the storage
+which the object will occupy has been allocated [ Footnote: ...] or,
+after the lifetime of an object has ended and before the storage which
+the object occupied is reused or released, any pointer
+that <DEL>represents the address of the storage location where the
+object will be or was located</DEL> <INS>points to the object</INS>
+may be used but only in limited ways. For an object under construction
+or destruction, see 11.9.5 [<A href="https://wg21.link/class.cdtor">class.cdtor</A>].  Otherwise, such a
+pointer refers to allocated storage (6.7.6.5.2 [<A href="https://wg21.link/basic.stc.dynamic.allocation">basic.stc.dynamic.allocation</A>]),
+and using the pointer as if the pointer were of type void* is
+well-defined. Indirection through such a pointer is permitted but the
+resulting lvalue may only be used in limited ways, as described
+below. The program has undefined behavior if
+<UL>
+<LI>the pointer is used as the operand of a <I>delete-expression</I>,</LI>
+<LI>the pointer is used to access a non-static data member or call a
+non-static member function of the object, <DEL>or</DEL>
+</LI>
+<LI>the pointer is <DEL>implicitly</DEL> converted
+(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]<INS>, 7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]</INS>)
+to a pointer to a virtual base class, or</LI>
+<LI class="del">the pointer is used as the operand of a static_cast
+(7.6.1.9 [<A href="https://wg21.link/expr.static.cast">expr.static.cast</A>]), except when the conversion is to
+pointer to cv void, or to pointer to cv void and subsequently to
+pointer to cv char, cv unsigned char, or cv std::byte
+(17.2.1 [<A href="https://wg21.link/cstddef.syn">cstddef.syn</A>]), or</LI>
+<LI>the pointer is used as the operand of a dynamic_cast
+(7.6.1.7 [<A href="https://wg21.link/expr.dynamic.cast">expr.dynamic.cast</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
