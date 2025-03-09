@@ -97,7 +97,7 @@ determine where updates are needed.
 
 Use math-like abstract concepts such as pairs (a bundle of two
 things), tuples (a bundle of multiple things), sets (an unordered
-collection of things), or lists (an ordered colleciton of things) as
+collection of things), or lists (an ordered collection of things) as
 necessary to convey a rule as precisely as possible.
 
 Consider introducing definitions of terms and phrases to manage complexity.
