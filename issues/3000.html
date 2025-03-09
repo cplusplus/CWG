@@ -27,7 +27,7 @@
   Core Issues List revision 116c.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2025-03-08</P>
+<P>2025-03-09</P>
 <HR>
 <A NAME="3000"></A><H4>3000.
   
@@ -265,40 +265,48 @@ Attempts are made to form an implicit conversion sequence from an
 operand expression E1 of type T1 to a target type related to the type
 T2 of the operand expression E2 as follows:
 <UL>
-<LI>If E2 is an lvalue, the target type is &#8220;lvalue reference to
-<DEL>T2</DEL> <INS><TT>T3</TT></INS>&#8221;, <INS>where <TT>T3</TT> is
-the qualification-combined type of <TT>T2</TT>
-and <TT>T1</TT>;</INS> <DEL>but</DEL> an implicit conversion sequence
+<LI>If E2 is <DEL>an lvalue</DEL> <INS>a glvalue</INS>, the target
+type is &#8220;<DEL>lvalue</DEL> reference to <DEL>T2</DEL>
+<INS><TT>T3</TT></INS>&#8221;, <INS>where</INS>
+<UL class="ins">
+<LI>the reference is an lvalue reference if <TT>E2</TT> is an lvalue and
+an rvalue reference otherwise and</LI>
+<LI>if <TT>T2</TT> is reference-related to <TT>T1</TT>
+(9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]), <TT>T3</TT> is such that "pointer
+to <TT>T3</TT>" is the qualification-combined type of "pointer
+to <TT>T2</TT>" and "pointer to <TT>T1</TT>", otherwise <TT>T3</TT>
+is <TT>T2</TT>;
+</LI>
+</UL>
+<DEL>but</DEL> an implicit conversion sequence
 can <DEL>only</DEL> be formed <INS>only</INS> if the reference would
-bind directly (9.4.4 [<A href="https://wg21.link/dcl.init.ref">dcl.init.ref</A>]) to a glvalue.</LI>
-<LI>If E2 is an xvalue, the target type is &#8220;rvalue reference to
-<DEL>T2</DEL> <INS><TT>T3</TT></INS>&#8221;, <INS>where <TT>T3</TT> is
-the qualification-combined type of <TT>T2</TT>
-and <TT>T1</TT>;</INS> <DEL>but</DEL> an implicit conversion sequence
-can <DEL>only</DEL> be formed <INS>only</INS> if the reference would
-bind directly.</LI>
+bind directly to a glvalue.</LI>
+<LI class="del">If E2 is an xvalue, the target type is &#8220;rvalue
+reference to T2&#8221;, but an implicit conversion sequence can only
+be formed if the reference would bind directly.</LI>
 <LI>If E2 is a prvalue or if
-neither of the conversion sequences above can be formed and at least
-one of the operands has (possibly cv-qualified) class type:
+<DEL>neither of</DEL> the conversion <DEL>sequences</DEL>
+<INS>sequence</INS> above <DEL>can</DEL> <INS>cannot</INS> be formed
+and at least one of the operands has (possibly cv-qualified) class
+type:
 <UL>
-<LI>if T1 and T2 are <DEL>the same class type (ignoring
-cv-qualification)</DEL> <INS>of similar class types</INS>:
-<UL>
+<LI>if <DEL>T1 and T2 are the same class type (ignoring
+cv-qualification):</DEL> <INS><TT>T2</TT> is reference-related
+to <TT>T1</TT>, the target type <TT>T3</TT> is such that "pointer to <TT>T3</TT>" is the qualification-combined type of "pointer to <TT>T2</TT>" and "pointer to <TT>T1</TT>";</INS>
+<UL class="del">
 <LI>if T2 is at least as cv-qualified as T1, the target type is
 T2,</LI>
 <LI>otherwise, no conversion sequence is formed for this operand;</LI>
 </UL>
 </LI>
-<LI>otherwise, if T2 is a base class of T1, the target type
-is <DEL>cv1 T2, where cv1 denotes the cv-qualifiers of
-T1</DEL> <INS>the qualification-combined type of <TT>T2</TT>
-and <TT>T1</TT></INS>;
+<LI class="del">otherwise, if T2 is a base class of T1, the target
+type is cv1 T2, where cv1 denotes the cv-qualifiers of T1;
 </LI>
-<LI>otherwise, the target type is the
-type that E2 would have after applying the lvalue-to-rvalue
-(7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]), array-to-pointer
-(7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>]), and function-to-pointer
-(7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard conversions.</LI>
+<LI>otherwise, the target type is the type that E2 would have after
+applying the <DEL>lvalue-to-rvalue (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]),</DEL>
+array-to-pointer (7.3.3 [<A href="https://wg21.link/conv.array">conv.array</A>])<DEL>,</DEL> and
+function-to-pointer (7.3.4 [<A href="https://wg21.link/conv.func">conv.func</A>]) standard
+conversions.</LI>
 </UL>
 </LI>
 </UL>
@@ -316,21 +324,25 @@ ill-formed.
 unchanged and further checking is performed as described below.</LI>
 <LI>Otherwise, if exactly one conversion sequence can be formed,
 <DEL>that conversion is applied to the chosen operand</DEL>
-<INS>the combined target type is defined as the target type of that
+<INS>the common target type is defined as the target type of that
 conversion.</INS>
 </LI>
 <LI class="ins">
-Otherwise, if both conversion sequences can be formed and the
-respective target types are similar, the combined target type is
-defined as the qualification-combined type of the target types.
-</LI>
+Otherwise, if both conversion sequences can be formed and the target
+types are the same, the common target type is defined as that
+type.</LI>
+<LI class="ins">
+Otherwise, if both conversion sequences can be formed and one of the
+target types is "reference to <TT>T</TT>" and the other is <TT>T</TT>
+for some type <TT>T</TT>, the common target type is defined
+as <TT>T</TT>.</LI>
 <LI class="ins">
 Otherwise, the program is ill-formed.
 </LI>
 </UL>
 
-<INS>If a combined target type is defined above, each operand is
-converted to the combined target type</INS> and the
+<INS>If a common target type is defined above, each operand is
+converted to the common target type</INS> and the
 converted <DEL>operand is</DEL> <INS>operands are</INS> is used in
 place of the original
 <DEL>operand</DEL> <INS>operands</INS> for the remainder of this
@@ -340,7 +352,6 @@ implicit conversion sequence <DEL>could</DEL> <INS>can</INS> be
 formed. &#8212;<I>end note</I>]
 
 </BLOCKQUOTE>
-
 </LI>
 
 <LI>
@@ -357,6 +368,33 @@ operands (12.2.2.3 [<A href="https://wg21.link/over.match.oper">over.match.oper<
 program is ill-formed. Otherwise, the conversions thus determined are
 applied, and the converted operands are used in place of the original
 operands for the remainder of this subclause.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add an example at the end of 7.6.16 [<A href="https://wg21.link/expr.cond">expr.cond</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+<PRE>
+template&lt;class T&gt;
+T f();
+
+using X0 = decltype(true ? f&lt;int const **&amp;&gt;() : f&lt;int *const *&amp;&gt;());  // X0<SPAN CLASS="cmnt"> is "reference to const pointer to const pointer to const </SPAN>int"
+
+struct B {};
+using X1 = decltype(true ? f&lt;const B&amp;&gt;() : f&lt;volatile B&amp;&gt;());  // X1<SPAN CLASS="cmnt"> is "lvalue reference to</SPAN> const volatile B"
+using X2 = decltype(true ? f&lt;const B&amp;&gt;() : f&lt;B&gt;());      // X2<SPAN CLASS="cmnt"> is </SPAN>const B
+
+struct C {
+  operator B&amp;() const;
+};
+using X3 = decltype(true ? f&lt;const C&gt;() : f&lt;B&amp;&gt;());      // X3<SPAN CLASS="cmnt"> is "lvalue reference to </SPAN>B"
+
+struct D : B {};
+using X4 = decltype(true ? f&lt;const D&amp;&gt;() : f&lt;B&amp;&gt;());       // X4<SPAN CLASS="cmnt"> is </SPAN>const B&amp;
+using X5 = decltype(true ? f&lt;const D&gt;() : f&lt;B&gt;());       // X5<SPAN CLASS="cmnt"> is </SPAN>const B
+</PRE>
 
 </BLOCKQUOTE>
 </LI>
