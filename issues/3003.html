@@ -1,0 +1,121 @@
+<HTML>
+<HEAD>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<TITLE>
+    CWG Issue 3003</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 116c.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2025-03-10</P>
+<HR>
+<A NAME="3003"></A><H4>3003.
+  
+Naming a deducible template for class template argument deduction
+</H4>
+<B>Section: </B>9.2.9.3&#160; [<A href="https://wg21.link/dcl.type.simple">dcl.type.simple</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-02-02<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/670">#670</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;template &lt;typename&gt; class TT&gt;
+  void f() { TT x(42); }  //<SPAN CLASS="cmnt"> #1</SPAN>
+
+  template &lt;typename T&gt; struct A { A(T); };
+
+  void g() { f&lt;A&gt;(); }
+</PRE>
+
+<P>Using a template template parameter should not enable class
+template argument deduction at #1.  However, while the normative rules
+are clear, all implementations accepts the code above, but fails when
+parsing situations involving alias templates:</P>
+
+<PRE>
+  template &lt;typename T&gt; struct A { A(T); };
+
+  template &lt;typename T, template &lt;typename&gt; class TT = A&gt;
+  using Alias = TT&lt;T&gt;;
+
+  template &lt;typename T&gt;
+  using Alias2 = Alias&lt;T&gt;;
+
+  void h() { Alias2 a(42); }
+  void h2() { Alias a(42); }
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 9.2.9.3 [<A href="https://wg21.link/dcl.type.simple#3">dcl.type.simple</A>] paragraph 3 and add numbered
+paragraphs as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>(3) A <I>placeholder-type-specifier</I> is a placeholder for a type to be
+deduced (9.2.9.7 [<A href="https://wg21.link/dcl.spec.auto">dcl.spec.auto</A>]).</P>
+
+<P>(4) A <I>type-specifier</I> of the
+form
+<PRE>typename/opt <I>nested-name-specifier</I>/opt <I>template-name</I>
+</PRE>
+is a placeholder for a deduced class type
+(9.2.9.8 [<A href="https://wg21.link/dcl.type.class.deduct">dcl.type.class.deduct</A>]). The <I>nested-name-specifier</I>, if
+any, shall be non-dependent and the <I>template-name</I> shall name a
+deducible template.  A deducible template is either a class template
+or is an alias template whose <I>defining-type-id</I> is of the form
+typenameopt <I>nested-name-specifieropt</I>
+templateopt <I>simple-template-id</I> where
+the <I>nested-name-specifier</I> (if any) is non-dependent and
+the <I>template-name</I> of the <I>simple-template-id</I> names a
+deducible template.  <INS>[Note: A template template parameter
+(13.2 [<A href="https://wg21.link/temp.param">temp.param</A>]) does not name a deducible template. -- end
+note]</INS> [<I>Note:</I> An <I>injected-class-name</I> is never
+interpreted as a <I>template-name</I> in contexts where class template
+argument deduction would be performed
+(13.8.2 [<A href="https://wg21.link/temp.local">temp.local</A>]). &#8212;<I>end note</I>]</P>
+
+<P>(5) The other <I>simple-type-specifier</I>s specify either a
+previously-declared type, a type determined from an expression, or one
+of the fundamental types (6.8.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]).</P>
+
+<P>(6)Table 17 summarizes the valid combinations
+of <I>simple-type-specifier</I> s and the types they specify.</P>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
