@@ -158,6 +158,9 @@ USA.</P>
 <P><B>Revision 121, 2026-??-??:</B></P>
 
 <P>Added new issues
+<A HREF="cwg_active.html#3195">3195</A>,
+<A HREF="cwg_active.html#3196">3196</A>,
+<A HREF="cwg_active.html#3197">3197</A>,
 </P>
 
 <P><B>Revision 120, 2026-05-31:</B></P>
@@ -5559,6 +5562,17 @@ No ordering for initializing thread-local variables
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.10.3.4&#160;
+  <A href="https://wg21.link/basic.start.term">basic.start.term</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3196">3196</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Move restriction on standard library functions in signal handlers
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">7.2.1&#160;
   <A href="https://wg21.link/basic.lval">basic.lval</A>
 </TD>
@@ -6068,8 +6082,8 @@ Protected access rule for a pointer-to-member from a <I>reflect-expression</I>
   <A href="https://wg21.link/expr.reflect">expr.reflect</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3190">3190</A></TD>
-<TD ALIGN="CENTER">review</TD>
-<TD ALIGN="CENTER">EWG</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
+<TD ALIGN="CENTER">(EWG)</TD>
 <TD ALIGN="LEFT">
 Ambiguous lookup for type aliases in reflection
 </TD>
@@ -6402,6 +6416,17 @@ Unclear rules for constant initialization
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Self-initialization of constexpr-unknown references
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">7.7.2&#160;
+  <A href="https://wg21.link/expr.const.core">expr.const.core</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3195">3195</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Starting the lifetime of a runtime object during constant evaluation
 </TD>
 </TR>
 <TR>
@@ -7290,7 +7315,7 @@ Visibility of enumerator names
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3185">3185</A></TD>
 <TD ALIGN="CENTER">review</TD>
-<TD ALIGN="CENTER">EWG</TD>
+<TD ALIGN="CENTER">(EWG)</TD>
 <TD ALIGN="LEFT">
 Exporting a <I><TT>static_assert</TT>-declaration</I>
 </TD>
@@ -10134,6 +10159,17 @@ Updating Annex C to C99 and C23
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">C.7.3&#160;
+  <A href="https://wg21.link/diff.basic">diff.basic</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3197">3197</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Relaxed requirements for integer representations
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">C.7.4&#160;
   <A href="https://wg21.link/diff.expr">diff.expr</A>
 </TD>
@@ -10683,6 +10719,142 @@ selected as described in 12.3 [<A href="https://wg21.link/over.over">over.over</
 </UL>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3190"></A><H4>3190.
+  
+Ambiguous lookup for type aliases in reflection
+</H4>
+<B>Section: </B>7.6.2.10&#160; [<A href="https://wg21.link/expr.reflect">expr.reflect</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-05-06
+  &#160;&#160;&#160;
+  <B>Liaison: </B>(EWG)<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  T t;                // <SPAN CLASS="cmnt">#1, OK</SPAN>
+  auto r = ^^T;       // <SPAN CLASS="cmnt">#2, ???</SPAN>
+</PRE>
+
+<P>While 6.1 [<A href="https://wg21.link/basic.pre#8">basic.pre</A>] paragraph 8 clarifies that #1 is
+well-formed by considering the underlying type, the treatment of #2 is
+unclear.</P>
+
+<P><U>Possible resolution (option 2) [SUPERSEDED]:</U></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a namespace alias
+(9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]), R represents <DEL>that</DEL> <INS>an
+unspecified</INS> namespace alias <INS>among the lookup
+results</INS>.</LI>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a type alias A, R represents the
+underlying entity of A if A was introduced by the declaration of a
+template parameter; otherwise, R represents <DEL>A</DEL> <INS>an
+unspecified type alias among the lookup results</INS>.
+<DIV class="ins">
+[ Example:
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  auto r = ^^T;       // <SPAN CLASS="cmnt">OK, represents either </SPAN>A::T<SPAN CLASS="cmnt"> or </SPAN>B::T
+</PRE>
+-- end example ]
+</DIV>
+</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
+
+<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a namespace alias (9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]),
+<INS>all declarations found by name lookup shall have the same target
+scope, and</INS> R represents
+<DEL>that</DEL> <INS>such a</INS> namespace alias.</LI>
+<LI>...</LI>
+<LI>Otherwise, if lookup finds a type alias <DEL>A,</DEL><INS>:</INS>
+<UL>
+<LI>
+<INS>If any declaration found by name lookup introduced a
+template parameter T,</INS> R represents the underlying entity
+of <INS><TT>T</TT>.</INS> <DEL>A if A was introduced by the
+declaration of a template parameter; otherwise,</DEL>
+</LI>
+<LI>
+<INS>Otherwise, all declarations found by name lookup shall have
+the same target scope, and</INS> R represents
+<DEL>A</DEL> <INS>such a type alias</INS>.</LI>
+</UL>
+<DIV class="ins">
+[ Example:
+<PRE>
+  namespace A {
+    using T = int;
+  }
+  namespace B {
+    using T = int;
+  }
+  using namespace A;
+  using namespace B;
+  auto r = ^^T;       // <SPAN CLASS="cmnt">error: lookup finds type aliases with different target scopes</SPAN>
+</PRE>
+-- end example ]
+</DIV>
+
+</LI>
+
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-05-19</B></P>
+
+<P>Seeking EWG's approval via
+<A HREF="https://github.com/cplusplus/papers/issues/2795">paper issue #2795</A>.</P>
+
+<P><B>EWG 2026-06-08</B></P>
+
+<P>EWG approved the proposed resolution.</P>
 
 <BR><BR><HR>
 <A NAME="3184"></A><H4>3184.
@@ -14924,138 +15096,6 @@ object</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
 </OL>
 
 <BR><BR><HR>
-<A NAME="3190"></A><H4>3190.
-  
-Ambiguous lookup for type aliases in reflection
-</H4>
-<B>Section: </B>7.6.2.10&#160; [<A href="https://wg21.link/expr.reflect">expr.reflect</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-05-06
-  &#160;&#160;&#160;
-  <B>Liaison: </B>EWG<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  namespace A {
-    using T = int;
-  }
-  namespace B {
-    using T = int;
-  }
-  using namespace A;
-  using namespace B;
-  T t;                // <SPAN CLASS="cmnt">#1, OK</SPAN>
-  auto r = ^^T;       // <SPAN CLASS="cmnt">#2, ???</SPAN>
-</PRE>
-
-<P>While 6.1 [<A href="https://wg21.link/basic.pre#8">basic.pre</A>] paragraph 8 clarifies that #1 is
-well-formed by considering the underlying type, the treatment of #2 is
-unclear.</P>
-
-<P><U>Possible resolution (option 2) [SUPERSEDED]:</U></P>
-
-<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>Otherwise, if lookup finds a namespace alias
-(9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]), R represents <DEL>that</DEL> <INS>an
-unspecified</INS> namespace alias <INS>among the lookup
-results</INS>.</LI>
-<LI>...</LI>
-<LI>Otherwise, if lookup finds a type alias A, R represents the
-underlying entity of A if A was introduced by the declaration of a
-template parameter; otherwise, R represents <DEL>A</DEL> <INS>an
-unspecified type alias among the lookup results</INS>.
-<DIV class="ins">
-[ Example:
-<PRE>
-  namespace A {
-    using T = int;
-  }
-  namespace B {
-    using T = int;
-  }
-  using namespace A;
-  using namespace B;
-  auto r = ^^T;       // <SPAN CLASS="cmnt">OK, represents either </SPAN>A::T<SPAN CLASS="cmnt"> or </SPAN>B::T
-</PRE>
--- end example ]
-</DIV>
-</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P><B>Proposed resolution (approved by CWG 2026-05-19):</B></P>
-
-<P>Change in 7.6.2.10 [<A href="https://wg21.link/expr.reflect#5">expr.reflect</A>] paragraph 5 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>Otherwise, if lookup finds a namespace alias (9.9.3 [<A href="https://wg21.link/namespace.alias">namespace.alias</A>]),
-<INS>all declarations found by name lookup shall have the same target
-scope, and</INS> R represents
-<DEL>that</DEL> <INS>such a</INS> namespace alias.</LI>
-<LI>...</LI>
-<LI>Otherwise, if lookup finds a type alias <DEL>A,</DEL><INS>:</INS>
-<UL>
-<LI>
-<INS>If any declaration found by name lookup introduced a
-template parameter T,</INS> R represents the underlying entity
-of <INS><TT>T</TT>.</INS> <DEL>A if A was introduced by the
-declaration of a template parameter; otherwise,</DEL>
-</LI>
-<LI>
-<INS>Otherwise, all declarations found by name lookup shall have
-the same target scope, and</INS> R represents
-<DEL>A</DEL> <INS>such a type alias</INS>.</LI>
-</UL>
-<DIV class="ins">
-[ Example:
-<PRE>
-  namespace A {
-    using T = int;
-  }
-  namespace B {
-    using T = int;
-  }
-  using namespace A;
-  using namespace B;
-  auto r = ^^T;       // <SPAN CLASS="cmnt">error: lookup finds type aliases with different target scopes</SPAN>
-</PRE>
--- end example ]
-</DIV>
-
-</LI>
-
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P><B>CWG 2026-05-19</B></P>
-
-<P>Seeking EWG's approval via
-<A HREF="https://github.com/cplusplus/papers/issues/2795">paper issue #2795</A>.</P>
-
-<BR><BR><HR>
 <A NAME="2593"></A><H4>2593.
   
 Insufficient base class restriction for pointer-to-member expression
@@ -17249,7 +17289,7 @@ Exporting a <I><TT>static_assert</TT>-declaration</I>
 
  <B>Date: </B>2026-04-28
   &#160;&#160;&#160;
-  <B>Liaison: </B>EWG<BR>
+  <B>Liaison: </B>(EWG)<BR>
 
 
 <P>(From submission
@@ -17272,7 +17312,7 @@ for <I>block-declaration</I> is
 Similar concerns apply to <I>consteval-block-declaration</I>
 and <I>empty-declaration</I>.</P>
 
-<P><B>Proposed resolution (May, 2026):</B></P>
+<P><B>Proposed resolution (May, 2026) [SUPERSEDED]:</B></P>
 
 <P>Change in 10.2 [<A href="https://wg21.link/module.interface#1">module.interface</A>] paragraph 1 as follows:</P>
 
@@ -17303,6 +17343,40 @@ or <I>module-import-declaration</I>.
 <P>Forwarded to EWG with
 <A HREF="https://github.com/cplusplus/papers/issues/2802">paper issue #2802</A>
 for considering the design direction.</P>
+
+<P><B>EWG 2026-06-08</B></P>
+
+<P>EWG approved the direction and suggested to
+consider <I>asm-declaration</I> and <I>attribute-declaration</I> as
+well.</P>
+
+<P><B>Proposed resolution (June, 2026):</B></P>
+
+<P>Change in 10.2 [<A href="https://wg21.link/module.interface#1">module.interface</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+An <I>export-declaration</I> shall inhabit a namespace scope and
+appear in the purview of a module interface unit.
+An <I>export-declaration</I> shall not appear directly or indirectly
+within an unnamed namespace or a <I>private-module-fragment</I>.
+An <I>export-declaration</I> has the declarative effects of
+its <I>name-declaration</I>, <I>declaration-seq</I> (if any),
+or <I>module-import-declaration</I>.  The <I>name-declaration</I> of
+an <I>export-declaration</I> shall <DEL>not</DEL> <INS>neither</INS>
+<UL>
+<LI class="ins">be a <I>static_assert-declaration</I>,
+<I>asm-declaration</I>, <I>attribute-declaration</I>,
+<I>consteval-block-declaration</I>, or <I>empty-declaration</I>,
+nor</LI>
+<LI>declare a partial specialization (13.7.1 [<A href="https://wg21.link/temp.decls.general">temp.decls.general</A>]).
+</LI>
+</UL>
+The <I>declaration-seq</I> of an <I>export-declaration</I> shall not
+contain an <I>export-declaration</I>
+or <I>module-import-declaration</I>.
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="3169"></A><H4>3169.
@@ -34556,6 +34630,44 @@ duration.</P>
 <P>See also <A HREF="cwg_active.html#2148">issue 2148</A>.</P>
 
 <BR><BR><HR>
+<A NAME="3196"></A><H4>3196.
+  
+Move restriction on standard library functions in signal handlers
+</H4>
+<B>Section: </B>6.10.3.4&#160; [<A href="https://wg21.link/basic.start.term">basic.start.term</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Berne
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-04<BR>
+
+
+<P>Subclause 6.10.3.4 [<A href="https://wg21.link/basic.start.term#7">basic.start.term</A>] paragraph 7 is a restriction
+on the use of the standard library that should be moved to the library
+section:</P>
+
+<BLOCKQUOTE>
+
+If there is a use of a standard library object or function not
+permitted within signal handlers (17.14 [<A href="https://wg21.link/support.runtime">support.runtime</A>]) that
+does not happen before (6.10.2 [<A href="https://wg21.link/intro.multithread">intro.multithread</A>]) completion of
+destruction of objects with static storage duration and execution of
+std::atexit registered functions (17.5 [<A href="https://wg21.link/support.start.term">support.start.term</A>]), the
+program has undefined behavior.  [<I>Note 3:</I> If there is a use of
+an object with static storage duration that does not happen before the
+object's destruction, the program has undefined behavior. Terminating
+every thread before a call to std::exit or the exit from main is
+sufficient, but not necessary, to satisfy these requirements. These
+requirements permit thread managers as static-storage-duration
+objects. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3042"></A><H4>3042.
   
 Implicit object creation is insufficient to model effective type rule of C
@@ -38242,6 +38354,65 @@ constructor of <TT>A</TT> and the destructor of <TT>B</TT> is intended
 to be part of the conditions for constant-initializable, which
 unsuccessfully attempts to delegate to 7.7 [<A href="https://wg21.link/expr.const#22">expr.const</A>] paragraph 22.</P>
 
+<BR><BR><HR>
+<A NAME="3195"></A><H4>3195.
+  
+Starting the lifetime of a runtime object during constant evaluation
+</H4>
+<B>Section: </B>7.7.2&#160; [<A href="https://wg21.link/expr.const.core">expr.const.core</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>LWG
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-05-22<BR>
+
+
+<P>(From
+<A HREF="https://cplusplus.github.io/LWG/issue4578">LWG issue 4578</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  union U { int x = 10; float f[2]; };
+  U u;
+
+  consteval {
+    std::start_lifetime(u.f); //<SPAN CLASS="cmnt"> changes active member</SPAN>
+  };
+
+  void foo() {
+    U u;
+    constexpr int x = (std::start_lifetime(u.f), 10);
+  }
+</PRE>
+
+<P>There is no prohibition against explicitly starting the lifetime of
+a runtime object during constant evaluation.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Insert a bullet after 7.7.2 [<A href="https://wg21.link/expr.const.core#2.18">expr.const.core</A>] bullet 2.18 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>an invocation of a destructor (11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]) or a
+function call whose <I>postfix-expression</I> names a
+pseudo-destructor (7.6.1.3 [<A href="https://wg21.link/expr.call">expr.call</A>]), in either case for
+an object whose lifetime did not begin within the evaluation of E;</LI>
+
+<LI class="ins">starting the lifetime of an object <I>O</I> such that
+the lifetime of the complete object of <I>O</I> did not begin within
+the evaluation of E;</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2115"></A><H4>2115.
   
@@ -52150,6 +52321,64 @@ new features in C99 and C23 that should be covered.</P>
 <P><B>Additional note (August, 2024)</B></P>
 
 <P>The issue title and description were amended to cover C23 as well.</P>
+
+<BR><BR><HR>
+<A NAME="3197"></A><H4>3197.
+  
+Relaxed requirements for integer representations
+</H4>
+<B>Section: </B>C.7.3&#160; [<A href="https://wg21.link/diff.basic">diff.basic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-04<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/914">#914</A>.)</P>
+
+<P>C++ does not have a requirement that an integer value 0 is
+represented as all-zero bits in the value representation; C does.  See
+C23 6.2.6.2 paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+... For any integer type, the object representation where all the bits
+are zero shall be a representation of the value zero in that type.
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Add a section in C.7.3 [<A href="https://wg21.link/diff.basic">diff.basic</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]<BR>
+<B>Change:</B> C++ has relaxed rules for the representation of integer types compared to C.<BR>
+[ Example: With the assumption that <TT>int</TT> has no padding bits:
+<PRE>
+  int i = 0;
+  unsigned char a[sizeof(int)] = {};
+  assert(memcmp(&amp;i, a, sizeof(i)) == 0);   //<SPAN CLASS="cmnt"> guaranteed to hold in C; may fail in C++</SPAN>
+</PRE>
+-- end example]<BR>
+<B>Rationale:</B> C++ has a more elaborate value model that de-emphasizes
+access to object representations.<BR>
+<B>Effect on original feature:</B>
+Change of semantics of well-defined feature.<BR>
+<B>Difficulty of converting:</B> Semantic transformation.  Aggregate
+initialization should be used in lieu of <TT>memset</TT>.<BR>
+<B>How widely used:</B> Occasionally.  In particular, <TT>calloc</TT>
+and <TT>memset</TT> are expected to yield scalar subobjects with value
+0.<BR>
+
+</BLOCKQUOTE>
 
 <BR><BR><BR><BR>
 </BODY>
