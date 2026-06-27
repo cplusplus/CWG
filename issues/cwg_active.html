@@ -169,6 +169,7 @@ USA.</P>
 <A HREF="cwg_active.html#3203">3203</A>,
 <A HREF="cwg_active.html#3204">3204</A>,
 <A HREF="cwg_active.html#3205">3205</A>,
+<A HREF="cwg_active.html#3206">3206</A>,
 </P>
 
 <P><B>Revision 120, 2026-05-31:</B></P>
@@ -4473,7 +4474,7 @@ Lexing of <TT>&lt;=&gt;</TT>
   <A href="https://wg21.link/lex.pptoken">lex.pptoken</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3205">3205</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Prefer <I>header-name</I> over <I>user-defined-string-literal</I>
@@ -7850,10 +7851,21 @@ Naming anonymous union members as class members
   <A href="https://wg21.link/class.local">class.local</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3192">3192</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Out-of-line definition of an enum member of a local class
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">11.6&#160;
+  <A href="https://wg21.link/class.local">class.local</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3206">3206</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Scattered definition of "local class"
 </TD>
 </TR>
 <TR>
@@ -10237,7 +10249,7 @@ Updating Annex C to C99 and C23
   <A href="https://wg21.link/diff.basic">diff.basic</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3197">3197</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Relaxed requirements for integer representations
@@ -12845,6 +12857,52 @@ performed;</LI>
 </OL>
 
 <BR><BR><HR>
+<A NAME="3192"></A><H4>3192.
+  
+Out-of-line definition of an enum member of a local class
+</H4>
+<B>Section: </B>11.6&#160; [<A href="https://wg21.link/class.local">class.local</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Victor Chernyakin
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-05-16<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/907">#907</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void f() {
+    struct X {
+      struct S;
+      enum E : int;
+    };
+    struct X::S {};         //<SPAN CLASS="cmnt"> OK</SPAN>
+    enum X::E : int {};     //<SPAN CLASS="cmnt"> ill-formed, but all major implementations accept</SPAN>
+  }
+</PRE>
+
+<P><B>Proposed resolution (approved by CWG 2026-06-26):</B></P>
+
+<P>Change in 11.6 [<A href="https://wg21.link/class.local#3">class.local</A>] paragraph 3 as follows:</P>
+
+<BLOCKQUOTE>
+
+A class nested within a local class is a local class. A member of a
+local class X shall be declared only in the definition of X or, if the
+member is <INS>an enumeration or</INS> a nested class, in the nearest
+enclosing block scope of X.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3199"></A><H4>3199.
   
 Missing predefined macros for <TT>chart16_t</TT> and <TT>char32_t</TT>
@@ -12966,6 +13024,62 @@ Forwarding this issue to EWG via
 <A HREF="https://github.com/cplusplus/papers/issues/2794">paper issue #2794</A>
 to keep CWG informed whether EWG is pursuing any normative changes in
 this area.</P>
+
+<BR><BR><HR>
+<A NAME="3205"></A><H4>3205.
+  
+Prefer <I>header-name</I> over <I>user-defined-string-literal</I>
+</H4>
+<B>Section: </B>5.5&#160; [<A href="https://wg21.link/lex.pptoken">lex.pptoken</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Richard Smith
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-24<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  #define SUFFIX
+  #include "foo.h"SUFFIX
+</PRE>
+
+<P>The <TT>"foo.h"</TT> should be lexed as a <I>header-name</I>, not
+as a <I>user-defined-string-literal</I>.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 5.5 [<A href="https://wg21.link/lex.pptoken#5.4.1">lex.pptoken</A>] bullet 5.4.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>Otherwise, the next preprocessing token is the longest sequence of
+characters that could constitute a preprocessing token, even if that
+would cause further lexical analysis to fail, except that
+<UL>
+<LI>a <I>string-literal</I> <INS>or <I>user-defined-string-literal</I></INS>
+token is never formed when a <I>header-name</I> token can be formed,
+and</LI>
+<LI>a <I>header-name</I> (5.6 [<A href="https://wg21.link/lex.header">lex.header</A>]) is only
+formed ...</LI>
+</UL>
+</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-06-26</B></P>
+
+<P>This issue is resolved by the resolution of <A HREF="cwg_active.html#3194">issue 3194</A>.</P>
 
 <BR><BR><HR>
 <A NAME="2726"></A><H4>2726.
@@ -21307,6 +21421,92 @@ with empty sets of types P and A.
 </BLOCKQUOTE>
 </LI>
 </OL>
+
+<BR><BR><HR>
+<A NAME="3197"></A><H4>3197.
+  
+Relaxed requirements for integer representations
+</H4>
+<B>Section: </B>C.7.3&#160; [<A href="https://wg21.link/diff.basic">diff.basic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jiang An
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-04<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/914">#914</A>.)</P>
+
+<P>C++ does not have a requirement that an integer value 0 is
+represented as all-zero bits in the value representation; C does.  See
+C23 6.2.6.2 paragraph 3:</P>
+
+<BLOCKQUOTE>
+
+... For any integer type, the object representation where all the bits
+are zero shall be a representation of the value zero in that type.
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Add a section in C.7.3 [<A href="https://wg21.link/diff.basic">diff.basic</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+
+<B>Affected subclause:</B> 6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]<BR>
+<B>Change:</B> C++ has relaxed rules for the representation of integer types compared to C.<BR>
+[ Example: With the assumption that <TT>int</TT> has no padding bits:
+<PRE>
+  int i = 0;
+  unsigned char a[sizeof(int)] = {};
+  assert(memcmp(&amp;i, a, sizeof(i)) == 0);   //<SPAN CLASS="cmnt"> guaranteed to hold in C; may fail in C++</SPAN>
+</PRE>
+-- end example]<BR>
+<B>Rationale:</B> C++ has a more elaborate value model that de-emphasizes
+access to object representations.<BR>
+<B>Effect on original feature:</B>
+Change of semantics of well-defined feature.<BR>
+<B>Difficulty of converting:</B> Semantic transformation.  Aggregate
+initialization should be used in lieu of <TT>memset</TT>.<BR>
+<B>How widely used:</B> Occasionally.  In particular, <TT>calloc</TT>
+and <TT>memset</TT> are expected to yield scalar subobjects with value
+0.<BR>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-06-26</B></P>
+
+<P>In lieu of the above suggested resolution, CWG opted to eliminate
+this difference vs. C.</P>
+
+<P><U>Possible resoluition:</U></P>
+
+<P>Change in 6.9.2 [<A href="https://wg21.link/basic.fundamental#11">basic.fundamental</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The types char, wchar_t, char8_t, char16_t, and char32_t are
+collectively called character types. The character types, bool, the
+signed and unsigned integer types, and cv-qualified versions
+(6.9.5 [<A href="https://wg21.link/basic.type.qualifier">basic.type.qualifier</A>]) thereof, are collectively termed integral
+types. A synonym for integral type is integer type.</P>
+<P>[<I>Note 8:</I>
+Enumerations (9.8.1 [<A href="https://wg21.link/dcl.enum">dcl.enum</A>]) are not integral; however,
+unscoped enumerations can be promoted to integral types as specified
+in 7.3.7 [<A href="https://wg21.link/conv.prom">conv.prom</A>]. &#8212;<I>end note</I>]</P>
+<P class="ins">If the bytes in the object representation of an object
+of integer type other than <TT>bool</TT> all have value zero, the
+object contains the value zero (7.3.2 [<A href="https://wg21.link/conv.lval">conv.lval</A>]).  If the
+bytes in the object representation of an object of type <TT>bool</TT>
+all have value zero, the object contains the value <TT>false</TT>.</P>
+
+</BLOCKQUOTE>
 
 <BR><BR><BR><BR><HR>
 <A NAME="Drafting%20Status"></A><H3>Issues with "Drafting" Status</H3>
@@ -29935,58 +30135,6 @@ end-of-line indicators with new-line characters.  Is it intended
 that, for example, a CRLF in the source of a raw string literal
 is to be represented as a newline character or as the original
 characters?</P>
-
-<BR><BR><HR>
-<A NAME="3205"></A><H4>3205.
-  
-Prefer <I>header-name</I> over <I>user-defined-string-literal</I>
-</H4>
-<B>Section: </B>5.5&#160; [<A href="https://wg21.link/lex.pptoken">lex.pptoken</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Richard Smith
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-06-24<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  #define SUFFIX
-  #include "foo.h"SUFFIX
-</PRE>
-
-<P>The <TT>"foo.h"</TT> should be lexed as a <I>header-name</I>, not
-as a <I>user-defined-string-literal</I>.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 5.5 [<A href="https://wg21.link/lex.pptoken#5.4.1">lex.pptoken</A>] bullet 5.4.1 as follows:</P>
-
-<BLOCKQUOTE>
-
-<UL>
-<LI>...</LI>
-<LI>Otherwise, the next preprocessing token is the longest sequence of
-characters that could constitute a preprocessing token, even if that
-would cause further lexical analysis to fail, except that
-<UL>
-<LI>a <I>string-literal</I> <INS>or <I>user-defined-string-literal</I></INS>
-token is never formed when a <I>header-name</I> token can be formed,
-and</LI>
-<LI>a <I>header-name</I> (5.6 [<A href="https://wg21.link/lex.header">lex.header</A>]) is only
-formed ...</LI>
-</UL>
-</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="3019"></A><H4>3019.
@@ -43775,9 +43923,9 @@ vs.
 <P>tbd</P>
 
 <BR><BR><HR>
-<A NAME="3192"></A><H4>3192.
+<A NAME="3206"></A><H4>3206.
   
-Out-of-line definition of an enum member of a local class
+Scattered definition of "local class"
 </H4>
 <B>Section: </B>11.6&#160; [<A href="https://wg21.link/class.local">class.local</A>]
  &#160;&#160;&#160;
@@ -43785,41 +43933,48 @@ Out-of-line definition of an enum member of a local class
  <B>Status: </B>open
  &#160;&#160;&#160;
 
- <B>Submitter: </B>Victor Chernyakin
+ <B>Submitter: </B>CWG
  &#160;&#160;&#160;
 
- <B>Date: </B>2026-05-16<BR>
+ <B>Date: </B>2026-06-26<BR>
 
 
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/907">#907</A>.)</P>
+<P>In 11.6 [<A href="https://wg21.link/class.local">class.local</A>], the definition of local class is
+colloquially scattered across several paragraphs.</P>
 
-<P>Consider:</P>
+<P><U>Possible resolution:</U></P>
 
-<PRE>
-  void f() {
-    struct X {
-      struct S;
-      enum E : int;
-    };
-    struct X::S {};         //<SPAN CLASS="cmnt"> OK</SPAN>
-    enum X::E : int {};     //<SPAN CLASS="cmnt"> ill-formed, but all major implementations accept</SPAN>
-  }
-</PRE>
+<OL>
+<LI>
+<P>Change in 11.6 [<A href="https://wg21.link/class.local#1">class.local</A>] paragraph 1 as follows:</P>
 
-<P><U>Suggested resolution:</U></P>
+<BLOCKQUOTE>
 
+<DEL>A class can be declared within a function definition; such a class is
+called a <I>local class</I>.</DEL>
+<INS>A class is a <I>local class</I> if</INS>
+<UL class="ins">
+<LI>its declaration inhabits a block scope or</LI>
+<LI>it is a nested class of a local class.</LI>
+</UL>
+
+[<I>Note 1:</I> A declaration in a local class
+cannot odr-use (6.3 [<A href="https://wg21.link/basic.def.odr">basic.def.odr</A>]) a local entity from an
+enclosing scope. &#8212;<I>end note</I>]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
 <P>Change in 11.6 [<A href="https://wg21.link/class.local#3">class.local</A>] paragraph 3 as follows:</P>
 
 <BLOCKQUOTE>
 
-A class nested within a local class is a local class. A member of a
-local class X shall be declared only in the definition of X or, if the
-member is <INS>an enumeration or</INS> a nested class, in the nearest
-enclosing block scope of X.
+<DEL>A class nested within a local class is a local class.</DEL> ...
 
 </BLOCKQUOTE>
-
+</LI>
+</OL>
 <BR><BR><HR>
 <A NAME="3068"></A><H4>3068.
   
@@ -51381,6 +51536,11 @@ an invocation of the function std::terminate.
 </LI>
 </OL>
 
+<P><B>CWG 2026-06-26</B></P>
+
+<P>This issue interacts with P0876 (fiber_context - fibers without
+scheduler), and is postponed until that paper has been adopted.</P>
+
 <BR><BR><HR>
 <A NAME="2417"></A><H4>2417.
   
@@ -52779,64 +52939,6 @@ new features in C99 and C23 that should be covered.</P>
 <P><B>Additional note (August, 2024)</B></P>
 
 <P>The issue title and description were amended to cover C23 as well.</P>
-
-<BR><BR><HR>
-<A NAME="3197"></A><H4>3197.
-  
-Relaxed requirements for integer representations
-</H4>
-<B>Section: </B>C.7.3&#160; [<A href="https://wg21.link/diff.basic">diff.basic</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jiang An
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-06-04<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/914">#914</A>.)</P>
-
-<P>C++ does not have a requirement that an integer value 0 is
-represented as all-zero bits in the value representation; C does.  See
-C23 6.2.6.2 paragraph 3:</P>
-
-<BLOCKQUOTE>
-
-... For any integer type, the object representation where all the bits
-are zero shall be a representation of the value zero in that type.
-
-</BLOCKQUOTE>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Add a section in C.7.3 [<A href="https://wg21.link/diff.basic">diff.basic</A>] as follows:</P>
-
-<BLOCKQUOTE class="ins">
-
-<B>Affected subclause:</B> 6.9.2 [<A href="https://wg21.link/basic.fundamental">basic.fundamental</A>]<BR>
-<B>Change:</B> C++ has relaxed rules for the representation of integer types compared to C.<BR>
-[ Example: With the assumption that <TT>int</TT> has no padding bits:
-<PRE>
-  int i = 0;
-  unsigned char a[sizeof(int)] = {};
-  assert(memcmp(&amp;i, a, sizeof(i)) == 0);   //<SPAN CLASS="cmnt"> guaranteed to hold in C; may fail in C++</SPAN>
-</PRE>
--- end example]<BR>
-<B>Rationale:</B> C++ has a more elaborate value model that de-emphasizes
-access to object representations.<BR>
-<B>Effect on original feature:</B>
-Change of semantics of well-defined feature.<BR>
-<B>Difficulty of converting:</B> Semantic transformation.  Aggregate
-initialization should be used in lieu of <TT>memset</TT>.<BR>
-<B>How widely used:</B> Occasionally.  In particular, <TT>calloc</TT>
-and <TT>memset</TT> are expected to yield scalar subobjects with value
-0.<BR>
-
-</BLOCKQUOTE>
 
 <BR><BR><BR><BR>
 </BODY>
