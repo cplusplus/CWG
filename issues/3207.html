@@ -1,0 +1,90 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3207</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120a.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-06-29</P>
+<HR>
+<A NAME="3207"></A><H4>3207.
+  
+Deduced return type of a deleted three-way comparison operator function
+</H4>
+<B>Section: </B>11.10.3&#160; [<A href="
+   https://wg21.link/class.spaceship">class.spaceship</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Arthur O'Dwyer
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-29<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A { friend int operator&lt;=&gt;(A,A); };
+  struct B { A a; friend auto operator&lt;=&gt;(const B&amp;) const = default; };
+  using Q = [: return_type_of(^^B::operator&lt;=&gt;) :];
+</PRE>
+
+<P>What is the type <TT>Q</TT>?</P>
+
+<P>Traditionally, CWG had the viewpoint that querying properties of
+deleted functions (e.g. triviality) should be impossible or
+ill-formed.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 11.10.3 [<A href="
+   https://wg21.link/class.spaceship#2.1">class.spaceship</A>] bullet 2.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Let R be the declared return type of a defaulted three-way comparison
+operator function, and let xi be the elements of the expanded list of
+subobjects for an object x of type C.
+<UL>
+<LI>If R is auto, then let cv i Ri be the type of the expression xi
+&lt;=&gt; xi . The operator function is defined as deleted if that
+expression is not usable or if Ri is not a comparison category type
+(17.12.2.1 [<A href="
+   https://wg21.link/cmp.categories.pre">cmp.categories.pre</A>]) for any
+i. <DEL>The</DEL> <INS>Otherwise, the</INS> return type is deduced as
+the common comparison type (see below) of R0, R1, ..., Rn-1.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
