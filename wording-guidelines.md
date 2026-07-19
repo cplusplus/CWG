@@ -192,29 +192,74 @@ violation means non-conformance of the implementation.
 In the standard library, "shall" establishes a precondition;
 when violated, the program has undefined behavior.
 
-Do not use "in" when nested constructs are not supposed to be in
-scope.
-
-**Example (bad):**
-> X shall not appear in the expression
-
-covers lambda bodies nested in the expression, which is often undesirable.
-
 Use a recursive definition of a term or phrase to clearly specify how
 a rule applies to a recursive construct such as an expression or
 block.
 
-Use "of" to uniquely identify top-level grammar components, without
-risk of unwanted recursion.
+### "in" vs. "of"
+
+We use two different prepositions to put parts of the syntax in relation:
+
+<dl>
+<dt>of</dt>
+<dd>specifies a <em>direct</em> relationship between constructs</dd>
+
+<dt>in</dt>
+<dd>specifies a <em>nested</em> relationship between constructs</dd>
+</dl>
 
 **Example:**
-> The _nested-name-specifier_ of a _qualified-id_ ...
+<!-- dcl.type.class.deduct -->
 
-does not cover any _nested-name-specifier_ nested
-within the top-level _nested-name-specifier_.
+> the *type-specifier* in the *parameter-declaration* of a *template-parameter*
 
+This wording is chosen because a *parameter-declaration*
+appears directly in the definition of *template-parameter*,
+and *type-specifier* is nested several levels deep into *parameter-declaration*
+(*type-specifier* → *defining-type-specifier* → *decl-specifier* → *decl-specifier-seq*
+→ *parameter-declaration*).
 
-## Specific words and phrases
+> [!CAUTION]
+> Do not use "in" when nested constructs are not supposed to be in scope.
+>
+> **Example (bad):**
+> > X shall not appear in the expression
+>
+> covers lambda bodies nested in the expression, which is often undesirable.
+
+> [!TIP]
+> "of" can be chained to describe nested relationships, like
+> > *type-specifier* of a *defining-type-specifier* of a *decl-specifier*.
+
+### "names", "denotes", and "designates"
+
+There are several words used to describe lookup:
+
+<dl>
+<dt>(to) name</dt>
+<dd>means that declarations are found by name</dd>
+
+<dt>(to) denote ([basic.pre])</dt>
+<dd>means to name an entity, but also "see through" type aliases and namespace aliases</dd>
+
+<dt>(to) designate ([basic.splice])</dt>
+<dd>means to denote in a <i>splice-specifier</i> what a reflection represents,
+or simply for a name to denote something
+(that is, "designate" is universal and works for either case)</dd>
+</dl>
+
+**Example:**
+- the *type-specifier* `std::int32_t` names the type alias `std::int32_t`
+- the *type-specifier* `std::int32_t` denotes the type `int` or some other signed integer type
+- the *type-specifier* `int` designates type `int`
+- the *splice-specifier* `[: ^^int :]` designates type `int`
+- the *splice-specifier* `[: ^^std::int32_t :]` designates the type denoted by `std::int32_t`
+
+> [!NOTE]
+> The least powerful term should be chosen when in doubt.
+> For example, we can say "`T` designates type `int`", but "denotes" is preferred.
+
+### Specific words and phrases
 
 <dl>
 <dt>ill-formed, no diagnostic required</dt>
