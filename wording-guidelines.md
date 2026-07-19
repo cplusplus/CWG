@@ -259,3 +259,47 @@ Avoid unbounded unspecified behavior.
 > If X happens, the behavior of the program is unspecified.
 
 Do not try to make runtime behavior ill-formed; this is a category error.
+
+### Grammar: "in" vs. "of"
+
+We use two different prepositions to put parts of the grammar in relation:
+
+<dl>
+<dt>of</dt>
+<dd>specifies a <em>direct</em> relationship between syntactical constructs</dd>
+
+<dt>in</dt>
+<dd>specifies a <em>nested</em> relationship between syntactical constructs</dd>
+</dl>
+
+**Example:**
+<!-- dcl.type.class.deduct -->
+
+> the *type-specifier* in the *parameter-declaration* of a *template-parameter*
+
+This wording is chosen because a *parameter-declaration*
+appears directly in the definition of *template-parameter*,
+and *type-specifier* is nested several levels deep into *parameter-declaration*
+(*type-specifier* → *defining-type-specifier* → *decl-specifier* → *decl-specifier-seq*
+→ *parameter-declaration*).
+
+### "names", "denotes", and "designates"
+
+There are several words used to describe lookup:
+
+<dl>
+<dt>(to) name</dt>
+<dd>means that an entity is looked up by name</dd>
+
+<dt>(to) denote ([basic.pre])</dt>
+<dd>means to name an entity, but also "sees through" type aliases and namespace aliases</dd>
+
+<dt>(to) designate ([basic.splice])</dt>
+<dd>means to denote in a <i>splice-specifier</i> what a reflection represents</dd>
+</dl>
+
+**Example:**
+- the *type-specifier* `std::int32_t` names the type alias `std::int32_t`
+- the *type-specifier* `std::int32_t` denotes the type `int` or some other signed integer type
+- the *splice-specifier* `[: ^^int :]` designates type `int`
+- the *splice-specifier* `[: ^^std::int32_t :]` designates the type denoted by `std::int32_t`
