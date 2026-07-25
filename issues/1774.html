@@ -1,6 +1,6 @@
 <HTML>
 <HEAD>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta charset="us-ascii">
 <TITLE>
     CWG Issue 1774</TITLE>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,13 +27,14 @@
   Core Issues List revision 120a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2026-05-31</P>
+<P>2026-07-25</P>
 <HR>
 <A NAME="1774"></A><H4>1774.
   
 Discrepancy between subobject destruction and stack unwinding
 </H4>
-<B>Section: </B>14.3&#160; [<A href="https://wg21.link/except.ctor">except.ctor</A>]
+<B>Section: </B>14.3&#160; [<A href="
+   https://wg21.link/except.ctor">except.ctor</A>]
  &#160;&#160;&#160;
 
  <B>Status: </B>CD4
@@ -50,7 +51,8 @@ Discrepancy between subobject destruction and stack unwinding
 <A href="http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3903.html#CA24">N3690 comment
   CA&#160;24<BR></A>
 
-<P>The current wording of 14.6.2 [<A href="https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2
+<P>The current wording of 14.6.2 [<A href="
+   https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2
 affords implementations a significant degree of freedom when exception
 handling results in a call to <TT>std::terminate:</TT>
 </P>
@@ -60,9 +62,11 @@ handling results in a call to <TT>std::terminate:</TT>
 In the situation where no matching handler is found, it is
 implementation-defined whether or not the stack is unwound before
 <TT>std::terminate()</TT> is called. In the situation where the search for
-a handler (14.4 [<A href="https://wg21.link/except.handle">except.handle</A>]) encounters the outermost block of a
+a handler (14.4 [<A href="
+   https://wg21.link/ubx:except.handle.handler.ctor.dtor">ubx:except.handle.handler.ctor.dtor</A>]) encounters the outermost block of a
 function with a <I>noexcept-specification</I> that does not allow the
-exception (14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]), it is implementation-defined whether
+exception (14.5 [<A href="
+   https://wg21.link/except.spec">except.spec</A>]), it is implementation-defined whether
 the stack is unwound, unwound partially, or not unwound at all before
 <TT>std::terminate()</TT> is called. In all other situations, the stack
 shall not be unwound before std::terminate() is called.
@@ -70,7 +74,8 @@ shall not be unwound before std::terminate() is called.
 </BLOCKQUOTE>
 
 <P>This contrasts with the treatment of subobjects and objects constructed
-via delegating constructos in 14.3 [<A href="https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2:</P>
+via delegating constructos in 14.3 [<A href="
+   https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2:</P>
 
 <BLOCKQUOTE>
 
@@ -78,7 +83,8 @@ An object of any storage duration whose initialization or destruction is
 terminated by an exception will have destructors executed for all of its
 fully constructed subobjects (excluding the variant members of a union-like
 class), that is, for subobjects for which the principal constructor
-(11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has completed execution and the destructor
+(11.9.3 [<A href="
+   https://wg21.link/ubx:class.base.init.mem.fun">ubx:class.base.init.mem.fun</A>]) has completed execution and the destructor
 has not yet begun execution. Similarly, if the non-delegating constructor
 for an object has completed execution and a delegating constructor for that
 object exits with an exception, the object's destructor will be invoked.
@@ -98,7 +104,8 @@ merited its own issue.</P>
 <P><B>Proposed resolution (June, 2014):</B></P>
 
 <OL>
-<LI><P>Change all of 14.3 [<A href="https://wg21.link/except.ctor">except.ctor</A>], reparagraphing
+<LI><P>Change all of 14.3 [<A href="
+   https://wg21.link/except.ctor">except.ctor</A>], reparagraphing
 as follows:</P></LI>
 
 <BLOCKQUOTE>
@@ -107,7 +114,8 @@ as follows:</P></LI>
 a handler, destructors are invoked <INS>by a process, specified in
 this section, called <I>stack unwinding</I>.  If a destructor
 directly invoked by stack unwinding exits with an exception,
-<TT>std::terminate</TT> is called (14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]).
+<TT>std::terminate</TT> is called (14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]).
 [<I>Note:</I> Consequently, destructors should generally catch
 exceptions and not let them propagate out of the destructor.
 &#8212;<I>end note</I>]</INS>
@@ -129,7 +137,8 @@ for <DEL>all</DEL> <INS>each</INS> of <DEL>its</DEL> <INS>the
 object's</INS> fully constructed subobjects (excluding the
 variant members of a union-like class), that is,
 for <DEL>subobjects</DEL> <INS>each subobject</INS> for which the
-principal constructor (11.9.3 [<A href="https://wg21.link/class.base.init">class.base.init</A>]) has completed
+principal constructor (11.9.3 [<A href="
+   https://wg21.link/ubx:class.base.init.mem.fun">ubx:class.base.init.mem.fun</A>]) has completed
 execution and the destructor has not yet begun
 execution. <INS>The subobjects are destroyed in the reverse order
 of the completion of their construction.  Such destruction is
@@ -148,9 +157,13 @@ delegating constructor for that object, if any.</INS>
 <P>
 <INS>[<I>Note:</I></INS> If the object was
 allocated <DEL>in</DEL> <INS>by</INS> a <I>new-expression</I>
-<INS>(7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>])</INS>, the matching
-deallocation function (6.8.6.5.3 [<A href="https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]<DEL>,
-7.6.2.8 [<A href="https://wg21.link/expr.new">expr.new</A>], 11.4.11 [<A href="https://wg21.link/class.free">class.free</A>]</DEL>), if any,
+<INS>(7.6.2.8 [<A href="
+   https://wg21.link/ubx:expr.new.non.allocating.null">ubx:expr.new.non.allocating.null</A>])</INS>, the matching
+deallocation function (6.8.6.5.3 [<A href="
+   https://wg21.link/basic.stc.dynamic.deallocation">basic.stc.dynamic.deallocation</A>]<DEL>,
+7.6.2.8 [<A href="
+   https://wg21.link/ubx:expr.new.non.allocating.null">ubx:expr.new.non.allocating.null</A>], 11.4.11 [<A href="
+   https://wg21.link/class.free">class.free</A>]</DEL>), if any,
 is called to free the storage occupied by the object.
 <INS>&#8212;<I>end note</I>]</INS>
 </P>
@@ -160,13 +173,15 @@ constructed on the path from a try block to the point where an
 exception is thrown is called &#8220;<I>stack unwinding</I>.&#8221; If a
 destructor called during stack unwinding exits with an exception,
 <TT>std::terminate</TT> is called
-(14.6.2 [<A href="https://wg21.link/except.terminate">except.terminate</A>]). [<I>Note:</I> So destructors
+(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]). [<I>Note:</I> So destructors
 should generally catch exceptions and not let them propagate out
 of the destructor. &#8212;<I>end note</I>]</DEL></P>
 
 </BLOCKQUOTE>
 
-<LI><P>Delete 14.4 [<A href="https://wg21.link/except.handle#11">except.handle</A>] paragraph 11:</P></LI>
+<LI><P>Delete 14.4 [<A href="
+   https://wg21.link/ubx:except.handle.handler.ctor.dtor#11">ubx:except.handle.handler.ctor.dtor</A>] paragraph 11:</P></LI>
 
 <BLOCKQUOTE>
 
@@ -181,7 +196,8 @@ a <I>function-try-block</I> of a constructor for that object. The
 base classes and non-variant members of an object shall be
 destroyed before entering the handler of
 a <I>function-try-block</I> of a destructor for that object
-(11.4.7 [<A href="https://wg21.link/class.dtor">class.dtor</A>]).</DEL>
+(11.4.7 [<A href="
+   https://wg21.link/ubx:class.dtor.no.longer.exists">ubx:class.dtor.no.longer.exists</A>]).</DEL>
 
 </BLOCKQUOTE>
 

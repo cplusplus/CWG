@@ -1,6 +1,6 @@
 <HTML>
 <HEAD>
-<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<meta charset="us-ascii">
 <TITLE>
     CWG Issue 2191</TITLE>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,13 +27,14 @@
   Core Issues List revision 120a.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2026-05-31</P>
+<P>2026-07-25</P>
 <HR>
 <A NAME="2191"></A><H4>2191.
   
 Incorrect result for <TT>noexcept(typeid(v))</TT>
 </H4>
-<B>Section: </B>14.5&#160; [<A href="https://wg21.link/except.spec">except.spec</A>]
+<B>Section: </B>14.5&#160; [<A href="
+   https://wg21.link/except.spec">except.spec</A>]
  &#160;&#160;&#160;
 
  <B>Status: </B>C++17
@@ -55,8 +56,10 @@ Incorrect result for <TT>noexcept(typeid(v))</TT>
     bool b = noexcept(typeid(d));
 </PRE>
 
-<P>According to 7.6.2.7 [<A href="https://wg21.link/expr.unary.noexcept#3">expr.unary.noexcept</A>] paragraph 3, the value of
-<TT>b</TT> should be <TT>false</TT>, because 14.5 [<A href="https://wg21.link/except.spec">except.spec</A>]
+<P>According to 7.6.2.7 [<A href="
+   https://wg21.link/expr.unary.noexcept#3">expr.unary.noexcept</A>] paragraph 3, the value of
+<TT>b</TT> should be <TT>false</TT>, because 14.5 [<A href="
+   https://wg21.link/except.spec">except.spec</A>]
 bullet 14.6 says,</P>
 
 <UL>
@@ -64,14 +67,16 @@ bullet 14.6 says,</P>
 
 <P>If <TT>e</TT> is a <TT>typeid</TT> expression applied to a glvalue
 expression whose type is a polymorphic class type
-(7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), <I>S</I> consists of the type
+(7.6.1.8 [<A href="
+   https://wg21.link/expr.typeid">expr.typeid</A>]), <I>S</I> consists of the type
 <TT>std::bad_typeid</TT>.</P>
 </LI>
 
 </UL>
 
 <P>and <TT>d</TT> is such an expression. This is clearly bogus, as the
-expression cannot possibly throw; according to 7.6.1.8 [<A href="https://wg21.link/expr.typeid#2">expr.typeid</A>] paragraph 2,
+expression cannot possibly throw; according to 7.6.1.8 [<A href="
+   https://wg21.link/expr.typeid#2">expr.typeid</A>] paragraph 2,
  the condition under which the exception might be thrown
 is:</P>
 
@@ -79,9 +84,12 @@ is:</P>
 
 If the glvalue expression is obtained by applying the unary <TT>*</TT>
 operator to a pointer<SUP>69</SUP> and the pointer is a null pointer value
-(7.3.12 [<A href="https://wg21.link/conv.ptr">conv.ptr</A>]), the <TT>typeid</TT> expression throws an exception
-(14.2 [<A href="https://wg21.link/except.throw">except.throw</A>]) of a type that would match a handler of type
-<TT>std::bad_typeid</TT> exception (17.7.5 [<A href="https://wg21.link/bad.typeid">bad.typeid</A>]).
+(7.3.12 [<A href="
+   https://wg21.link/ubx:conv.ptr.virtual.base">ubx:conv.ptr.virtual.base</A>]), the <TT>typeid</TT> expression throws an exception
+(14.2 [<A href="
+   https://wg21.link/except.throw">except.throw</A>]) of a type that would match a handler of type
+<TT>std::bad_typeid</TT> exception (17.7.5 [<A href="
+   https://wg21.link/bad.typeid">bad.typeid</A>]).
 
 </BLOCKQUOTE>
 
@@ -89,13 +97,15 @@ operator to a pointer<SUP>69</SUP> and the pointer is a null pointer value
 <B>Proposed resolution (November, 2016):</B>
 </P>
 
-<P>Change 14.5 [<A href="https://wg21.link/except.spec#13.6">except.spec</A>] bullet 13.6 as follows:</P>
+<P>Change 14.5 [<A href="
+   https://wg21.link/except.spec#13.6">except.spec</A>] bullet 13.6 as follows:</P>
 
 <BLOCKQUOTE>
 
 <P>The <I>set of potential exceptions of an expression</I>
 <TT>e</TT> is empty if <TT>e</TT> is a core constant expression
-(7.7 [<A href="https://wg21.link/expr.const">expr.const</A>]). Otherwise, it is the union of the sets of
+(7.7 [<A href="
+   https://wg21.link/expr.const">expr.const</A>]). Otherwise, it is the union of the sets of
 potential exceptions of the immediate subexpressions of <TT>e</TT>,
 including default argument expressions used in a function call, combined
 with a set <I>S</I> defined by the form of <TT>e</TT>, as follows:</P>
@@ -106,7 +116,8 @@ with a set <I>S</I> defined by the form of <TT>e</TT>, as follows:</P>
 <LI><P>If <TT>e</TT> is a <TT>typeid</TT> expression applied to
 a <DEL>glvalue expression whose type is</DEL> <INS>(possibly parenthesized)
 built-in unary <TT>*</TT> operator applied to a pointer to</INS> a
-polymorphic class type (7.6.1.8 [<A href="https://wg21.link/expr.typeid">expr.typeid</A>]), <I>S</I> consists of
+polymorphic class type (7.6.1.8 [<A href="
+   https://wg21.link/expr.typeid">expr.typeid</A>]), <I>S</I> consists of
 the type <TT>std::bad_typeid</TT>. [<I>Example:</I> ...</P></LI>
 
 </UL>
