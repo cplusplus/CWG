@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3213</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-07-25</P>
+<HR>
+<A NAME="3213"></A><H4>3213.
+  
+Restrictions on the <I>template-head</I> of a concept definition
+</H4>
+<B>Section: </B>13.2&#160; [<A href="
+   https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-07-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/951">#951</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T, typename U = int, typename V&gt;
+  concept C = true;
+
+  template &lt;typename T = int&gt;
+  concept C2 = true;
+  static_assert(C2&lt;&gt;);
+
+  template &lt;typename... T, typename... U&gt;
+  concept C3 = true;
+
+  template &lt;typename... T, typename U = int&gt;
+  concept C4 = true;
+
+  template &lt;typename... T, typename U&gt;
+  concept C5 = true;
+</PRE>
+
+<P>None of these examples should be valid. There is implementation
+divergence.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 13.2 [<A href="
+   https://wg21.link/temp.param#19">temp.param</A>] paragraph 19 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a <I>template-parameter</I> of a class template, variable template,
+<INS>concept,</INS> or alias template has a default template argument,
+each subsequent <I>template-parameter</I> shall either have a default
+template argument supplied or declare a template parameter pack. If
+a <I>template-parameter</I> of a primary class template, primary
+variable template, <INS>concept,</INS> or alias template declares a
+template parameter pack, it shall be the last
+<I>template-parameter</I>.  If a <I>template-parameter</I> of a
+function template declares a template parameter pack, it shall not be
+followed by another <I>template-parameter</I> unless that template
+parameter is deducible from the <I>parameter-type-list</I>
+(9.3.4.6 [<A href="
+   https://wg21.link/dcl.fct">dcl.fct</A>]) of the function template or has a
+default argument (13.10.3 [<A href="
+   https://wg21.link/temp.deduct">temp.deduct</A>]). A template parameter
+of a deduction guide template (13.7.2.3 [<A href="
+   https://wg21.link/temp.deduct.guide">temp.deduct.guide</A>]) that
+does not have a default argument shall be deducible from
+the <I>parameter-type-list</I> of the deduction guide template.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 13.7.9 [<A href="
+   https://wg21.link/temp.concept">temp.concept</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+The first declared template parameter of a concept definition is its
+<I>prototype parameter</I>. <INS>It shall not have a default argument
+(13.2 [<A href="
+   https://wg21.link/temp.param">temp.param</A>]).</INS> A <I>type concept</I> is a concept
+whose prototype parameter is a type template parameter.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
