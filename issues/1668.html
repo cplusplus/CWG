@@ -27,7 +27,7 @@
   Core Issues List revision 120b.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2026-07-25</P>
+<P>2026-07-26</P>
 <HR>
 <A NAME="1668"></A><H4>1668.
   
@@ -37,7 +37,7 @@ Parameter type determination still not clear enough
    https://wg21.link/dcl.fct">dcl.fct</A>]
  &#160;&#160;&#160;
 
- <B>Status: </B>drafting
+ <B>Status: </B>review
  &#160;&#160;&#160;
 
  <B>Submitter: </B>Daniel Kr&#252;gler
@@ -86,6 +86,49 @@ types have been determined from the <I>decl-specifier-seq</I> and
 <I>declarator</I> instead of for each parameter individually.</P>
 
 <P>See also <A HREF="1444.html">issue 1444</A>.</P>
+
+<P><U>Possible resolution (2026-07-22):</U></P>
+
+<P>Split and change 9.3.4.6 [<A href="
+   https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The type of a function is determined using the following
+rules. The type of each parameter (including function parameter packs)
+is determined from its own <I>parameter-declaration</I>
+(9.3 [<A href="
+   https://wg21.link/dcl.decl">dcl.decl</A>]).</DEL> After determining the type of each
+parameter <INS>as specified in 9.3.4.1 [<A href="
+   https://wg21.link/dcl.meaning.general">dcl.meaning.general</A>])</INS>,
+<DEL>any parameter of</DEL> <INS>if that</INS> type <INS>is of the
+form</INS> &#8220;array of T&#8221; or <DEL>of</DEL> <INS>is a</INS>
+function type T<INS>, the type</INS> is adjusted to be &#8220;pointer
+to T&#8221; <INS>before any further analysis</INS>.
+<div class="ins">
+[ Example:
+<PRE>
+   extern int* a[];
+   void f(int b[] = a[sizeof(b)]); //<SPAN CLASS="cmnt"> OK, <TT>b</TT> has type "pointer to <TT>int</TT>" and its default argument has value <TT>a[sizeof(int*)]</TT></SPAN>
+</PRE>
+-- end example ]
+</div>
+
+<P>
+<DEL>After producing the list of parameter types, any</DEL>
+<INS>Any</INS> top-level <I>cv-qualifier</I>s modifying a
+parameter type are <DEL>deleted</DEL> <INS>ignored</INS> when forming
+the function type. The resulting list of transformed parameter types
+and the presence or absence of the ellipsis or a function parameter
+pack is the function's <I>parameter-type-list</I>.  [<I>Note 3:</I>
+<DEL>This transformation does not affect the types of the
+parameters.</DEL>
+<INS>Therefore, the types comprising the parameter-type-list can
+differ from the types of the parameters themselves.</INS> For example,
+<TT>int(*)(const int p, decltype(p)*)</TT> and <TT>int(*)(int, const
+int*)</TT> are identical types. &#8212;<I>end note</I>]</P>
+
+</BLOCKQUOTE>
 
 <BR><BR>
 </BODY>
