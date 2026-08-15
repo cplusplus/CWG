@@ -1,0 +1,91 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3216</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-15</P>
+<HR>
+<A NAME="3216"></A><H4>3216.
+  
+Values of pointer-to-member type need pointer treatment
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-15<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  union U { int x, y; };
+  template &lt;auto&gt; int q;
+  int main(void) {
+   unsigned long x = __builtin_bit_cast(unsigned long, &amp;U::x);
+   unsigned long y = __builtin_bit_cast(unsigned long, &amp;U::y);
+   assert(x == y);
+   assert(&amp;q&lt;&amp;U::x&gt; != &amp;q&lt;&amp;U::y&gt;);
+  }
+</PRE>
+
+<P>Two pointer-to-member values may reasonably have the same value
+representations, yet their (abstract) values can be different.
+<A HREF="https://wg21.link/p2434r5">P2434R5</A> (Nondeterministic
+Pointer Provenance) introduced a regression here.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.9.1 [<A href="
+   https://wg21.link/basic.types.general#1">basic.types.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each trivially copyable type T has an implementation-defined set of
+discrete values. Each possible value representation of an object of
+type T corresponds to a distinct implementation-defined subset of this
+set. The union of these subsets is the set of values; for scalar types
+other than object pointer <INS>and pointer-to-member</INS> types, each
+such subset contains no more than one value. Certain operations cause
+an object to acquire a value representation, in which case the
+object's value is replaced with an unspecified member of the
+corresponding subset that would result in the program having defined
+behavior, if any.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
