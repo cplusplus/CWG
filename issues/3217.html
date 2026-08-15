@@ -1,0 +1,143 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3217</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-15</P>
+<HR>
+<A NAME="3217"></A><H4>3217.
+  
+Run-time treatment of <TT>std::meta::info</TT> types
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-15<BR>
+
+
+
+
+<P>Paper <A HREF="https://wg21.link/p4101r1.html">P4101R1</A>
+(Consteval-only Values for C++26) allowed for values of
+type <TT>std::meta::info</TT> to exist at run-time, although any
+possibly distinct values have no meaning at run-time.  See also
+paper <A HREF="https://wg21.link/p2434r5">P2434R5</A>
+(Nondeterministic Pointer Provenance).</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.8.2 [<A href="
+   https://wg21.link/intro.object#8">intro.object</A>] paragraph 8 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+An object has nonzero size if it
+<UL>
+<LI>is not a potentially-overlapping subobject, or</LI>
+<LI>is not of class type <INS>and not of
+type <TT>std::meta::info</TT></INS>, or</LI>
+<LI>is of a class type with virtual member functions or virtual base
+classes, or</LI>
+<LI>has subobjects of nonzero size or unnamed bit-fields of nonzero
+length.</LI>
+</UL>
+Otherwise, if the object is a base class subobject of a
+standard-layout class type with no non-static data members, it has
+zero size. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial#1">basic.types.trivial</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each trivially copyable type T has an implementation-defined set of
+discrete values. Each possible value representation of an object of
+type T corresponds to a distinct implementation-defined subset of this
+set. The union of these subsets is the set of values; for scalar types
+other than object pointer types <INS>and type
+<TT>std::meta::info</TT></INS>, each such subset contains no more
+than one value. Certain operations cause an object to acquire a value
+representation, in which case the object's value is replaced with an
+unspecified member of the corresponding subset that would result in
+the program having defined behavior, if any.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.9.3 [<A href="
+   https://wg21.link/basic.fundamental#17">basic.fundamental</A>] paragraph 17 as follows:</P>
+
+<BLOCKQUOTE>
+
+... A reflection is said to represent the corresponding construct.
+<INS>The value representation (6.9.1 [<A href="
+   https://wg21.link/basic.types.general">basic.types.general</A>]) of
+type <TT>std::meta::info</TT> comprises zero bits.</INS> ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.3.2 [<A href="
+   https://wg21.link/conv.lval#3">conv.lval</A>] paragraph 3 as follows:</P>
+
+
+<BLOCKQUOTE>
+
+The result of the conversion is determined according to the following
+rules:
+<UL>
+<LI>...</LI>
+<LI>Otherwise, the object indicated by the glvalue is read
+(3.1 [<A href="
+   https://wg21.link/defns.access">defns.access</A>]) <INS>unless <TT>T</TT>
+is <I>cv</I> <TT>std::meta::info</TT></INS>. Let V be the value
+contained in the object.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
