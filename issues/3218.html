@@ -1,0 +1,107 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3218</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-16</P>
+<HR>
+<A NAME="3218"></A><H4>3218.
+  
+Expanding packs created within a pack expansion
+</H4>
+<B>Section: </B>13.7.4&#160; [<A href="
+   https://wg21.link/temp.variadic">temp.variadic</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-16<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/976">#976</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+   struct S {};
+
+   int f(auto ... x) {
+     int a[] = { [&amp;] {
+       auto[...y] = x;
+       return y;    // <SPAN CLASS="cmnt">#1</SPAN>
+     }()...};       // <SPAN CLASS="cmnt">#2</SPAN>
+     return 0;
+   }
+   int x = f(S());
+</PRE>
+
+<P>The use of <TT>y</TT> at #1 should be ill-formed due to the
+appearance of an unexpanded pack.  The expansion at #2 should not
+apply to <TT>y</TT>.  Some implementations fail spectacularly.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.7.4 [<A href="
+   https://wg21.link/temp.variadic#8">temp.variadic</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+A pack whose name appears within the pattern of a pack expansion is
+expanded by that pack expansion<INS> if unqualified name lookup
+(6.5.3 [<A href="
+   https://wg21.link/basic.lookup.unqual">basic.lookup.unqual</A>]) from the point of the pack expansion
+finds a declaration of that pack</INS>.  An appearance of the name of
+a pack is only expanded by the innermost enclosing pack expansion. The
+pattern of a pack expansion shall name one or more packs that are not
+expanded by a nested pack expansion; such packs are called unexpanded
+packs in the pattern. All of the packs expanded by a pack expansion
+shall have the same number of arguments specified. An appearance of a
+name of a pack that is not expanded is ill-formed.
+
+[Example: ...
+<PRE class="ins">
+   struct S {};
+
+   int h(auto ... x) {
+     int a[] = { [&amp;] {
+       auto[...y] = x;
+       return y;    // <SPAN CLASS="cmnt">error: unexpanded pack</SPAN>
+     }()...};
+     return 0;
+   }
+   int x = h(S());
+</PRE>
+-- end example]
+</BLOCKQUOTE>
+<BR><BR>
+</BODY>
+</HTML>
