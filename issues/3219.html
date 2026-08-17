@@ -1,0 +1,170 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3219</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120b.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-17</P>
+<HR>
+<A NAME="3219"></A><H4>3219.
+  
+Acquiring value representations and indeterminate or erroneous values
+</H4>
+<B>Section: </B>6.9.2&#160; [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Hubert Tong
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-17<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/980">#980</A>.)</P>
+
+
+
+<P>An <TT>unsigned char</TT> value that is indeterminate is not
+immediately causing undefined behavior per 6.8.5 [<A href="
+   https://wg21.link/basic.indet">basic.indet</A>].
+When <TT>std::bit_cast</TT> is applied to such a value, converting to
+an <TT>unsigned char</TT> type, the "acquire a value representation"
+wording in 6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial#1">basic.types.trivial</A>] paragraph 1 is not equipped to
+handle the situation.</P>
+
+<P>Furthermore, consider:</P>
+
+<PRE>
+  #include &lt;cstring&gt;
+
+  int main() {
+    int x = 42, *p = &amp;x, *q = p + 1;
+    std::memcpy(&amp;p, &amp;q, sizeof(p)); //<SPAN CLASS="cmnt"> giving `p` the value of `q` would _not_ lead to the</SPAN>
+	       //<SPAN CLASS="cmnt"> program having defined behaviour</SPAN>
+    return *p; //<SPAN CLASS="cmnt"> Is the value of `p` here still `&amp;x`? Prior to P2434R5, no.</SPAN>
+  }
+</PRE>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial#1">basic.types.trivial</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each trivially copyable type T has an implementation-defined set of
+discrete values. Each possible value representation of an object of
+type T corresponds to a distinct implementation-defined subset of this
+set. The union of these subsets is the set of values; for scalar types
+other than object pointer types, each such subset contains no more
+than one value. Certain operations cause an object to <I>acquire</I> a
+value representation, in which case the object's value is replaced
+<INS>as follows:</INS>
+<UL>
+<LI class="ins">For each bit <I>b</I> in the value representation
+that is indeterminate or erroneous, let <I>u</I> be the smallest
+object enclosing <I>b</I>:
+<UL class="ins">
+<LI>If <I>u</I> is of unsigned ordinary character type
+or <TT>std::byte type</TT>, <I>u</I> has an indeterminate value if any
+of the bits in its value representation are indeterminate, or
+otherwise has an erroneous value.</LI>
+<LI>Otherwise, if <I>b</I> is indeterminate, the behavior is undefined.</LI>
+<LI>Otherwise (i.e., <I>b</I> is erroneous), the behavior is
+erroneous.</LI>
+</UL>
+The value does not otherwise contain any indeterminate or erroneous values.
+</LI>
+
+<LI>
+<INS>Within these constraints, the value is</INS>
+<DEL>with</DEL> an unspecified member <INS>, if any,</INS> of
+the <DEL>corresponding</DEL> subset <DEL>that would result
+in</DEL> <INS>corresponding to the value representation, selected such
+that</INS> the program <DEL>having</DEL> <INS>would have</INS> defined
+behavior, if <DEL>any</DEL> <INS>possible</INS>.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 22.11.3 [<A href="
+   https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follow:</P>
+
+<BLOCKQUOTE>
+
+Returns: An object of type To. Implicitly creates objects nested
+within the result (6.8.2 [<A href="
+   https://wg21.link/intro.object">intro.object</A>]). Each bit of the value
+representation of the result is equal to the corresponding bit in the
+object representation of from. Padding bits of the result are
+unspecified.
+<DEL>Every trivially copyable object among the result and each object
+created within it acquires the value representation produced; if any
+such object does not receive a value, the behavior is undefined.</DEL>
+A bit in the value representation of the result is indeterminate if it
+does not correspond to a bit in the value representation of from or
+corresponds to a bit for which the smallest enclosing object is not
+within its lifetime or has an indeterminate value
+(6.8.5 [<A href="
+   https://wg21.link/basic.indet">basic.indet</A>]). A bit in the value representation of the
+result is erroneous if it corresponds to a bit for which the smallest
+enclosing object has an erroneous value.
+<INS>Every trivially copyable object among the result and each object
+created within it acquires (6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>]) the value
+representation produced; if any such object does not receive a value,
+the behavior is undefined.</INS>
+
+<DEL>For each bit b in the value representation of the result that is
+indeterminate or erroneous, let u be the smallest object containing
+that bit enclosing b:</DEL>
+
+<UL class="del">
+<LI>If u is of unsigned ordinary character type or std::byte type, u has an indeterminate value if
+any of the bits in its value representation are indeterminate, or otherwise has an erroneous value.</LI>
+<LI>Otherwise, if b is indeterminate, the behavior is undefined.</LI>
+<LI>Otherwise, the behavior is erroneous, and the result is as specified above.
+The result does not otherwise contain any indeterminate or erroneous values.</LI>
+</UL>
+<DEL>The result does not otherwise contain any indeterminate or
+erroneous values.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
