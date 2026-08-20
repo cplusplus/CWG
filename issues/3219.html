@@ -87,27 +87,21 @@ discrete values. Each possible value representation of an object of
 type T corresponds to a distinct implementation-defined subset of this
 set. The union of these subsets is the set of values; for scalar types
 other than object pointer types, each such subset contains no more
-than one value. Certain operations cause an object to <I>acquire</I> a
-value representation, in which case the object's value is replaced
+than one value. Certain operations cause an object <INS><I>o</I></INS>
+to <I>acquire</I> a value representation, in which case the object's
+value is replaced
 <INS>as follows:</INS>
 <UL>
-<LI class="ins">For each bit <I>b</I> in the value representation
-that is indeterminate or erroneous, let <I>u</I> be the smallest
-object enclosing <I>b</I>:
-<UL class="ins">
-<LI>If <I>u</I> is of unsigned ordinary character type
-or <TT>std::byte type</TT>, <I>u</I> has an indeterminate value if any
-of the bits in its value representation are indeterminate, or
-otherwise has an erroneous value.</LI>
-<LI>Otherwise, if <I>b</I> is indeterminate, the behavior is undefined.</LI>
-<LI>Otherwise (i.e., <I>b</I> is erroneous), the behavior is
-erroneous.</LI>
-</UL>
-The value does not otherwise contain any indeterminate or erroneous values.
+<LI class="ins">For each bit <I>b</I> in the value representation that
+is indeterminate or erroneous, the smallest object enclosing <I>b</I>
+has indeterminate value if any of the bits in its value representation
+are indeterminate, or otherwise has an erroneous value.  No other
+subobject of <I>o</I> (if any) has indeterminate or an erroneous
+value.
 </LI>
 
 <LI>
-<INS>Within these constraints, the value is</INS>
+<INS>Within these constraints, the value of <I>o</I> is</INS>
 <DEL>with</DEL> an unspecified member <INS>, if any,</INS> of
 the <DEL>corresponding</DEL> subset <DEL>that would result
 in</DEL> <INS>corresponding to the value representation, selected such
@@ -120,7 +114,9 @@ behavior, if <DEL>any</DEL> <INS>possible</INS>.</LI>
 
 <LI>
 <P>Change in 22.11.3 [<A href="
-   https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follow:</P>
+   https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follows: (remove
+rules now redundant with "acquire a value representation"; the entire
+result is trivially copyable per the constraints)</P>
 
 <BLOCKQUOTE>
 
@@ -141,22 +137,26 @@ within its lifetime or has an indeterminate value
    https://wg21.link/basic.indet">basic.indet</A>]). A bit in the value representation of the
 result is erroneous if it corresponds to a bit for which the smallest
 enclosing object has an erroneous value.
-<INS>Every trivially copyable object among the result and each object
-created within it acquires (6.9.2 [<A href="
+<INS>The result acquires (6.9.2 [<A href="
    https://wg21.link/basic.types.trivial">basic.types.trivial</A>]) the value
-representation produced; if any such object does not receive a value,
-the behavior is undefined.</INS>
+representation produced.  If any object among the result of other than
+unsigned ordinary character type or <TT>std::byte</TT> type has
+indeterminate value, the behavior is undefined. Otherwise, if any
+object among the result has erroneous value, the behavior is
+erroneous.</INS>
 
 <DEL>For each bit b in the value representation of the result that is
 indeterminate or erroneous, let u be the smallest object containing
 that bit enclosing b:</DEL>
 
 <UL class="del">
-<LI>If u is of unsigned ordinary character type or std::byte type, u has an indeterminate value if
-any of the bits in its value representation are indeterminate, or otherwise has an erroneous value.</LI>
+<LI>If u is of unsigned ordinary character type or std::byte type, u
+has an indeterminate value if any of the bits in its value
+representation are indeterminate, or otherwise has an erroneous
+value.</LI>
 <LI>Otherwise, if b is indeterminate, the behavior is undefined.</LI>
-<LI>Otherwise, the behavior is erroneous, and the result is as specified above.
-The result does not otherwise contain any indeterminate or erroneous values.</LI>
+<LI>Otherwise, the behavior is erroneous, and the result is as
+specified above.</LI>
 </UL>
 <DEL>The result does not otherwise contain any indeterminate or
 erroneous values.</DEL>
