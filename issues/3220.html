@@ -1,0 +1,127 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3220</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120c.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-20</P>
+<HR>
+<A NAME="3220"></A><H4>3220.
+  
+Regression in module attachment rules introduced by CWG3171
+</H4>
+<B>Section: </B>6.7&#160; [<A href="
+   https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yehuda Bern&#225;th
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-15<BR>
+
+
+<P>(From thread beginning
+<A HREF="https://lists.isocpp.org/std-discussion/2026/08/3456.php">here</A>.)</P>
+
+<P>
+<A HREF="3171.html">Issue 3171</A> was misguided in turning a
+normative rule about module attachment into a note.  The "precedes"
+condition is implied, though, once template specializations are
+attached to the module of the primary template.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.8 [<A href="
+   https://wg21.link/basic.memobj#10">basic.memobj</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 5:</I></DEL> If two declarations <DEL>correspond
+but</DEL> <INS>of an entity</INS> are attached to different modules,
+the program is ill-formed <DEL>if one precedes the other
+(6.4.1 [<A href="
+   https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
+[ Example 2:
+<PRE>
+  ...
+  int g();   //<SPAN CLASS="cmnt"> error: <DEL>corresponds to</DEL> <INS>matches</INS> #2, but attached to M</SPAN>
+  ...
+</PRE>
+-- end example]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 10.1 [<A href="
+   https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A module is either a named module or the global module. A declaration
+is <I>attached</I> to a module as follows:
+<UL>
+<LI>If the declaration is a
+non-dependent friend declaration that nominates a function with
+a <I>declarator-id</I> that is a <I>qualified-id</I>
+or <I>template-id</I> or that nominates a class other than with
+an <I>elaborated-type-specifier</I> with neither
+a <I>nested-name-specifier</I> nor a <I>simple-template-id</I>, it is
+attached to the module to which the friend is attached
+(6.7 [<A href="
+   https://wg21.link/basic.link">basic.link</A>]).</LI>
+<LI class="ins">Otherwise, if the declaration declares a template
+specialization (13.7.6 [<A href="
+   https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
+13.9.4 [<A href="
+   https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), it is attached to the module to which
+the primary template is attached.</LI>
+<LI>Otherwise, if the declaration
+<UL>
+<LI>declares a namespace whose name has external linkage,</LI>
+<LI>declares a type alias,</LI>
+<LI>declares a namespace alias, or</LI>
+<LI>appears within a <I>linkage-specification</I>
+(9.12 [<A href="
+   https://wg21.link/dcl.link">dcl.link</A>])</LI>
+</UL>
+it is attached to the global module.</LI>
+<LI>Otherwise, the declaration is attached to the module in whose
+spurview it appears.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR>
+</BODY>
+</HTML>
