@@ -1,0 +1,109 @@
+<HTML>
+<HEAD>
+<meta charset="us-ascii">
+<TITLE>
+    CWG Issue 3224</TITLE>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<STYLE TYPE="text/css">
+  INS { text-decoration:none; font-weight:bold; background-color:#A0FFA0 }
+  .INS { text-decoration:none; background-color:#D0FFD0 }
+  DEL { text-decoration:line-through; background-color:#FFA0A0 }
+  .DEL { text-decoration:line-through; background-color: #FFD0D0 }
+  @media (prefers-color-scheme: dark) {
+    HTML { background-color:#202020; color:#f0f0f0; }
+    A { color:#5bc0ff; }
+    A:visited { color:#c6a8ff; }
+    A:hover, a:focus { color:#afd7ff; }
+    INS { background-color:#033a16; color:#aff5b4; }
+    .INS { background-color: #033a16; }
+    DEL { background-color:#67060c; color:#ffdcd7; }
+    .DEL { background-color:#67060c; }
+  }
+  SPAN.cmnt { font-family:Times; font-style:italic }
+</STYLE>
+</HEAD>
+<BODY>
+<P><EM>This is an unofficial snapshot of the ISO/IEC JTC1 SC22 WG21
+  Core Issues List revision 120c.
+  See http://www.open-std.org/jtc1/sc22/wg21/ for the official
+  list.</EM></P>
+<P>2026-08-23</P>
+<HR>
+<A NAME="3224"></A><H4>3224.
+  
+Directives in multi-line macro arguments
+</H4>
+<B>Section: </B>15.7.1&#160; [<A href="
+   https://wg21.link/cpp.replace.general">cpp.replace.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yin Xinyu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-14<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/975">#975</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  #define FOO(...)
+  FOO(
+  #include &lt;iostream&gt;
+  )
+</PRE>
+
+<P>This is ill-formed per 15.7.1 [<A href="
+   https://wg21.link/cpp.replace.general#14">cpp.replace.general</A>] paragraph 14.</P>
+
+<BLOCKQUOTE>
+
+... If there are sequences of preprocessing tokens within the list of
+arguments that would otherwise act as preprocessing directives,
+[Footnote: ...] the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<P>However, what about this:</P>
+
+<PRE>
+  #define FOO(...)
+  FOO(
+  #if )
+</PRE>
+
+<P>According to 15.7.1 [<A href="
+   https://wg21.link/cpp.replace.general#14">cpp.replace.general</A>] paragraph 14, the closing
+parenthesis is not part of the analysis for a "preprocessing
+directive" (note "within"), but 15.1 [<A href="
+   https://wg21.link/cpp.pre#2">cpp.pre</A>] paragraph 2
+requires a trailing <I>new-line</I> for some text to be recognized as
+a preprocessing directive (which is not "within" the arguments here).</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 15.7.1 [<A href="
+   https://wg21.link/cpp.replace.general#14">cpp.replace.general</A>] paragraph 14 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If there <DEL>are sequences of preprocessing tokens</DEL>
+<INS>is whitespace containing at least one new-line character
+immediately followed by a directive-introducing token
+(15.1 [<A href="
+   https://wg21.link/cpp.pre">cpp.pre</A>])</INS> within the list of arguments
+<DEL>that would otherwise act as preprocessing directives</DEL>,
+<DEL>[Footnote: A conditionally-supported-directive is a preprocessing
+directive regardless of whether the implementation supports it.]</DEL>
+the program is ill-formed.
+
+</BLOCKQUOTE>
+
+<BR><BR>
+</BODY>
+</HTML>
