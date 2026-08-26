@@ -243,7 +243,7 @@ but is required to document its choice of behavior.</dd>
 program behavior if control flow reaches that particular point.</dd>
 
 <dt>the behavior is erroneous</dt>
-<dd>means the program may (or may not) terminate at any future time;
+<dd>means the program may (or may not) terminate when the operation happens;
 the behavior in case of non-termination must be specified</dd>
 
 <dt>it is unspecified whether X or Y</dt>
