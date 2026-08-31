@@ -27,7 +27,7 @@
   Core Issues List revision 120c.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2026-08-30</P>
+<P>2026-08-31</P>
 <HR>
 <A NAME="3227"></A><H4>3227.
   
@@ -68,7 +68,26 @@ empty template parameter pack, or</LI>
 <P>For example, this bullet is vacuously true (but unintentionally so)
 if there is no valid specialization at all.</P>
 
-<P>Also, a similar rule for empty structured binding packs is missing.</P>
+<P>Also, a similar rule for empty structured binding packs is missing,
+although the example in 9.7 [<A href="
+   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
+indicate support for these.  However, consider:</P>
+
+<PRE>
+  int f(auto x) {
+    auto [...y] = x;
+    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
+    return 0;
+  }
+  
+  struct S {};
+  int z = f(S());
+</PRE>
+
+<P>This might be addressed by 13.7.4 [<A href="
+   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
+though, together with the existing rule about valid specializations
+for the function template <TT>f</TT>.</P>
 
 <P><U>Possible resolution:</U></P>
 
@@ -87,10 +106,6 @@ The program is ill-formed, no diagnostic required, if
 generated for</INS> a variadic template <DEL>requires an
 empty</DEL> <INS>where a </INS> template parameter pack <INS>is
 non-empty</INS>, or</LI>
-<LI class="ins">no valid specialization, ignoring
-<I><TT>static_assert</TT>-declaration</I>s that fail, can be generated
-for a templated entity where a structured binding pack is non-empty,
-or</LI>
 <LI>...</LI>
 </UL>
 
