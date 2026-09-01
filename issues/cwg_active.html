@@ -190,6 +190,9 @@ USA.</P>
 <A HREF="cwg_active.html#3224">3224</A>,
 <A HREF="cwg_active.html#3225">3225</A>,
 <A HREF="cwg_active.html#3226">3226</A>,
+<A HREF="cwg_active.html#3227">3227</A>,
+<A HREF="cwg_active.html#3228">3228</A>,
+<A HREF="cwg_active.html#3229">3229</A>,
 </P>
 
 <P><B>Revision 120, 2026-05-31:</B></P>
@@ -4685,6 +4688,18 @@ Explicitly captured variable is not odr-usable in lambda contract
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">6.3&#160;
+  <A href="
+   https://wg21.link/basic.def.odr">basic.def.odr</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3229">3229</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Incomplete restrictions on same meaning for same tokens
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">6.4&#160;
   <A href="
    https://wg21.link/basic.scope">basic.scope</A>
@@ -7130,6 +7145,18 @@ Default arguments and function parameter packs
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Copy elision for direct-initialization with a conversion function
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">9.5&#160;
+  <A href="
+   https://wg21.link/dcl.init">dcl.init</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3228">3228</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Empty initializers vs. empty packs
 </TD>
 </TR>
 <TR>
@@ -9626,6 +9653,18 @@ Omission of the <TT>typename</TT> keyword in a member template parameter list
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Conflict of templated entity vs. enclosing template
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">13.8.1&#160;
+  <A href="
+   https://wg21.link/temp.res.general">temp.res.general</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3227">3227</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+IFNDR for always-empty packs
 </TD>
 </TR>
 <TR>
@@ -30897,6 +30936,49 @@ or operator template of the corresponding closure type.</LI>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3229"></A><H4>3229.
+  
+Incomplete restrictions on same meaning for same tokens
+</H4>
+<B>Section: </B>6.3&#160; [<A href="
+   https://wg21.link/basic.def.odr">basic.def.odr</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-27<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/994">#994</A>.)</P>
+
+<P>The one-definition rule pivots around the model of "same tokens
+with same meaning".  The existing wording is insufficient to cover
+optionally overloaded operators (i.e. comma and address-of).</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.3 [<A href="
+   https://wg21.link/basic.def.odr#16.10">basic.def.odr</A>] bullet 16.10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>In each such definition, the <INS>possibly</INS> overloaded
+operators referred to, the implicit calls to conversion functions,
+constructors, <DEL>operator new functions and operator delete functions</DEL>
+<INS> and allocation and deallocation functions</INS> shall refer to
+the same function.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+<BR><BR><HR>
 <A NAME="2969"></A><H4>2969.
   
 Scopes in the <I>function-try-block</I> of a constructor
@@ -42369,6 +42451,85 @@ default arguments applies to the template declaration itself, not to
 its specializations.</P>
 
 <BR><BR><HR>
+<A NAME="3228"></A><H4>3228.
+  
+Empty initializers vs. empty packs
+</H4>
+<B>Section: </B>9.5&#160; [<A href="
+   https://wg21.link/dcl.init">dcl.init</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-30<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/998">#998</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  void foo(auto...x) {
+    int y[]{x...};
+  }
+  void bar(auto...z) {
+    int w(z...);
+  }
+  int main(){
+    foo();
+    bar();
+  }
+</PRE>
+
+<P>The rules around empty initializers are syntax-based and do not
+appear to address situations involving empty packs.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 9.5.1 [<A href="
+   https://wg21.link/dcl.init.general#15.4">dcl.init.general</A>] bullet 15.4 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>If the initializer is <DEL>()</DEL> <INS>of the
+form <TT>(</TT> <I>expression-list</I><SUB>opt</SUB> <TT>)</TT> and
+the <I>expression-list</I> is absent (after any pack expansion
+(13.7.4 [<A href="
+   https://wg21.link/temp.variadic">temp.variadic</A>]))</INS>, the object is
+value-initialized. [ Note: ... ]</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.5.2 [<A href="
+   https://wg21.link/dcl.init.aggr#11">dcl.init.aggr</A>] paragraph 11 as follows:</P>
+
+<BLOCKQUOTE>
+
+... An array of unknown bound shall not be initialized with <DEL>an
+empty</DEL> <INS>a</INS> <I>braced-init-list</I> <DEL>{}</DEL> <INS>that
+has no elements</INS>. [ Footnote: ... ] ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<BR><BR><HR>
 <A NAME="2991"></A><H4>2991.
   
 "array size" is vague
@@ -47075,7 +47236,7 @@ case also defines sets of permissible types for explicit and
 non-explicit conversion functions; <INS>for</INS> each (non-template) conversion
 function <INS><TT>F</TT></INS> that
 <UL>
-<LI class="del">is a non-hidden member of S,</LI>
+<LI>is a <DEL>non-hidden</DEL> member of S,</LI>
 <LI>yields a permissible type <INS><TT>U</TT></INS><DEL>,</DEL> and,</LI>
 <LI>for the former set, is non-explicit<INS>,</INS>
 </LI>
@@ -47090,6 +47251,44 @@ conversion functions is empty, any candidates that are explicit are
 discarded.
 
 </BLOCKQUOTE>
+
+<P><B>Additional notes (August 2026)</B></P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    operator int();
+  };
+  struct B {
+    operator int();
+  };
+  struct C : A, B {
+    operator short();
+  } c;
+  short s = c;  //<SPAN CLASS="cmnt"> ought to be OK and call </SPAN>operator short
+  int n = c;    //<SPAN CLASS="cmnt"> ambiguous base class conversion during overload resolution with prior wording</SPAN>
+</PRE>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct A {
+  protected:
+    operator int() &amp;&amp;;
+  };
+  struct B {
+  protected:
+    operator int();
+  };
+  struct C : A, B {} c;
+  int n2 = c;
+</PRE>
+
+<P>The current rule weirdly allows this, yet there is no other way to
+invoke <TT>C::operator int</TT>.</P>
 
 <BR><BR><HR>
 <A NAME="2189"></A><H4>2189.
@@ -52274,6 +52473,89 @@ a substatement of a constexpr if statement
    https://wg21.link/stmt.if">stmt.if</A>]) within a templated entity and <DEL>the
 innermost enclosing template</DEL> <INS>that templated entity or
 substatement</INS> is not instantiated, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3227"></A><H4>3227.
+  
+IFNDR for always-empty packs
+</H4>
+<B>Section: </B>13.8.1&#160; [<A href="
+   https://wg21.link/temp.res.general">temp.res.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-03-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/878">#878</A>.)</P>
+
+<P>The phrasing in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 is not
+parallel to similar phrasings in bullets 1-3:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>every valid specialization of a variadic template requires an
+empty template parameter pack, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For example, this bullet is vacuously true (but unintentionally so)
+if there is no valid specialization at all.</P>
+
+<P>Also, a similar rule for empty structured binding packs is missing,
+although the example in 9.7 [<A href="
+   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
+indicate support for these.  However, consider:</P>
+
+<PRE>
+  int f(auto x) {
+    auto [...y] = x;
+    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
+    return 0;
+  }
+
+  struct S {};
+  int z = f(S());
+</PRE>
+
+<P>This might be addressed by 13.7.4 [<A href="
+   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
+though, together with the existing rule about valid specializations
+for the function template <TT>f</TT>.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>
+<DEL>every</DEL> <INS>no</INS> valid specialization
+<DEL>of</DEL><INS>, ignoring
+<I><TT>static_assert</TT>-declaration</I>s that fail, can be
+generated for</INS> a variadic template <DEL>requires an
+empty</DEL> <INS>where a </INS> template parameter pack <INS>is
+non-empty</INS>, or</LI>
 <LI>...</LI>
 </UL>
 
