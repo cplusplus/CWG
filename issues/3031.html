@@ -27,7 +27,7 @@
   Core Issues List revision 120c.
   See http://www.open-std.org/jtc1/sc22/wg21/ for the official
   list.</EM></P>
-<P>2026-08-31</P>
+<P>2026-09-01</P>
 <HR>
 <A NAME="3031"></A><H4>3031.
   
@@ -99,6 +99,44 @@ conversion functions is empty, any candidates that are explicit are
 discarded.
 
 </BLOCKQUOTE>
+
+<P><B>Additional notes (August 2026)</B></P>
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  struct A {
+    operator int();
+  };
+  struct B {
+    operator int();
+  };
+  struct C : A, B {
+    operator short();
+  } c;
+  short s = c;  //<SPAN CLASS="cmnt"> ought to be OK and call </SPAN>operator short
+  int n = c;    //<SPAN CLASS="cmnt"> ambiguous base class conversion during overload resolution with prior wording</SPAN>
+</PRE>
+
+<P>Also consider:</P>
+
+<PRE>
+  struct A {
+  protected:
+    operator int() &amp;&amp;;
+  };
+  struct B {
+  protected:
+    operator int();
+  };
+  struct C : A, B {} c;
+  int n2 = c;
+</PRE>
+
+<P>The current rule weirdly allows this, yet there is no other way to
+invoke <TT>C::operator int</TT>.</P>
 
 <BR><BR>
 </BODY>
