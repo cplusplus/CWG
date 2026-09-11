@@ -9637,7 +9637,7 @@ Omission of the <TT>typename</TT> keyword in a member template parameter list
    https://wg21.link/temp.res.general">temp.res.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3226">3226</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Conflict of templated entity vs. enclosing template
@@ -9649,7 +9649,7 @@ Conflict of templated entity vs. enclosing template
    https://wg21.link/temp.res.general">temp.res.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3227">3227</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 IFNDR for always-empty packs
@@ -12136,6 +12136,69 @@ name of a pack that is not expanded is ill-formed.
 </PRE>
 -- end example]
 </BLOCKQUOTE>
+<BR><BR><HR>
+<A NAME="3226"></A><H4>3226.
+  
+Conflict of templated entity vs. enclosing template
+</H4>
+<B>Section: </B>13.8.1&#160; [<A href="
+   https://wg21.link/temp.res.general">temp.res.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Egor Mikhailov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-12<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/973">#973</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T&gt;
+  struct Foo
+  {
+    Foo() {}
+    Foo(T) {
+      this-&gt;bar(); //<SPAN CLASS="cmnt"> IFNDR here?</SPAN>
+    }
+  };
+
+  Foo&lt;int&gt; f;
+</PRE>
+
+<P>This ought to be IFNDR, but the enclosing template is, in fact,
+instantiated.  However, the definition of <TT>Foo(T)</TT> is not
+instantiated.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-09-01):</B></P>
+
+<P>Change in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.1">temp.res.general</A>] bullet 6.1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>no valid specialization, ignoring
+<I>static_assert-declarations</I> that fail
+(9.1 [<A href="
+   https://wg21.link/dcl.pre">dcl.pre</A>]), can be generated for a templated entity or
+a substatement of a constexpr if statement
+(8.5.2 [<A href="
+   https://wg21.link/stmt.if">stmt.if</A>]) within a templated entity and <DEL>the
+innermost enclosing template</DEL> <INS>that templated entity or
+substatement</INS> is not instantiated, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
 <BR><BR><HR>
 <A NAME="3222"></A><H4>3222.
   
@@ -20793,6 +20856,90 @@ non-members. &#8212;<I>end note</I>]
 <P><B>CWG 2024-01-19</B></P>
 
 <P>It seems #2 should be chosen, because it is more specialized than #1.</P>
+
+<BR><BR><HR>
+<A NAME="3227"></A><H4>3227.
+  
+IFNDR for always-empty packs
+</H4>
+<B>Section: </B>13.8.1&#160; [<A href="
+   https://wg21.link/temp.res.general">temp.res.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-03-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/878">#878</A>.)</P>
+
+<P>The phrasing in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 is not
+parallel to similar phrasings in bullets 1-3:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>every valid specialization of a variadic template requires an
+empty template parameter pack, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For example, this bullet is vacuously true (but unintentionally so)
+if there is no valid specialization at all.</P>
+
+<P>Also, a similar rule for empty structured binding packs is missing,
+although the example in 9.7 [<A href="
+   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
+indicate support for these.  However, consider:</P>
+
+<PRE>
+  int f(auto x) {
+    auto [...y] = x;
+    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
+    return 0;
+  }
+
+  struct S {};
+  int z = f(S());
+</PRE>
+
+<P>This might be addressed by 13.7.4 [<A href="
+   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
+though, together with the existing rule about valid specializations
+for the function template <TT>f</TT>.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>
+<DEL>every</DEL> <INS>there exists a template parameter pack such
+that no</INS> valid specialization
+<DEL>of</DEL><INS>, ignoring
+<I><TT>static_assert</TT>-declaration</I>s that fail, can be generated
+for</INS> a variadic template <DEL>requires an empty template
+parameter</DEL> <INS>when that</INS> pack <INS>is non-empty</INS>,
+or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="1845"></A><H4>1845.
@@ -52474,152 +52621,6 @@ template's template parameter list.</P>
 <P>(Note: this issue was spun off from
 <A HREF="cwg_active.html#2462">issue 2462</A> to allow the
 resolutions to proceed independently.)</P>
-
-<BR><BR><HR>
-<A NAME="3226"></A><H4>3226.
-  
-Conflict of templated entity vs. enclosing template
-</H4>
-<B>Section: </B>13.8.1&#160; [<A href="
-   https://wg21.link/temp.res.general">temp.res.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Egor Mikhailov
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-08-12<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/973">#973</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  template &lt;typename T&gt;
-  struct Foo
-  {
-    Foo() {}
-    Foo(T) {
-      this-&gt;bar(); //<SPAN CLASS="cmnt"> IFNDR here?</SPAN>
-    }
-  };
-
-  Foo&lt;int&gt; f;
-</PRE>
-
-<P>This ought to be IFNDR, but the enclosing template is, in fact,
-instantiated.  However, the definition of <TT>Foo(T)</TT> is not
-instantiated.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 13.8.1 [<A href="
-   https://wg21.link/temp.res.general#6.1">temp.res.general</A>] bullet 6.1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The program is ill-formed, no diagnostic required, if
-<UL>
-<LI>no valid specialization, ignoring
-<I>static_assert-declarations</I> that fail
-(9.1 [<A href="
-   https://wg21.link/dcl.pre">dcl.pre</A>]), can be generated for a templated entity or
-a substatement of a constexpr if statement
-(8.5.2 [<A href="
-   https://wg21.link/stmt.if">stmt.if</A>]) within a templated entity and <DEL>the
-innermost enclosing template</DEL> <INS>that templated entity or
-substatement</INS> is not instantiated, or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="3227"></A><H4>3227.
-  
-IFNDR for always-empty packs
-</H4>
-<B>Section: </B>13.8.1&#160; [<A href="
-   https://wg21.link/temp.res.general">temp.res.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jay Ghiron
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-03-31<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/878">#878</A>.)</P>
-
-<P>The phrasing in 13.8.1 [<A href="
-   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 is not
-parallel to similar phrasings in bullets 1-3:</P>
-
-<BLOCKQUOTE>
-
-The program is ill-formed, no diagnostic required, if
-<UL>
-<LI>...</LI>
-<LI>every valid specialization of a variadic template requires an
-empty template parameter pack, or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>For example, this bullet is vacuously true (but unintentionally so)
-if there is no valid specialization at all.</P>
-
-<P>Also, a similar rule for empty structured binding packs is missing,
-although the example in 9.7 [<A href="
-   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
-indicate support for these.  However, consider:</P>
-
-<PRE>
-  int f(auto x) {
-    auto [...y] = x;
-    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
-    return 0;
-  }
-
-  struct S {};
-  int z = f(S());
-</PRE>
-
-<P>This might be addressed by 13.7.4 [<A href="
-   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
-though, together with the existing rule about valid specializations
-for the function template <TT>f</TT>.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 13.8.1 [<A href="
-   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-The program is ill-formed, no diagnostic required, if
-<UL>
-<LI>...</LI>
-<LI>
-<DEL>every</DEL> <INS>no</INS> valid specialization
-<DEL>of</DEL><INS>, ignoring
-<I><TT>static_assert</TT>-declaration</I>s that fail, can be
-generated for</INS> a variadic template <DEL>requires an
-empty</DEL> <INS>where a </INS> template parameter pack <INS>is
-non-empty</INS>, or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="186"></A><H4>186.
