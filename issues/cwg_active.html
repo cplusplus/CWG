@@ -9649,7 +9649,7 @@ Conflict of templated entity vs. enclosing template
    https://wg21.link/temp.res.general">temp.res.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3227">3227</A></TD>
-<TD ALIGN="CENTER">review</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 IFNDR for always-empty packs
@@ -12194,6 +12194,91 @@ a substatement of a constexpr if statement
    https://wg21.link/stmt.if">stmt.if</A>]) within a templated entity and <DEL>the
 innermost enclosing template</DEL> <INS>that templated entity or
 substatement</INS> is not instantiated, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3227"></A><H4>3227.
+  
+IFNDR for always-empty packs
+</H4>
+<B>Section: </B>13.8.1&#160; [<A href="
+   https://wg21.link/temp.res.general">temp.res.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-03-31<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/878">#878</A>.)</P>
+
+<P>The phrasing in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 is not
+parallel to similar phrasings in bullets 1-3:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>every valid specialization of a variadic template requires an
+empty template parameter pack, or</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+
+<P>For example, this bullet is vacuously true (but unintentionally so)
+if there is no valid specialization at all.</P>
+
+<P>Also, a similar rule for empty structured binding packs is missing,
+although the example in 9.7 [<A href="
+   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
+indicate support for these.  However, consider:</P>
+
+<PRE>
+  int f(auto x) {
+    auto [...y] = x;
+    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
+    return 0;
+  }
+
+  struct S {};
+  int z = f(S());
+</PRE>
+
+<P>This might be addressed by 13.7.4 [<A href="
+   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
+though, together with the existing rule about valid specializations
+for the function template <TT>f</TT>.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-09-11):</B></P>
+
+<P>Change in 13.8.1 [<A href="
+   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 as follows:</P>
+
+<BLOCKQUOTE>
+
+The program is ill-formed, no diagnostic required, if
+<UL>
+<LI>...</LI>
+<LI>
+<DEL>every</DEL> <INS>there exists a template parameter
+pack <TT>P</TT> of a variadic template <TT>TT</TT> such that no</INS>
+valid specialization
+<DEL>of</DEL><INS>, ignoring
+<I><TT>static_assert</TT>-declaration</I>s that fail, can be generated
+for <TT>TT</TT></INS> <DEL>a variadic template requires an empty template
+parameter pack</DEL> <INS>when <TT>P</TT> is non-empty</INS>,
+or</LI>
 <LI>...</LI>
 </UL>
 
@@ -20856,90 +20941,6 @@ non-members. &#8212;<I>end note</I>]
 <P><B>CWG 2024-01-19</B></P>
 
 <P>It seems #2 should be chosen, because it is more specialized than #1.</P>
-
-<BR><BR><HR>
-<A NAME="3227"></A><H4>3227.
-  
-IFNDR for always-empty packs
-</H4>
-<B>Section: </B>13.8.1&#160; [<A href="
-   https://wg21.link/temp.res.general">temp.res.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jay Ghiron
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-03-31<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/878">#878</A>.)</P>
-
-<P>The phrasing in 13.8.1 [<A href="
-   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 is not
-parallel to similar phrasings in bullets 1-3:</P>
-
-<BLOCKQUOTE>
-
-The program is ill-formed, no diagnostic required, if
-<UL>
-<LI>...</LI>
-<LI>every valid specialization of a variadic template requires an
-empty template parameter pack, or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-
-<P>For example, this bullet is vacuously true (but unintentionally so)
-if there is no valid specialization at all.</P>
-
-<P>Also, a similar rule for empty structured binding packs is missing,
-although the example in 9.7 [<A href="
-   https://wg21.link/dcl.struct.bind#3">dcl.struct.bind</A>] paragraph 3 appears to
-indicate support for these.  However, consider:</P>
-
-<PRE>
-  int f(auto x) {
-    auto [...y] = x;
-    union U : decltype(y)... {}; //<SPAN CLASS="cmnt"> unions cannot have base classes</SPAN>
-    return 0;
-  }
-
-  struct S {};
-  int z = f(S());
-</PRE>
-
-<P>This might be addressed by 13.7.4 [<A href="
-   https://wg21.link/temp.variadic#7">temp.variadic</A>] paragraph 7,
-though, together with the existing rule about valid specializations
-for the function template <TT>f</TT>.</P>
-
-<P><B>Proposed resolution:</B></P>
-
-<P>Change in 13.8.1 [<A href="
-   https://wg21.link/temp.res.general#6.6">temp.res.general</A>] bullet 6.6 as follows:</P>
-
-<BLOCKQUOTE>
-
-The program is ill-formed, no diagnostic required, if
-<UL>
-<LI>...</LI>
-<LI>
-<DEL>every</DEL> <INS>there exists a template parameter pack such
-that no</INS> valid specialization
-<DEL>of</DEL><INS>, ignoring
-<I><TT>static_assert</TT>-declaration</I>s that fail, can be generated
-for</INS> a variadic template <DEL>requires an empty template
-parameter</DEL> <INS>when that</INS> pack <INS>is non-empty</INS>,
-or</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="1845"></A><H4>1845.
@@ -36383,7 +36384,7 @@ value is replaced
 <INS>as follows:</INS>
 <UL>
 <LI class="ins">For each bit <I>b</I> in the value representation that
-is indeterminate or erroneous, the smallest object enclosing <I>b</I>
+is indeterminate or erroneous, any scalar object enclosing <I>b</I>
 has indeterminate value if any of the bits in its value representation
 are indeterminate, or otherwise has an erroneous value.  No other
 subobject of <I>o</I> (if any) has indeterminate or an erroneous
@@ -36421,18 +36422,22 @@ created within it acquires the value representation produced; if any
 such object does not receive a value, the behavior is undefined.</DEL>
 A bit in the value representation of the result is indeterminate if it
 does not correspond to a bit in the value representation of from or
-corresponds to a bit for which the smallest enclosing object is not
-within its lifetime or has an indeterminate value
-(6.8.5 [<A href="
-   https://wg21.link/basic.indet">basic.indet</A>]). A bit in the value representation of the
-result is erroneous if it corresponds to a bit for which the smallest
-enclosing object has an erroneous value.
+corresponds to a bit for which <DEL>the smallest</DEL> <INS>no</INS>
+enclosing <INS>scalar</INS> object is <DEL>not</DEL> within its
+lifetime or <INS>the enclosing scalar object within lifetime, if
+any,</INS> has an indeterminate value (6.8.5 [<A href="
+   https://wg21.link/basic.indet">basic.indet</A>]). A
+bit in the value representation of the result is erroneous if it
+corresponds to a bit for which <DEL>the smallest</DEL> <INS>the</INS>
+enclosing <INS>scalar</INS> object <INS>within lifetime, if any,</INS>
+has an erroneous value.
 <INS>The result acquires (6.9.2 [<A href="
    https://wg21.link/basic.types.trivial">basic.types.trivial</A>]) the value
 representation produced.  If any object among the result of other than
 unsigned ordinary character type or <TT>std::byte</TT> type has
 indeterminate value, the behavior is undefined. Otherwise, if any
-object among the result has erroneous value, the behavior is
+object among the result of other than unsigned ordinary character type
+or <TT>std::byte</TT> type has erroneous value, the behavior is
 erroneous.</INS>
 
 <DEL>For each bit b in the value representation of the result that is
