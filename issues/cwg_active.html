@@ -193,6 +193,8 @@ USA.</P>
 <A HREF="cwg_active.html#3227">3227</A>,
 <A HREF="cwg_active.html#3228">3228</A>,
 <A HREF="cwg_active.html#3229">3229</A>,
+<A HREF="cwg_active.html#3230">3230</A>,
+<A HREF="cwg_active.html#3231">3231</A>,
 </P>
 
 <P><B>Revision 120, 2026-05-31:</B></P>
@@ -4536,8 +4538,8 @@ Alternative tokens appearing as <I>attribute-token</I>s
    https://wg21.link/lex.literal">lex.literal</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#1924">1924</A></TD>
-<TD ALIGN="CENTER">review</TD>
-<TD ALIGN="CENTER">editor</TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Definition of &#8220;literal&#8221; and kinds of literals
 </TD>
@@ -4625,6 +4627,18 @@ Out-of-range literals in <I>user-defined-literal</I>s
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Nomenclature for variable vs reference non-static data member
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">6.1&#160;
+  <A href="
+   https://wg21.link/basic.pre">basic.pre</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3230">3230</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Are non-static data members "variables"?
 </TD>
 </TR>
 <TR>
@@ -9049,7 +9063,7 @@ Allowing template parameters following template parameter packs that are pack ex
    https://wg21.link/temp.param">temp.param</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3213">3213</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Restrictions on the <I>template-head</I> of a concept definition
@@ -9581,6 +9595,18 @@ When is an alias template specialization dependent?
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Uniqueness of lambdas in alias templates
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">13.7.9&#160;
+  <A href="
+   https://wg21.link/temp.concept">temp.concept</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3231">3231</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">EWG</TD>
+<TD ALIGN="LEFT">
+Default template argument for the prototype parameter of a concept
 </TD>
 </TR>
 <TR>
@@ -12070,6 +12096,84 @@ the common comparison type (see below) of R0, R1, ..., Rn-1.</LI>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3213"></A><H4>3213.
+  
+Restrictions on the <I>template-head</I> of a concept definition
+</H4>
+<B>Section: </B>13.2&#160; [<A href="
+   https://wg21.link/temp.param">temp.param</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-07-20<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/951">#951</A>.)</P>
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;typename T, typename U = int, typename V&gt;
+  concept C = true;
+
+  template &lt;typename T = int&gt;
+  concept C2 = true;
+  static_assert(C2&lt;&gt;);
+
+  template &lt;typename... T, typename... U&gt;
+  concept C3 = true;
+
+  template &lt;typename... T, typename U = int&gt;
+  concept C4 = true;
+
+  template &lt;typename... T, typename U&gt;
+  concept C5 = true;
+</PRE>
+
+<P>None of these examples should be valid. There is implementation
+divergence.</P>
+
+<P><B>Additional notes (CWG 2026-09-01)</B></P>
+
+<P>Example <TT>C2</TT> (default argument) was split off into
+<A HREF="cwg_active.html#3231">issue 3231</A> as a question of design.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-09-01):</B></P>
+
+<P>Change in 13.2 [<A href="
+   https://wg21.link/temp.param#19">temp.param</A>] paragraph 19 as follows:</P>
+
+<BLOCKQUOTE>
+
+If a <I>template-parameter</I> of a class template, variable template,
+<INS>concept,</INS> or alias template has a default template argument,
+each subsequent <I>template-parameter</I> shall either have a default
+template argument supplied or declare a template parameter pack. If
+a <I>template-parameter</I> of a primary class template, primary
+variable template, <INS>concept,</INS> or alias template declares a
+template parameter pack, it shall be the last
+<I>template-parameter</I>.  If a <I>template-parameter</I> of a
+function template declares a template parameter pack, it shall not be
+followed by another <I>template-parameter</I> unless that template
+parameter is deducible from the <I>parameter-type-list</I>
+(9.3.4.6 [<A href="
+   https://wg21.link/dcl.fct">dcl.fct</A>]) of the function template or has a
+default argument (13.10.3 [<A href="
+   https://wg21.link/temp.deduct">temp.deduct</A>]). A template parameter
+of a deduction guide template (13.7.2.3 [<A href="
+   https://wg21.link/temp.deduct.guide">temp.deduct.guide</A>]) that
+does not have a default argument shall be deducible from
+the <I>parameter-type-list</I> of the deduction guide template.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3218"></A><H4>3218.
   
 Expanding packs created within a pack expansion
@@ -12713,42 +12817,6 @@ changing the phase 4 treatment of alternative tokens.
 
 <P>Forwarded to EWG with paper issue
 <A HREF="https://github.com/cplusplus/papers/issues/1581">#1581</A>.</P>
-
-<BR><BR><HR>
-<A NAME="1924"></A><H4>1924.
-  
-Definition of &#8220;literal&#8221; and kinds of literals
-</H4>
-<B>Section: </B>5.13&#160; [<A href="
-   https://wg21.link/lex.literal">lex.literal</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>review
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Saeed Amrollah Boyouki
- &#160;&#160;&#160;
-
- <B>Date: </B>2014-05-12
-  &#160;&#160;&#160;
-  <B>Liaison: </B>editor<BR>
-
-
-
-
-<P>The term &#8220;literal&#8221; is used without definition except
-the implicit connection with the syntactic nonterminal <I>literal</I>.
-The relationships of English terms to syntactic nonterminals (such
-as &#8220;integer literal&#8221; and <I>integer-literal</I>) should
-be examined throughout 5.13 [<A href="
-   https://wg21.link/lex.literal">lex.literal</A>] and its subsections.</P>
-
-<P>
-<B>Notes from the November, 2016 meeting:</B>
-</P>
-
-<P>This issue will be handled editorially. It is being placed in
-"review" status until that point.</P>
 
 <BR><BR><HR>
 <A NAME="1897"></A><H4>1897.
@@ -31026,6 +31094,48 @@ an error when a <I>header-name</I> contains ", \, or ' in
 a <TT>__has_include</TT>.</P>
 
 <BR><BR><HR>
+<A NAME="1924"></A><H4>1924.
+  
+Definition of &#8220;literal&#8221; and kinds of literals
+</H4>
+<B>Section: </B>5.13&#160; [<A href="
+   https://wg21.link/lex.literal">lex.literal</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Saeed Amrollah Boyouki
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2014-05-12<BR>
+
+
+
+
+<P>The term &#8220;literal&#8221; is used without definition except
+the implicit connection with the syntactic nonterminal <I>literal</I>.
+The relationships of English terms to syntactic nonterminals (such
+as &#8220;integer literal&#8221; and <I>integer-literal</I>) should
+be examined throughout 5.13 [<A href="
+   https://wg21.link/lex.literal">lex.literal</A>] and its subsections.</P>
+
+<P>
+<B>Notes from the November, 2016 meeting:</B>
+</P>
+
+<P>This issue will be handled editorially. It is being placed in
+"review" status until that point.</P>
+
+<P><B>Additional notes (September, 2026)</B></P>
+
+<P>The common implementation practice to <TT>#define NULL</TT> as,
+say, <TT>__null</TT> to catch attempts to use <TT>NULL</TT> as an
+integer value should be supported, but <TT>NULL</TT> is currently
+specified to yield an integer literal.  In view of this complication,
+this issue should be reconsidered by CWG.</P>
+
+<BR><BR><HR>
 <A NAME="3120"></A><H4>3120.
   
 Incorrect description for interpreting integer literals
@@ -31408,6 +31518,60 @@ quality-of-implementation issue?  Should something be said, either
 normatively or non-normatively, about this question?</P>
 
 <P>See also <A HREF="cwg_active.html#1266">issue 1266</A>.</P>
+
+<BR><BR><HR>
+<A NAME="3230"></A><H4>3230.
+  
+Are non-static data members "variables"?
+</H4>
+<B>Section: </B>6.1&#160; [<A href="
+   https://wg21.link/basic.pre">basic.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jay Ghiron
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-07-18<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/1005">#1005</A>.)</P>
+
+<P>The definition of "variable" in 6.1 [<A href="
+   https://wg21.link/basic.pre#7">basic.pre</A>] paragraph 7
+does not clearly exclude non-static data members, because those are
+also declared using an object declaration as defined in
+9.1 [<A href="
+   https://wg21.link/dcl.pre#8">dcl.pre</A>] paragraph 8.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<P>Change in 6.1 [<A href="
+   https://wg21.link/basic.pre#7">basic.pre</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A variable is introduced by <DEL>the</DEL> <INS>an object</INS>
+declaration <INS>(9.1 [<A href="
+   https://wg21.link/dcl.pre">dcl.pre</A>])</INS> <DEL>D of</DEL>
+<UL class="del">
+<LI>a reference other than a non-static data member or</LI>
+<LI>an object,</LI>
+</UL>
+<DEL>where D</DEL> <INS>that</INS>
+<UL>
+<LI>
+is not the <I>parameter-declaration</I> of
+a <I>template-parameter</I> <INS>and</INS>
+</LI>
+<LI class="ins">does not declare a non-static member (11.4.1 [<A href="
+   https://wg21.link/class.mem.general">class.mem.general</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="1209"></A><H4>1209.
@@ -50406,100 +50570,6 @@ expansion</INS>.</LI>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
-<A NAME="3213"></A><H4>3213.
-  
-Restrictions on the <I>template-head</I> of a concept definition
-</H4>
-<B>Section: </B>13.2&#160; [<A href="
-   https://wg21.link/temp.param">temp.param</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Corentin Jabot
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-07-20<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/951">#951</A>.)</P>
-
-<P>Consider:</P>
-
-<PRE>
-  template &lt;typename T, typename U = int, typename V&gt;
-  concept C = true;
-
-  template &lt;typename T = int&gt;
-  concept C2 = true;
-  static_assert(C2&lt;&gt;);
-
-  template &lt;typename... T, typename... U&gt;
-  concept C3 = true;
-
-  template &lt;typename... T, typename U = int&gt;
-  concept C4 = true;
-
-  template &lt;typename... T, typename U&gt;
-  concept C5 = true;
-</PRE>
-
-<P>None of these examples should be valid. There is implementation
-divergence.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 13.2 [<A href="
-   https://wg21.link/temp.param#19">temp.param</A>] paragraph 19 as follows:</P>
-
-<BLOCKQUOTE>
-
-If a <I>template-parameter</I> of a class template, variable template,
-<INS>concept,</INS> or alias template has a default template argument,
-each subsequent <I>template-parameter</I> shall either have a default
-template argument supplied or declare a template parameter pack. If
-a <I>template-parameter</I> of a primary class template, primary
-variable template, <INS>concept,</INS> or alias template declares a
-template parameter pack, it shall be the last
-<I>template-parameter</I>.  If a <I>template-parameter</I> of a
-function template declares a template parameter pack, it shall not be
-followed by another <I>template-parameter</I> unless that template
-parameter is deducible from the <I>parameter-type-list</I>
-(9.3.4.6 [<A href="
-   https://wg21.link/dcl.fct">dcl.fct</A>]) of the function template or has a
-default argument (13.10.3 [<A href="
-   https://wg21.link/temp.deduct">temp.deduct</A>]). A template parameter
-of a deduction guide template (13.7.2.3 [<A href="
-   https://wg21.link/temp.deduct.guide">temp.deduct.guide</A>]) that
-does not have a default argument shall be deducible from
-the <I>parameter-type-list</I> of the deduction guide template.
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 13.7.9 [<A href="
-   https://wg21.link/temp.concept">temp.concept</A>] as follows:</P>
-
-<BLOCKQUOTE>
-
-The first declared template parameter of a concept definition is its
-<I>prototype parameter</I>. <INS>It shall not have a default argument
-(13.2 [<A href="
-   https://wg21.link/temp.param">temp.param</A>]).</INS> A <I>type concept</I> is a concept
-whose prototype parameter is a type template parameter.
-
-</BLOCKQUOTE>
-
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="579"></A><H4>579.
   
 What is a &#8220;nested&#8221; <TT>&gt;</TT> or <TT>&gt;&gt;</TT>?
@@ -52393,6 +52463,64 @@ treat simple alias templates differently (those would not have
 specializations, but be transparent for template argument deduction)
 from more complicated ones (those would have specializations and be
 morally equivalent to a <TT>struct</TT> with a member typedef).</P>
+
+<BR><BR><HR>
+<A NAME="3231"></A><H4>3231.
+  
+Default template argument for the prototype parameter of a concept
+</H4>
+<B>Section: </B>13.7.9&#160; [<A href="
+   https://wg21.link/temp.concept">temp.concept</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Corentin Jabot
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-07-20
+  &#160;&#160;&#160;
+  <B>Liaison: </B>EWG<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/951">#951</A>.)</P>
+
+<P>It is design-unclear whether the prototype parameter of a concept
+definition is allowed to have a default argument.  That default
+argument would be used only in situations where a <I>concept-id</I>
+appears as a boolean expression.  Example:</P>
+
+<PRE>
+   template &lt;typename T = int&gt;
+   concept C2 = true;
+   static_assert(C2&lt;&gt;);
+
+   template&lt;C2 U&gt;      // U<SPAN CLASS="cmnt"> is not required to be </SPAN>int
+   void f(U);
+</PRE>
+
+<P><U>Suggested resolution of submitter:</U></P>
+
+<P>Change in 13.7.9 [<A href="
+   https://wg21.link/temp.concept">temp.concept</A>] as follows:</P>
+
+<BLOCKQUOTE>
+
+The first declared template parameter of a concept definition is its
+<I>prototype parameter</I>. <INS>It shall not have a default argument
+(13.2 [<A href="
+   https://wg21.link/temp.param">temp.param</A>]).</INS> A <I>type concept</I> is a concept
+whose prototype parameter is a type template parameter.
+
+</BLOCKQUOTE>
+
+<P><B>Additional notes (CWG 2026-09-01)</B></P>
+
+<P>CWG considers this a language design question and requests EWG input via
+<A HREF="https://github.com/cplusplus/papers/issues/2875">paper issue #2875</A>.
+</P>
 
 <BR><BR><HR>
 <A NAME="1257"></A><H4>1257.
