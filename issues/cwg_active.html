@@ -195,6 +195,8 @@ USA.</P>
 <A HREF="cwg_active.html#3229">3229</A>,
 <A HREF="cwg_active.html#3230">3230</A>,
 <A HREF="cwg_active.html#3231">3231</A>,
+<A HREF="cwg_active.html#3232">3232</A>,
+<A HREF="cwg_active.html#3233">3233</A>,
 </P>
 
 <P><B>Revision 120, 2026-05-31:</B></P>
@@ -6370,6 +6372,18 @@ Pointer arithmetic in array-like containers
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">7.6.6&#160;
+  <A href="
+   https://wg21.link/expr.add">expr.add</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3232">3232</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Accidental removal of undefined behavior in pointer subtraction
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">7.6.10&#160;
   <A href="
    https://wg21.link/expr.eq">expr.eq</A>
@@ -7147,6 +7161,18 @@ Default arguments in explicit instantiations
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Default arguments and function parameter packs
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">9.4.1&#160;
+  <A href="
+   https://wg21.link/dcl.contract.func">dcl.contract.func</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3233">3233</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Function contract assertions are needed for pure virtual function calls
 </TD>
 </TR>
 <TR>
@@ -39910,6 +39936,90 @@ See <A HREF="https://github.com/cplusplus/papers/issues/1970">paper issue 1970</
 </P>
 
 <BR><BR><HR>
+<A NAME="3232"></A><H4>3232.
+  
+Accidental removal of undefined behavior in pointer subtraction
+</H4>
+<B>Section: </B>7.6.6&#160; [<A href="
+   https://wg21.link/expr.add">expr.add</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-06-13<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/922">#922</A>.)</P>
+
+<P>Paper P3899R3 (Clarify the behavior of floating-point overflow),
+adopted in June, 2026, accidentally removed undefined behavior for the
+case where the result of subtracting two pointer values is not
+representable as a <TT>std::ptrdiff_t</TT>.  Undefined behavior was
+limited to arithmetic expressions, which pointer subtraction is
+not.</P>
+
+<P><U>Possible resolution:</U></P>
+
+<OL>
+<LI>
+<P>Change in 7.6.6 [<A href="
+   https://wg21.link/expr.add#5">expr.add</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+The result of subtracting two pointer expressions P and Q is a prvalue
+of type std::ptrdiff_t (17.2.4 [<A href="
+   https://wg21.link/support.types.layout">support.types.layout</A>]).
+<UL>
+<LI>If P and Q both evaluate to null pointer values, the value is
+0.</LI>
+<LI>Otherwise, if P and Q point to, respectively, array elements i and
+j of the same array object x, the expression P - Q has the value i -
+j<DEL>.  [<I>Note 2:</I> If</DEL> <INS>;
+if</INS> <DEL>the</DEL> <INS>that</INS> value <DEL>i - j</DEL> is not
+in the range of representable values of type std::ptrdiff_t, the
+behavior is undefined
+(<DEL>7.1 [<A href="
+   https://wg21.link/expr.pre">expr.pre</A>]</DEL> <INS>[expr.sub.pointers.rep]</INS>).
+<DEL>&#8212;<I>end note</I>]</DEL>
+</LI>
+<LI>Otherwise, the behavior is undefined (F.3.31 [<A href="
+   https://wg21.link/ub:expr.add.sub.diff.pointers">ub:expr.add.sub.diff.pointers</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Add a subclause before F.3.31 [<A href="
+   https://wg21.link/ub:expr.add.sub.diff.pointers">ub:expr.add.sub.diff.pointers</A>] as follows:</P>
+
+<BLOCKQUOTE class="ins">
+<B>[ub:expr.sub.pointers.rep]</B><BR>
+
+Specified in: 7.6.6 [<A href="
+   https://wg21.link/expr.add">expr.add</A>]<BR>
+
+Subtracting two expressions of pointer type where the difference is
+not representable in <TT>std::ptrdiff_t</TT> is undefined behavior.
+[Example:
+<PRE>
+  char big[static_cast&lt;std::uintmax_t&gt;(PTRDIFF_MAX) + 1];
+  std::ptrdiff_t d = (big + sizeof(big) - big);   //<SPAN CLASS="cmnt"> undefined behavior</SPAN>
+</PRE>
+&#8212;<I>end example</I>]
+</BLOCKQUOTE>
+
+
+
+</LI>
+</OL>
+<BR><BR><HR>
 <A NAME="2786"></A><H4>2786.
   
 Comparing pointers to complete objects
@@ -43047,6 +43157,59 @@ apparent contradiction.  </P>
 <P>CWG agreed that this example should be accepted; the restriction on
 default arguments applies to the template declaration itself, not to
 its specializations.</P>
+
+<BR><BR><HR>
+<A NAME="3233"></A><H4>3233.
+  
+Function contract assertions are needed for pure virtual function calls
+</H4>
+<B>Section: </B>9.4.1&#160; [<A href="
+   https://wg21.link/dcl.contract.func">dcl.contract.func</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Berne
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-09-06<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/1003">#1003</A>.)</P>
+
+<P>With P3097R3 (Contracts for C++: Virtual functions), adopted in
+June, 2026, function contract assertions are now required to be
+instantiated in cases where a pure virtual function is called, even
+when the function is not odr-used.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 9.4.1 [<A href="
+   https://wg21.link/dcl.contract.func#9">dcl.contract.func</A>] paragraph 9 as follows:</P>
+
+
+
+<BLOCKQUOTE>
+
+The function contract assertions of a function are considered to be
+needed (13.9.2 [<A href="
+   https://wg21.link/temp.inst">temp.inst</A>]) when
+<UL>
+<LI>the function is odr-used
+(6.3 [<A href="
+   https://wg21.link/basic.def.odr">basic.def.odr</A>]) <DEL>or</DEL> <INS>,</INS>
+</LI>
+<LI class="ins">the function is selected by overload resolution
+(12.2 [<A href="
+   https://wg21.link/over.match">over.match</A>], 12.3 [<A href="
+   https://wg21.link/over.over">over.over</A>]) where the
+function call is a potentially evaluated expression, or</LI>
+<LI>the function is defined.</LI>
+</UL>
+
+</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="2991"></A><H4>2991.
