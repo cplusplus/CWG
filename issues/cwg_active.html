@@ -158,7 +158,8 @@ USA.</P>
 <P><B>Revision 122, 2026-??-??:</B></P>
 
 <P>Added new issues
-<A HREF="cwg_active.html#3195">3195</A>,
+<A HREF="cwg_active.html#3239">3239</A>,
+<A HREF="cwg_active.html#3240">3240</A>,
 </P>
 
 <P><B>Revision 121, 2026-10-10:</B></P>
@@ -10501,6 +10502,18 @@ Unclear presentation style of template argument deduction rules
 </TD>
 </TR>
 <TR>
+<TD ALIGN="LEFT">14.3&#160;
+  <A href="
+   https://wg21.link/except.ctor">except.ctor</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3240">3240</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Return object destruction from throwing postcondition evaluation
+</TD>
+</TR>
+<TR>
 <TD ALIGN="LEFT">14.4&#160;
   <A href="
    https://wg21.link/except.handle">except.handle</A>
@@ -10534,6 +10547,18 @@ Dynamically-unreachable handlers
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Stack unwinding when no matching handler is found
+</TD>
+</TR>
+<TR>
+<TD ALIGN="LEFT">14.4&#160;
+  <A href="
+   https://wg21.link/except.handle">except.handle</A>
+</TD>
+<TD ALIGN="RIGHT"><A HREF="#3239">3239</A></TD>
+<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER"></TD>
+<TD ALIGN="LEFT">
+Redundant specification for stack unwinding for <TT>std::terminate</TT>
 </TD>
 </TR>
 <TR>
@@ -46187,7 +46212,7 @@ causes it to be deleted (9.6.2 [<A href="
 the public copy constructor is selected by overload resolution when
 used at #2.</P>
 
-<P><U>Possible resolution:</U></P>
+<P><U>Possible resolution (updated after CWG review 2026-10-06):</U></P>
 
 <P>Change in 11.4.4 [<A href="
    https://wg21.link/special#6">special</A>] paragraph 6 as follows:</P>
@@ -46212,10 +46237,7 @@ constraints, if any, are satisfied is more constrained
 
 <P class="ins">
 where a function F1 is at most as explicit as a function F2 if
-<UL class="ins">
-<LI>both are explicit or neither is or</LI>
-<LI>F1 is not explicit and F2 is explicit.</LI>
-</UL>
+F1 is not explicit or F2 is explicit.
 </P>
 
 </BLOCKQUOTE>
@@ -55309,6 +55331,54 @@ rules seem to cover this case (deduction is not specified to
 but it might be helpful to be clearer.</P>
 
 <BR><BR><HR>
+<A NAME="3240"></A><H4>3240.
+  
+Return object destruction from throwing postcondition evaluation
+</H4>
+<B>Section: </B>14.3&#160; [<A href="
+   https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Berne
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-25<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/988">#988</A>.)</P>
+
+<P>The return object is created while evaluating a <TT>return</TT>
+statement.  It needs to be destroyed when a later evaluation in that
+same function exits via an exception, i.e. destruction of temporaries
+or local variables (already covered).  The consideration of an
+exception thrown from a postcondition evaluation is missing.</P>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 14.3 [<A href="
+   https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each object with automatic storage duration<INS>, as well as the
+return object (if any) of a return statement
+(8.8.4 [<A href="
+   https://wg21.link/stmt.return">stmt.return</A>],</INS> is destroyed if it has been
+constructed, but not yet destroyed, since the try block was
+entered. <DEL>If an exception is thrown during the destruction of
+temporaries or local variables for a return statement
+(8.8.4 [<A href="
+   https://wg21.link/stmt.return">stmt.return</A>]), the destructor for the returned object
+(if any) is also invoked.</DEL> The objects are destroyed in the reverse
+order of the completion of their construction. [ Example: ... ]
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3198"></A><H4>3198.
   
 Stack unwinding when no matching handler is found
@@ -55436,6 +55506,66 @@ an invocation of the function std::terminate.
 <P>This issue interacts with P0876 (fiber_context - fibers without
 scheduler), and is postponed until that paper has been adopted.</P>
 
+<BR><BR><HR>
+<A NAME="3239"></A><H4>3239.
+  
+Redundant specification for stack unwinding for <TT>std::terminate</TT>
+</H4>
+<B>Section: </B>14.4&#160; [<A href="
+   https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>open
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yin Xinyu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-09-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/1014">#1014</A>.)</P>
+
+<P>Subclause 14.4 [<A href="
+   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function std::terminate is
+invoked; whether or not the stack is unwound before this invocation of
+std::terminate is implementation-defined
+(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+
+<P>However, this (and more) is already said in
+14.6.2 [<A href="
+   https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+In the situation where no matching handler is found, it is
+implementation-defined whether or not the stack is unwound before
+<TT>std::terminate</TT> is invoked. ...
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution:</U></P>
+
+<P>Change in 14.4 [<A href="
+   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function std::terminate is
+invoked<DEL>; whether or not the stack is unwound before this invocation of
+std::terminate is implementation-defined</DEL>
+(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2417"></A><H4>2417.
   
