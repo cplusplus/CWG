@@ -4675,7 +4675,7 @@ Are non-static data members "variables"?
    https://wg21.link/basic.pre">basic.pre</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3238">3238</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Postcondition result bindings as declarations
@@ -7891,7 +7891,7 @@ Kind of explicit object copy/move assignment function
    https://wg21.link/special">special</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3234">3234</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 explicit and eligible constructors
@@ -10507,7 +10507,7 @@ Unclear presentation style of template argument deduction rules
    https://wg21.link/except.ctor">except.ctor</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3240">3240</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Return object destruction from throwing postcondition evaluation
@@ -11152,6 +11152,69 @@ a <I>template-parameter</I> <INS>and</INS>
 </UL>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3238"></A><H4>3238.
+  
+Postcondition result bindings as declarations
+</H4>
+<B>Section: </B>6.1&#160; [<A href="
+   https://wg21.link/basic.pre">basic.pre</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yin Xinyu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-09-22<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/1012">#1012</A>.)</P>
+
+<P>There is a conflict between 6.1 [<A href="
+   https://wg21.link/basic.pre#5.4">basic.pre</A>] bullet 5.4 and 9.4.2 [<A href="
+   https://wg21.link/dcl.contract.res#1">dcl.contract.res</A>] paragraph 1.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-16):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.1 [<A href="
+   https://wg21.link/basic.pre#5.4">basic.pre</A>] bullet 5.4 as follows:</P>
+
+<BLOCKQUOTE>
+
+Every name is introduced by a declaration, which is a
+
+<UL>
+<LI>...</LI>
+<LI>
+<DEL><I>identifier</I> in a</DEL> <I>result-name-introducer</I> in
+a postcondition assertion (9.4.2 [<A href="
+   https://wg21.link/dcl.contract.res">dcl.contract.res</A>]),</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.4.2 [<A href="
+   https://wg21.link/dcl.contract.res#1">dcl.contract.res</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>The <I>result-name-introducer</I> of a
+<I>postcondition-specifier</I> is a declaration.</DEL>
+The <I>result-name-introducer</I> introduces the identifier as the
+name of a result binding of the associated function. ...
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="3211"></A><H4>3211.
@@ -12844,6 +12907,112 @@ can result in an ill-formed interpretation.  [Example:
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3234"></A><H4>3234.
+  
+explicit and eligible constructors
+</H4>
+<B>Section: </B>11.4.4&#160; [<A href="
+   https://wg21.link/special">special</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jason Merrill
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-09-30<BR>
+
+
+
+
+<P>Consider:</P>
+
+<PRE>
+  template &lt;class T&gt;
+  struct X {
+    X() = default;
+    X(const X&amp;) = default;
+  private:
+    explicit X(const X&amp;) requires (T::value) = default;  //<SPAN CLASS="cmnt"> #1</SPAN>
+  };
+
+  struct S { static constexpr bool value = true; };
+
+  int main() {
+    const X&lt;S&gt; x;
+    X&lt;S&gt; x2 = x;     //<SPAN CLASS="cmnt"> #2</SPAN>
+  }
+</PRE>
+
+<P>According to 11.4.4 [<A href="
+   https://wg21.link/special#6">special</A>] paragraph 6, the public copy
+constructor is not eligible, because #1 is more constrained.  This
+causes it to be deleted (9.6.2 [<A href="
+   https://wg21.link/dcl.fct.def.default#5">dcl.fct.def.default</A>] paragraph 5).  Yet,
+the public copy constructor is selected by overload resolution when
+used at #2.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-16):</B></P>
+
+<P>Change in 11.4.4 [<A href="
+   https://wg21.link/special#6">special</A>] paragraph 6 as follows:</P>
+
+<BLOCKQUOTE>
+
+An eligible special member function is a special member function for
+which:
+<UL>
+<LI>the function is not deleted,</LI>
+<LI>the associated constraints (13.5 [<A href="
+   https://wg21.link/temp.constr">temp.constr</A>]), if any,
+are satisfied, and</LI>
+<LI>
+<INS>there exists</INS> no special member function
+<UL>
+<LI>
+<INS>that is</INS> of the same kind<INS>,</INS>
+</LI>
+<LI><INS>that is not more
+explicit,</INS></LI>
+<LI>whose associated constraints, if any, are satisfied<INS>, and</INS>
+</LI>
+<LI>
+<INS>that</INS> is more constrained (13.5.5 [<A href="
+   https://wg21.link/temp.constr.order">temp.constr.order</A>])<INS>,</INS>
+</LI>
+</UL>
+<INS>where a function F1 is more explicit than a function F2 if F1 is
+explicit (9.2.3 [<A href="
+   https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>]) and F2 is not</INS>.</LI>
+</UL>
+
+<P class="ins">[ Example:</P>
+<PRE class="ins">
+  template &lt;class T&gt;
+  struct X {
+    X() = default;
+    X(const X&amp;) = default;                         //<SPAN CLASS="cmnt"> #1</SPAN>
+  private:
+    explicit X(const X&amp;) requires true = default;  //<SPAN CLASS="cmnt"> #2</SPAN>
+  };
+
+  int main() {
+    X&lt;int&gt; x;
+    X&lt;int&gt; x2 = x;     //<SPAN CLASS="cmnt"> OK, selects #1; both #1 and #2 are eligible</SPAN>
+  }
+</PRE>
+
+<P class="ins"> -- end example]</P>
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-10-06</B></P>
+
+<P>See also
+<A HREF="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=127627">GCC bugzilla #127627</A>.</P>
+
+<BR><BR><HR>
 <A NAME="3022"></A><H4>3022.
   
 Redundant specification of explicit destructor calls
@@ -13620,6 +13789,53 @@ parameter pack</DEL> <INS>when <TT>P</TT> is non-empty</INS>,
 or</LI>
 <LI>...</LI>
 </UL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3240"></A><H4>3240.
+  
+Return object destruction from throwing postcondition evaluation
+</H4>
+<B>Section: </B>14.3&#160; [<A href="
+   https://wg21.link/except.ctor">except.ctor</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Joshua Berne
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-25<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/988">#988</A>.)</P>
+
+<P>The return object is created while evaluating a <TT>return</TT>
+statement.  It needs to be destroyed when a later evaluation in that
+same function exits via an exception, i.e. destruction of temporaries
+or local variables (already covered).  The consideration of an
+exception thrown from a postcondition evaluation is missing.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-16):</B></P>
+
+<P>Change in 14.3 [<A href="
+   https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each object with automatic storage duration is destroyed if it has been
+constructed, but not yet destroyed, since the try block was
+entered. If an exception is thrown during the destruction of
+temporaries or local variables for a return statement
+(8.8.4 [<A href="
+   https://wg21.link/stmt.return">stmt.return</A>]), <INS>or from the evaluation of postcondition assertions of the enclosing function (7.6.1.3 [<A href="
+   https://wg21.link/expr.call">expr.call</A>]),</INS>
+the destructor for the returned object
+(if any) is also invoked. The objects are destroyed in the reverse
+order of the completion of their construction. [ Example: ... ]
 
 </BLOCKQUOTE>
 
@@ -32684,69 +32900,6 @@ normatively or non-normatively, about this question?</P>
 <P>See also <A HREF="cwg_active.html#1266">issue 1266</A>.</P>
 
 <BR><BR><HR>
-<A NAME="3238"></A><H4>3238.
-  
-Postcondition result bindings as declarations
-</H4>
-<B>Section: </B>6.1&#160; [<A href="
-   https://wg21.link/basic.pre">basic.pre</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Yin Xinyu
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-09-22<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/1012">#1012</A>.)</P>
-
-<P>There is a conflict between 6.1 [<A href="
-   https://wg21.link/basic.pre#5.4">basic.pre</A>] bullet 5.4 and 9.4.2 [<A href="
-   https://wg21.link/dcl.contract.res#1">dcl.contract.res</A>] paragraph 1.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.1 [<A href="
-   https://wg21.link/basic.pre#5.4">basic.pre</A>] bullet 5.4 as follows:</P>
-
-<BLOCKQUOTE>
-
-Every name is introduced by a declaration, which is a
-
-<UL>
-<LI>...</LI>
-<LI>
-<DEL><I>identifier</I> in a</DEL> <I>result-name-introducer</I> in
-a postcondition assertion (9.4.2 [<A href="
-   https://wg21.link/dcl.contract.res">dcl.contract.res</A>]),</LI>
-<LI>...</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 9.4.2 [<A href="
-   https://wg21.link/dcl.contract.res#1">dcl.contract.res</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-<DEL>The <I>result-name-introducer</I> of a
-<I>postcondition-specifier</I> is a declaration.</DEL>
-The <I>result-name-introducer</I> introduces the identifier as the
-name of a result binding of the associated function. ...
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="1209"></A><H4>1209.
   
 Is a potentially-evaluated expression in a template definition a &#8220;use?&#8221;
@@ -37427,7 +37580,7 @@ handle the situation.</P>
   }
 </PRE>
 
-<P><U>Possible resolution:</U></P>
+<P><U>Possible resolution (September, 2026) [SUPERSEDED]:</U></P>
 
 <OL>
 <LI>
@@ -37480,7 +37633,7 @@ an object a of type T whose address is p, and objects nested within a,
 as follows: The object representation of a is the contents of the
 storage prior to the call to start_lifetime_as. <DEL>The value of
 each</DEL> <INS>Each</INS> created object o of trivially copyable type
-<INS>acquires a value representation</INS>
+<INS>acquires its value representation</INS>
 (6.9.1 [<A href="
    https://wg21.link/basic.types.general">basic.types.general</A>])
 <DEL>U is determined in the same manner as for a call to
@@ -37533,6 +37686,158 @@ erroneous.</INS>
 <DEL>For each bit b in the value representation of the result that is
 indeterminate or erroneous, let u be the smallest object containing
 that bit enclosing b:</DEL>
+
+<UL class="del">
+<LI>If u is of unsigned ordinary character type or std::byte type, u
+has an indeterminate value if any of the bits in its value
+representation are indeterminate, or otherwise has an erroneous
+value.</LI>
+<LI>Otherwise, if b is indeterminate, the behavior is undefined.</LI>
+<LI>Otherwise, the behavior is erroneous, and the result is as
+specified above.</LI>
+</UL>
+<DEL>The result does not otherwise contain any indeterminate or
+erroneous values.</DEL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><U>Possible resolution (October, 2026):</U></P>
+
+<P>This resolution depends on the resolution of <A HREF="cwg_active.html#3039">issue 3039</A>.</P>
+
+<OL>
+<LI>
+<P>Change in 6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial#1">basic.types.trivial</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each trivially copyable type T has an implementation-defined set of
+discrete values. Each possible value representation of an object of
+type T corresponds to a distinct implementation-defined subset of this
+set. The union of these subsets is the set of values; for scalar types
+other than object pointer types, each such subset contains no more
+than one value. Certain operations cause an object <INS><I>o</I></INS>
+to <I>acquire</I> a value representation, in which case the object's
+value is replaced
+<DEL>with an unspecified member of the corresponding subset that would
+result in the program having defined behavior, if
+any</DEL>
+<INS>as follows:</INS>
+<UL class="ins">
+<LI>
+Any object has indeterminate value if any of the bits in the value
+representation are indeterminate, otherwise any object has an
+erroneous value if any of the bits in its value representation are
+erreonous. No other subobject of <I>o</I> (if any) has indeterminate
+or an erroneous value.
+</LI>
+<LI>Except where <I>o</I> has indeterminate value, the value
+of <I>o</I> is an unspecified member of the subset corresponding to
+the value representation, selected to maximize the defined prefix of
+the execution (4.1.2 [<A href="
+   https://wg21.link/intro.abstract">intro.abstract</A>]); if the subset is empty,
+the value is not replaced (7.3.2 [<A href="
+   https://wg21.link/conv.lval">conv.lval</A>]).</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 20.2.6 [<A href="
+   https://wg21.link/obj.lifetime#5">obj.lifetime</A>] paragraph 5 as follows:</P>
+
+<BLOCKQUOTE>
+
+<I>Effects:</I> Implicitly creates objects
+(6.8.2 [<A href="
+   https://wg21.link/intro.object">intro.object</A>]) within the denoted region consisting of
+an object a of type T whose address is p, and objects nested within a,
+as follows: The object representation of a is the contents of the
+storage prior to the call to start_lifetime_as. <DEL>The value of
+each</DEL> <INS>Each</INS> created object <DEL>o</DEL> of trivially
+copyable type
+<INS>acquires its value representation (6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>])</INS>
+<DEL>(6.9.1 [<A href="
+   https://wg21.link/basic.types.general">basic.types.general</A>]) U is determined in the same manner
+as for a call to bit_cast&lt;U&gt;(E) (22.11.3 [<A href="
+   https://wg21.link/bit.cast">bit.cast</A>]),
+where E is an lvalue of type U denoting o, except that the storage is
+not accessed</DEL>. The value of any other created object is
+unspecified.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 22.11.3 [<A href="
+   https://wg21.link/bit.cast#3">bit.cast</A>] paragraph 3 as follows: (remove
+rules now redundant with "acquire a value representation"; the entire
+result is trivially copyable per the constraints)</P>
+
+<BLOCKQUOTE>
+
+Returns: An object of type To<DEL>.</DEL><INS>, in which the value of
+a bit <I>b</I> in the object representation is as follows:</INS>
+
+<DEL>Implicitly creates objects nested within the result
+(6.8.2 [<A href="
+   https://wg21.link/intro.object">intro.object</A>]). Each bit of the value representation of
+the result is equal to the corresponding bit in the object
+representation of from. Padding bits of the result are
+unspecified.</DEL>
+<DEL>Every trivially copyable object among the result and each object
+created within it acquires the value representation produced; if any
+such object does not receive a value, the behavior is undefined.</DEL>
+<UL class="ins">
+<LI>If <I>b</I> is a padding bit, its value is unspecified.</LI>
+<LI>Otherwise, if <I>b</I> does not correspond to a bit in the value
+representation of <TT>from</TT>, <I>b</I> has indeterminate value.</LI>
+<LI>Otherwise, if <I>b</I> corresponds to a bit for which no enclosing
+scalar object is within its lifetime, <I>b</I> has indeterminate
+value.</LI>
+<LI>Otherwise, if the smallest enclosing scalar object within lifetime
+has indeterminate value (6.8.5 [<A href="
+   https://wg21.link/basic.indet">basic.indet</A>]), <I>b</I> has
+indeterminate value.</LI>
+<LI>Otherwise, the value of <I>b</I> is the value of the corresponding
+bit in the object representation of <TT>from</TT>; if <I>b</I>
+corresponds to a bit for which the smallest enclosing scalar object
+within lifetime has an erroneous value, <I>b</I> has an erroneous
+value.</LI>
+</UL>
+
+<P class="ins">Remarks: Implicitly creates objects nested within the
+result (6.8.2 [<A href="
+   https://wg21.link/intro.object">intro.object</A>]).  Every trivially copyable object
+among the result and each object created within it acquires
+(6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>]) the value representation produced. For
+any object <I>o</I> that is the result or a subobject thereof, of other
+than unsigned ordinary character type or <TT>std::byte</TT> type,
+if <I>o</I> has indeterminate value, the behavior is undefined;
+otherwise, if <I>o</I> has an erroneous value, the behavior is
+erroneous.
+</P>
+
+<P class="del">
+A bit in the value representation of the result is indeterminate if it
+does not correspond to a bit in the value representation of from or
+corresponds to a bit for which the smallest enclosing object is not
+within its lifetime or has an indeterminate value
+(6.8.5 [<A href="
+   https://wg21.link/basic.indet">basic.indet</A>]). A bit in the value representation of the
+result is erroneous if it corresponds to a bit for which the smallest
+enclosing object has an erroneous value.
+
+For each bit b in the value representation of the result that is
+indeterminate or erroneous, let u be the smallest object containing
+that bit enclosing b:
+</P>
 
 <UL class="del">
 <LI>If u is of unsigned ordinary character type or std::byte type, u
@@ -46164,88 +46469,6 @@ of them is</INS>.</LI>
 </UL>
 
 </BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="3234"></A><H4>3234.
-  
-explicit and eligible constructors
-</H4>
-<B>Section: </B>11.4.4&#160; [<A href="
-   https://wg21.link/special">special</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jason Merrill
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-09-30<BR>
-
-
-
-
-<P>Consider:</P>
-
-<PRE>
-  template &lt;class T&gt;
-  struct X {
-    X() = default;
-    X(const X&amp;) = default;
-  private:
-    explicit X(const X&amp;) requires (T::value) = default;  //<SPAN CLASS="cmnt"> #1</SPAN>
-  };
-
-  struct S { static constexpr bool value = true; };
-
-  int main() {
-    const X&lt;S&gt; x;
-    X&lt;S&gt; x2 = x;     //<SPAN CLASS="cmnt"> #2</SPAN>
-  }
-</PRE>
-
-<P>According to 11.4.4 [<A href="
-   https://wg21.link/special#6">special</A>] paragraph 6, the public copy
-constructor is not eligible, because #1 is more constrained.  This
-causes it to be deleted (9.6.2 [<A href="
-   https://wg21.link/dcl.fct.def.default#5">dcl.fct.def.default</A>] paragraph 5).  Yet,
-the public copy constructor is selected by overload resolution when
-used at #2.</P>
-
-<P><U>Possible resolution (updated after CWG review 2026-10-06):</U></P>
-
-<P>Change in 11.4.4 [<A href="
-   https://wg21.link/special#6">special</A>] paragraph 6 as follows:</P>
-
-<BLOCKQUOTE>
-
-An eligible special member function is a special member function for
-which:
-<UL>
-<LI>the function is not deleted,</LI>
-<LI>the associated constraints (13.5 [<A href="
-   https://wg21.link/temp.constr">temp.constr</A>]), if any,
-are satisfied, and</LI>
-<LI>no special member function of the same kind <INS>and at most as
-explict (9.2.3 [<A href="
-   https://wg21.link/dcl.fct.spec">dcl.fct.spec</A>])</INS> whose associated
-constraints, if any, are satisfied is more constrained
-(13.5.5 [<A href="
-   https://wg21.link/temp.constr.order">temp.constr.order</A>])<DEL>.</DEL><INS>,</INS>
-</LI>
-</UL>
-
-<P class="ins">
-where a function F1 is at most as explicit as a function F2 if
-F1 is not explicit or F2 is explicit.
-</P>
-
-</BLOCKQUOTE>
-
-<P><B>CWG 2026-10-06</B></P>
-
-<P>See also
-<A HREF="https://gcc.gnu.org/bugzilla/show_bug.cgi?id=127627">GCC bugzilla #127627</A>.</P>
 
 <BR><BR><HR>
 <A NAME="2841"></A><H4>2841.
@@ -55329,54 +55552,6 @@ type.</P>
 rules seem to cover this case (deduction is not specified to
 &#8220;succeed,&#8221; so it's a reasonable conclusion that it fails),
 but it might be helpful to be clearer.</P>
-
-<BR><BR><HR>
-<A NAME="3240"></A><H4>3240.
-  
-Return object destruction from throwing postcondition evaluation
-</H4>
-<B>Section: </B>14.3&#160; [<A href="
-   https://wg21.link/except.ctor">except.ctor</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Joshua Berne
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-08-25<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/988">#988</A>.)</P>
-
-<P>The return object is created while evaluating a <TT>return</TT>
-statement.  It needs to be destroyed when a later evaluation in that
-same function exits via an exception, i.e. destruction of temporaries
-or local variables (already covered).  The consideration of an
-exception thrown from a postcondition evaluation is missing.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 14.3 [<A href="
-   https://wg21.link/except.ctor#2">except.ctor</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-Each object with automatic storage duration<INS>, as well as the
-return object (if any) of a return statement
-(8.8.4 [<A href="
-   https://wg21.link/stmt.return">stmt.return</A>],</INS> is destroyed if it has been
-constructed, but not yet destroyed, since the try block was
-entered. <DEL>If an exception is thrown during the destruction of
-temporaries or local variables for a return statement
-(8.8.4 [<A href="
-   https://wg21.link/stmt.return">stmt.return</A>]), the destructor for the returned object
-(if any) is also invoked.</DEL> The objects are destroyed in the reverse
-order of the completion of their construction. [ Example: ... ]
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="3198"></A><H4>3198.
