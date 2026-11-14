@@ -4578,7 +4578,7 @@ Definition of &#8220;literal&#8221; and kinds of literals
    https://wg21.link/lex.icon">lex.icon</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3120">3120</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Incorrect description for interpreting integer literals
@@ -5047,7 +5047,7 @@ Redeclaration of types and namespaces and their aliases
    https://wg21.link/basic.link">basic.link</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3220">3220</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Regression in module attachment rules introduced by CWG3171
@@ -5131,7 +5131,7 @@ Undefined behavior from implicit object creation ignores observable checkpoints
    https://wg21.link/intro.object">intro.object</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3144">3144</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Granularity of implementation choice for <TT>sizeof</TT> and subobject offsets
@@ -5611,7 +5611,7 @@ Representation of unsigned integral types
    https://wg21.link/basic.extended.fp">basic.extended.fp</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3036">3036</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Extended floating-point types should not be cv-qualified
@@ -5899,7 +5899,7 @@ Conversion of <TT>bool</TT> to signed integer of width 1
    https://wg21.link/expr.arith.conv">expr.arith.conv</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2981">2981</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Usual arithmetic conversions and result types
@@ -7147,7 +7147,7 @@ Packs in a function's parameter-type-list
    https://wg21.link/dcl.fct">dcl.fct</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3121">3121</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Zero-size arrays in function parameters
@@ -10075,7 +10075,7 @@ Explicit specialization of defaulted special member function
    https://wg21.link/temp.inst">temp.inst</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3034">3034</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">tentatively ready</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Infinite recursion should hit an implementation limit
@@ -11464,6 +11464,73 @@ note</I>]
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3144"></A><H4>3144.
+  
+Granularity of implementation choice for <TT>sizeof</TT> and subobject offsets
+</H4>
+<B>Section: </B>6.8.2&#160; [<A href="
+   https://wg21.link/intro.object">intro.object</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Tomasz Kami&#324;ski
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-12-16<BR>
+
+
+
+
+<P>The size of an object depends on the implementation
+(7.6.2.5 [<A href="
+   https://wg21.link/expr.sizeof">expr.sizeof</A>]).  Similarly, the size and location of
+padding depends on the implementation (6.9.1 [<A href="
+   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4).</P>
+
+<P>Equality-comparing pointers compares their addresses (independent
+of provenance) (7.6.10 [<A href="
+   https://wg21.link/expr.eq#3">expr.eq</A>] paragraph 3), which makes the
+padding choices of implementations observable.  Reflection facilities
+provide similar means. Note that such address comparisons need to be
+supported only within a single complete object, not across complete
+objects (see also <A HREF="cwg_defects.html#2765">issue 2765</A>).</P>
+
+<P>It is intended that the implemenation can choose size and padding
+per type and per program, but these choices cannot vary for a given
+type within a single program.  However, there is insufficient
+specification to that end.  The question arises in particular whether
+equality-comparing pointers to subobjects (or elements of the object
+representation) at compile time and at runtime is permitted to yield
+different outcomes.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-27):</B></P>
+
+<P>Change in 6.9.1 [<A href="
+   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+<P>The <I>object representation</I> of a complete object type T is the
+sequence of N unsigned char objects taken up by a non-bit-field
+complete object of type T, where N equals sizeof(T)
+<INS>(7.6.2.5 [<A href="
+   https://wg21.link/expr.sizeof">expr.sizeof</A>])</INS>.  ... For
+trivially copyable types, the value representation is a set of bits in
+the object representation that determines a value, which is one
+discrete element of an implementation-defined set of values.  [
+Footnote: ... ]</P>
+
+<P class="ins">
+For any complete object type, its size and the presence and placement
+of padding does not vary within a program (including during constant
+evaluation (7.7 [<A href="
+   https://wg21.link/expr.const">expr.const</A>])).
+</P>
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3208"></A><H4>3208.
   
 Base classes of virtual base classes
@@ -11677,6 +11744,60 @@ perform a <TT>longjmp</TT>).</P>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3036"></A><H4>3036.
+  
+Extended floating-point types should not be cv-qualified
+</H4>
+<B>Section: </B>6.9.4&#160; [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-06-03<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/710">#710</A>.)</P>
+
+<P>It is underspecified whether <TT>std::float16_t</TT> and related
+extended floating-point types are cv-qualified or not.  The intent is
+that those are cv-unqualified.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-27):</B></P>
+
+<P>Change in 17.4.2 [<A href="
+   https://wg21.link/stdfloat.syn">stdfloat.syn</A>] as follows:</P>
+
+<PRE>
+  namespace std {
+    #if defined(__STDCPP_FLOAT16_T__)
+      using float16_t = <DEL>implementation-defined</DEL> <INS>decltype(1.0f16)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
+    #endif
+    #if defined(__STDCPP_FLOAT32_T__)
+      using float32_t = <DEL>implementation-defined</DEL> <INS>decltype(1.0f32)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
+    #endif
+    #if defined(__STDCPP_FLOAT64_T__)
+      using float64_t = <DEL>implementation-defined</DEL> <INS>decltype(1.0f64)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
+    #endif
+    #if defined(__STDCPP_FLOAT128_T__)
+      using float128_t = <DEL>implementation-defined</DEL> <INS>decltype(1.0f128)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
+    #endif
+    #if defined(__STDCPP_BFLOAT16_T__)
+      using bfloat16_t = <DEL>implementation-defined</DEL> <INS>decltype(1.0bf16)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
+   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
+    #endif
+  }
+</PRE>
+<BR><BR><HR>
 <A NAME="3137"></A><H4>3137.
   
 Composite pointer type with qualification and pointer-to-member conversions
@@ -11793,6 +11914,210 @@ integer <INS>value</INS> modulo 2^N, where N is the width of the
 destination type.</P>
 
 </BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="2981"></A><H4>2981.
+  
+Usual arithmetic conversions and result types
+</H4>
+<B>Section: </B>7.4&#160; [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-01-02<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/663">#663</A>.)
+</P>
+
+<P>Subclause 7.4 [<A href="
+   https://wg21.link/expr.arith.conv#1">expr.arith.conv</A>] paragraph 1 specifies:</P>
+
+<BLOCKQUOTE>
+
+Many binary operators that expect operands of arithmetic or
+enumeration type cause conversions and yield result types in a similar
+way. The purpose is to yield a common type, which is also the type of
+the result. ...
+
+</BLOCKQUOTE>
+
+<P>However, while the relational and equality operators do apply the
+usual arithmetic conversions, their result type is <TT>bool</TT> and
+not the common type from the usual arithmetic conversions.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-27):</B></P>
+
+<OL>
+<LI>
+<P>Change in 7.4 [<A href="
+   https://wg21.link/expr.arith.conv#1">expr.arith.conv</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Many binary operators that expect operands of arithmetic or
+enumeration type cause conversions <DEL>and yield result types</DEL>
+in a similar way. The purpose is to yield a common type<DEL>, which is
+also the type of the result</DEL>. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.5 [<A href="
+   https://wg21.link/expr.mul#2">expr.mul</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+The operands of * and / shall have arithmetic or unscoped enumeration
+type; the operands of % shall have integral or unscoped enumeration
+type. The usual arithmetic conversions (7.4 [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are
+performed on the operands<INS>,</INS>
+and <DEL>determine the type of</DEL> the result <INS>is a prvalue of
+the type of the converted operands</INS>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.6 [<A href="
+   https://wg21.link/expr.add#1">expr.add</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The additive operators + and - group left-to-right. Each operand shall
+be a prvalue. <INS>The result is a prvalue.</INS> If both operands
+have arithmetic or unscoped enumeration type, the usual arithmetic
+conversions (7.4 [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the
+operands, and the result is of the type of the converted operands</INS>.
+Otherwise, if one operand has arithmetic or unscoped enumeration type,
+integral promotion is applied (7.3.7 [<A href="
+   https://wg21.link/conv.prom">conv.prom</A>]) to that
+operand. A converted or promoted operand is used in place of the
+corresponding original operand for the remainder of this section.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.9 [<A href="
+   https://wg21.link/expr.rel#2">expr.rel</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+The converted operands shall have arithmetic, enumeration, or pointer
+type. The operators &lt; (less than), &gt; (greater than), &lt;= (less
+than or equal to), and &gt;= (greater than or equal to) all yield
+<INS>prvalues of</INS> <DEL>false or true. The</DEL> type <DEL>of the
+result is</DEL> bool.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.10 [<A href="
+   https://wg21.link/expr.eq#2">expr.eq</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+The converted operands shall have scalar type. The operators == and !=
+both yield <DEL>true or false, i.e.,</DEL>
+a <DEL>result</DEL> <INS>prvalue</INS> of type bool. In each case
+below, the operands shall have the same type after the specified
+conversions have been applied.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.11 [<A href="
+   https://wg21.link/expr.bit.and#1">expr.bit.and</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The &amp; operator groups left-to-right. The operands shall be of
+integral or unscoped enumeration type. The usual arithmetic
+conversions (7.4 [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the
+operands, and the result is a prvalue of the type of the converted
+operands</INS>. Given the coefficients xi and yi of the base-2
+representation (6.9.3 [<A href="
+   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands
+x and y, the coefficient ri of the base-2 representation of the result
+r is 1 if both xi and yi are 1, and 0 otherwise.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.12 [<A href="
+   https://wg21.link/expr.xor#1">expr.xor</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The ^ operator groups left-to-right. The operands shall be of integral
+or unscoped enumeration type. The usual arithmetic conversions
+(7.4 [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the operands, and the
+result is a prvalue of the type of the converted operands</INS>. Given
+the coefficients xi and yi of the base-2 representation
+(6.9.3 [<A href="
+   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands x and y, the
+coefficient ri of the base-2 representation of the result r is 1 if
+either (but not both) of xi and yi is 1, and 0 otherwise.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 7.6.13 [<A href="
+   https://wg21.link/expr.or#1">expr.or</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+The | operator groups left-to-right. The operands shall be of integral
+or unscoped enumeration type. The usual arithmetic conversions
+(7.4 [<A href="
+   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the operands, and the
+result is a prvalue of the type of the converted operands</INS>. Given
+the coefficients xi and yi of the base-2 representation
+(6.9.3 [<A href="
+   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands x and y, the
+coefficient ri of the base-2 representation of the result r is 1 if at
+least one of xi and yi is 1, and 0 otherwise.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 7.6.16 [<A href="
+   https://wg21.link/expr.cond#7.2">expr.cond</A>] bullet 7.2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<UL>
+<LI>...</LI>
+<LI>The second and third operands have arithmetic or enumeration type;
+the usual arithmetic conversions are performed <DEL>to bring them to a
+common type</DEL>, and the result is of <DEL>that</DEL> <INS>the</INS>
+type <INS>of the converted operands</INS>.</LI>
+<LI>...</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="3204"></A><H4>3204.
@@ -12493,6 +12818,46 @@ supported by the type system so that they cannot be subverted without
 casting (7.6.1.11 [<A href="
    https://wg21.link/expr.const.cast">expr.const.cast</A>]).  &#8212;<I>end note</I>]
 
+</BLOCKQUOTE>
+
+<BR><BR><HR>
+<A NAME="3121"></A><H4>3121.
+  
+Zero-size arrays in function parameters
+</H4>
+<B>Section: </B>9.3.4.6&#160; [<A href="
+   https://wg21.link/dcl.fct">dcl.fct</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Jan Schultke
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-08<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/797">#797</A>.)</P>
+
+<P>Clarify that a zero-size array as a function parameter is
+ill-formed, because the array-to-pointer canonicalization happens
+later.  There is implementation divergence.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-27):</B></P>
+
+<P>Change in 9.3.4.6 [<A href="
+   https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+...
+<PRE>
+  void h(int x(const int));  //<SPAN CLASS="cmnt"> #3</SPAN>
+  void h(int (*)(int)) {}    //<SPAN CLASS="cmnt"> defines #3</SPAN>
+
+<INS>  void j(int[0]);            //<SPAN CLASS="cmnt"> error: </SPAN>int[0]<SPAN CLASS="cmnt"> is not a valid type</SPAN></INS>
+</PRE>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
@@ -13793,6 +14158,48 @@ or</LI>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
+<A NAME="3034"></A><H4>3034.
+  
+Infinite recursion should hit an implementation limit
+</H4>
+<B>Section: </B>13.9.2&#160; [<A href="
+   https://wg21.link/temp.inst">temp.inst</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>tentatively ready
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Timur Doumler
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-07-04<BR>
+
+
+
+
+<P>Infinite recursion during template instantiation is specified to
+yield undefined behavior in 13.9.2 [<A href="
+   https://wg21.link/temp.inst#16">temp.inst</A>] paragraph 16.
+However, instantiation should be subject to compile-time
+implementation limits and not cause runtime undefined behavior.</P>
+
+<P><B>Proposed resolution (approved by CWG 2026-10-27):</B></P>
+
+<P>Change in 13.9.2 [<A href="
+   https://wg21.link/temp.inst#16">temp.inst</A>] paragraph 16 as follows:</P>
+
+<BLOCKQUOTE>
+
+There is an implementation-defined quantity that specifies the limit
+on the total depth of recursive instantiations
+(Clause Annex B [<A href="
+   https://wg21.link/implimits">implimits</A>]), which could involve more than one
+template. <DEL>The result of an infinite recursion in instantiation is
+undefined.</DEL>
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="3240"></A><H4>3240.
   
 Return object destruction from throwing postcondition evaluation
@@ -14362,6 +14769,52 @@ changing the phase 4 treatment of alternative tokens.
 <A HREF="https://github.com/cplusplus/papers/issues/1581">#1581</A>.</P>
 
 <BR><BR><HR>
+<A NAME="3120"></A><H4>3120.
+  
+Incorrect description for interpreting integer literals
+</H4>
+<B>Section: </B>5.13.2&#160; [<A href="
+   https://wg21.link/lex.icon">lex.icon</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Masaki Moriguchi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-11-08<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/794">#794</A>.)</P>
+
+<P>The octal integer literal <TT>0</TT> is not covered by the rule in
+5.13.2 [<A href="
+   https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2026-10-27, with low quorum):</B></P>
+
+<P>Change in 5.13.2 [<A href="
+   https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+In an <I>integer-literal</I>,
+<UL>
+<LI>the sequence of <I>binary-digit</I>s<DEL>, <I>octal-digit</I>s,
+<I>digit</I>s,</DEL> or <I>hexadecimal-digit</I>s <INS>or</INS>
+</LI>
+<LI class="ins">the sequence of digits in an <I>octal-literal</I>
+or <I>decimal-literal</I>
+</LI>
+</UL>
+is interpreted as a base N integer as shown in Table 7; the lexically
+first digit of the sequence of digits is the most significant.
+
+</BLOCKQUOTE>
+
+<BR><BR><HR>
 <A NAME="1897"></A><H4>1897.
   
 ODR vs alternative tokens
@@ -14596,6 +15049,190 @@ entity attached to M (6.7 [<A href="
 
 <P>A gcc implementer reports that the status quo rule is needed to
 support implementing the standard library.</P>
+<BR><BR><HR>
+<A NAME="3220"></A><H4>3220.
+  
+Regression in module attachment rules introduced by CWG3171
+</H4>
+<B>Section: </B>6.7&#160; [<A href="
+   https://wg21.link/basic.link">basic.link</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yehuda Bern&#225;th
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-08-15<BR>
+
+
+<P>(From thread beginning
+<A HREF="https://lists.isocpp.org/std-discussion/2026/08/3456.php">here</A>.)</P>
+
+<P>
+<A HREF="cwg_defects.html#3171">Issue 3171</A> was misguided in turning a
+normative rule about module attachment into a note.  The "precedes"
+condition is implied, though, once template specializations are
+attached to the module of the primary template.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.7 [<A href="
+   https://wg21.link/basic.link#10">basic.link</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 5:</I></DEL> If two declarations <DEL>correspond
+but</DEL> <INS>of an entity</INS> are attached to different modules,
+the program is ill-formed <DEL>if one precedes the other
+(6.4.1 [<A href="
+   https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
+[ Example 2:
+<PRE>
+  ...
+  int g();   //<SPAN CLASS="cmnt"> error: <DEL>corresponds to</DEL> <INS>matches</INS> #2, but attached to M</SPAN>
+  ...
+</PRE>
+-- end example]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 10.1 [<A href="
+   https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A module is either a named module or the global module. A declaration
+is <I>attached</I> to a module as follows:
+<UL>
+<LI>If the declaration is a
+non-dependent friend declaration that nominates a function with
+a <I>declarator-id</I> that is a <I>qualified-id</I>
+or <I>template-id</I> or that nominates a class other than with
+an <I>elaborated-type-specifier</I> with neither
+a <I>nested-name-specifier</I> nor a <I>simple-template-id</I>, it is
+attached to the module to which the friend is attached
+(6.7 [<A href="
+   https://wg21.link/basic.link">basic.link</A>]).</LI>
+<LI class="ins">Otherwise, if the declaration declares a template
+specialization (13.7.6 [<A href="
+   https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
+13.9.4 [<A href="
+   https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), it is attached to the module to which
+the primary template is attached.</LI>
+<LI>Otherwise, if the declaration
+<UL>
+<LI>declares a namespace whose name has external linkage,</LI>
+<LI>declares a type alias,</LI>
+<LI>declares a namespace alias, or</LI>
+<LI>appears within a <I>linkage-specification</I>
+(9.12 [<A href="
+   https://wg21.link/dcl.link">dcl.link</A>])</LI>
+</UL>
+it is attached to the global module.</LI>
+<LI>Otherwise, the declaration is attached to the module in whose
+purview it appears.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
+<P><B>Additional notes (2026-08-21)</B></P>
+
+<P>The suggested resolution does not handle the case of an <TT>extern
+"C"</TT> declaration (which is always attached to the global module)
+vs. a declaration of global-scope variable attached to a named
+module; see 9.12 [<A href="
+   https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7.</P>
+
+<P><B>Proposed resolution (reviewed by CWG 2026-10-27, with low quorum):</B></P>
+
+<OL>
+<LI>
+<P>Change in 6.7 [<A href="
+   https://wg21.link/basic.link#10">basic.link</A>] paragraph 10 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>[<I>Note 5:</I></DEL> If two declarations <DEL>correspond
+but</DEL> <INS>of an entity</INS> are attached to different modules,
+the program is ill-formed <DEL>if one precedes the other
+(6.4.1 [<A href="
+   https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
+[ Example 2:
+<PRE>
+  ...
+  int g();   //<SPAN CLASS="cmnt"> error: <DEL>corresponds to</DEL> <INS>matches</INS> #2, but attached to M</SPAN>
+  ...
+</PRE>
+-- end example]
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 9.12 [<A href="
+   https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+Two declarations declare the same entity if they (re)introduce the
+same name, one declares a function or variable with C language
+linkage, and the other declares such an entity or declares a variable
+that belongs to the global scope <INS>and is attached to the global
+module</INS>. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 10.1 [<A href="
+   https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+A module is either a named module or the global module. A declaration
+is <I>attached</I> to a module as follows:
+<UL>
+<LI>If the declaration is a
+non-dependent friend declaration that nominates a function with
+a <I>declarator-id</I> that is a <I>qualified-id</I>
+or <I>template-id</I> or that nominates a class other than with
+an <I>elaborated-type-specifier</I> with neither
+a <I>nested-name-specifier</I> nor a <I>simple-template-id</I>, it is
+attached to the module to which the friend is attached
+(6.7 [<A href="
+   https://wg21.link/basic.link">basic.link</A>]).</LI>
+<LI class="ins">Otherwise, if the declaration declares a template
+specialization (13.7.6 [<A href="
+   https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
+13.9.4 [<A href="
+   https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), it is attached to the module to which
+the primary template is attached.</LI>
+<LI>Otherwise, if the declaration
+<UL>
+<LI>declares a namespace whose name has external linkage,</LI>
+<LI>declares a type alias,</LI>
+<LI>declares a namespace alias, or</LI>
+<LI>appears within a <I>linkage-specification</I>
+(9.12 [<A href="
+   https://wg21.link/dcl.link">dcl.link</A>])</LI>
+</UL>
+it is attached to the global module.</LI>
+<LI>Otherwise, the declaration is attached to the module in whose
+purview it appears.</LI>
+</UL>
+
+</BLOCKQUOTE>
+</LI>
+</OL>
+
 <BR><BR><HR>
 <A NAME="2940"></A><H4>2940.
   
@@ -32516,53 +33153,6 @@ specified to yield an integer literal.  In view of this complication,
 this issue should be reconsidered by CWG.</P>
 
 <BR><BR><HR>
-<A NAME="3120"></A><H4>3120.
-  
-Incorrect description for interpreting integer literals
-</H4>
-<B>Section: </B>5.13.2&#160; [<A href="
-   https://wg21.link/lex.icon">lex.icon</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Masaki Moriguchi
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-11-08<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/794">#794</A>.)</P>
-
-<P>The octal integer literal <TT>0</TT> is not covered by the rule in
-5.13.2 [<A href="
-   https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 5.13.2 [<A href="
-   https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-In an <I>integer-literal</I>,
-<UL>
-<LI>the sequence of <I>binary-digit</I>s<DEL>, <I>octal-digit</I>s,
-<I>digit</I>s,</DEL> or <I>hexadecimal-digit</I>s <INS>or</INS>
-</LI>
-<LI class="ins">the sequence of digits in an <I>octal-literal</I>
-or <I>decimal-literal</I>
-</LI>
-</UL>
-<DEL>is</DEL> <INS>are</INS> interpreted as a base N integer as shown
-in Table 7; the lexically first digit of the sequence of digits is the
-most significant.
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="2752"></A><H4>2752.
   
 Excess-precision floating-point literals
@@ -34360,190 +34950,6 @@ P is odr-used by N unless
 </BLOCKQUOTE>
 
 <BR><BR><HR>
-<A NAME="3220"></A><H4>3220.
-  
-Regression in module attachment rules introduced by CWG3171
-</H4>
-<B>Section: </B>6.7&#160; [<A href="
-   https://wg21.link/basic.link">basic.link</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Yehuda Bern&#225;th
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-08-15<BR>
-
-
-<P>(From thread beginning
-<A HREF="https://lists.isocpp.org/std-discussion/2026/08/3456.php">here</A>.)</P>
-
-<P>
-<A HREF="cwg_defects.html#3171">Issue 3171</A> was misguided in turning a
-normative rule about module attachment into a note.  The "precedes"
-condition is implied, though, once template specializations are
-attached to the module of the primary template.</P>
-
-<P><U>Suggested resolution [SUPERSEDED]:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.7 [<A href="
-   https://wg21.link/basic.link#10">basic.link</A>] paragraph 10 as follows:</P>
-
-<BLOCKQUOTE>
-
-<DEL>[<I>Note 5:</I></DEL> If two declarations <DEL>correspond
-but</DEL> <INS>of an entity</INS> are attached to different modules,
-the program is ill-formed <DEL>if one precedes the other
-(6.4.1 [<A href="
-   https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
-[ Example 2:
-<PRE>
-  ...
-  int g();   //<SPAN CLASS="cmnt"> error: <DEL>corresponds to</DEL> <INS>matches</INS> #2, but attached to M</SPAN>
-  ...
-</PRE>
--- end example]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 10.1 [<A href="
-   https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 as follows:</P>
-
-<BLOCKQUOTE>
-
-A module is either a named module or the global module. A declaration
-is <I>attached</I> to a module as follows:
-<UL>
-<LI>If the declaration is a
-non-dependent friend declaration that nominates a function with
-a <I>declarator-id</I> that is a <I>qualified-id</I>
-or <I>template-id</I> or that nominates a class other than with
-an <I>elaborated-type-specifier</I> with neither
-a <I>nested-name-specifier</I> nor a <I>simple-template-id</I>, it is
-attached to the module to which the friend is attached
-(6.7 [<A href="
-   https://wg21.link/basic.link">basic.link</A>]).</LI>
-<LI class="ins">Otherwise, if the declaration declares a template
-specialization (13.7.6 [<A href="
-   https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
-13.9.4 [<A href="
-   https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), it is attached to the module to which
-the primary template is attached.</LI>
-<LI>Otherwise, if the declaration
-<UL>
-<LI>declares a namespace whose name has external linkage,</LI>
-<LI>declares a type alias,</LI>
-<LI>declares a namespace alias, or</LI>
-<LI>appears within a <I>linkage-specification</I>
-(9.12 [<A href="
-   https://wg21.link/dcl.link">dcl.link</A>])</LI>
-</UL>
-it is attached to the global module.</LI>
-<LI>Otherwise, the declaration is attached to the module in whose
-purview it appears.</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<P><B>Additional notes (2026-08-21)</B></P>
-
-<P>The suggested resolution does not handle the case of an <TT>extern
-"C"</TT> declaration (which is always attached to the global module)
-vs. a declaration of global-scope variable attached to a named
-module; see 9.12 [<A href="
-   https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.7 [<A href="
-   https://wg21.link/basic.link#10">basic.link</A>] paragraph 10 as follows:</P>
-
-<BLOCKQUOTE>
-
-<DEL>[<I>Note 5:</I></DEL> If two declarations <DEL>correspond
-but</DEL> <INS>of an entity</INS> are attached to different modules,
-the program is ill-formed <DEL>if one precedes the other
-(6.4.1 [<A href="
-   https://wg21.link/basic.scope.scope">basic.scope.scope</A>])</DEL>. <DEL>&#8212;<I>end note</I>]</DEL>
-[ Example 2:
-<PRE>
-  ...
-  int g();   //<SPAN CLASS="cmnt"> error: <DEL>corresponds to</DEL> <INS>matches</INS> #2, but attached to M</SPAN>
-  ...
-</PRE>
--- end example]
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 9.12 [<A href="
-   https://wg21.link/dcl.link#7">dcl.link</A>] paragraph 7 as follows:</P>
-
-<BLOCKQUOTE>
-
-Two declarations declare the same entity if they (re)introduce the
-same name, one declares a function or variable with C language
-linkage, and the other declares such an entity or declares a variable
-that belongs to the global scope <INS>and is attached to the global
-module</INS>. ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 10.1 [<A href="
-   https://wg21.link/module.unit#7">module.unit</A>] paragraph 7 as follows:</P>
-
-<BLOCKQUOTE>
-
-A module is either a named module or the global module. A declaration
-is <I>attached</I> to a module as follows:
-<UL>
-<LI>If the declaration is a
-non-dependent friend declaration that nominates a function with
-a <I>declarator-id</I> that is a <I>qualified-id</I>
-or <I>template-id</I> or that nominates a class other than with
-an <I>elaborated-type-specifier</I> with neither
-a <I>nested-name-specifier</I> nor a <I>simple-template-id</I>, it is
-attached to the module to which the friend is attached
-(6.7 [<A href="
-   https://wg21.link/basic.link">basic.link</A>]).</LI>
-<LI class="ins">Otherwise, if the declaration declares a template
-specialization (13.7.6 [<A href="
-   https://wg21.link/temp.spec.partial">temp.spec.partial</A>],
-13.9.4 [<A href="
-   https://wg21.link/temp.expl.spec">temp.expl.spec</A>]), it is attached to the module to which
-the primary template is attached.</LI>
-<LI>Otherwise, if the declaration
-<UL>
-<LI>declares a namespace whose name has external linkage,</LI>
-<LI>declares a type alias,</LI>
-<LI>declares a namespace alias, or</LI>
-<LI>appears within a <I>linkage-specification</I>
-(9.12 [<A href="
-   https://wg21.link/dcl.link">dcl.link</A>])</LI>
-</UL>
-it is attached to the global module.</LI>
-<LI>Otherwise, the declaration is attached to the module in whose
-purview it appears.</LI>
-</UL>
-
-</BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
 <A NAME="2334"></A><H4>2334.
   
 Creation of objects by <TT>typeid</TT>
@@ -34685,74 +35091,6 @@ produced. <INS>-- end note]</INS>
 </BLOCKQUOTE>
 </LI>
 </OL>
-
-<BR><BR><HR>
-<A NAME="3144"></A><H4>3144.
-  
-Granularity of implementation choice for <TT>sizeof</TT> and subobject offsets
-</H4>
-<B>Section: </B>6.8.2&#160; [<A href="
-   https://wg21.link/intro.object">intro.object</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Tomasz Kami&#324;ski
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-12-16<BR>
-
-
-
-
-<P>The size of an object depends on the implementation
-(7.6.2.5 [<A href="
-   https://wg21.link/expr.sizeof">expr.sizeof</A>]).  Similarly, the size and location of
-padding depends on the implementation (6.9.1 [<A href="
-   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4).</P>
-
-<P>Equality-comparing pointers compares their addresses (independent
-of provenance) (7.6.10 [<A href="
-   https://wg21.link/expr.eq#3">expr.eq</A>] paragraph 3), which makes the
-padding choices of implementations observable.  Reflection facilities
-provide similar means. Note that such address comparisons need to be
-supported only within a single complete object, not across complete
-objects (see also <A HREF="cwg_defects.html#2765">issue 2765</A>).</P>
-
-<P>It is intended that the implemenation can choose size and padding
-per type and per program, but these choices cannot vary for a given
-type within a single program.  However, there is insufficient
-specification to that end.  The question arises in particular whether
-equality-comparing pointers to subobjects (or elements of the object
-representation) at compile time and at runtime is permitted to yield
-different outcomes.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 6.9.1 [<A href="
-   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-
-<P>The <I>object representation</I> of a complete object type T is the
-sequence of N unsigned char objects taken up by a non-bit-field
-complete object of type T, where N equals sizeof(T)
-<INS>(7.6.2.5 [<A href="
-   https://wg21.link/expr.sizeof">expr.sizeof</A>])</INS>.  ... For
-trivially copyable types, the value representation is a set of bits in
-the object representation that determines a value, which is one
-discrete element of an implementation-defined set of values.  [
-Footnote: ... ]</P>
-
-<P class="ins">
-For any complete object type, its size and the presence and placement
-of padding does not vary within a program.  [ Note: In particular,
-these properties are not affected by constant evaluation
-(7.7 [<A href="
-   https://wg21.link/expr.const">expr.const</A>]). -- end note ]
-</P>
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="1211"></A><H4>1211.
@@ -37889,60 +38227,6 @@ non-zero value converts to the <TT>bool</TT> value <TT>true</TT>.</P>
 <P>Suggested resolution: require that all floating point types have an
 exact representation of the value zero.</P>
 <BR><BR><HR>
-<A NAME="3036"></A><H4>3036.
-  
-Extended floating-point types should not be cv-qualified
-</H4>
-<B>Section: </B>6.9.4&#160; [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-06-03<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/710">#710</A>.)</P>
-
-<P>It is underspecified whether <TT>std::float16_t</TT> and related
-extended floating-point types are cv-qualified or not.  The intent is
-that those are cv-unqualified.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<P>Change in 17.4.2 [<A href="
-   https://wg21.link/stdfloat.syn">stdfloat.syn</A>] as follows:</P>
-
-<PRE>
-  namespace std {
-    #if defined(__STDCPP_FLOAT16_T__)
-      using float16_t = <DEL>implementation-defined</DEL> <INS>decltype(0.0f16)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
-    #endif
-    #if defined(__STDCPP_FLOAT32_T__)
-      using float32_t = <DEL>implementation-defined</DEL> <INS>decltype(0.0f32)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
-    #endif
-    #if defined(__STDCPP_FLOAT64_T__)
-      using float64_t = <DEL>implementation-defined</DEL> <INS>decltype(0.0f64)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
-    #endif
-    #if defined(__STDCPP_FLOAT128_T__)
-      using float128_t = <DEL>implementation-defined</DEL> <INS>decltype(0.0f128)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
-    #endif
-    #if defined(__STDCPP_BFLOAT16_T__)
-      using bfloat16_t = <DEL>implementation-defined</DEL> <INS>decltype(0.0bf16)</INS> ; //<SPAN CLASS="cmnt"> see 6.9.4 [<A href="
-   https://wg21.link/basic.extended.fp">basic.extended.fp</A>]</SPAN>
-    #endif
-  }
-</PRE>
-<BR><BR><HR>
 <A NAME="2544"></A><H4>2544.
   
 Address of past-the-end of a potentially-overlapping subobject
@@ -38865,198 +39149,6 @@ that computing the cv-combined type actually works in that case)
 or to perform the array-to-pointer conversion before considering
 the composite pointer type.</P></LI>
 
-</OL>
-
-<BR><BR><HR>
-<A NAME="2981"></A><H4>2981.
-  
-Usual arithmetic conversions and result types
-</H4>
-<B>Section: </B>7.4&#160; [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-01-02<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/663">#663</A>.)
-</P>
-
-<P>Subclause 7.4 [<A href="
-   https://wg21.link/expr.arith.conv#1">expr.arith.conv</A>] paragraph 1 specifies:</P>
-
-
-<BLOCKQUOTE>
-
-Many binary operators that expect operands of arithmetic or
-enumeration type cause conversions and yield result types in a similar
-way. The purpose is to yield a common type, which is also the type of
-the result. ...
-
-</BLOCKQUOTE>
-
-<P>However, while the relational and equality operators do apply the
-usual arithmetic conversions, their result type is <TT>bool</TT> and
-not the common type from the usual arithmetic conversions.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 7.4 [<A href="
-   https://wg21.link/expr.arith.conv#1">expr.arith.conv</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-Many binary operators that expect operands of arithmetic or
-enumeration type cause conversions <DEL>and yield result types</DEL>
-in a similar way. The purpose is to yield a common type<DEL>, which is
-also the type of the result</DEL>. ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.5 [<A href="
-   https://wg21.link/expr.mul#2">expr.mul</A>] paragraph 2 as follows:</P>
-
-
-
-<BLOCKQUOTE>
-
-The operands of * and / shall have arithmetic or unscoped enumeration
-type; the operands of % shall have integral or unscoped enumeration
-type. The usual arithmetic conversions (7.4 [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are
-performed on the operands <INS>to bring them to a common type,</INS>
-and <DEL>determine the type of</DEL> the result <INS>is a prvalue of
-that type</INS>.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.6 [<A href="
-   https://wg21.link/expr.add#1">expr.add</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The additive operators + and - group left-to-right. Each operand shall
-be a prvalue. <INS>The result is a prvalue.</INS> If both operands
-have arithmetic or unscoped enumeration type, the usual arithmetic
-conversions (7.4 [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the
-operands to bring them to a common type, and the result is of that
-type</INS>. Otherwise, if one operand has arithmetic or unscoped
-enumeration type, integral promotion is applied
-(7.3.7 [<A href="
-   https://wg21.link/conv.prom">conv.prom</A>]) to that operand. A converted or promoted
-operand is used in place of the corresponding original operand for the
-remainder of this section.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.9 [<A href="
-   https://wg21.link/expr.rel#2">expr.rel</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-The converted operands shall have arithmetic, enumeration, or pointer
-type. The operators &lt; (less than), &gt; (greater than), &lt;= (less
-than or equal to), and &gt;= (greater than or equal to) all yield
-<INS>prvalues of</INS> <DEL>false or true. The</DEL> type <DEL>of the
-result is</DEL> bool.
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 7.6.10 [<A href="
-   https://wg21.link/expr.eq#2">expr.eq</A>] paragraph 2 as follows:</P>
-
-<BLOCKQUOTE>
-
-The converted operands shall have scalar type. The operators == and !=
-both yield <DEL>true or false, i.e.,</DEL>
-a <DEL>result</DEL> <INS>prvalue</INS> of type bool. In each case
-below, the operands shall have the same type after the specified
-conversions have been applied.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.11 [<A href="
-   https://wg21.link/expr.bit.and#1">expr.bit.and</A>] paragraph 1 as follows:</P>
-
-
-
-<BLOCKQUOTE>
-
-The &amp; operator groups left-to-right. The operands shall be of
-integral or unscoped enumeration type. The usual arithmetic
-conversions (7.4 [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the
-operands to bring them to a common type, and the result is a prvalue of
-that type</INS>. Given the coefficients xi and yi of the base-2
-representation (6.9.3 [<A href="
-   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands
-x and y, the coefficient ri of the base-2 representation of the result
-r is 1 if both xi and yi are 1, and 0 otherwise.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.12 [<A href="
-   https://wg21.link/expr.xor#1">expr.xor</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The ^ operator groups left-to-right. The operands shall be of integral
-or unscoped enumeration type. The usual arithmetic conversions
-(7.4 [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the operands to bring
-them to a common type, and the result is a prvalue of that
-type</INS>. Given the coefficients xi and yi of the base-2
-representation (6.9.3 [<A href="
-   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands
-x and y, the coefficient ri of the base-2 representation of the result
-r is 1 if either (but not both) of xi and yi is 1, and 0 otherwise.
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 7.6.13 [<A href="
-   https://wg21.link/expr.or#1">expr.or</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-The | operator groups left-to-right. The operands shall be of integral
-or unscoped enumeration type. The usual arithmetic conversions
-(7.4 [<A href="
-   https://wg21.link/expr.arith.conv">expr.arith.conv</A>]) are performed <INS>on the operands to bring
-them to a common type, and the result is a prvalue of that
-type</INS>. Given the coefficients xi and yi of the base-2
-representation (6.9.3 [<A href="
-   https://wg21.link/basic.fundamental">basic.fundamental</A>]) of the converted operands
-x and y, the coefficient ri of the base-2 representation of the result
-r is 1 if at least one of xi and yi is 1, and 0 otherwise.
-
-</BLOCKQUOTE>
-
-</LI>
 </OL>
 
 <BR><BR><HR>
@@ -43695,46 +43787,6 @@ parameter types and the presence or absence of the ellipsis <DEL>or a
 function parameter pack</DEL> is the function's
 <I>parameter-type-list</I>.
 
-</BLOCKQUOTE>
-
-<BR><BR><HR>
-<A NAME="3121"></A><H4>3121.
-  
-Zero-size arrays in function parameters
-</H4>
-<B>Section: </B>9.3.4.6&#160; [<A href="
-   https://wg21.link/dcl.fct">dcl.fct</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Jan Schultke
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-11-08<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/797">#797</A>.)</P>
-
-<P>Clarify that a zero-size array as a function parameter is
-ill-formed, because the array-to-pointer canonicalization happens
-later.  There is implementation divergence.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 9.3.4.6 [<A href="
-   https://wg21.link/dcl.fct#4">dcl.fct</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-...
-<PRE>
-  void h(int x(const int));  //<SPAN CLASS="cmnt"> #3</SPAN>
-  void h(int (*)(int)) {}    //<SPAN CLASS="cmnt"> defines #3</SPAN>
-
-<INS>  void j(int[0]);            //<SPAN CLASS="cmnt"> error: </SPAN>int[0]<SPAN CLASS="cmnt"> is not a valid type</SPAN></INS>
-</PRE>
 </BLOCKQUOTE>
 
 <BR><BR><HR>
@@ -54352,48 +54404,6 @@ Indirect nested classes of class templates
 observed that the current rules do not adequately address indirect nested
 classes of class templates (i.e., member classes of member classes of class
 templates) in regard to their potential separate instantiation.</P>
-
-<BR><BR><HR>
-<A NAME="3034"></A><H4>3034.
-  
-Infinite recursion should hit an implementation limit
-</H4>
-<B>Section: </B>13.9.2&#160; [<A href="
-   https://wg21.link/temp.inst">temp.inst</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Timur Doumler
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-07-04<BR>
-
-
-
-
-<P>Infinite recursion during template instantiation is specified to
-yield undefined behavior in 13.9.2 [<A href="
-   https://wg21.link/temp.inst#16">temp.inst</A>] paragraph 16.
-However, instantiation should be subject to compile-time
-implementation limits and not cause runtime undefined behavior.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 13.9.2 [<A href="
-   https://wg21.link/temp.inst#16">temp.inst</A>] paragraph 16 as follows:</P>
-
-<BLOCKQUOTE>
-
-There is an implementation-defined quantity that specifies the limit
-on the total depth of recursive instantiations
-(Clause Annex B [<A href="
-   https://wg21.link/implimits">implimits</A>]), which could involve more than one
-template. <DEL>The result of an infinite recursion in instantiation is
-undefined.</DEL>
-
-</BLOCKQUOTE>
 
 <BR><BR><HR>
 <A NAME="293"></A><H4>293.
