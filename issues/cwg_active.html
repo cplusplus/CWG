@@ -5515,7 +5515,7 @@ Array vs sequence in object representation
    https://wg21.link/basic.types.general">basic.types.general</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#2953">2953</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Value representation for non-trivially-copyable types
@@ -7615,7 +7615,7 @@ A <I>using-declarator</I> should bind a name
    https://wg21.link/namespace.udecl">namespace.udecl</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3037">3037</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">drafting</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Name lookup results for <I>using-declarator</I>s
@@ -10555,7 +10555,7 @@ Stack unwinding when no matching handler is found
    https://wg21.link/except.handle">except.handle</A>
 </TD>
 <TD ALIGN="RIGHT"><A HREF="#3239">3239</A></TD>
-<TD ALIGN="CENTER">open</TD>
+<TD ALIGN="CENTER">review</TD>
 <TD ALIGN="CENTER"></TD>
 <TD ALIGN="LEFT">
 Redundant specification for stack unwinding for <TT>std::terminate</TT>
@@ -14793,7 +14793,7 @@ Incorrect description for interpreting integer literals
 5.13.2 [<A href="
    https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1.</P>
 
-<P><B>Proposed resolution (reviewed by CWG 2026-10-27, with low quorum):</B></P>
+<P><B>Proposed resolution option 1 (reviewed by CWG 2026-10-27, with low quorum):</B></P>
 
 <P>Change in 5.13.2 [<A href="
    https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1 as follows:</P>
@@ -14811,6 +14811,22 @@ or <I>decimal-literal</I>
 </UL>
 is interpreted as a base N integer as shown in Table 7; the lexically
 first digit of the sequence of digits is the most significant.
+
+</BLOCKQUOTE>
+
+<P><B>Proposed resolution option 2</B></P>
+
+<P>Change in 5.13.2 [<A href="
+   https://wg21.link/lex.icon#1">lex.icon</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+In an <I>integer-literal</I>, the sequence
+of <I>binary-digit</I>s, <I>octal-digit</I>s, <I>digit</I>s,
+or <I>hexadecimal-digit</I>s is interpreted as a base N integer as
+shown in Table 7; the lexically first digit of the sequence of digits
+is the most significant. <INS>If the sequence is empty,
+the <I>integer-literal</I> has the value zero.</INS> ...
 
 </BLOCKQUOTE>
 
@@ -15799,6 +15815,97 @@ explicitly allows an explicit
 potentially-throwing deallocation function ill-formed, making this
 issue moot.</P>
 
+<BR><BR><HR>
+<A NAME="2953"></A><H4>2953.
+  
+Value representation for non-trivially-copyable types
+</H4>
+<B>Section: </B>6.9.1&#160; [<A href="
+   https://wg21.link/basic.types.general">basic.types.general</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Brian Bi
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2024-11-08<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/635">#635</A>.)
+</P>
+
+<P>Subclause 6.9.1 [<A href="
+   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 specifies:</P>
+
+<BLOCKQUOTE>
+
+... The <I>value representation</I> of a type T is the set of bits in
+the object representation of T that participate in representing a
+value of type T. ... For trivially copyable types, the value
+representation is a set of bits in the object representation that
+determines a <I>value</I>, ... [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<P>It is unclear what difference is intended between "participate in
+representing a value" and "determines a value".  If there is no
+difference, it is unclear why one of the statements applies only to
+trivially copyable types. The standard does not seem to refer to the
+value representation of types that are not trivially copyable.</P>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 6.9.1 [<A href="
+   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+The <I>object representation</I> of a complete object type T is the
+sequence of N unsigned char objects taken up by a non-bit-field
+complete object of type T, where N equals sizeof(T). The <I>value
+representation</I> of a <INS>trivially copyable</INS> type T is the
+set of bits in the object representation of T that participate in
+representing a <DEL>value</DEL> <INS><I>value</I></INS> of type
+T<INS>, which is one discrete element of an implementation-defined set
+of values</INS>. The object and value representation of a
+non-bit-field complete object of type T are the bytes and bits,
+respectively, of the object corresponding to the object and value
+representation of its type. The object representation of a bit-field
+object is the sequence of N bits taken up by the object, where N is
+the width of the bit-field (11.4.10 [<A href="
+   https://wg21.link/class.bit">class.bit</A>]).  The value
+representation of a bit-field object is the set of bits in the object
+representation that participate in representing its value. Bits in the
+object representation of a type or object that are not part of the
+value representation are <I>padding bits</I>. <DEL>For trivially copyable
+types, the value representation is a set of bits in the object
+representation that determines a <I>value</I>, which is one discrete
+element of an implementation-defined set of values.</DEL> [ Footnote: ... ]
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-10-27</B></P>
+
+<P>This issue's resolution needs to be rebased given the changes
+applied by P2434R5 (Nondeterministic pointer provenance).</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<P>Change in 6.9.1 [<A href="
+   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+... The <I>value representation</I> of a <INS>trivially copyable</INS>
+type <TT>T</TT> is the set of bits in the object representation of T
+that participate in representing a value of type
+T <INS>(6.9.2 [<A href="
+   https://wg21.link/basic.types.trivial">basic.types.trivial</A>])</INS>. ...
+
+</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="3065"></A><H4>3065.
   
@@ -24074,6 +24181,136 @@ with empty sets of types P and A.
 </LI>
 </OL>
 
+<BR><BR><HR>
+<A NAME="3239"></A><H4>3239.
+  
+Redundant specification for stack unwinding for <TT>std::terminate</TT>
+</H4>
+<B>Section: </B>14.4&#160; [<A href="
+   https://wg21.link/except.handle">except.handle</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>review
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Yin Xinyu
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2026-09-24<BR>
+
+
+<P>(From submission
+<A HREF="https://github.com/cplusplus/CWG/issues/1014">#1014</A>.)</P>
+
+<P>Subclause 14.4 [<A href="
+   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 specifies:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function std::terminate is
+invoked; whether or not the stack is unwound before this invocation of
+std::terminate is implementation-defined
+(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+
+<P>However, this (and more) is already said in
+14.6.2 [<A href="
+   https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2:</P>
+
+<BLOCKQUOTE>
+
+In the situation where no matching handler is found, it is
+implementation-defined whether or not the stack is unwound before
+<TT>std::terminate</TT> is invoked. ...
+
+</BLOCKQUOTE>
+
+<P><U>Suggested resolution [SUPERSEDED]:</U></P>
+
+<P>Change in 14.4 [<A href="
+   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function std::terminate is
+invoked<DEL>; whether or not the stack is unwound before this invocation of
+std::terminate is implementation-defined</DEL>
+(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]).
+
+</BLOCKQUOTE>
+
+<P><B>CWG 2026-10-27</B></P>
+
+<P>Pursue the opposite approach, i.e. 14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]
+should be turned into a notes.</P>
+
+<P><B>Proposed resolution:</B></P>
+
+<OL>
+<LI>
+<P>Change in 14.4 [<A href="
+   https://wg21.link/except.handle#7">except.handle</A>] paragraph 7 as follows:</P>
+
+<BLOCKQUOTE>
+
+If the search for a handler exits the function body of a function with
+a non-throwing exception specification, the
+function <TT>std::terminate</TT> (14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>]) is
+invoked<INS>; whether the stack is
+unwound, unwound partially, or not unwound at all before this
+invocation of <TT>std::terminate</TT> is implementation-defined.</INS> ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.4 [<A href="
+   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 as follows:</P>
+
+<BLOCKQUOTE>
+
+If no matching handler is found, the function <TT>std::terminate</TT>
+<INS>(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>])</INS>
+is invoked; whether or not the stack is unwound before this invocation
+of <TT>std::terminate</TT> is implementation-defined
+<DEL>(14.6.2 [<A href="
+   https://wg21.link/except.terminate">except.terminate</A>])</DEL>.
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 14.6.2 [<A href="
+   https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2 as follows:</P>
+
+<BLOCKQUOTE>
+
+<DEL>In the situation where no matching handler is found, it is
+implementation-defined whether or not the stack is unwound before
+std::terminate is invoked. In the situation where the search for a
+handler (14.4 [<A href="
+   https://wg21.link/except.handle">except.handle</A>]) exits the function body of a
+function with a non-throwing exception specification
+(14.5 [<A href="
+   https://wg21.link/except.spec">except.spec</A>]), it is implementation-defined whether the
+stack is unwound, unwound partially, or not unwound at all before the
+function std::terminate is invoked. In all other situations,</DEL>
+<INS>Unless otherwise specified (14.4 [<A href="
+   https://wg21.link/except.handle">except.handle</A>]),</INS> the
+stack shall not be unwound before the function std::terminate is
+invoked. An implementation is not permitted to finish stack unwinding
+prematurely based on a determination that the unwind process will
+eventually cause an invocation of the function std::terminate.
+
+</BLOCKQUOTE>
+</LI>
+</OL>
 <BR><BR><BR><BR><HR>
 <A NAME="Drafting%20Status"></A><H3>Issues with "Drafting" Status</H3>
 <HR>
@@ -27136,6 +27373,97 @@ namespaces, but there are related examples that do not
 involve unnamed namespaces. The problem needs to be solved
 more generally in the specification of lookup.
 </P>
+
+<BR><BR><HR>
+<A NAME="3037"></A><H4>3037.
+  
+Name lookup results for <I>using-declarator</I>s
+</H4>
+<B>Section: </B>9.10&#160; [<A href="
+   https://wg21.link/namespace.udecl">namespace.udecl</A>]
+ &#160;&#160;&#160;
+
+ <B>Status: </B>drafting
+ &#160;&#160;&#160;
+
+ <B>Submitter: </B>Vlad Serebrennikov
+ &#160;&#160;&#160;
+
+ <B>Date: </B>2025-06-10<BR>
+
+
+
+
+<P>Subclause 9.10 [<A href="
+   https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 subtly changes the
+mechanics of name lookup for a <I>using-declarator</I>.  This is
+better done in 6.5.1 [<A href="
+   https://wg21.link/basic.lookup.general">basic.lookup.general</A>] to avoid the impression of
+conflicting rules.</P>
+
+<P><U>Possible resolution (reviewed by CWG 2026-11-06):</U></P>
+
+<OL>
+<LI>
+<P>Change in 6.5.1 [<A href="
+   https://wg21.link/basic.lookup.general#1">basic.lookup.general</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+... If the declarations found by name lookup all denote functions or
+function templates, the declarations are said to form an <I>overload
+set</I>. Otherwise, if the declarations found by name lookup do not
+all denote the same entity, they are <I>ambiguous</I> and the program
+is ill-formed<INS>, unless lookup is for a <I>using-declarator</I></INS>. ...
+
+</BLOCKQUOTE>
+</LI>
+
+<LI>
+<P>Change in 6.5.1 [<A href="
+   https://wg21.link/basic.lookup.general#4">basic.lookup.general</A>] paragraph 4 as follows:</P>
+
+<BLOCKQUOTE>
+
+In certain contexts, only certain kinds of declarations are
+included <INS>in the result of the search</INS>.
+After <DEL>any</DEL> <INS>applying</INS> such
+<DEL>restriction</DEL> <INS>restrictions (if any)</INS>, any
+declarations of classes or enumerations are discarded if <INS>lookup
+is not for a <I>using-declarator</I> and</INS> any other declarations
+are found.  [<I>Note 4:</I> A type (but not a type alias or template)
+is therefore hidden by any other entity in its scope. &#8212;<I>end
+note</I>] However, if a lookup is type-only, only declarations of
+types and templates whose specializations are types are considered;
+furthermore, if declarations of a type alias and of its underlying
+entity are found, the declaration of the type alias is discarded
+instead of the type declaration.
+
+</BLOCKQUOTE>
+
+</LI>
+
+<LI>
+<P>Change in 9.10 [<A href="
+   https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P>
+
+<BLOCKQUOTE>
+
+Each <I>using-declarator</I> in a <I>using-declaration</I> [ Footnote:
+... ] names the set of declarations found by lookup
+(6.5.5 [<A href="
+   https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]) for the <I>using-declarator</I>, except
+that <DEL>class and enumeration declarations that would be discarded
+are merely ignored when checking for ambiguity
+(6.5 [<A href="
+   https://wg21.link/basic.lookup">basic.lookup</A>]),</DEL> conversion function templates with a
+dependent return type are ignored<DEL>,</DEL> and certain functions
+are hidden as described below.
+
+</BLOCKQUOTE>
+
+</LI>
+</OL>
 
 <BR><BR><HR>
 <A NAME="1706"></A><H4>1706.
@@ -36993,78 +37321,6 @@ representation that do not participate in the value representation
 of the object (&#8220;padding&#8221; bytes).</P>
 
 <BR><BR><HR>
-<A NAME="2953"></A><H4>2953.
-  
-Value representation for non-trivially-copyable types
-</H4>
-<B>Section: </B>6.9.1&#160; [<A href="
-   https://wg21.link/basic.types.general">basic.types.general</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Brian Bi
- &#160;&#160;&#160;
-
- <B>Date: </B>2024-11-08<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/635">#635</A>.)
-</P>
-
-<P>Subclause 6.9.1 [<A href="
-   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 specifies:</P>
-
-<BLOCKQUOTE>
-
-... The <I>value representation</I> of a type T is the set of bits in
-the object representation of T that participate in representing a
-value of type T. ... For trivially copyable types, the value
-representation is a set of bits in the object representation that
-determines a <I>value</I>, ... [ Footnote: ... ]
-
-</BLOCKQUOTE>
-
-<P>It is unclear what difference is intended between "participate in
-representing a value" and "determines a value".  If there is no
-difference, it is unclear why one of the statements applies only to
-trivially copyable types. The standard does not seem to refer to the
-value representation of types that are not trivially copyable.</P>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 6.9.1 [<A href="
-   https://wg21.link/basic.types.general#4">basic.types.general</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-
-The <I>object representation</I> of a complete object type T is the
-sequence of N unsigned char objects taken up by a non-bit-field
-complete object of type T, where N equals sizeof(T). The <I>value
-representation</I> of a <INS>trivially copyable</INS> type T is the
-set of bits in the object representation of T that participate in
-representing a <DEL>value</DEL> <INS><I>value</I></INS> of type
-T<INS>, which is one discrete element of an implementation-defined set
-of values</INS>. The object and value representation of a
-non-bit-field complete object of type T are the bytes and bits,
-respectively, of the object corresponding to the object and value
-representation of its type. The object representation of a bit-field
-object is the sequence of N bits taken up by the object, where N is
-the width of the bit-field (11.4.10 [<A href="
-   https://wg21.link/class.bit">class.bit</A>]).  The value
-representation of a bit-field object is the set of bits in the object
-representation that participate in representing its value. Bits in the
-object representation of a type or object that are not part of the
-value representation are <I>padding bits</I>. <DEL>For trivially copyable
-types, the value representation is a set of bits in the object
-representation that determines a <I>value</I>, which is one discrete
-element of an implementation-defined set of values.</DEL> [ Footnote: ... ]
-
-</BLOCKQUOTE>
-
-<BR><BR><HR>
 <A NAME="3150"></A><H4>3150.
   
 Incomplete consteval-only class types
@@ -45181,97 +45437,6 @@ A <I>using-declaration</I> shall not name a <I>template-id</I>.
   };
 </PRE>
 </BLOCKQUOTE>
-</LI>
-</OL>
-
-<BR><BR><HR>
-<A NAME="3037"></A><H4>3037.
-  
-Name lookup results for <I>using-declarator</I>s
-</H4>
-<B>Section: </B>9.10&#160; [<A href="
-   https://wg21.link/namespace.udecl">namespace.udecl</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Vlad Serebrennikov
- &#160;&#160;&#160;
-
- <B>Date: </B>2025-06-10<BR>
-
-
-
-
-<P>Subclause 9.10 [<A href="
-   https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 subtly changes the
-mechanics of name lookup for a <I>using-declarator</I>.  This is
-better done in 6.5.1 [<A href="
-   https://wg21.link/basic.lookup.general">basic.lookup.general</A>] to avoid the impression of
-conflicting rules.</P>
-
-<P><U>Possible resolution:</U></P>
-
-<OL>
-<LI>
-<P>Change in 6.5.1 [<A href="
-   https://wg21.link/basic.lookup.general#1">basic.lookup.general</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-... If the declarations found by name lookup all denote functions or
-function templates, the declarations are said to form an <I>overload
-set</I>. Otherwise, if the declarations found by name lookup do not
-all denote the same entity, they are <I>ambiguous</I> and the program
-is ill-formed<INS>, unless lookup is for a <I>using-declarator</I></INS>. ...
-
-</BLOCKQUOTE>
-</LI>
-
-<LI>
-<P>Change in 6.5.1 [<A href="
-   https://wg21.link/basic.lookup.general#4">basic.lookup.general</A>] paragraph 4 as follows:</P>
-
-<BLOCKQUOTE>
-
-In certain contexts, only certain kinds of declarations are
-included <INS>in the result of the search</INS>.
-After <DEL>any</DEL> <INS>applying</INS> such
-<DEL>restriction</DEL> <INS>restrictions (if any)</INS>, any
-declarations of classes or enumerations are discarded if <INS>lookup
-is not for a <I>using-declarator</I> and</INS> any other declarations
-are found.  [<I>Note 4:</I> A type (but not a type alias or template)
-is therefore hidden by any other entity in its scope. &#8212;<I>end
-note</I>] However, if a lookup is type-only, only declarations of
-types and templates whose specializations are types are considered;
-furthermore, if declarations of a type alias and of its underlying
-entity are found, the declaration of the type alias is discarded
-instead of the type declaration.
-
-</BLOCKQUOTE>
-
-</LI>
-
-<LI>
-<P>Change in 9.10 [<A href="
-   https://wg21.link/namespace.udecl#1">namespace.udecl</A>] paragraph 1 as follows:</P>
-
-<BLOCKQUOTE>
-
-Each <I>using-declarator</I> in a <I>using-declaration</I> [ Footnote:
-... ] names the set of declarations found by lookup
-(6.5.5 [<A href="
-   https://wg21.link/basic.lookup.qual">basic.lookup.qual</A>]) for the <I>using-declarator</I>, except
-that <DEL>class and enumeration declarations that would be discarded
-are merely ignored when checking for ambiguity
-(6.5 [<A href="
-   https://wg21.link/basic.lookup">basic.lookup</A>]),</DEL> conversion function templates with a
-dependent return type are ignored<DEL>,</DEL> and certain functions
-are hidden as described below.
-
-</BLOCKQUOTE>
-
 </LI>
 </OL>
 
@@ -55691,66 +55856,6 @@ an invocation of the function std::terminate.
 <P>This issue interacts with P0876 (fiber_context - fibers without
 scheduler), and is postponed until that paper has been adopted.</P>
 
-<BR><BR><HR>
-<A NAME="3239"></A><H4>3239.
-  
-Redundant specification for stack unwinding for <TT>std::terminate</TT>
-</H4>
-<B>Section: </B>14.4&#160; [<A href="
-   https://wg21.link/except.handle">except.handle</A>]
- &#160;&#160;&#160;
-
- <B>Status: </B>open
- &#160;&#160;&#160;
-
- <B>Submitter: </B>Yin Xinyu
- &#160;&#160;&#160;
-
- <B>Date: </B>2026-09-24<BR>
-
-
-<P>(From submission
-<A HREF="https://github.com/cplusplus/CWG/issues/1014">#1014</A>.)</P>
-
-<P>Subclause 14.4 [<A href="
-   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 specifies:</P>
-
-<BLOCKQUOTE>
-
-If no matching handler is found, the function std::terminate is
-invoked; whether or not the stack is unwound before this invocation of
-std::terminate is implementation-defined
-(14.6.2 [<A href="
-   https://wg21.link/except.terminate">except.terminate</A>]).
-
-</BLOCKQUOTE>
-
-<P>However, this (and more) is already said in
-14.6.2 [<A href="
-   https://wg21.link/except.terminate#2">except.terminate</A>] paragraph 2:</P>
-
-<BLOCKQUOTE>
-
-In the situation where no matching handler is found, it is
-implementation-defined whether or not the stack is unwound before
-<TT>std::terminate</TT> is invoked. ...
-
-</BLOCKQUOTE>
-
-<P><U>Suggested resolution:</U></P>
-
-<P>Change in 14.4 [<A href="
-   https://wg21.link/except.handle#8">except.handle</A>] paragraph 8 as follows:</P>
-
-<BLOCKQUOTE>
-
-If no matching handler is found, the function std::terminate is
-invoked<DEL>; whether or not the stack is unwound before this invocation of
-std::terminate is implementation-defined</DEL>
-(14.6.2 [<A href="
-   https://wg21.link/except.terminate">except.terminate</A>]).
-
-</BLOCKQUOTE>
 <BR><BR><HR>
 <A NAME="2417"></A><H4>2417.
   
